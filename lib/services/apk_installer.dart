@@ -12,7 +12,7 @@ class ApkInstaller {
       }
     }
     
-    // Open APK file
+    // Open APK file using open_filex
     final result = await OpenFilex.open(
       apkPath,
       type: 'application/vnd.android.package-archive',

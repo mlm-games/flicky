@@ -5,6 +5,7 @@ class FDroidApp {
   final String description;
   final String iconUrl;
   final String version;
+  final int versionCode;
   final int size;
   final String apkUrl;
   final String license;
@@ -15,8 +16,10 @@ class FDroidApp {
   final DateTime added;
   final DateTime lastUpdated;
   final List<String> screenshots;
+  final List<String> antiFeatures;
   final int downloads;
   final bool isInstalled;
+  final String repository;
   
   FDroidApp({
     required this.packageName,
@@ -25,6 +28,7 @@ class FDroidApp {
     required this.description,
     required this.iconUrl,
     required this.version,
+    this.versionCode = 1,
     required this.size,
     required this.apkUrl,
     required this.license,
@@ -35,7 +39,9 @@ class FDroidApp {
     required this.added,
     required this.lastUpdated,
     required this.screenshots,
+    this.antiFeatures = const [],
     required this.downloads,
     required this.isInstalled,
+    this.repository = 'F-Droid',
   });
 }

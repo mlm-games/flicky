@@ -8,8 +8,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 class UpdatesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final installedApps = ref.watch(installedAppsProvider);
-    final availableUpdates = ref.watch(availableUpdatesProvider);
+    final installedAppsAsync = ref.watch(installedAppsProvider);
+    final availableUpdatesAsync = ref.watch(availableUpdatesProvider);
     
     return Scaffold(
       body: CustomScrollView(
@@ -41,64 +41,72 @@ class UpdatesScreen extends ConsumerWidget {
             ),
           ),
           
-          // Update all button
-          if (availableUpdates.isNotEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Implement update all
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGreen,
-                    padding: EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+          // Updates section
+          availableUpdatesAsync.when(
+            data: (availableUpdates) {
+              if (availableUpdates.isNotEmpty) {
+                return SliverList(
+                  delegate: SliverChildListDelegate([
+                    // Update all button
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // TODO: Implement update all
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryGreen,
+                          padding: EdgeInsets.all(16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.update, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text(
+                              'Update All (${availableUpdates.length} apps)',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.update, color: Colors.white),
-                      SizedBox(width: 8),
-                      Text(
-                        'Update All (${availableUpdates.length} apps)',
+                    
+                    // Available updates header
+                    Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text(
+                        'Available Updates',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
+                    ),
+                    
+                    // Update cards
+                    ...availableUpdates.map((app) => _UpdateCard(app: app)),
+                  ]),
+                );
+              }
+              return SliverToBoxAdapter(child: SizedBox.shrink());
+            },
+            loading: () => SliverToBoxAdapter(
+              child: Center(child: CircularProgressIndicator()),
             ),
+            error: (error, stack) => SliverToBoxAdapter(
+              child: Center(child: Text('Error loading updates')),
+            ),
+          ),
           
-          // Available updates section
-          if (availableUpdates.isNotEmpty) ...[
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Text(
-                  'Available Updates',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _UpdateCard(app: availableUpdates[index]),
-                childCount: availableUpdates.length,
-              ),
-            ),
-          ],
-          
-          // Installed apps section
+          // Installed apps header
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(20),
@@ -112,44 +120,56 @@ class UpdatesScreen extends ConsumerWidget {
             ),
           ),
           
-          if (installedApps.isEmpty)
-            SliverToBoxAdapter(
-              child: Center(
-                child: Container(
-                  padding: EdgeInsets.all(40),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.apps_outlined,
-                        size: 64,
-                        color: Colors.grey,
+          // Installed apps section
+          installedAppsAsync.when(
+            data: (installedApps) {
+              if (installedApps.isEmpty) {
+                return SliverToBoxAdapter(
+                  child: Center(
+                    child: Container(
+                      padding: EdgeInsets.all(40),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.apps_outlined,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No installed apps',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          Text(
+                            'Apps you install from Flicky will appear here',
+                            style: TextStyle(
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 16),
-                      Text(
-                        'No installed apps',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      Text(
-                        'Apps you install from Flicky will appear here',
-                        style: TextStyle(
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
+                );
+              }
+              
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _InstalledAppCard(app: installedApps[index]),
+                  childCount: installedApps.length,
                 ),
-              ),
-            )
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _InstalledAppCard(app: installedApps[index]),
-                childCount: installedApps.length,
-              ),
+              );
+            },
+            loading: () => SliverToBoxAdapter(
+              child: Center(child: CircularProgressIndicator()),
             ),
+            error: (error, stack) => SliverToBoxAdapter(
+              child: Center(child: Text('Error loading installed apps')),
+            ),
+          ),
         ],
       ),
     );
@@ -193,7 +213,7 @@ class _UpdateCard extends StatelessWidget {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Current: v1.0.0 → New: v${app.version}',
+                    'New version: v${app.version}',
                     style: TextStyle(
                       color: Colors.grey,
                       fontSize: 14,

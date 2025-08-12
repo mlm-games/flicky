@@ -1,12 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/fdroid_app.dart';
+import '../models/repository.dart';
 import '../services/fdroid_service.dart';
+import '../services/installation_service.dart';
 
-// Apps provider
-final appsProvider = FutureProvider<List<FDroidApp>>((ref) async {
-  return ref.watch(fdroidServiceProvider).fetchApps();
+// Repository management
+final repositoriesProvider = StateNotifierProvider<RepositoryNotifier, List<Repository>>((ref) {
+  return RepositoryNotifier();
 });
+
+class RepositoryNotifier extends StateNotifier<List<Repository>> {
+  RepositoryNotifier() : super([
+    Repository.fdroid(),
+    Repository.izzyOnDroid(),
+    Repository.fdroidArchive(),
+    Repository.guardian(),
+  ]);
+  
+  void toggleRepository(String url) {
+    state = state.map((repo) {
+      if (repo.url == url) {
+        return Repository(
+          name: repo.name,
+          url: repo.url,
+          description: repo.description,
+          enabled: !repo.enabled,
+          lastUpdated: repo.lastUpdated,
+          publicKey: repo.publicKey,
+        );
+      }
+      return repo;
+    }).toList();
+  }
+  
+  void addRepository(Repository repo) {
+    state = [...state, repo];
+  }
+  
+  void removeRepository(String url) {
+    state = state.where((repo) => repo.url != url).toList();
+  }
+}
+
+// Apps provider with multiple repositories
+final appsProvider = FutureProvider<List<FDroidApp>>((ref) async {
+  final repos = ref.watch(repositoriesProvider);
+  final service = ref.watch(fdroidServiceProvider);
+  return service.fetchAppsFromMultipleRepos(repos);
+});
+
+// Installation service provider
+final installationServiceProvider = Provider<InstallationService>((ref) {
+  final fdroidService = ref.watch(fdroidServiceProvider);
+  return InstallationService(fdroidService);
+});
+
+// Installed apps provider (real implementation)
+final installedAppsProvider = FutureProvider<List<FDroidApp>>((ref) async {
+  final allApps = await ref.watch(appsProvider.future);
+  final service = ref.watch(fdroidServiceProvider);
+  return service.getInstalledApps(allApps);
+});
+
+// Available updates provider (real implementation)
+final availableUpdatesProvider = FutureProvider<List<FDroidApp>>((ref) async {
+  final allApps = await ref.watch(appsProvider.future);
+  final service = ref.watch(fdroidServiceProvider);
+  return service.getUpdatableApps(allApps);
+});
+
+// Download progress provider
+final downloadProgressProvider = StateProvider<Map<String, double>>((ref) => {});
 
 // Search provider
 final searchQueryProvider = StateProvider<String>((ref) => '');
@@ -42,21 +107,6 @@ final categoriesProvider = Provider<List<String>>((ref) {
     },
     orElse: () => [],
   );
-});
-
-// Installed apps provider (mock for now)
-final installedAppsProvider = Provider<List<FDroidApp>>((ref) {
-  // TODO: Get actual installed apps
-  return [];
-});
-
-// Available updates provider
-final availableUpdatesProvider = Provider<List<FDroidApp>>((ref) {
-  final installed = ref.watch(installedAppsProvider);
-  final allApps = ref.watch(appsProvider).valueOrNull ?? [];
-  
-  // TODO: Compare versions to find actual updates
-  return [];
 });
 
 // Sort options
