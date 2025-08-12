@@ -50,6 +50,12 @@ class SettingsScreen extends ConsumerWidget {
                 isEnabled: false,
                 onToggle: (value) {},
               ),
+              _RepositoryTile(
+                name: 'IzzyOnDroid',
+                url: 'https://android.izzysoft.de/repo',
+                isEnabled: true,
+                onToggle: (value) {},
+              ),
               SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: () {
