@@ -16,7 +16,7 @@ class AppTheme {
       surface: cardLight,
       background: surfaceLight,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData( 
       elevation: 0,
       color: cardLight,
       shape: RoundedRectangleBorder(
@@ -35,7 +35,7 @@ class AppTheme {
       surface: cardDark,
       background: surfaceDark,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 0,
       color: cardDark,
       shape: RoundedRectangleBorder(

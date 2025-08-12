@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../widgets/navigation_sidebar.dart';
+import 'browse_screen.dart';
+import 'categories_screen.dart';
+import 'updates_screen.dart';
+import 'settings_screen.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   @override
@@ -15,6 +20,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     return Scaffold(
       body: Row(
         children: [
+          // Sidebar
           NavigationSidebar(
             selectedIndex: selectedIndex,
             onIndexChanged: (index) {
@@ -27,7 +33,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             },
           ),
           
-          // Main content area
+          // Main content
           Expanded(
             child: PageView(
               controller: pageController,

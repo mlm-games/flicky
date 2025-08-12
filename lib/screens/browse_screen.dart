@@ -1,7 +1,16 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/app_providers.dart';
+import '../widgets/app_card.dart';
+import '../widgets/search_bar.dart' as custom;
+import '../widgets/featured_carousel.dart';
+import '../widgets/section_header.dart';
+import '../widgets/loading_indicator.dart';
+
 class BrowseScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final apps = ref.watch(appsProvider);
+    final apps = ref.watch(filteredAppsProvider);
     
     return Scaffold(
       body: CustomScrollView(
@@ -10,11 +19,11 @@ class BrowseScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(20),
-              child: SearchBar(),
+              child: custom.SearchBar(),
             ),
           ),
           
-          // Featured apps carousel
+          // Featured apps
           SliverToBoxAdapter(
             child: FeaturedCarousel(),
           ),
@@ -22,7 +31,7 @@ class BrowseScreen extends ConsumerWidget {
           // Recently updated
           SliverToBoxAdapter(
             child: SectionHeader(
-              title: 'Recently Updated',
+              title: 'All Apps',
               onSeeAll: () {},
             ),
           ),
@@ -40,14 +49,16 @@ class BrowseScreen extends ConsumerWidget {
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) => AppCard(app: appList[index]),
-                  childCount: appList.length,
+                  childCount: appList.length > 20 ? 20 : appList.length,
                 ),
               ),
               loading: () => SliverToBoxAdapter(
                 child: LoadingIndicator(),
               ),
               error: (error, stack) => SliverToBoxAdapter(
-                child: ErrorWidget(error: error),
+                child: Center(
+                  child: Text('Error: $error'),
+                ),
               ),
             ),
           ),

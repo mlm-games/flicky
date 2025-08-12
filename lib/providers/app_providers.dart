@@ -1,4 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/fdroid_app.dart';
+import '../services/fdroid_service.dart';
 
 // Apps provider
 final appsProvider = FutureProvider<List<FDroidApp>>((ref) async {

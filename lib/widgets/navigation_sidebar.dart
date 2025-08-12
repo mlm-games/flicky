@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+
 class NavigationSidebar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onIndexChanged;
@@ -24,7 +27,7 @@ class NavigationSidebar extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Logo section
+          // Logo
           Container(
             padding: EdgeInsets.all(20),
             child: Row(
@@ -43,14 +46,14 @@ class NavigationSidebar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'F-Droid TV',
+                      'Flicky',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      'Free Software',
+                      'F-Droid TV',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
@@ -81,7 +84,6 @@ class NavigationSidebar extends StatelessWidget {
             icon: Icons.update,
             label: 'Updates',
             isSelected: selectedIndex == 2,
-            badge: '3', // Show update count
             onTap: () => onIndexChanged(2),
           ),
           _NavItem(
@@ -89,39 +91,6 @@ class NavigationSidebar extends StatelessWidget {
             label: 'Settings',
             isSelected: selectedIndex == 3,
             onTap: () => onIndexChanged(3),
-          ),
-          
-          Spacer(),
-          
-          // Repository info
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.storage, size: 16, color: Colors.grey),
-                    SizedBox(width: 8),
-                    Text('F-Droid Main', style: TextStyle(fontSize: 12)),
-                  ],
-                ),
-                SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: 0.7,
-                  backgroundColor: Colors.grey.shade300,
-                  valueColor: AlwaysStoppedAnimation(AppTheme.primaryGreen),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  '2,543 apps available',
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -133,7 +102,6 @@ class _NavItem extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isSelected;
-  final String? badge;
   final VoidCallback onTap;
   
   const _NavItem({
@@ -141,7 +109,6 @@ class _NavItem extends StatefulWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
-    this.badge,
   });
   
   @override
@@ -153,8 +120,6 @@ class _NavItemState extends State<_NavItem> {
   
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Focus(
       onFocusChange: (focused) => setState(() => isFocused = focused),
       child: GestureDetector(
@@ -167,12 +132,9 @@ class _NavItemState extends State<_NavItem> {
             color: widget.isSelected
                 ? AppTheme.primaryGreen.withOpacity(0.1)
                 : isFocused
-                    ? (isDark ? Colors.grey.shade800 : Colors.grey.shade100)
+                    ? Colors.grey.withOpacity(0.1)
                     : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            border: widget.isSelected
-                ? Border.all(color: AppTheme.primaryGreen, width: 2)
-                : null,
           ),
           child: Row(
             children: [
@@ -181,31 +143,13 @@ class _NavItemState extends State<_NavItem> {
                 color: widget.isSelected ? AppTheme.primaryGreen : null,
               ),
               SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  widget.label,
-                  style: TextStyle(
-                    fontWeight: widget.isSelected ? FontWeight.bold : null,
-                    color: widget.isSelected ? AppTheme.primaryGreen : null,
-                  ),
+              Text(
+                widget.label,
+                style: TextStyle(
+                  fontWeight: widget.isSelected ? FontWeight.bold : null,
+                  color: widget.isSelected ? AppTheme.primaryGreen : null,
                 ),
               ),
-              if (widget.badge != null)
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    widget.badge!,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
