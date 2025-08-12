@@ -11,6 +11,7 @@ final appsProvider = FutureProvider<List<FDroidApp>>((ref) async {
 // Search provider
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
+// Filtered apps provider
 final filteredAppsProvider = Provider<AsyncValue<List<FDroidApp>>>((ref) {
   final query = ref.watch(searchQueryProvider).toLowerCase();
   final apps = ref.watch(appsProvider);
@@ -41,4 +42,51 @@ final categoriesProvider = Provider<List<String>>((ref) {
     },
     orElse: () => [],
   );
+});
+
+// Installed apps provider (mock for now)
+final installedAppsProvider = Provider<List<FDroidApp>>((ref) {
+  // TODO: Get actual installed apps
+  return [];
+});
+
+// Available updates provider
+final availableUpdatesProvider = Provider<List<FDroidApp>>((ref) {
+  final installed = ref.watch(installedAppsProvider);
+  final allApps = ref.watch(appsProvider).valueOrNull ?? [];
+  
+  // TODO: Compare versions to find actual updates
+  return [];
+});
+
+// Sort options
+enum SortOption { name, updated, size, added }
+
+final sortOptionProvider = StateProvider<SortOption>((ref) => SortOption.updated);
+
+// Sorted apps provider
+final sortedAppsProvider = Provider<AsyncValue<List<FDroidApp>>>((ref) {
+  final apps = ref.watch(filteredAppsProvider);
+  final sortOption = ref.watch(sortOptionProvider);
+  
+  return apps.whenData((appList) {
+    final sorted = List<FDroidApp>.from(appList);
+    
+    switch (sortOption) {
+      case SortOption.name:
+        sorted.sort((a, b) => a.name.compareTo(b.name));
+        break;
+      case SortOption.updated:
+        sorted.sort((a, b) => b.lastUpdated.compareTo(a.lastUpdated));
+        break;
+      case SortOption.size:
+        sorted.sort((a, b) => a.size.compareTo(b.size));
+        break;
+      case SortOption.added:
+        sorted.sort((a, b) => b.added.compareTo(a.added));
+        break;
+    }
+    
+    return sorted;
+  });
 });

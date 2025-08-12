@@ -9,12 +9,12 @@ import '../widgets/error_widget.dart';
 class BrowseScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final apps = ref.watch(filteredAppsProvider);
+    final apps = ref.watch(sortedAppsProvider);  // Changed to sortedAppsProvider
     
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // Search bar
+          // Search bar with sort
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(20),
@@ -50,7 +50,17 @@ class BrowseScreen extends ConsumerWidget {
                 if (appList.isEmpty) {
                   return SliverToBoxAdapter(
                     child: Center(
-                      child: Text('No apps found'),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off, size: 64, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text(
+                            'No apps found',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }
