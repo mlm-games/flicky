@@ -69,13 +69,18 @@ class FDroidService {
           final icon = metadata['icon'];
           if (icon != null) {
             if (icon is Map) {
-              final enIcon = icon['en-US'];
+              final enIcon = icon['en-US'] ?? icon['en'] ?? icon.values.firstOrNull;
               if (enIcon != null && enIcon is Map && enIcon['name'] != null) {
-                iconUrl = '$REPO_URL/icons-640/${enIcon['name']}';
+                iconUrl = '$REPO_URL/${enIcon['name']}';
               }
             } else if (icon is String) {
-              iconUrl = '$REPO_URL/icons-640/$icon';
+              iconUrl = icon.contains('http') ? icon : '$REPO_URL/$icon';
             }
+          }
+          
+          // Fallback
+          if (iconUrl.isEmpty) {
+            iconUrl = 'https://f-droid.org/assets/ic_repo_app_default.png';
           }
           
           // Get screenshots
