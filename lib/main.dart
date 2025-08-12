@@ -5,10 +5,12 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'theme/app_theme.dart';
 import 'providers/app_providers.dart';
 import 'screens/main_screen.dart';
+import 'services/cache_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
+  await CacheService.init();
   
   // Set TV orientation
   SystemChrome.setPreferredOrientations([
