@@ -3,10 +3,11 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import '../models/fdroid_app.dart';
 import '../models/repository.dart';
 import 'apk_installer.dart';
+import 'package_info_service.dart';
 
 final fdroidServiceProvider = Provider<FDroidService>((ref) {
   return FDroidService();
@@ -15,8 +16,23 @@ final fdroidServiceProvider = Provider<FDroidService>((ref) {
 class FDroidService {
   final Dio _dio = Dio(BaseOptions(
     connectTimeout: Duration(seconds: 30),
-    receiveTimeout: Duration(seconds: 30),
+    receiveTimeout: Duration(seconds: 60),
   ));
+  
+  static final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
+  
+  // Get device ABI using device_info_plus
+  static Future<List<String>> _getDeviceAbis() async {
+    try {
+      if (Platform.isAndroid) {
+        final androidInfo = await _deviceInfo.androidInfo;
+        return androidInfo.supportedAbis;
+      }
+    } catch (e) {
+      print('Error getting device ABIs: $e');
+    }
+    return ['arm64-v8a', 'armeabi-v7a', 'x86_64', 'x86'];
+  }
   
   Future<List<FDroidApp>> fetchApps() async {
     // Default repositories
@@ -51,18 +67,196 @@ class FDroidService {
     
     return uniqueApps.values.toList();
   }
+
+  List<String> _parseScreenshotsV2(dynamic screenshots, Repository repo) {
+    if (screenshots == null) return [];
+    
+    List<String> result = [];
+    
+    if (screenshots is Map) {
+      // TV screenshots first, then phone
+      final tvScreenshots = screenshots['tv'];
+      final phoneScreenshots = screenshots['phone'];
+      
+      void addScreenshots(dynamic screens) {
+        if (screens is Map<String, dynamic>) {
+          final localized = _getLocalizedList(screens);
+          for (var screenshot in localized) {
+            if (screenshot is String) {
+              result.add('${repo.url}/$screenshot');
+            }
+          }
+        }
+      }
+      
+      if (tvScreenshots != null) addScreenshots(tvScreenshots);
+      if (phoneScreenshots != null) addScreenshots(phoneScreenshots);
+    }
+    
+    return result;
+  }
+  
+  List<dynamic> _getLocalizedList(Map<String, dynamic> localizedMap) {
+    final value = localizedMap['en-US'] ?? 
+           localizedMap['en'] ?? 
+           localizedMap.values.firstOrNull ?? 
+           [];
+    return value is List ? value : [];
+  }
+  
+  List<String> _parseAntiFeatures(dynamic antiFeatures) {
+    if (antiFeatures == null) return [];
+    
+    if (antiFeatures is List) {
+      return antiFeatures.whereType<String>().toList();
+    }
+    
+    if (antiFeatures is Map) {
+      return antiFeatures.keys.whereType<String>().toList();
+    }
+    
+    return [];
+  }
+  
+  // Fixed _getBestApk to be async and use proper device info
+  Future<Map<String, dynamic>> _getBestApk(Map<String, dynamic> version, Repository repo) async {
+    final file = version['file'];
+    if (file == null) return {'url': '', 'size': 0};
+    
+    // Get APK info
+    final apkName = file['name'] ?? '';
+    final size = file['size'] ?? 0;
+    
+    // Get native code ABIs
+    final manifest = version['manifest'] ?? {};
+    final nativecode = List<String>.from(manifest['nativecode'] ?? []);
+    
+    // If no native code, it's universal
+    if (nativecode.isEmpty) {
+      return {
+        'url': '${repo.url}/$apkName',
+        'size': size,
+      };
+    }
+    
+    // Check if device ABIs match
+    final deviceAbis = await _getDeviceAbis();
+    final hasCompatibleAbi = nativecode.any((abi) => deviceAbis.contains(abi));
+    
+    if (hasCompatibleAbi) {
+      return {
+        'url': '${repo.url}/$apkName',
+        'size': size,
+      };
+    }
+    
+    // No compatible ABI
+    return {'url': '', 'size': 0};
+  }
+  
+  // Update _parseIndexV2 to use async _getBestApk
+  Future<List<FDroidApp>> _parseIndexV2(Map<String, dynamic> data, Repository repo) async {
+    final List<FDroidApp> apps = [];
+    
+    try {
+      final packages = data['packages'] ?? {};
+      
+      for (var entry in packages.entries) {
+        try {
+          final packageName = entry.key;
+          final packageData = entry.value;
+          
+          final metadata = packageData['metadata'];
+          if (metadata == null) continue;
+          
+          final versions = packageData['versions'] ?? {};
+          if (versions.isEmpty) continue;
+          
+          // Get latest version
+          final latestVersionKey = versions.keys.first;
+          final latestVersion = versions[latestVersionKey];
+          if (latestVersion == null) continue;
+          
+          // Get localized name (prefer en-US, then en, then any)
+          final name = _getLocalizedString(metadata['name']) ?? packageName;
+          
+          // Get localized summary and description
+          final summary = _getLocalizedString(metadata['summary']) ?? '';
+          final description = _getLocalizedString(metadata['description']) ?? '';
+          
+          // Build icon URL properly
+          final iconUrl = _buildIconUrlV2(repo, metadata['icon']);
+          
+          // Get best APK for device (now async)
+          final apkInfo = await _getBestApk(latestVersion, repo);
+          
+          apps.add(FDroidApp(
+            packageName: packageName,
+            name: name,
+            summary: summary,
+            description: description,
+            iconUrl: iconUrl,
+            version: latestVersion['manifest']?['versionName'] ?? '1.0',
+            versionCode: latestVersion['manifest']?['versionCode'] ?? 1,
+            size: apkInfo['size'] ?? 0,
+            apkUrl: apkInfo['url'] ?? '',
+            license: metadata['license'] ?? 'Unknown',
+            category: _normalizeCategory(
+              (metadata['categories'] as List?)?.firstOrNull ?? 'Other'
+            ),
+            author: metadata['authorName'] ?? 'Unknown',
+            website: metadata['webSite'] ?? '',
+            sourceCode: metadata['sourceCode'] ?? '',
+            added: DateTime.fromMillisecondsSinceEpoch(
+              metadata['added'] ?? DateTime.now().millisecondsSinceEpoch
+            ),
+            lastUpdated: DateTime.fromMillisecondsSinceEpoch(
+              metadata['lastUpdated'] ?? DateTime.now().millisecondsSinceEpoch
+            ),
+            screenshots: _parseScreenshotsV2(metadata['screenshots'], repo),
+            antiFeatures: _parseAntiFeatures(latestVersion['antiFeatures']),
+            downloads: 0,
+            isInstalled: false,
+            repository: repo.name,
+          ));
+        } catch (e) {
+          print('Error parsing app ${entry.key}: $e');
+        }
+      }
+    } catch (e) {
+      print('Error in _parseIndexV2: $e');
+    }
+    
+    return apps;
+  }
   
   Future<List<FDroidApp>> fetchAppsFromRepo(Repository repo) async {
     try {
+      // Try index-v2 first
+      try {
+        final entryResponse = await _dio.get('${repo.url}/entry.json');
+        final entryData = entryResponse.data;
+        
+        if (entryData['index'] != null) {
+          final indexUrl = '${repo.url}/${entryData['index']['name']}';
+          final indexResponse = await _dio.get(indexUrl);
+          return await _parseIndexV2(indexResponse.data, repo);  // Note: await added
+        }
+      } catch (e) {
+        print('Index v2 not available, falling back to v1: $e');
+      }
+      
+      // Fallback to index-v1
       final response = await _dio.get('${repo.url}/index-v1.json');
-      return _parseApps(response.data, repo.name);
+      return _parseIndexV1(response.data, repo);
     } catch (e) {
       print('Error fetching from ${repo.name}: $e');
       return [];
     }
   }
+
   
-  List<FDroidApp> _parseApps(Map<String, dynamic> data, String repoName) {
+  List<FDroidApp> _parseIndexV1(Map<String, dynamic> data, Repository repo) {
     final List<FDroidApp> apps = [];
     
     try {
@@ -77,28 +271,37 @@ class FDroidService {
           if (packageInfo != null && packageInfo.isNotEmpty) {
             final latestPackage = packageInfo[0];
             
+            // For v1, names are direct strings
+            final name = appData['name'] ?? packageName;
+            
             apps.add(FDroidApp(
               packageName: packageName,
-              name: appData['name'] ?? 'Unknown',
+              name: name,
               summary: appData['summary'] ?? '',
               description: appData['description'] ?? '',
-              iconUrl: _buildIconUrl(repoName, packageName, appData['icon']),
+              iconUrl: _buildIconUrlV1(repo, packageName, appData['icon']),
               version: latestPackage['versionName'] ?? '1.0',
               versionCode: latestPackage['versionCode'] ?? 1,
               size: latestPackage['size'] ?? 0,
-              apkUrl: _buildApkUrl(repoName, latestPackage['apkName']),
+              apkUrl: _buildApkUrlV1(repo, latestPackage['apkName']),
               license: appData['license'] ?? 'Unknown',
-              category: _normalizeCategory(appData['categories']?.first ?? 'Other'),
+              category: _normalizeCategory(
+                appData['categories']?.firstOrNull ?? 'Other'
+              ),
               author: appData['authorName'] ?? 'Unknown',
               website: appData['webSite'] ?? '',
               sourceCode: appData['sourceCode'] ?? '',
-              added: DateTime.fromMillisecondsSinceEpoch(appData['added'] ?? 0),
-              lastUpdated: DateTime.fromMillisecondsSinceEpoch(appData['lastUpdated'] ?? 0),
-              screenshots: _parseScreenshots(appData['screenshots']),
+              added: DateTime.fromMillisecondsSinceEpoch(
+                appData['added'] ?? DateTime.now().millisecondsSinceEpoch
+              ),
+              lastUpdated: DateTime.fromMillisecondsSinceEpoch(
+                appData['lastUpdated'] ?? DateTime.now().millisecondsSinceEpoch
+              ),
+              screenshots: _parseScreenshotsV1(appData['screenshots'], repo),
               antiFeatures: List<String>.from(appData['antiFeatures'] ?? []),
               downloads: 0,
               isInstalled: false,
-              repository: repoName,
+              repository: repo.name,
             ));
           }
         } catch (e) {
@@ -106,39 +309,94 @@ class FDroidService {
         }
       }
     } catch (e) {
-      print('Error in _parseApps: $e');
+      print('Error in _parseIndexV1: $e');
     }
     
     return apps;
   }
   
-  String _buildIconUrl(String repoName, String packageName, dynamic icon) {
-    String baseUrl = repoName == 'IzzyOnDroid' 
-        ? 'https://apt.izzysoft.de/fdroid/repo'
-        : 'https://f-droid.org/repo';
+  String? _getLocalizedString(dynamic value) {
+    if (value == null) return null;
+    
+    // If it's already a string, return it
+    if (value is String) return value;
+    
+    // If it's a map of localized strings
+    if (value is Map) {
+      // Try to get the best locale match
+      return value['en-US'] ?? 
+             value['en'] ?? 
+             value['en_US'] ?? 
+             value['en_GB'] ?? 
+             value.values.firstOrNull;
+    }
+    
+    return null;
+  }
+  
+  String _buildIconUrlV2(Repository repo, dynamic icon) {
+    if (icon == null) return 'https://f-droid.org/assets/ic_repo_app_default.png';
+    
+    String iconPath;
+    if (icon is Map) {
+      // Get any available icon from the localized map
+      iconPath = icon['en-US'] ?? 
+                 icon['en'] ?? 
+                 icon.values.firstOrNull ?? '';
+    } else if (icon is String) {
+      iconPath = icon;
+    } else {
+      return 'https://f-droid.org/assets/ic_repo_app_default.png';
+    }
+    
+    if (iconPath.isEmpty) {
+      return 'https://f-droid.org/assets/ic_repo_app_default.png';
+    }
+    
+    // Build full URL
+    final baseUrl = repo.url;
+    
+    // Check if it's already a full URL
+    if (iconPath.startsWith('http')) {
+      return iconPath;
+    }
+    
+    // Handle different icon path formats
+    if (iconPath.contains('/')) {
+      return '$baseUrl/$iconPath';
+    } else {
+      // Use icons-640 for better quality on TV
+      return '$baseUrl/icons-640/$iconPath';
+    }
+  }
+  
+  String _buildIconUrlV1(Repository repo, String packageName, dynamic icon) {
+    final baseUrl = repo.url;
     
     if (icon != null && icon is String) {
+      // For index v1, icons are usually just filenames
+      if (icon.contains('/')) {
+        return '$baseUrl/$icon';
+      }
       return '$baseUrl/icons-640/$icon';
     }
     
+    // Default icon path
     return '$baseUrl/icons-640/${packageName}.png';
   }
   
-  String _buildApkUrl(String repoName, String apkName) {
-    if (repoName == 'IzzyOnDroid') {
-      return 'https://apt.izzysoft.de/fdroid/repo/$apkName';
-    }
-    return 'https://f-droid.org/repo/$apkName';
+  String _buildApkUrlV1(Repository repo, String apkName) {
+    return '${repo.url}/$apkName';
   }
   
-  List<String> _parseScreenshots(dynamic screenshots) {
+  List<String> _parseScreenshotsV1(dynamic screenshots, Repository repo) {
     if (screenshots == null) return [];
     
     List<String> result = [];
     if (screenshots is List) {
       for (var screenshot in screenshots) {
         if (screenshot is String) {
-          result.add('https://f-droid.org/repo/$screenshot');
+          result.add('${repo.url}/$screenshot');
         }
       }
     }
@@ -175,6 +433,11 @@ class FDroidService {
     Function(double)? onProgress,
   }) async {
     try {
+      // Check if APK URL is available
+      if (app.apkUrl.isEmpty) {
+        throw Exception('No compatible APK available for this device');
+      }
+      
       final Directory tempDir = await getTemporaryDirectory();
       final String fileName = '${app.packageName}_${app.version}.apk';
       final String savePath = '${tempDir.path}/$fileName';
@@ -194,106 +457,10 @@ class FDroidService {
       
       await ApkInstaller.installApk(savePath);
       
-      // Mark as installed
-      await markAsInstalled(app);
+      // Mark as installed in our tracking
+      await PackageInfoService.markAsInstalled(app.packageName, app.version);
     } catch (e) {
       throw Exception('Failed to install: $e');
     }
-  }
-  
-  // Installation tracking with Hive
-  Future<void> markAsInstalled(FDroidApp app) async {
-    if (!Hive.isBoxOpen('installed_apps')) {
-      await Hive.openBox<String>('installed_apps');
-    }
-    
-    final box = Hive.box<String>('installed_apps');
-    final installedInfo = jsonEncode({
-      'packageName': app.packageName,
-      'version': app.version,
-      'versionCode': app.versionCode,
-      'installedAt': DateTime.now().toIso8601String(),
-    });
-    
-    await box.put(app.packageName, installedInfo);
-  }
-  
-  Future<void> markAsUninstalled(String packageName) async {
-    if (!Hive.isBoxOpen('installed_apps')) {
-      await Hive.openBox<String>('installed_apps');
-    }
-    
-    final box = Hive.box<String>('installed_apps');
-    await box.delete(packageName);
-  }
-  
-  Future<bool> isInstalled(String packageName) async {
-    if (!Hive.isBoxOpen('installed_apps')) {
-      await Hive.openBox<String>('installed_apps');
-    }
-    
-    final box = Hive.box<String>('installed_apps');
-    return box.containsKey(packageName);
-  }
-  
-  Future<List<FDroidApp>> getInstalledApps(List<FDroidApp> allApps) async {
-    final installed = <FDroidApp>[];
-    
-    for (final app in allApps) {
-      if (await isInstalled(app.packageName)) {
-        installed.add(app);
-      }
-    }
-    
-    return installed;
-  }
-  
-  Future<List<FDroidApp>> getUpdatableApps(List<FDroidApp> allApps) async {
-    if (!Hive.isBoxOpen('installed_apps')) {
-      await Hive.openBox<String>('installed_apps');
-    }
-    
-    final box = Hive.box<String>('installed_apps');
-    final updatable = <FDroidApp>[];
-    
-    for (final app in allApps) {
-      final installedInfo = box.get(app.packageName);
-      if (installedInfo != null) {
-        final info = jsonDecode(installedInfo);
-        final installedVersionCode = info['versionCode'] as int;
-        if (app.versionCode > installedVersionCode) {
-          updatable.add(app);
-        }
-      }
-    }
-    
-    return updatable;
-  }
-  
-  // Mock data for testing
-  List<FDroidApp> _getMockApps() {
-    return List.generate(5, (index) => FDroidApp(
-      packageName: 'com.example.app$index',
-      name: 'App ${index + 1}',
-      summary: 'This is a summary for app ${index + 1}',
-      description: 'This is a longer description for app ${index + 1}',
-      iconUrl: 'https://via.placeholder.com/150',
-      version: '1.0.$index',
-      versionCode: index + 1,
-      size: 1024 * 1024 * (index + 1),
-      apkUrl: 'https://example.com/app$index.apk',
-      license: 'GPL-3.0',
-      category: 'Tools',
-      author: 'Author $index',
-      website: 'https://example.com',
-      sourceCode: 'https://github.com/example/app$index',
-      added: DateTime.now().subtract(Duration(days: index * 10)),
-      lastUpdated: DateTime.now().subtract(Duration(days: index)),
-      screenshots: [],
-      antiFeatures: [],
-      downloads: 1000 * (index + 1),
-      isInstalled: false,
-      repository: 'F-Droid',
-    ));
   }
 }

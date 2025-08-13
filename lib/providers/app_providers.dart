@@ -4,6 +4,7 @@ import '../models/fdroid_app.dart';
 import '../models/repository.dart';
 import '../services/fdroid_service.dart';
 import '../services/installation_service.dart';
+import '../services/package_info_service.dart';
 
 // Repository management
 final repositoriesProvider = StateNotifierProvider<RepositoryNotifier, List<Repository>>((ref) {
@@ -52,23 +53,41 @@ final appsProvider = FutureProvider<List<FDroidApp>>((ref) async {
 
 // Installation service provider
 final installationServiceProvider = Provider<InstallationService>((ref) {
-  final fdroidService = ref.watch(fdroidServiceProvider);
-  return InstallationService(fdroidService);
+  return InstallationService();
 });
 
-// Installed apps provider (real implementation)
+// Installed apps provider
 final installedAppsProvider = FutureProvider<List<FDroidApp>>((ref) async {
   final allApps = await ref.watch(appsProvider.future);
-  final service = ref.watch(fdroidServiceProvider);
-  return service.getInstalledApps(allApps);
+  final installedPackageNames = await PackageInfoService.getInstalledPackageNames();
+  
+  return allApps.where((app) => installedPackageNames.contains(app.packageName)).toList();
 });
 
-// Available updates provider (real implementation)
+// Available updates provider
 final availableUpdatesProvider = FutureProvider<List<FDroidApp>>((ref) async {
+  final installed = await ref.watch(installedAppsProvider.future);
   final allApps = await ref.watch(appsProvider.future);
-  final service = ref.watch(fdroidServiceProvider);
-  return service.getUpdatableApps(allApps);
+  
+  final updates = <FDroidApp>[];
+  
+  for (final installedApp in installed) {
+    final currentVersion = await PackageInfoService.getAppVersion(installedApp.packageName);
+    if (currentVersion != null) {
+      final latestApp = allApps.firstWhere(
+        (app) => app.packageName == installedApp.packageName,
+        orElse: () => installedApp,
+      );
+      
+      if (latestApp.version != currentVersion) {
+        updates.add(latestApp);
+      }
+    }
+  }
+  
+  return updates;
 });
+
 
 // Download progress provider
 final downloadProgressProvider = StateProvider<Map<String, double>>((ref) => {});

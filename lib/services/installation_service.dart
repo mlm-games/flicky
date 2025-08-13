@@ -5,19 +5,15 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:dio/dio.dart';
 import '../models/fdroid_app.dart';
-import 'fdroid_service.dart';
+import 'package_info_service.dart';
 
 class InstallationService {
   static const platform = MethodChannel('com.flicky/install');
   
-  final FDroidService _fdroidService;
   final Dio _dio = Dio();
-  
-  InstallationService(this._fdroidService);
   
   Future<bool> requestInstallPermission() async {
     if (Platform.isAndroid) {
-      // Request install permission
       final status = await Permission.requestInstallPackages.request();
       return status.isGranted;
     }
@@ -40,7 +36,7 @@ class InstallationService {
       await _installApkFile(apkPath);
       
       // Mark as installed
-      await _fdroidService.markAsInstalled(app);
+      await PackageInfoService.markAsInstalled(app.packageName, app.version);
       
     } catch (e) {
       throw Exception('Installation failed: $e');
@@ -66,67 +62,30 @@ class InstallationService {
   
   Future<void> _installApkFile(String apkPath) async {
     if (Platform.isAndroid) {
-      // Use OpenFilex to install APK
       final result = await OpenFilex.open(
         apkPath,
         type: 'application/vnd.android.package-archive',
       );
       
       if (result.type != ResultType.done) {
-        // Fallback to native installation
-        try {
-          await platform.invokeMethod('installApk', {'path': apkPath});
-        } catch (e) {
-          throw Exception('Failed to install APK: $e');
-        }
+        throw Exception('Failed to install APK: ${result.message}');
       }
     }
   }
   
   Future<void> uninstallApp(String packageName) async {
-    if (Platform.isAndroid) {
-      try {
-        await platform.invokeMethod('uninstallApp', {'packageName': packageName});
-        await _fdroidService.markAsUninstalled(packageName);
-      } catch (e) {
-        throw Exception('Failed to uninstall app: $e');
-      }
-    }
+    await PackageInfoService.uninstallApp(packageName);
   }
   
   Future<void> launchApp(String packageName) async {
-    if (Platform.isAndroid) {
-      try {
-        await platform.invokeMethod('launchApp', {'packageName': packageName});
-      } catch (e) {
-        throw Exception('Failed to launch app: $e');
-      }
-    }
+    await PackageInfoService.openApp(packageName);
   }
   
   Future<bool> isAppInstalled(String packageName) async {
-    if (Platform.isAndroid) {
-      try {
-        final result = await platform.invokeMethod('isInstalled', {'packageName': packageName});
-        return result as bool;
-      } catch (e) {
-        // Fallback to checking our local database
-        return await _fdroidService.isInstalled(packageName);
-      }
-    }
-    return false;
+    return await PackageInfoService.isAppInstalled(packageName);
   }
   
   Future<void> updateApp(FDroidApp app, Function(double) onProgress) async {
-    // Same as install for updates
     await installApp(app, onProgress);
-  }
-  
-  Future<void> updateAllApps(List<FDroidApp> apps, Function(int, double) onProgress) async {
-    for (int i = 0; i < apps.length; i++) {
-      await updateApp(apps[i], (progress) {
-        onProgress(i, progress);
-      });
-    }
   }
 }

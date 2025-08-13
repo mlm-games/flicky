@@ -6,11 +6,15 @@ import 'theme/app_theme.dart';
 import 'providers/app_providers.dart';
 import 'screens/main_screen.dart';
 import 'services/cache_service.dart';
+import 'services/repository_service.dart';
+import 'services/package_info_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await CacheService.init();
+  await RepositoryService.init();
+  await PackageInfoService.init();
   
   // Set TV orientation
   SystemChrome.setPreferredOrientations([

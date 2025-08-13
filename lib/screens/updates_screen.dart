@@ -4,185 +4,205 @@ import '../providers/app_providers.dart';
 import '../models/fdroid_app.dart';
 import '../theme/app_theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../services/package_info_service.dart';
+import '../services/fdroid_service.dart';
 
 class UpdatesScreen extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
+    @override
+    Widget build(BuildContext context, WidgetRef ref) {
     final installedAppsAsync = ref.watch(installedAppsProvider);
     final availableUpdatesAsync = ref.watch(availableUpdatesProvider);
-    
+
     return Scaffold(
-      body: CustomScrollView(
+        body: CustomScrollView(
         slivers: [
-          // Header
-          SliverToBoxAdapter(
+            // Header
+            SliverToBoxAdapter(
             child: Container(
-              padding: EdgeInsets.all(20),
-              child: Column(
+                padding: EdgeInsets.all(20),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                    Text(
                     'Updates',
                     style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
                     ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
+                    ),
+                    SizedBox(height: 8),
+                    Text(
                     'Keep your apps up to date',
                     style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 16,
+                        color: Colors.grey,
+                        fontSize: 16,
                     ),
-                  ),
+                    ),
                 ],
-              ),
+                ),
             ),
-          ),
-          
-          // Updates section
-          availableUpdatesAsync.when(
+            ),
+            
+            // Handle async updates
+            availableUpdatesAsync.when(
             data: (availableUpdates) {
-              if (availableUpdates.isNotEmpty) {
-                return SliverList(
-                  delegate: SliverChildListDelegate([
-                    // Update all button
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: Implement update all
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryGreen,
-                          padding: EdgeInsets.all(16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.update, color: Colors.white),
-                            SizedBox(width: 8),
-                            Text(
-                              'Update All (${availableUpdates.length} apps)',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                if (availableUpdates.isNotEmpty) {
+                return SliverToBoxAdapter(
+                    child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                        Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: ElevatedButton(
+                            onPressed: () => _updateAll(context, ref, availableUpdates),
+                            style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryGreen,
+                            padding: EdgeInsets.all(16),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                             ),
-                          ],
+                            ),
+                            child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                                Icon(Icons.update, color: Colors.white),
+                                SizedBox(width: 8),
+                                Text(
+                                'Update All (${availableUpdates.length} apps)',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                ),
+                                ),
+                            ],
+                            ),
                         ),
-                      ),
-                    ),
-                    
-                    // Available updates header
-                    Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Text(
-                        'Available Updates',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
                         ),
-                      ),
+                        Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Text(
+                            'Available Updates',
+                            style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            ),
+                        ),
+                        ),
+                        ...availableUpdates.map((app) => _UpdateCard(app: app)).toList(),
+                    ],
                     ),
-                    
-                    // Update cards
-                    ...availableUpdates.map((app) => _UpdateCard(app: app)),
-                  ]),
                 );
-              }
-              return SliverToBoxAdapter(child: SizedBox.shrink());
+                }
+                return SliverToBoxAdapter(child: SizedBox.shrink());
             },
             loading: () => SliverToBoxAdapter(
-              child: Center(child: CircularProgressIndicator()),
+                child: Center(child: CircularProgressIndicator()),
             ),
-            error: (error, stack) => SliverToBoxAdapter(
-              child: Center(child: Text('Error loading updates')),
+            error: (_, __) => SliverToBoxAdapter(child: SizedBox.shrink()),
             ),
-          ),
-          
-          // Installed apps header
-          SliverToBoxAdapter(
+            
+            // Installed apps section
+            SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.all(20),
-              child: Text(
+                padding: EdgeInsets.all(20),
+                child: Text(
                 'Installed Apps',
                 style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                 ),
-              ),
+                ),
             ),
-          ),
-          
-          // Installed apps section
-          installedAppsAsync.when(
+            ),
+            
+            installedAppsAsync.when(
             data: (installedApps) {
-              if (installedApps.isEmpty) {
+                if (installedApps.isEmpty) {
                 return SliverToBoxAdapter(
-                  child: Center(
+                    child: Center(
                     child: Container(
-                      padding: EdgeInsets.all(40),
-                      child: Column(
+                        padding: EdgeInsets.all(40),
+                        child: Column(
                         children: [
-                          Icon(
+                            Icon(
                             Icons.apps_outlined,
                             size: 64,
                             color: Colors.grey,
-                          ),
-                          SizedBox(height: 16),
-                          Text(
+                            ),
+                            SizedBox(height: 16),
+                            Text(
                             'No installed apps',
                             style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey,
+                                fontSize: 18,
+                                color: Colors.grey,
                             ),
-                          ),
-                          Text(
+                            ),
+                            Text(
                             'Apps you install from Flicky will appear here',
                             style: TextStyle(
-                              color: Colors.grey,
+                                color: Colors.grey,
                             ),
-                          ),
+                            ),
                         ],
-                      ),
+                        ),
                     ),
-                  ),
+                    ),
                 );
-              }
-              
-              return SliverList(
+                }
+                return SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => _InstalledAppCard(app: installedApps[index]),
-                  childCount: installedApps.length,
+                    (context, index) => _InstalledAppCard(app: installedApps[index]),
+                    childCount: installedApps.length,
                 ),
-              );
+                );
             },
             loading: () => SliverToBoxAdapter(
-              child: Center(child: CircularProgressIndicator()),
+                child: Center(child: CircularProgressIndicator()),
             ),
-            error: (error, stack) => SliverToBoxAdapter(
-              child: Center(child: Text('Error loading installed apps')),
+            error: (_, __) => SliverToBoxAdapter(
+                child: Center(child: Text('Error loading installed apps')),
             ),
-          ),
+            ),
         ],
-      ),
+        ),
     );
-  }
+    }
+
+    Future<void> _updateAll(BuildContext context, WidgetRef ref, List<FDroidApp> apps) async {
+    for (final app in apps) {
+        try {
+        await ref.read(fdroidServiceProvider).downloadAndInstall(app);
+        } catch (e) {
+        if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to update ${app.name}')),
+            );
+        }
+        }
+    }
+    
+    // Refresh the lists
+    ref.invalidate(installedAppsProvider);
+    ref.invalidate(availableUpdatesProvider);
+    
+    if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('All apps updated successfully')),
+        );
+    }
+    }
 }
 
-class _UpdateCard extends StatelessWidget {
+
+
+class _UpdateCard extends ConsumerWidget {
   final FDroidApp app;
   
   const _UpdateCard({required this.app});
   
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Padding(
@@ -195,8 +215,14 @@ class _UpdateCard extends StatelessWidget {
                 imageUrl: app.iconUrl,
                 width: 60,
                 height: 60,
-                placeholder: (context, url) => Icon(Icons.android, size: 60),
-                errorWidget: (context, url, error) => Icon(Icons.android, size: 60),
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[300],
+                  child: Icon(Icons.android, size: 30),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[300],
+                  child: Icon(Icons.android, size: 30),
+                ),
               ),
             ),
             SizedBox(width: 16),
@@ -213,7 +239,7 @@ class _UpdateCard extends StatelessWidget {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'New version: v${app.version}',
+                    'New version: ${app.version}',
                     style: TextStyle(
                       color: Colors.grey,
                       fontSize: 14,
@@ -231,8 +257,24 @@ class _UpdateCard extends StatelessWidget {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
-                // TODO: Implement update
+              onPressed: () async {
+                try {
+                  await ref.read(fdroidServiceProvider).downloadAndInstall(app);
+                  ref.invalidate(installedAppsProvider);
+                  ref.invalidate(availableUpdatesProvider);
+                  
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${app.name} updated successfully')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Update failed: $e')),
+                    );
+                  }
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryGreen,
@@ -255,13 +297,13 @@ class _UpdateCard extends StatelessWidget {
   }
 }
 
-class _InstalledAppCard extends StatelessWidget {
+class _InstalledAppCard extends ConsumerWidget {
   final FDroidApp app;
   
   const _InstalledAppCard({required this.app});
   
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Padding(
@@ -274,8 +316,14 @@ class _InstalledAppCard extends StatelessWidget {
                 imageUrl: app.iconUrl,
                 width: 48,
                 height: 48,
-                placeholder: (context, url) => Icon(Icons.android, size: 48),
-                errorWidget: (context, url, error) => Icon(Icons.android, size: 48),
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[300],
+                  child: Icon(Icons.android, size: 24),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[300],
+                  child: Icon(Icons.android, size: 24),
+                ),
               ),
             ),
             SizedBox(width: 16),
@@ -301,14 +349,24 @@ class _InstalledAppCard extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () {
-                // TODO: Open app
+              onPressed: () async {
+                await PackageInfoService.openApp(app.packageName);
               },
               child: Text('Open'),
             ),
             TextButton(
-              onPressed: () {
-                // TODO: Uninstall app
+              onPressed: () async {
+                final result = await PackageInfoService.uninstallApp(app.packageName);
+                if (result) {
+                  ref.invalidate(installedAppsProvider);
+                  ref.invalidate(availableUpdatesProvider);
+                  
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${app.name} uninstalled')),
+                    );
+                  }
+                }
               },
               child: Text(
                 'Uninstall',

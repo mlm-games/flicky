@@ -46,10 +46,13 @@ dependencies:
   animations: ^2.0.8
   path_provider: ^2.1.1
   url_launcher: ^6.1.14
-  package_info_plus: ^4.2.0
+  package_info_plus: ^8.3.1
   permission_handler: ^11.0.1
   open_filex: ^4.3.4
   focusable_control_builder: ^1.0.0
+  speech_to_text: ^7.3.0
+  installed_apps: ^1.6.0
+  device_info_plus: ^11.5.0
 
 dev_dependencies:
   flutter_test:
