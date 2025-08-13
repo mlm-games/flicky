@@ -5,10 +5,14 @@ import '../models/repository.dart';
 import '../services/fdroid_service.dart';
 import '../services/installation_service.dart';
 import '../services/package_info_service.dart';
+import '../services/repository_sync_service.dart';
 
-// Repository management
 final repositoriesProvider = StateNotifierProvider<RepositoryNotifier, List<Repository>>((ref) {
   return RepositoryNotifier();
+});
+
+final repositorySyncServiceProvider = Provider<RepositorySyncService>((ref) {
+  return RepositorySyncService(ref);
 });
 
 class RepositoryNotifier extends StateNotifier<List<Repository>> {
@@ -44,19 +48,39 @@ class RepositoryNotifier extends StateNotifier<List<Repository>> {
   }
 }
 
-// Apps provider with multiple repositories
 final appsProvider = FutureProvider<List<FDroidApp>>((ref) async {
-  final repos = ref.watch(repositoriesProvider);
-  final service = ref.watch(fdroidServiceProvider);
-  return service.fetchAppsFromMultipleRepos(repos);
+  final syncService = ref.watch(repositorySyncServiceProvider);
+  
+  final cached = await syncService.getCachedApps();
+  if (cached.isNotEmpty) {
+    print('Loading ${cached.length} cached apps');
+    
+    if (await syncService.shouldSync()) {
+      syncService.syncAllRepositories().then((freshApps) {
+        if (freshApps.isNotEmpty) {
+          ref.invalidateSelf();
+        }
+      });
+    }
+    
+    return cached;
+  }
+  
+  // No cache, do full sync
+  return await syncService.syncAllRepositories(force: true);
 });
 
-// Installation service provider
+
 final installationServiceProvider = Provider<InstallationService>((ref) {
   return InstallationService();
 });
 
-// Installed apps provider
+final refreshAppsProvider = FutureProvider.autoDispose<void>((ref) async {
+  final syncService = ref.watch(repositorySyncServiceProvider);
+  await syncService.syncAllRepositories(force: true);
+  ref.invalidate(appsProvider);
+});
+
 final installedAppsProvider = FutureProvider<List<FDroidApp>>((ref) async {
   final allApps = await ref.watch(appsProvider.future);
   final installedPackageNames = await PackageInfoService.getInstalledPackageNames();
@@ -64,7 +88,6 @@ final installedAppsProvider = FutureProvider<List<FDroidApp>>((ref) async {
   return allApps.where((app) => installedPackageNames.contains(app.packageName)).toList();
 });
 
-// Available updates provider
 final availableUpdatesProvider = FutureProvider<List<FDroidApp>>((ref) async {
   final installed = await ref.watch(installedAppsProvider.future);
   final allApps = await ref.watch(appsProvider.future);
@@ -89,13 +112,10 @@ final availableUpdatesProvider = FutureProvider<List<FDroidApp>>((ref) async {
 });
 
 
-// Download progress provider
 final downloadProgressProvider = StateProvider<Map<String, double>>((ref) => {});
 
-// Search provider
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
-// Filtered apps provider
 final filteredAppsProvider = Provider<AsyncValue<List<FDroidApp>>>((ref) {
   final query = ref.watch(searchQueryProvider).toLowerCase();
   final apps = ref.watch(appsProvider);
@@ -111,10 +131,8 @@ final filteredAppsProvider = Provider<AsyncValue<List<FDroidApp>>>((ref) {
   });
 });
 
-// Theme provider
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
 
-// Categories provider
 final categoriesProvider = Provider<List<String>>((ref) {
   final apps = ref.watch(appsProvider);
   
@@ -128,12 +146,10 @@ final categoriesProvider = Provider<List<String>>((ref) {
   );
 });
 
-// Sort options
 enum SortOption { name, updated, size, added }
 
 final sortOptionProvider = StateProvider<SortOption>((ref) => SortOption.updated);
 
-// Sorted apps provider
 final sortedAppsProvider = Provider<AsyncValue<List<FDroidApp>>>((ref) {
   final apps = ref.watch(filteredAppsProvider);
   final sortOption = ref.watch(sortOptionProvider);

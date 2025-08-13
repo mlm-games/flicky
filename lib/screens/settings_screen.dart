@@ -1,27 +1,115 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/app_providers.dart';
 import '../theme/app_theme.dart';
+import '../services/repository_sync_service.dart';
+import '../models/repository.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  _SettingsScreenState createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  bool _isSyncing = false;
+
+  Future<void> _syncRepositories() async {
+    setState(() => _isSyncing = true);
+    
+    try {
+      await ref.read(repositorySyncServiceProvider).syncAllRepositories(force: true);
+      ref.invalidate(appsProvider);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Repositories synced successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sync failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSyncing = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
+    final syncService = ref.watch(repositorySyncServiceProvider);
     
     return Scaffold(
       body: ListView(
         padding: EdgeInsets.all(20),
         children: [
-          Text(
-            'Settings',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Text(
+                'Settings',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Spacer(),
+              // Sync button
+              ElevatedButton.icon(
+                onPressed: _isSyncing ? null : _syncRepositories,
+                icon: _isSyncing 
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(Icons.sync),
+                label: Text(_isSyncing ? 'Syncing...' : 'Sync Now'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryGreen,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          FutureBuilder<DateTime?>(
+            future: syncService.getLastSyncTime(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data != null) {
+                final lastSync = snapshot.data!;
+                final diff = DateTime.now().difference(lastSync);
+                String timeAgo;
+                if (diff.inMinutes < 1) {
+                  timeAgo = 'Just now';
+                } else if (diff.inHours < 1) {
+                  timeAgo = '${diff.inMinutes} minutes ago';
+                } else if (diff.inDays < 1) {
+                  timeAgo = '${diff.inHours} hours ago';
+                } else {
+                  timeAgo = '${diff.inDays} days ago';
+                }
+                return Text(
+                  'Last synced: $timeAgo',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                );
+              }
+              return Text(
+                'Never synced',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              );
+            },
           ),
           SizedBox(height: 20),
           
-          // Appearance section
           _SettingsSection(
             title: 'Appearance',
             children: [
@@ -34,33 +122,20 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           
-          // Repository section
           _SettingsSection(
             title: 'Repositories',
             children: [
-              _RepositoryTile(
-                name: 'F-Droid',
-                url: 'https://f-droid.org/repo',
-                isEnabled: true,
-                onToggle: (value) {},
-              ),
-              _RepositoryTile(
-                name: 'F-Droid Archive',
-                url: 'https://f-droid.org/archive',
-                isEnabled: false,
-                onToggle: (value) {},
-              ),
-              _RepositoryTile(
-                name: 'IzzyOnDroid',
-                url: 'https://android.izzysoft.de/repo',
-                isEnabled: true,
-                onToggle: (value) {},
+              ...ref.watch(repositoriesProvider).map((repo) => 
+                _TVFriendlyRepositoryTile(
+                  repository: repo,
+                  onToggle: (enabled) {
+                    ref.read(repositoriesProvider.notifier).toggleRepository(repo.url);
+                  },
+                ),
               ),
               SizedBox(height: 12),
               OutlinedButton.icon(
-                onPressed: () {
-                  _showAddRepositoryDialog(context);
-                },
+                onPressed: () => _showAddRepositoryDialog(context),
                 icon: Icon(Icons.add),
                 label: Text('Add Repository'),
                 style: OutlinedButton.styleFrom(
@@ -73,19 +148,18 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           
-          // Download section
           _SettingsSection(
             title: 'Downloads',
             children: [
-              SwitchListTile(
-                title: Text('Auto-update apps'),
-                subtitle: Text('Automatically download and install updates'),
+              _TVFriendlySwitch(
+                title: 'Auto-update apps',
+                subtitle: 'Automatically download and install updates',
                 value: false,
                 onChanged: (value) {},
               ),
-              SwitchListTile(
-                title: Text('Update over Wi-Fi only'),
-                subtitle: Text('Only download updates when connected to Wi-Fi'),
+              _TVFriendlySwitch(
+                title: 'Update over Wi-Fi only',
+                subtitle: 'Only download updates when connected to Wi-Fi',
                 value: true,
                 onChanged: (value) {},
               ),
@@ -112,25 +186,39 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   child: Icon(Icons.shop_2, color: Colors.white),
                 ),
-                title: Text('Flicky'),
-                subtitle: Text('Version 1.0.0'),
+                title: Text('Flicky-Droid/Store'),
+                subtitle: Text('Aptoide TV for Fdroid Repos'),
               ),
               ListTile(
                 leading: Icon(Icons.code),
                 title: Text('Source Code'),
                 subtitle: Text('View on GitHub'),
-                onTap: () {},
+                onTap: () async {
+                    const url = 'https://github.com/mlm-games/flicky';
+                    if (await canLaunch(url)) {
+                    await launch(url);
+                    } else {
+                    throw 'Could not launch $url';
+                    }
+                },
               ),
               ListTile(
                 leading: Icon(Icons.bug_report),
-                title: Text('Report an Issue'),
+                title: Text('Report an Issue (Maybe not from the TV..)'),
                 onTap: () {},
               ),
               ListTile(
                 leading: Icon(Icons.favorite),
                 title: Text('Donate'),
-                subtitle: Text('Support development'),
-                onTap: () {},
+                subtitle: Text('Support me! (if you like the app)'),
+                onTap: () async {
+                    const url = 'https://github.com/mlm-games/flicky';
+                    if (await canLaunch(url)) {
+                    await launch(url);
+                    } else {
+                    throw 'Could not launch $url';
+                    }
+                },
               ),
             ],
           ),
@@ -138,8 +226,11 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
   }
-  
+
   void _showAddRepositoryDialog(BuildContext context) {
+    final urlController = TextEditingController();
+    final nameController = TextEditingController();
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -148,14 +239,17 @@ class SettingsScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
+              controller: urlController,
               decoration: InputDecoration(
                 labelText: 'Repository URL',
                 hintText: 'https://example.com/fdroid/repo',
                 border: OutlineInputBorder(),
               ),
+              autofocus: true,
             ),
             SizedBox(height: 16),
             TextField(
+              controller: nameController,
               decoration: InputDecoration(
                 labelText: 'Repository Name (optional)',
                 border: OutlineInputBorder(),
@@ -170,8 +264,22 @@ class SettingsScreen extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              // TODO: Add repository
-              Navigator.pop(context);
+              if (urlController.text.isNotEmpty) {
+                final name = nameController.text.isEmpty 
+                    ? Uri.parse(urlController.text).host 
+                    : nameController.text;
+                ref.read(repositoriesProvider.notifier).addRepository(
+                  Repository(
+                    name: name,
+                    url: urlController.text,
+                    description: 'Custom repository',
+                    enabled: true,
+                    lastUpdated: DateTime.now(),
+                    publicKey: '',
+                  ),
+                );
+                Navigator.pop(context);
+              }
             },
             child: Text('Add'),
           ),
@@ -180,6 +288,101 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 }
+
+// TV-friendly switch widget
+class _TVFriendlySwitch extends StatefulWidget {
+  final String title;
+  final String subtitle;
+  final bool value;
+  final Function(bool) onChanged;
+  
+  const _TVFriendlySwitch({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+  
+  @override
+  _TVFriendlySwitchState createState() => _TVFriendlySwitchState();
+}
+
+class _TVFriendlySwitchState extends State<_TVFriendlySwitch> {
+  late FocusNode _focusNode;
+  bool _isFocused = false;
+  bool _value = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.value;
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+  }
+  
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+  
+  void _toggle() {
+    setState(() {
+      _value = !_value;
+    });
+    widget.onChanged(_value);
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      focusNode: _focusNode,
+      onTap: _toggle,
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _isFocused ? Colors.grey.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: _isFocused ? AppTheme.primaryGreen : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(widget.title, style: TextStyle(fontSize: 16)),
+                  if (widget.subtitle.isNotEmpty)
+                    Text(
+                      widget.subtitle,
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                ],
+              ),
+            ),
+            Switch(
+              value: _value,
+              onChanged: (value) {
+                setState(() => _value = value);
+                widget.onChanged(value);
+              },
+              activeColor: AppTheme.primaryGreen,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
 class _SettingsSection extends StatelessWidget {
   final String title;
@@ -323,27 +526,92 @@ class _ThemeOption extends StatelessWidget {
   }
 }
 
-class _RepositoryTile extends StatelessWidget {
-  final String name;
-  final String url;
-  final bool isEnabled;
+class _TVFriendlyRepositoryTile extends StatefulWidget {
+  final Repository repository;
   final Function(bool) onToggle;
   
-  const _RepositoryTile({
-    required this.name,
-    required this.url,
-    required this.isEnabled,
+  const _TVFriendlyRepositoryTile({
+    required this.repository,
     required this.onToggle,
   });
   
   @override
+  _TVFriendlyRepositoryTileState createState() => _TVFriendlyRepositoryTileState();
+}
+
+class _TVFriendlyRepositoryTileState extends State<_TVFriendlyRepositoryTile> {
+  late FocusNode _focusNode;
+  bool _isFocused = false;
+  bool _isEnabled = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _isEnabled = widget.repository.enabled;
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+  }
+  
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+  
+  void _toggle() {
+    setState(() {
+      _isEnabled = !_isEnabled;
+    });
+    widget.onToggle(_isEnabled);
+  }
+  
+  @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      title: Text(name),
-      subtitle: Text(url),
-      value: isEnabled,
-      onChanged: onToggle,
-      secondary: Icon(Icons.storage),
+    return InkWell(
+      focusNode: _focusNode,
+      onTap: _toggle,
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _isFocused ? Colors.grey.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: _isFocused ? AppTheme.primaryGreen : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.storage),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(widget.repository.name, style: TextStyle(fontSize: 16)),
+                  Text(
+                    widget.repository.url,
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            Switch(
+              value: _isEnabled,
+              onChanged: (value) {
+                setState(() => _isEnabled = value);
+                widget.onToggle(value);
+              },
+              activeColor: AppTheme.primaryGreen,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

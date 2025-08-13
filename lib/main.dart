@@ -8,6 +8,8 @@ import 'screens/main_screen.dart';
 import 'services/cache_service.dart';
 import 'services/repository_service.dart';
 import 'services/package_info_service.dart';
+import 'services/repository_sync_service.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +17,7 @@ void main() async {
   await CacheService.init();
   await RepositoryService.init();
   await PackageInfoService.init();
+  await RepositorySyncService.init();
   
   // Set TV orientation
   SystemChrome.setPreferredOrientations([
