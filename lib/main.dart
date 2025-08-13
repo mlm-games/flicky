@@ -6,25 +6,22 @@ import 'theme/app_theme.dart';
 import 'providers/app_providers.dart';
 import 'screens/main_screen.dart';
 import 'services/cache_service.dart';
-import 'services/repository_service.dart';
 import 'services/package_info_service.dart';
 import 'services/repository_sync_service.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await CacheService.init();
-  await RepositoryService.init();
   await PackageInfoService.init();
   await RepositorySyncService.init();
-  
+
   // Set TV orientation
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
-  
+
   runApp(ProviderScope(child: FDroidTV()));
 }
 
@@ -32,9 +29,10 @@ class FDroidTV extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
-    
+
     return Shortcuts(
-      shortcuts: <LogicalKeySet, Intent>{  //TODO: Need the ok button shortcut
+      shortcuts: <LogicalKeySet, Intent>{
+        //TODO?: Need the ok button shortcut
         LogicalKeySet(LogicalKeyboardKey.select): ActivateIntent(),
         LogicalKeySet(LogicalKeyboardKey.enter): ActivateIntent(),
         LogicalKeySet(LogicalKeyboardKey.space): ActivateIntent(),
@@ -46,9 +44,7 @@ class FDroidTV extends ConsumerWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: themeMode,
-        home: DefaultTextEditingShortcuts(
-          child: MainScreen(),
-        ),
+        home: DefaultTextEditingShortcuts(child: MainScreen()),
       ),
     );
   }
