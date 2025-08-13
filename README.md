@@ -1,6 +1,6 @@
 # Flicky - Android TV F-Droid Client
 
-![Banner](assets/tv_banner.png)
+![Banner](assets/banner.svg)
 
 ## Features
 - 📺 Optimized for Android TV
