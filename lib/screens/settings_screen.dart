@@ -472,7 +472,7 @@ class _ThemeSelector extends StatelessWidget {
   }
 }
 
-class _ThemeOption extends StatelessWidget {
+class _ThemeOption extends StatefulWidget {
   final String title;
   final IconData icon;
   final bool isSelected;
@@ -486,36 +486,77 @@ class _ThemeOption extends StatelessWidget {
   });
   
   @override
+  _ThemeOptionState createState() => _ThemeOptionState();
+}
+
+class _ThemeOptionState extends State<_ThemeOption> {
+  late FocusNode _focusNode;
+  bool _isFocused = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+  }
+  
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+  
+  @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
+      child: InkWell(
+        focusNode: _focusNode,
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 200),
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isSelected
+            color: widget.isSelected
                 ? AppTheme.primaryGreen.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
+                : _isFocused
+                    ? Colors.grey.withOpacity(0.2)
+                    : Colors.grey.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected
+              color: _isFocused
                   ? AppTheme.primaryGreen
-                  : Colors.grey.withOpacity(0.3),
-              width: 2,
+                  : widget.isSelected
+                      ? AppTheme.primaryGreen
+                      : Colors.grey.withOpacity(0.3),
+              width: _isFocused ? 3 : (widget.isSelected ? 2 : 1),
             ),
+            boxShadow: _isFocused
+                ? [
+                    BoxShadow(
+                      color: AppTheme.primaryGreen.withOpacity(0.3),
+                      blurRadius: 8,
+                      spreadRadius: 0,
+                    ),
+                  ]
+                : [],
           ),
           child: Column(
             children: [
               Icon(
-                icon,
-                color: isSelected ? AppTheme.primaryGreen : null,
+                widget.icon,
+                color: widget.isSelected || _isFocused ? AppTheme.primaryGreen : null,
               ),
               SizedBox(height: 8),
               Text(
-                title,
+                widget.title,
                 style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.bold : null,
-                  color: isSelected ? AppTheme.primaryGreen : null,
+                  fontWeight: widget.isSelected ? FontWeight.bold : null,
+                  color: widget.isSelected || _isFocused ? AppTheme.primaryGreen : null,
                 ),
               ),
             ],
