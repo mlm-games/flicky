@@ -249,6 +249,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 border: OutlineInputBorder(),
               ),
               autofocus: true,
+              textInputAction: TextInputAction.next,
+              onSubmitted: (_) {
+                FocusScope.of(context).nextFocus();
+              },
             ),
             SizedBox(height: 16),
             TextField(
@@ -257,6 +261,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 labelText: 'Repository Name (optional)',
                 border: OutlineInputBorder(),
               ),
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) {
+                if (urlController.text.isNotEmpty) {
+                  final name = nameController.text.isEmpty
+                      ? Uri.parse(urlController.text).host
+                      : nameController.text;
+                  ref
+                      .read(repositoriesProvider.notifier)
+                      .addRepository(
+                        Repository(
+                          name: name,
+                          url: urlController.text,
+                          description: 'Custom repository',
+                          enabled: true,
+                          lastUpdated: DateTime.now(),
+                          publicKey: '',
+                        ),
+                      );
+                  Navigator.pop(context);
+                }
+              },
             ),
           ],
         ),
@@ -286,6 +311,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Navigator.pop(context);
               }
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryGreen,
+              foregroundColor: Colors.white,
+            ),
             child: Text('Add'),
           ),
         ],
