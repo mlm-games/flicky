@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/fdroid_app.dart';
 import '../theme/app_theme.dart';
@@ -9,7 +8,7 @@ class AppCard extends StatefulWidget {
   final FDroidApp app;
   final bool autofocus;
 
-  const AppCard({required this.app, this.autofocus = false});
+  const AppCard({super.key, required this.app, this.autofocus = false});
 
   @override
   _AppCardState createState() => _AppCardState();

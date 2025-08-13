@@ -6,201 +6,194 @@ import '../theme/app_theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/package_info_service.dart';
 import '../services/fdroid_service.dart';
+import '../utils/formatters.dart';
 
 class UpdatesScreen extends ConsumerWidget {
-    @override
-    Widget build(BuildContext context, WidgetRef ref) {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final installedAppsAsync = ref.watch(installedAppsProvider);
     final availableUpdatesAsync = ref.watch(availableUpdatesProvider);
 
     return Scaffold(
-        body: CustomScrollView(
+      body: CustomScrollView(
         slivers: [
-            // Header
-            SliverToBoxAdapter(
+          // Header
+          SliverToBoxAdapter(
             child: Container(
-                padding: EdgeInsets.all(20),
-                child: Column(
+              padding: EdgeInsets.all(20),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                    Text(
+                  Text(
                     'Updates',
-                    style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                    ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
                     'Keep your apps up to date',
-                    style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 16,
-                    ),
-                    ),
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                  ),
                 ],
-                ),
+              ),
             ),
-            ),
-            
-            // Handle async updates
-            availableUpdatesAsync.when(
+          ),
+
+          // Handle async updates
+          availableUpdatesAsync.when(
             data: (availableUpdates) {
-                if (availableUpdates.isNotEmpty) {
+              if (availableUpdates.isNotEmpty) {
                 return SliverToBoxAdapter(
-                    child: Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                        Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(horizontal: 20),
                         child: ElevatedButton(
-                            onPressed: () => _updateAll(context, ref, availableUpdates),
-                            style: ElevatedButton.styleFrom(
+                          onPressed: () =>
+                              _updateAll(context, ref, availableUpdates),
+                          style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryGreen,
                             padding: EdgeInsets.all(16),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            ),
-                            child: Row(
+                          ),
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                                Icon(Icons.update, color: Colors.white),
-                                SizedBox(width: 8),
-                                Text(
+                              Icon(Icons.update, color: Colors.white),
+                              SizedBox(width: 8),
+                              Text(
                                 'Update All (${availableUpdates.length} apps)',
                                 style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                ),
+                              ),
                             ],
-                            ),
+                          ),
                         ),
-                        ),
-                        Padding(
+                      ),
+                      Padding(
                         padding: EdgeInsets.all(20),
                         child: Text(
-                            'Available Updates',
-                            style: TextStyle(
+                          'Available Updates',
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            ),
+                          ),
                         ),
-                        ),
-                        ...availableUpdates.map((app) => _UpdateCard(app: app)).toList(),
+                      ),
+                      ...availableUpdates
+                          .map((app) => _UpdateCard(app: app))
+                          .toList(),
                     ],
-                    ),
+                  ),
                 );
-                }
-                return SliverToBoxAdapter(child: SizedBox.shrink());
+              }
+              return SliverToBoxAdapter(child: SizedBox.shrink());
             },
             loading: () => SliverToBoxAdapter(
-                child: Center(child: CircularProgressIndicator()),
+              child: Center(child: CircularProgressIndicator()),
             ),
             error: (_, __) => SliverToBoxAdapter(child: SizedBox.shrink()),
-            ),
-            
-            // Installed apps section
-            SliverToBoxAdapter(
+          ),
+
+          // Installed apps section
+          SliverToBoxAdapter(
             child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Text(
+              padding: EdgeInsets.all(20),
+              child: Text(
                 'Installed Apps',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                ),
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
-            ),
-            
-            installedAppsAsync.when(
+          ),
+
+          installedAppsAsync.when(
             data: (installedApps) {
-                if (installedApps.isEmpty) {
+              if (installedApps.isEmpty) {
                 return SliverToBoxAdapter(
-                    child: Center(
+                  child: Center(
                     child: Container(
-                        padding: EdgeInsets.all(40),
-                        child: Column(
+                      padding: EdgeInsets.all(40),
+                      child: Column(
                         children: [
-                            Icon(
+                          Icon(
                             Icons.apps_outlined,
                             size: 64,
                             color: Colors.grey,
-                            ),
-                            SizedBox(height: 16),
-                            Text(
+                          ),
+                          SizedBox(height: 16),
+                          Text(
                             'No installed apps',
-                            style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.grey,
-                            ),
-                            ),
-                            Text(
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                          Text(
                             'Apps you install from Flicky will appear here',
-                            style: TextStyle(
-                                color: Colors.grey,
-                            ),
-                            ),
+                            style: TextStyle(color: Colors.grey),
+                          ),
                         ],
-                        ),
+                      ),
                     ),
-                    ),
+                  ),
                 );
-                }
-                return SliverList(
+              }
+              return SliverList(
                 delegate: SliverChildBuilderDelegate(
-                    (context, index) => _InstalledAppCard(app: installedApps[index]),
-                    childCount: installedApps.length,
+                  (context, index) =>
+                      _InstalledAppCard(app: installedApps[index]),
+                  childCount: installedApps.length,
                 ),
-                );
+              );
             },
             loading: () => SliverToBoxAdapter(
-                child: Center(child: CircularProgressIndicator()),
+              child: Center(child: CircularProgressIndicator()),
             ),
             error: (_, __) => SliverToBoxAdapter(
-                child: Center(child: Text('Error loading installed apps')),
+              child: Center(child: Text('Error loading installed apps')),
             ),
-            ),
+          ),
         ],
-        ),
+      ),
     );
+  }
+
+  Future<void> _updateAll(
+    BuildContext context,
+    WidgetRef ref,
+    List<FDroidApp> apps,
+  ) async {
+    for (final app in apps) {
+      try {
+        await ref.read(fdroidServiceProvider).downloadAndInstall(app);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to update ${app.name}')),
+          );
+        }
+      }
     }
 
-    Future<void> _updateAll(BuildContext context, WidgetRef ref, List<FDroidApp> apps) async {
-    for (final app in apps) {
-        try {
-        await ref.read(fdroidServiceProvider).downloadAndInstall(app);
-        } catch (e) {
-        if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to update ${app.name}')),
-            );
-        }
-        }
-    }
-    
     // Refresh the lists
     ref.invalidate(installedAppsProvider);
     ref.invalidate(availableUpdatesProvider);
-    
+
     if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('All apps updated successfully')),
-        );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('All apps updated successfully')));
     }
-    }
+  }
 }
-
-
 
 class _UpdateCard extends ConsumerWidget {
   final FDroidApp app;
-  
+
   const _UpdateCard({required this.app});
-  
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Card(
@@ -232,26 +225,17 @@ class _UpdateCard extends ConsumerWidget {
                 children: [
                   Text(
                     app.name,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 4),
                   Text(
                     'New version: ${app.version}',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Size: ${_formatSize(app.size)}',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                    ),
+                    'Size: ${Formatters.formatSize(app.size)}',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],
               ),
@@ -262,10 +246,12 @@ class _UpdateCard extends ConsumerWidget {
                   await ref.read(fdroidServiceProvider).downloadAndInstall(app);
                   ref.invalidate(installedAppsProvider);
                   ref.invalidate(availableUpdatesProvider);
-                  
+
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${app.name} updated successfully')),
+                      SnackBar(
+                        content: Text('${app.name} updated successfully'),
+                      ),
                     );
                   }
                 } catch (e) {
@@ -285,10 +271,10 @@ class _UpdateCard extends ConsumerWidget {
               child: Text(
                 'Update',
                 style: TextStyle(
-                      color: Colors.brown[700],
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: Colors.brown[700],
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -296,19 +282,13 @@ class _UpdateCard extends ConsumerWidget {
       ),
     );
   }
-  
-  String _formatSize(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-  }
 }
 
 class _InstalledAppCard extends ConsumerWidget {
   final FDroidApp app;
-  
+
   const _InstalledAppCard({required this.app});
-  
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Card(
@@ -340,17 +320,11 @@ class _InstalledAppCard extends ConsumerWidget {
                 children: [
                   Text(
                     app.name,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     'v${app.version}',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                 ],
               ),
@@ -363,11 +337,13 @@ class _InstalledAppCard extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () async {
-                final result = await PackageInfoService.uninstallApp(app.packageName);
+                final result = await PackageInfoService.uninstallApp(
+                  app.packageName,
+                );
                 if (result) {
                   ref.invalidate(installedAppsProvider);
                   ref.invalidate(availableUpdatesProvider);
-                  
+
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('${app.name} uninstalled')),
@@ -375,10 +351,7 @@ class _InstalledAppCard extends ConsumerWidget {
                   }
                 }
               },
-              child: Text(
-                'Uninstall',
-                style: TextStyle(color: Colors.red),
-              ),
+              child: Text('Uninstall', style: TextStyle(color: Colors.red)),
             ),
           ],
         ),

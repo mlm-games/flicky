@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/fdroid_app.dart';
 import '../providers/app_providers.dart';
 import '../theme/app_theme.dart';
+import '../utils/formatters.dart';
 
 class AppDetailScreen extends ConsumerStatefulWidget {
   final FDroidApp app;
@@ -149,7 +150,9 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
                             ),
                           ),
                           Chip(label: Text('v${widget.app.version}')),
-                          Chip(label: Text(_formatSize(widget.app.size))),
+                          Chip(
+                            label: Text(Formatters.formatSize(widget.app.size)),
+                          ),
                           Chip(
                             label: Text(widget.app.repository),
                             backgroundColor:
@@ -326,11 +329,11 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
             _InfoRow('Package', widget.app.packageName),
             _InfoRow('Version', 'v${widget.app.version}'),
             _InfoRow('Version Code', widget.app.versionCode.toString()),
-            _InfoRow('Size', _formatSize(widget.app.size)),
+            _InfoRow('Size', Formatters.formatSize(widget.app.size)),
             _InfoRow('License', widget.app.license),
             _InfoRow('Author', widget.app.author),
-            _InfoRow('Updated', _formatDate(widget.app.lastUpdated)),
-            _InfoRow('Added', _formatDate(widget.app.added)),
+            _InfoRow('Updated', Formatters.formatDate(widget.app.lastUpdated)),
+            _InfoRow('Added', Formatters.formatDate(widget.app.added)),
             _InfoRow('Repository', widget.app.repository),
             if (widget.app.website.isNotEmpty)
               _InfoRow('Website', widget.app.website),
@@ -340,16 +343,6 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
         ),
       ),
     );
-  }
-
-  String _formatSize(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
   }
 }
 

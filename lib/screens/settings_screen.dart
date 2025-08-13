@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/app_providers.dart';
 import '../theme/app_theme.dart';
 import '../services/repository_sync_service.dart';
 import '../models/repository.dart';
+import '../utils/formatters.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   @override
@@ -84,20 +84,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             future: syncService.getLastSyncTime(),
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data != null) {
-                final lastSync = snapshot.data!;
-                final diff = DateTime.now().difference(lastSync);
-                String timeAgo;
-                if (diff.inMinutes < 1) {
-                  timeAgo = 'Just now';
-                } else if (diff.inHours < 1) {
-                  timeAgo = '${diff.inMinutes} minutes ago';
-                } else if (diff.inDays < 1) {
-                  timeAgo = '${diff.inHours} hours ago';
-                } else {
-                  timeAgo = '${diff.inDays} days ago';
-                }
                 return Text(
-                  'Last synced: $timeAgo',
+                  'Last synced: ${Formatters.formatTimeAgo(snapshot.data!)}',
                   style: TextStyle(color: Colors.grey, fontSize: 12),
                 );
               }
