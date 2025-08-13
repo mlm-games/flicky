@@ -220,12 +220,22 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: _installApp,
-                  icon: Icon(Icons.download),
-                  label: Text('Install'),
+                  icon: Icon(Icons.download, color: Colors.brown[900]),
+                  label: Text(
+                    'Install',
+                    style: TextStyle(
+                      color: Colors.brown[900],
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.brown[900],
                     padding: EdgeInsets.all(16),
-                    textStyle: TextStyle(fontSize: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
