@@ -4,7 +4,7 @@
 
 ## Features
 - 📺 Optimized for Android TV
-- 🎮 Full remote control support
+- 🎮 Full remote control support (... as expected)
 - 🔍 Voice search (currently bugged for some TVs)
 - 📦 Multiple repository support (comes with izzyondroid enabled by default)
 
