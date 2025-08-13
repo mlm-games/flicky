@@ -8,7 +8,8 @@
     <application
         android:label="flicky"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:banner="@drawable/banner">
         <activity
             android:name=".MainActivity"
             android:exported="true"
