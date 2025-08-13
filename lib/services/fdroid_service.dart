@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:nativewrappers/_internal/vm/lib/developer.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
@@ -40,7 +39,7 @@ class FDroidService {
         return androidInfo.supportedAbis;
       }
     } catch (e) {
-      log('Error getting device ABIs: $e');
+      print('Error getting device ABIs: $e');
     }
     return ['arm64-v8a', 'armeabi-v7a', 'x86_64', 'x86'];
   }
@@ -102,12 +101,12 @@ class FDroidService {
 
     for (final repo in repos.where((r) => r.enabled)) {
       try {
-        log('Fetching apps from ${repo.name} at ${repo.url}');
+        print('Fetching apps from ${repo.name} at ${repo.url}');
         final apps = await fetchAppsFromRepo(repo);
-        log('Got ${apps.length} apps from ${repo.name}');
+        print('Got ${apps.length} apps from ${repo.name}');
         allApps.addAll(apps);
       } catch (e) {
-        log('Error fetching from ${repo.name}: $e');
+        print('Error fetching from ${repo.name}: $e');
       }
     }
 
@@ -129,7 +128,7 @@ class FDroidService {
 
       // Try index-v2 first
       try {
-        log('Trying index-v2 for ${repo.name}');
+        print('Trying index-v2 for ${repo.name}');
         final entryUrl = '$normalizedUrl/entry.json';
         final entryResponse = await _dio.get(entryUrl);
         final entryData = entryResponse.data;
@@ -137,27 +136,27 @@ class FDroidService {
         if (entryData['index'] != null) {
           final indexPath = entryData['index']['name'];
           final indexUrl = _buildResourceUrl(normalizedUrl, indexPath);
-          log('Fetching index from: $indexUrl');
+          print('Fetching index from: $indexUrl');
           final indexResponse = await _dio.get(indexUrl);
           return await _parseIndexV2(indexResponse.data, repo);
         }
       } catch (e) {
-        log('Index v2 not available for ${repo.name}, trying v1: $e');
+        print('Index v2 not available for ${repo.name}, trying v1: $e');
       }
 
       // Fallback to index-v1
       try {
         final indexUrl = '$normalizedUrl/index-v1.json';
-        log('Fetching index-v1 from: $indexUrl');
+        print('Fetching index-v1 from: $indexUrl');
         final response = await _dio.get(indexUrl);
         return _parseIndexV1(response.data, repo);
       } catch (e) {
-        log('Index v1 also failed for ${repo.name}: $e');
+        print('Index v1 also failed for ${repo.name}: $e');
       }
 
       return [];
     } catch (e) {
-      log('Error fetching from ${repo.name}: $e');
+      print('Error fetching from ${repo.name}: $e');
       return [];
     }
   }
@@ -236,11 +235,11 @@ class FDroidService {
             );
           }
         } catch (e) {
-          log('Error parsing app ${appData['packageName']}: $e');
+          print('Error parsing app ${appData['packageName']}: $e');
         }
       }
     } catch (e) {
-      log('Error in _parseIndexV1: $e');
+      print('Error in _parseIndexV1: $e');
     }
 
     return apps;
@@ -362,7 +361,7 @@ class FDroidService {
           try {
             name = _getLocalizedString(metadata['name']) ?? packageName;
           } catch (e) {
-            log('Error parsing name for $packageName: $e');
+            print('Error parsing name for $packageName: $e');
           }
 
           // Get localized summary and description
@@ -372,7 +371,7 @@ class FDroidService {
             summary = _getLocalizedString(metadata['summary']) ?? '';
             description = _getLocalizedString(metadata['description']) ?? '';
           } catch (e) {
-            log('Error parsing summary/description for $packageName: $e');
+            print('Error parsing summary/description for $packageName: $e');
           }
 
           // Parse categories correctly (can be List or Map)
@@ -395,7 +394,7 @@ class FDroidService {
               }
             }
           } catch (e) {
-            log('Error parsing category for $packageName: $e');
+            print('Error parsing category for $packageName: $e');
           }
 
           // Build icon URL
@@ -403,7 +402,7 @@ class FDroidService {
           try {
             iconUrl = _buildIconUrlV2(repo, metadata['icon'], packageName);
           } catch (e) {
-            log('Error building icon URL for $packageName: $e');
+            print('Error building icon URL for $packageName: $e');
           }
 
           // Get best APK for device
@@ -440,12 +439,12 @@ class FDroidService {
             ),
           );
         } catch (e, stack) {
-          log('Error parsing app ${entry.key}: $e');
-          log('Stack trace: $stack');
+          print('Error parsing app ${entry.key}: $e');
+          print('Stack trace: $stack');
         }
       }
     } catch (e) {
-      log('Error in _parseIndexV2: $e');
+      print('Error in _parseIndexV2: $e');
     }
 
     return apps;
@@ -525,7 +524,7 @@ class FDroidService {
     }
 
     // No compatible ABI
-    log(
+    print(
       'No compatible ABI for $apkName. Device: $deviceAbis, App: $nativecode',
     );
     return {'url': '', 'size': 0};
@@ -664,8 +663,8 @@ class FDroidService {
       final String fileName = '${app.packageName}_${app.version}.apk';
       final String savePath = path.join(tempDir.path, fileName);
 
-      log('Downloading APK from: ${app.apkUrl}');
-      log('Saving to: $savePath');
+      print('Downloading APK from: ${app.apkUrl}');
+      print('Saving to: $savePath');
 
       // Delete old file if exists
       final file = File(savePath);
@@ -688,7 +687,7 @@ class FDroidService {
           ),
         );
       } catch (e) {
-        log('Download error: $e');
+        print('Download error: $e');
         throw Exception('Failed to download APK: $e');
       }
 
@@ -702,7 +701,7 @@ class FDroidService {
         throw Exception('Downloaded file is empty');
       }
 
-      log('Download complete. File size: $fileSize bytes');
+      print('Download complete. File size: $fileSize bytes');
 
       // Install APK
       await ApkInstaller.installApk(savePath);
@@ -710,7 +709,7 @@ class FDroidService {
       // Mark as installed in our tracking
       await PackageInfoService.markAsInstalled(app.packageName, app.version);
     } catch (e) {
-      log('Installation error: $e');
+      print('Installation error: $e');
       throw Exception('Failed to install: $e');
     }
   }
