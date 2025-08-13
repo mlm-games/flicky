@@ -34,7 +34,7 @@ class FDroidTV extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     
     return Shortcuts(
-      shortcuts: <LogicalKeySet, Intent>{
+      shortcuts: <LogicalKeySet, Intent>{  //TODO: Need the ok button shortcut
         LogicalKeySet(LogicalKeyboardKey.select): ActivateIntent(),
         LogicalKeySet(LogicalKeyboardKey.enter): ActivateIntent(),
         LogicalKeySet(LogicalKeyboardKey.space): ActivateIntent(),

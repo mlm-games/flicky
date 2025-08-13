@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_providers.dart';
 import 'voice_search.dart';
 import 'tv_search_field.dart';
 
 class SearchBar extends ConsumerStatefulWidget {
+  const SearchBar({Key? key}) : super(key: key);
+  
   @override
-  _SearchBarState createState() => _SearchBarState();
+  ConsumerState<SearchBar> createState() => _SearchBarState();
 }
 
 class _SearchBarState extends ConsumerState<SearchBar> {
@@ -37,12 +38,12 @@ class _SearchBarState extends ConsumerState<SearchBar> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Sort & Filter'),
+        title: const Text('Sort & Filter'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Sort by:'),
-            SizedBox(height: 8),
+            const Text('Sort by:'),
+            const SizedBox(height: 8),
             ...SortOption.values.map((option) => RadioListTile<SortOption>(
               title: Text(_getSortOptionLabel(option)),
               value: option,
@@ -60,7 +61,7 @@ class _SearchBarState extends ConsumerState<SearchBar> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
+            child: const Text('Close'),
           ),
         ],
       ),
@@ -88,27 +89,31 @@ class _SearchBarState extends ConsumerState<SearchBar> {
           child: Stack(
             alignment: Alignment.centerRight,
             children: [
-              TVSearchField(),
+              const TVSearchField(),
               Positioned(
                 right: 48,
-                child: VoiceSearchButton(),
+                child: VoiceSearchButton(), 
               ),
             ],
           ),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         InkWell(
           focusNode: _filterFocusNode,
           onTap: _showFilterDialog,
           borderRadius: BorderRadius.circular(24),
           child: AnimatedContainer(
-            duration: Duration(milliseconds: 200),
-            padding: EdgeInsets.all(12),
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _filterFocused ? Theme.of(context).primaryColor.withOpacity(0.1) : Colors.transparent,
+              color: _filterFocused 
+                  ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: _filterFocused ? Theme.of(context).primaryColor : Colors.grey.withOpacity(0.3),
+                color: _filterFocused 
+                    ? Theme.of(context).primaryColor 
+                    : Colors.grey.withValues(alpha: 0.3),
                 width: _filterFocused ? 2 : 1,
               ),
             ),

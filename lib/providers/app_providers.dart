@@ -11,10 +11,6 @@ final repositoriesProvider = StateNotifierProvider<RepositoryNotifier, List<Repo
   return RepositoryNotifier();
 });
 
-final repositorySyncServiceProvider = Provider<RepositorySyncService>((ref) {
-  return RepositorySyncService(ref);
-});
-
 class RepositoryNotifier extends StateNotifier<List<Repository>> {
   RepositoryNotifier() : super([
     Repository.fdroid(),
@@ -48,18 +44,33 @@ class RepositoryNotifier extends StateNotifier<List<Repository>> {
   }
 }
 
+final repositorySyncServiceProvider = Provider<RepositorySyncService>((ref) {
+  final repositories = ref.watch(repositoriesProvider);
+  final fdroidService = ref.watch(fdroidServiceProvider);
+  
+  return RepositorySyncService(
+    ref,
+    () => repositories,  
+    fdroidService,       
+  );
+});
+
 final appsProvider = FutureProvider<List<FDroidApp>>((ref) async {
   final syncService = ref.watch(repositorySyncServiceProvider);
   
+  // Try to get cached data first
   final cached = await syncService.getCachedApps();
   if (cached.isNotEmpty) {
-    print('Loading ${cached.length} cached apps');
-    
+    // Check if we should sync in background
     if (await syncService.shouldSync()) {
+      // Sync in background without blocking UI
       syncService.syncAllRepositories().then((freshApps) {
         if (freshApps.isNotEmpty) {
+          // Invalidate provider to reload with fresh data
           ref.invalidateSelf();
         }
+      }).catchError((error) {
+        // Silent fail for background sync
       });
     }
     
@@ -67,18 +78,27 @@ final appsProvider = FutureProvider<List<FDroidApp>>((ref) async {
   }
   
   // No cache, do full sync
-  return await syncService.syncAllRepositories(force: true);
-});
-
-
-final installationServiceProvider = Provider<InstallationService>((ref) {
-  return InstallationService();
+  try {
+    return await syncService.syncAllRepositories(force: true);
+  } catch (e) {
+    // If sync fails, still return cached data if available
+    final fallbackCache = await syncService.getCachedApps();
+    if (fallbackCache.isNotEmpty) {
+      return fallbackCache;
+    }
+    // If no cache at all, return empty list
+    return [];
+  }
 });
 
 final refreshAppsProvider = FutureProvider.autoDispose<void>((ref) async {
   final syncService = ref.watch(repositorySyncServiceProvider);
   await syncService.syncAllRepositories(force: true);
   ref.invalidate(appsProvider);
+});
+
+final installationServiceProvider = Provider<InstallationService>((ref) {
+  return InstallationService();
 });
 
 final installedAppsProvider = FutureProvider<List<FDroidApp>>((ref) async {
@@ -110,7 +130,6 @@ final availableUpdatesProvider = FutureProvider<List<FDroidApp>>((ref) async {
   
   return updates;
 });
-
 
 final downloadProgressProvider = StateProvider<Map<String, double>>((ref) => {});
 

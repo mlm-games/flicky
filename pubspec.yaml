@@ -42,6 +42,8 @@ dependencies:
   installed_apps: ^1.6.0
   device_info_plus: ^11.5.0
   crypto: ^3.0.6
+  path: ^1.9.1
+  collection: ^1.19.1
 
 dev_dependencies:
   flutter_test:

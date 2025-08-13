@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_providers.dart';
 
 class TVSearchField extends ConsumerStatefulWidget {
+  const TVSearchField({Key? key}) : super(key: key);
+  
   @override
-  _TVSearchFieldState createState() => _TVSearchFieldState();
+  ConsumerState<TVSearchField> createState() => _TVSearchFieldState();
 }
 
 class _TVSearchFieldState extends ConsumerState<TVSearchField> {
@@ -33,32 +35,39 @@ class _TVSearchFieldState extends ConsumerState<TVSearchField> {
     super.dispose();
   }
 
-  void _handleKeyEvent(KeyEvent event) {
-    if (event is KeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
-          event.logicalKey == LogicalKeyboardKey.arrowUp ||
-          event.logicalKey == LogicalKeyboardKey.arrowLeft ||
-          event.logicalKey == LogicalKeyboardKey.arrowRight) {
-        // if (!_controller.text.isNotEmpty) {
-        //   // If search is empty, allow navigation
-        //   _focusNode.unfocus();
-        // }
-      } else if (event.logicalKey == LogicalKeyboardKey.escape) {
-        // Clear search and unfocus
-        _controller.clear();
-        ref.read(searchQueryProvider.notifier).state = '';
-        _focusNode.unfocus();
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return KeyboardListener(
-      focusNode: FocusNode(),
-      onKeyEvent: _handleKeyEvent,
+    return Focus(
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          // Handle back/escape key
+          if (event.logicalKey == LogicalKeyboardKey.escape ||
+              event.logicalKey == LogicalKeyboardKey.goBack) {
+            if (_controller.text.isNotEmpty) {
+              // Clear search first
+              _controller.clear();
+              ref.read(searchQueryProvider.notifier).state = '';
+              return KeyEventResult.handled;
+            } else {
+              // Unfocus and let the back button work normally
+              _focusNode.unfocus();
+              return KeyEventResult.ignored;
+            }
+          }
+          
+          // Allow navigation when field is focused but empty
+          if (_controller.text.isEmpty && _isFocused) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+                event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              _focusNode.unfocus();
+              return KeyEventResult.ignored;
+            }
+          }
+        }
+        return KeyEventResult.ignored;
+      },
       child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 200),
         height: 56,
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
@@ -77,24 +86,22 @@ class _TVSearchFieldState extends ConsumerState<TVSearchField> {
             ref.read(searchQueryProvider.notifier).state = value;
           },
           onSubmitted: (value) {
-            // Unfocus after search
             _focusNode.unfocus();
           },
           decoration: InputDecoration(
             hintText: 'Search apps...',
-            prefixIcon: Icon(Icons.search),
+            prefixIcon: const Icon(Icons.search),
             suffixIcon: _controller.text.isNotEmpty
                 ? IconButton(
-                    icon: Icon(Icons.clear),
+                    icon: const Icon(Icons.clear),
                     onPressed: () {
                       _controller.clear();
                       ref.read(searchQueryProvider.notifier).state = '';
-                      _focusNode.unfocus();
                     },
                   )
                 : null,
             border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           ),
         ),
       ),

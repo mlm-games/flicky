@@ -5,30 +5,30 @@ import 'package:crypto/crypto.dart';
 import '../models/fdroid_app.dart';
 import '../models/repository.dart';
 import 'fdroid_service.dart';
-import '../providers/app_providers.dart';
-
 
 class RepositorySyncService {
-  static const String SYNC_BOX = 'repository_sync';
-  static const String LAST_SYNC_KEY = 'last_sync';
-  static const String REPO_DATA_PREFIX = 'repo_data_';
-  static const String REPO_HASH_PREFIX = 'repo_hash_';
-  static const String APPS_CACHE_KEY = 'cached_apps';
+  static const String syncBox = 'repository_sync';
+  static const String lastSyncKey = 'last_sync';
+  static const String repoDataPrefix = 'repo_data_';
+  static const String repoHashPrefix = 'repo_hash_';
+  static const String appsCacheKey = 'cached_apps';
   
-  static const Duration CACHE_DURATION = Duration(hours: 6); // Cache for 6 hours
-  static const Duration CHECK_INTERVAL = Duration(hours: 1); // Check for updates every hour
+  static const Duration cacheDuration = Duration(hours: 6);
+  static const Duration checkInterval = Duration(hours: 1);
   
   final Ref _ref;
+  final List<Repository> Function() _getRepositories;
+  final FDroidService _fdroidService;
   
-  RepositorySyncService(this._ref);
+  RepositorySyncService(this._ref, this._getRepositories, this._fdroidService);
   
   static Future<void> init() async {
-    await Hive.openBox(SYNC_BOX);
+    await Hive.openBox(syncBox);
   }
   
   Future<DateTime?> getLastSyncTime() async {
-    final box = await Hive.openBox(SYNC_BOX);
-    final timestamp = box.get(LAST_SYNC_KEY);
+    final box = await Hive.openBox(syncBox);
+    final timestamp = box.get(lastSyncKey);
     if (timestamp != null) {
       return DateTime.fromMillisecondsSinceEpoch(timestamp);
     }
@@ -40,12 +40,12 @@ class RepositorySyncService {
     if (lastSync == null) return true;
     
     final now = DateTime.now();
-    return now.difference(lastSync) > CHECK_INTERVAL;
+    return now.difference(lastSync) > checkInterval;
   }
   
   Future<List<FDroidApp>> getCachedApps() async {
-    final box = await Hive.openBox(SYNC_BOX);
-    final cachedData = box.get(APPS_CACHE_KEY);
+    final box = await Hive.openBox(syncBox);
+    final cachedData = box.get(appsCacheKey);
     
     if (cachedData == null) return [];
     
@@ -75,13 +75,13 @@ class RepositorySyncService {
         repository: json['repository'] ?? 'F-Droid',
       )).toList();
     } catch (e) {
-      print('Error loading cached apps: $e');
+      // Use debugPrint or logging instead of print
       return [];
     }
   }
   
   Future<void> cacheApps(List<FDroidApp> apps) async {
-    final box = await Hive.openBox(SYNC_BOX);
+    final box = await Hive.openBox(syncBox);
     
     final appsJson = apps.map((app) => {
       'packageName': app.packageName,
@@ -107,12 +107,11 @@ class RepositorySyncService {
       'repository': app.repository,
     }).toList();
     
-    await box.put(APPS_CACHE_KEY, jsonEncode(appsJson));
-    await box.put(LAST_SYNC_KEY, DateTime.now().millisecondsSinceEpoch);
+    await box.put(appsCacheKey, jsonEncode(appsJson));
+    await box.put(lastSyncKey, DateTime.now().millisecondsSinceEpoch);
   }
   
   Future<String> _getRepositoryHash(Repository repo) async {
-    // Create a hash of repository metadata to detect changes
     final data = '${repo.url}:${repo.lastUpdated.millisecondsSinceEpoch}';
     final bytes = utf8.encode(data);
     final digest = sha256.convert(bytes);
@@ -120,54 +119,43 @@ class RepositorySyncService {
   }
   
   Future<bool> hasRepositoryChanged(Repository repo) async {
-    final box = await Hive.openBox(SYNC_BOX);
-    final storedHash = box.get('${REPO_HASH_PREFIX}${repo.url}');
+    final box = await Hive.openBox(syncBox);
+    final storedHash = box.get('$repoHashPrefix${repo.url}');
     final currentHash = await _getRepositoryHash(repo);
     
     return storedHash != currentHash;
   }
   
   Future<void> updateRepositoryHash(Repository repo) async {
-    final box = await Hive.openBox(SYNC_BOX);
+    final box = await Hive.openBox(syncBox);
     final hash = await _getRepositoryHash(repo);
-    await box.put('${REPO_HASH_PREFIX}${repo.url}', hash);
+    await box.put('$repoHashPrefix${repo.url}', hash);
   }
   
   Future<List<FDroidApp>> syncAllRepositories({bool force = false}) async {
     final shouldUpdate = force || await shouldSync();
     
     if (!shouldUpdate) {
-      // Return cached data if available and not expired
       final cached = await getCachedApps();
       if (cached.isNotEmpty) {
-        print('Using cached apps (${cached.length} apps)');
         return cached;
       }
     }
     
-    print('Syncing repositories...');
+    final repos = _getRepositories().where((r) => r.enabled).toList();
+    final apps = await _fdroidService.fetchAppsFromMultipleRepos(repos);
     
-    // Get enabled repositories
-    final repos = _ref.read(repositoriesProvider).where((r) => r.enabled).toList();
-    
-    // Fetch fresh data
-    final service = _ref.read(fdroidServiceProvider);
-    final apps = await service.fetchAppsFromMultipleRepos(repos);
-    
-    // Cache the results
     await cacheApps(apps);
     
-    // Update repository hashes
     for (final repo in repos) {
       await updateRepositoryHash(repo);
     }
     
-    print('Synced ${apps.length} apps');
     return apps;
   }
   
   Future<void> clearCache() async {
-    final box = await Hive.openBox(SYNC_BOX);
+    final box = await Hive.openBox(syncBox);
     await box.clear();
   }
 }

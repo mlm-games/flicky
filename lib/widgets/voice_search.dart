@@ -5,8 +5,10 @@ import '../providers/app_providers.dart';
 import '../theme/app_theme.dart';
 
 class VoiceSearchButton extends ConsumerStatefulWidget {
+  const VoiceSearchButton({Key? key}) : super(key: key);
+  
   @override
-  _VoiceSearchButtonState createState() => _VoiceSearchButtonState();
+  ConsumerState<VoiceSearchButton> createState() => _VoiceSearchButtonState();
 }
 
 class _VoiceSearchButtonState extends ConsumerState<VoiceSearchButton> {

@@ -11,12 +11,11 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.light,
     scaffoldBackgroundColor: surfaceLight,
-    colorScheme: ColorScheme.light(
+    colorScheme: const ColorScheme.light(
       primary: primaryGreen,
       surface: cardLight,
-      background: surfaceLight,
     ),
-    cardTheme: CardThemeData( 
+    cardTheme: CardThemeData(
       elevation: 0,
       color: cardLight,
       shape: RoundedRectangleBorder(
@@ -30,10 +29,9 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.dark,
     scaffoldBackgroundColor: surfaceDark,
-    colorScheme: ColorScheme.dark(
+    colorScheme: const ColorScheme.dark(
       primary: primaryGreen,
       surface: cardDark,
-      background: surfaceDark,
     ),
     cardTheme: CardThemeData(
       elevation: 0,
