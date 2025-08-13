@@ -1,16 +1,16 @@
-# flicky
+# Flicky - Android TV F-Droid Client
 
-A new Flutter project.
+![Banner](assets/tv_banner.png)
 
-## Getting Started
+## Features
+- 📺 Optimized for Android TV
+- 🎮 Full remote control support
+- 🔍 Voice search (currently bugged for some TVs)
+- 📦 Multiple repository support (comes with izzyondroid enabled by default)
 
-This project is a starting point for a Flutter application.
+## Installation
+### Option 1: Direct APK download from Downloader app (by AFTV)
+### Option 2: Share through localsend (or send files to tv)
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## License
+GPL-3.0
