@@ -12,5 +12,8 @@
 ### Option 1: Direct APK download from Downloader app (by AFTV)
 ### Option 2: Share through localsend (or send files to tv)
 
+## FOSS apps for Android TVs (reference)
+- https://github.com/Generator/Awesome-Android-TV-FOSS-Apps
+
 ## License
 GPL-3.0
