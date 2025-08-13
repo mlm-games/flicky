@@ -9,7 +9,7 @@ import '../widgets/error_widget.dart';
 class BrowseScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final apps = ref.watch(sortedAppsProvider);  // Changed to sortedAppsProvider
+    final apps = ref.watch(sortedAppsProvider);
     
     return Scaffold(
       body: CustomScrollView(
@@ -72,7 +72,10 @@ class BrowseScreen extends ConsumerWidget {
                     mainAxisSpacing: 16,
                   ),
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) => AppCard(app: appList[index]),
+                    (context, index) => AppCard(
+                      app: appList[index],
+                      autofocus: index == 0,
+                    ),
                     childCount: appList.length,
                   ),
                 );

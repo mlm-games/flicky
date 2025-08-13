@@ -112,7 +112,7 @@ final filteredAppsProvider = Provider<AsyncValue<List<FDroidApp>>>((ref) {
 });
 
 // Theme provider
-final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
+final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
 
 // Categories provider
 final categoriesProvider = Provider<List<String>>((ref) {

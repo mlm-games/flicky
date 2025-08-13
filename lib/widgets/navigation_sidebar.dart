@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 
 class NavigationSidebar extends StatelessWidget {
@@ -73,24 +74,28 @@ class NavigationSidebar extends StatelessWidget {
             label: 'Browse',
             isSelected: selectedIndex == 0,
             onTap: () => onIndexChanged(0),
+            autofocus: selectedIndex == 0,
           ),
           _NavItem(
             icon: Icons.category,
             label: 'Categories',
             isSelected: selectedIndex == 1,
             onTap: () => onIndexChanged(1),
+            autofocus: selectedIndex == 1,
           ),
           _NavItem(
             icon: Icons.update,
             label: 'Updates',
             isSelected: selectedIndex == 2,
             onTap: () => onIndexChanged(2),
+            autofocus: selectedIndex == 2,
           ),
           _NavItem(
             icon: Icons.settings,
             label: 'Settings',
             isSelected: selectedIndex == 3,
             onTap: () => onIndexChanged(3),
+            autofocus: selectedIndex == 3,
           ),
         ],
       ),
@@ -103,12 +108,14 @@ class _NavItem extends StatefulWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final bool autofocus;
   
   const _NavItem({
     required this.icon,
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.autofocus = false,
   });
   
   @override
@@ -117,13 +124,36 @@ class _NavItem extends StatefulWidget {
 
 class _NavItemState extends State<_NavItem> {
   bool isFocused = false;
-  
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (mounted) {
+        setState(() {
+          isFocused = _focusNode.hasFocus;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Focus(
-      onFocusChange: (focused) => setState(() => isFocused = focused),
-      child: GestureDetector(
+    return Semantics(
+      button: true,
+      child: InkWell(
+        focusNode: _focusNode,
+        autofocus: widget.autofocus,
         onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: Duration(milliseconds: 200),
           margin: EdgeInsets.symmetric(vertical: 4),
@@ -135,6 +165,12 @@ class _NavItemState extends State<_NavItem> {
                     ? Colors.grey.withOpacity(0.1)
                     : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isFocused
+                  ? AppTheme.primaryGreen
+                  : Colors.transparent,
+              width: 2,
+            ),
           ),
           child: Row(
             children: [

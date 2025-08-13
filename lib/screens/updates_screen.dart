@@ -282,7 +282,14 @@ class _UpdateCard extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: Text('Update'),
+              child: Text(
+                'Update',
+                style: TextStyle(
+                      color: Colors.brown[700],
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
             ),
           ],
         ),

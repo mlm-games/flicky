@@ -33,6 +33,9 @@ class FDroidTV extends ConsumerWidget {
     return Shortcuts(
       shortcuts: <LogicalKeySet, Intent>{
         LogicalKeySet(LogicalKeyboardKey.select): ActivateIntent(),
+        LogicalKeySet(LogicalKeyboardKey.enter): ActivateIntent(),
+        LogicalKeySet(LogicalKeyboardKey.space): ActivateIntent(),
+        LogicalKeySet(LogicalKeyboardKey.gameButtonA): ActivateIntent(),
       },
       child: MaterialApp(
         title: 'Flicky',
@@ -40,7 +43,9 @@ class FDroidTV extends ConsumerWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: themeMode,
-        home: MainScreen(),
+        home: DefaultTextEditingShortcuts(
+          child: MainScreen(),
+        ),
       ),
     );
   }
