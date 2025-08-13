@@ -274,7 +274,7 @@ Future<List<FDroidApp>> _parseIndexV2(Map<String, dynamic> data, Repository repo
         final latestVersion = versions[latestVersionKey];
         if (latestVersion == null) continue;
         
-        // Get localized name - fixed to handle potential nested structure
+        // Get localized name
         String name = packageName;
         try {
           name = _getLocalizedString(metadata['name']) ?? packageName;
@@ -282,7 +282,7 @@ Future<List<FDroidApp>> _parseIndexV2(Map<String, dynamic> data, Repository repo
           print('Error parsing name for $packageName: $e');
         }
         
-        // Get localized summary and description - with error handling
+        // Get localized summary and description
         String summary = '';
         String description = '';
         try {
@@ -313,7 +313,7 @@ Future<List<FDroidApp>> _parseIndexV2(Map<String, dynamic> data, Repository repo
           print('Error parsing category for $packageName: $e');
         }
         
-        // Build icon URL - with proper error handling
+        // Build icon URL
         String iconUrl = 'https://f-droid.org/assets/ic_repo_app_default.png';
         try {
           iconUrl = _buildIconUrlV2(repo, metadata['icon'], packageName);

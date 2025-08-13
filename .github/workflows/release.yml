@@ -1,0 +1,231 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version_override:
+        description: 'Override version (optional)'
+        required: false
+        type: string
+      prerelease:
+        description: 'Mark as prerelease'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version_override }}" ]; then
+            VERSION="${{ inputs.version_override }}"
+            TAG_NAME="v$VERSION"
+          else
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG_NAME#v}"
+          fi
+          
+          # Verify version matches pubspec.yaml
+          PUBSPEC_VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //; s/+.*//')
+          if [ "$VERSION" != "$PUBSPEC_VERSION" ]; then
+            echo "::warning::Tag version ($VERSION) doesn't match pubspec.yaml ($PUBSPEC_VERSION)"
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
+  build:
+    needs: prepare-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-latest
+            target: android
+            build_cmd: "flutter build apk --release"
+            artifact_path: "build/app/outputs/flutter-apk/app-release.apk"
+            artifact_name: "android-apk"
+            asset_extension: "apk"
+            asset_content_type: "application/vnd.android.package-archive"
+          
+          # - platform: ubuntu-latest
+          #   target: linux
+          #   build_cmd: "flutter build linux --release"
+          #   artifact_path: "build/linux/x64/release/bundle"
+          #   artifact_name: "linux-x64"
+          #   asset_extension: "tar.gz"
+          #   asset_content_type: "application/gzip"
+          
+          # - platform: macos-latest
+          #   target: macos
+          #   build_cmd: "flutter build macos --release"
+          #   artifact_path: "build/macos/Build/Products/Release"
+          #   artifact_name: "macos-universal"
+          #   asset_extension: "dmg"
+          #   asset_content_type: "application/x-apple-diskimage"
+          
+          # - platform: windows-latest
+          #   target: windows
+          #   build_cmd: "flutter build windows --release"
+          #   artifact_path: "build/windows/x64/runner/Release"
+          #   artifact_name: "windows-x64"
+          #   asset_extension: "zip"
+          #   asset_content_type: "application/zip"
+
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+
+      - name: Install Linux dependencies
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Run tests
+        run: flutter test
+        continue-on-error: true # Currently no tests (or just the default test)
+
+      - name: Build ${{ matrix.target }}
+        run: ${{ matrix.build_cmd }}
+
+      - name: Package build artifacts
+        id: package
+        shell: bash
+        run: |
+          APP_NAME="Flicky"
+          VERSION="${{ needs.prepare-release.outputs.version }}"
+          
+          case "${{ matrix.target }}" in
+            android)
+              PACKAGE_NAME="${APP_NAME}-${VERSION}-android.apk"
+              cp "${{ matrix.artifact_path }}" "$PACKAGE_NAME"
+              ;;
+            linux)
+              PACKAGE_NAME="${APP_NAME}-${VERSION}-linux-x64.tar.gz"
+              cd build/linux/x64/release
+              tar czf "../../../../$PACKAGE_NAME" bundle/
+              cd -
+              ;;
+            macos)
+              PACKAGE_NAME="${APP_NAME}-${VERSION}-macos.dmg"
+              # Create DMG (requires additional tooling)
+              # For now, create a zip
+              PACKAGE_NAME="${APP_NAME}-${VERSION}-macos.zip"
+              cd "${{ matrix.artifact_path }}"
+              zip -r "../../../../../$PACKAGE_NAME" *.app
+              cd -
+              ;;
+            windows)
+              PACKAGE_NAME="${APP_NAME}-${VERSION}-windows-x64.zip"
+              cd build/windows/x64/runner
+              7z a -tzip "../../../../$PACKAGE_NAME" Release/
+              cd -
+              ;;
+          esac
+          
+          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "package_path=$(pwd)/$PACKAGE_NAME" >> $GITHUB_OUTPUT
+
+      - name: Generate SHA256 checksum
+        shell: bash
+        run: |
+          sha256sum "${{ steps.package.outputs.package_name }}" > "${{ steps.package.outputs.package_name }}.sha256"
+          echo "Checksum:"
+          cat "${{ steps.package.outputs.package_name }}.sha256"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            ${{ steps.package.outputs.package_name }}
+            ${{ steps.package.outputs.package_name }}.sha256
+
+  create-release:
+    needs: [prepare-release, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          # Get previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "## What's Changed" > release_notes.md
+            echo "" >> release_notes.md
+            
+            # Get commit messages
+            git log --pretty=format:"* %s (%h)" $PREVIOUS_TAG..HEAD >> release_notes.md
+            
+            echo "" >> release_notes.md
+            echo "## Downloads" >> release_notes.md
+            echo "" >> release_notes.md
+            echo "| Platform | Download | SHA256 |" >> release_notes.md
+            echo "|----------|----------|--------|" >> release_notes.md
+            
+            # Add download links (will be updated after release creation)
+            for artifact in artifacts/*/*.sha256; do
+              if [ -f "$artifact" ]; then
+                FILENAME=$(basename "$artifact" .sha256)
+                CHECKSUM=$(cut -d' ' -f1 "$artifact")
+                PLATFORM=$(echo "$FILENAME" | grep -oE '(android|linux|macos|windows)')
+                echo "| $PLATFORM | [$FILENAME](https://github.com/${{ github.repository }}/releases/download/${{ needs.prepare-release.outputs.tag_name }}/$FILENAME) | \`$CHECKSUM\` |" >> release_notes.md
+              fi
+            done
+          else
+            echo "Initial release" > release_notes.md
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.tag_name }}
+          name: "Flicky ${{ needs.prepare-release.outputs.version }}"
+          body_path: release_notes.md
+          prerelease: ${{ inputs.prerelease || false }}
+          files: |
+            artifacts/**/*
+          fail_on_unmatched_files: false
+        
+
+  

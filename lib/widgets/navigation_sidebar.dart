@@ -53,7 +53,7 @@ class NavigationSidebar extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'F-Droid TV',
+                      'Alt Store TV',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
