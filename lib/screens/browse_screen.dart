@@ -10,7 +10,7 @@ class BrowseScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final apps = ref.watch(sortedAppsProvider);
-    
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -32,7 +32,7 @@ class BrowseScreen extends ConsumerWidget {
                       'Loading F-Droid repository...',
                       style: TextStyle(color: Colors.grey),
                     ),
-                    error: (_, __) => Text(
+                    error: (_, _) => Text(
                       'Using offline data',
                       style: TextStyle(color: Colors.orange),
                     ),
@@ -41,7 +41,7 @@ class BrowseScreen extends ConsumerWidget {
               ),
             ),
           ),
-          
+
           // Apps grid
           SliverPadding(
             padding: EdgeInsets.all(20),
@@ -72,19 +72,14 @@ class BrowseScreen extends ConsumerWidget {
                     mainAxisSpacing: 16,
                   ),
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) => AppCard(
-                      app: appList[index],
-                      autofocus: index == 0,
-                    ),
+                    (context, index) =>
+                        AppCard(app: appList[index], autofocus: index == 0),
                     childCount: appList.length,
                   ),
                 );
               },
               loading: () => SliverToBoxAdapter(
-                child: Container(
-                  height: 400,
-                  child: LoadingIndicator(),
-                ),
+                child: Container(height: 400, child: LoadingIndicator()),
               ),
               error: (error, stack) => SliverToBoxAdapter(
                 child: ErrorDisplay(error: error, stackTrace: stack),
@@ -95,7 +90,7 @@ class BrowseScreen extends ConsumerWidget {
       ),
     );
   }
-  
+
   int _getGridCrossAxisCount(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     if (width > 1400) return 6;

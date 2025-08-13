@@ -7,9 +7,9 @@ import '../theme/app_theme.dart';
 
 class AppDetailScreen extends ConsumerStatefulWidget {
   final FDroidApp app;
-  
+
   const AppDetailScreen({required this.app});
-  
+
   @override
   _AppDetailScreenState createState() => _AppDetailScreenState();
 }
@@ -18,13 +18,13 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
   bool isInstalling = false;
   double downloadProgress = 0.0;
   bool? isInstalled;
-  
+
   @override
   void initState() {
     super.initState();
     _checkInstallStatus();
   }
-  
+
   Future<void> _checkInstallStatus() async {
     final service = ref.read(installationServiceProvider);
     final installed = await service.isAppInstalled(widget.app.packageName);
@@ -32,26 +32,23 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
       setState(() => isInstalled = installed);
     }
   }
-  
+
   Future<void> _installApp() async {
     setState(() {
       isInstalling = true;
       downloadProgress = 0.0;
     });
-    
+
     try {
       final service = ref.read(installationServiceProvider);
-      await service.installApp(
-        widget.app,
-        (progress) {
-          if (mounted) {
-            setState(() => downloadProgress = progress);
-          }
-        },
-      );
-      
+      await service.installApp(widget.app, (progress) {
+        if (mounted) {
+          setState(() => downloadProgress = progress);
+        }
+      });
+
       await _checkInstallStatus();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${widget.app.name} installed successfully!')),
@@ -72,18 +69,18 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
       }
     }
   }
-  
+
   Future<void> _uninstallApp() async {
     final service = ref.read(installationServiceProvider);
     await service.uninstallApp(widget.app.packageName);
     await _checkInstallStatus();
   }
-  
+
   Future<void> _launchApp() async {
     final service = ref.read(installationServiceProvider);
     await service.launchApp(widget.app.packageName);
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,7 +120,7 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
                   ),
                 ),
                 SizedBox(width: 20),
-                
+
                 // App info
                 Expanded(
                   child: Column(
@@ -139,10 +136,7 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
                       SizedBox(height: 4),
                       Text(
                         widget.app.packageName,
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                       SizedBox(height: 8),
                       Wrap(
@@ -150,19 +144,18 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
                         children: [
                           Chip(
                             label: Text(widget.app.category),
-                            backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
+                            backgroundColor: AppTheme.primaryGreen.withValues(
+                              alpha: 0.1,
+                            ),
                           ),
-                          Chip(
-                            label: Text('v${widget.app.version}'),
-                          ),
-                          Chip(
-                            label: Text(_formatSize(widget.app.size)),
-                          ),
+                          Chip(label: Text('v${widget.app.version}')),
+                          Chip(label: Text(_formatSize(widget.app.size))),
                           Chip(
                             label: Text(widget.app.repository),
-                            backgroundColor: widget.app.repository == 'IzzyOnDroid'
-                                ? Colors.purple.withOpacity(0.1)
-                                : Colors.blue.withOpacity(0.1),
+                            backgroundColor:
+                                widget.app.repository == 'IzzyOnDroid'
+                                ? Colors.purple.withValues(alpha: 0.1)
+                                : Colors.blue.withValues(alpha: 0.1),
                           ),
                         ],
                       ),
@@ -171,9 +164,9 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
                 ),
               ],
             ),
-            
+
             SizedBox(height: 20),
-            
+
             // Action buttons
             if (isInstalling)
               Column(
@@ -239,28 +232,22 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
                   ),
                 ),
               ),
-            
+
             SizedBox(height: 20),
-            
+
             // Summary
             Text(
               widget.app.summary,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
-            
+
             SizedBox(height: 20),
-            
+
             // Screenshots
             if (widget.app.screenshots.isNotEmpty) ...[
               Text(
                 'Screenshots',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 12),
               Container(
@@ -276,10 +263,8 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
                         child: CachedNetworkImage(
                           imageUrl: widget.app.screenshots[index],
                           height: 200,
-                          placeholder: (context, url) => Container(
-                            width: 120,
-                            color: Colors.grey[300],
-                          ),
+                          placeholder: (context, url) =>
+                              Container(width: 120, color: Colors.grey[300]),
                           errorWidget: (context, url, error) => Container(
                             width: 120,
                             color: Colors.grey[300],
@@ -293,21 +278,18 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
               ),
               SizedBox(height: 20),
             ],
-            
+
             // Description
             Text(
               'Description',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 12),
             Text(
               widget.app.description,
               style: TextStyle(fontSize: 14, height: 1.5),
             ),
-            
+
             // Anti-features
             if (widget.app.antiFeatures.isNotEmpty) ...[
               SizedBox(height: 20),
@@ -320,26 +302,25 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
                 ),
               ),
               SizedBox(height: 12),
-              ...widget.app.antiFeatures.map((feature) => Padding(
-                padding: EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    Icon(Icons.warning, color: Colors.orange, size: 20),
-                    SizedBox(width: 8),
-                    Text(feature),
-                  ],
+              ...widget.app.antiFeatures.map(
+                (feature) => Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning, color: Colors.orange, size: 20),
+                      SizedBox(width: 8),
+                      Text(feature),
+                    ],
+                  ),
                 ),
-              )),
+              ),
             ],
-            
+
             // App info
             SizedBox(height: 20),
             Text(
               'Information',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 12),
             _InfoRow('Package', widget.app.packageName),
@@ -360,13 +341,13 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
       ),
     );
   }
-  
+
   String _formatSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
-  
+
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
@@ -375,9 +356,9 @@ class _AppDetailScreenState extends ConsumerState<AppDetailScreen> {
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
-  
+
   const _InfoRow(this.label, this.value);
-  
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -389,17 +370,11 @@ class _InfoRow extends StatelessWidget {
             width: 120,
             child: Text(
               label,
-              style: TextStyle(
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: TextStyle(fontWeight: FontWeight.w400),
-            ),
+            child: Text(value, style: TextStyle(fontWeight: FontWeight.w400)),
           ),
         ],
       ),

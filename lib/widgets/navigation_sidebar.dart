@@ -5,16 +5,16 @@ import '../theme/app_theme.dart';
 class NavigationSidebar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onIndexChanged;
-  
+
   const NavigationSidebar({
     required this.selectedIndex,
     required this.onIndexChanged,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       width: 280,
       padding: EdgeInsets.all(20),
@@ -55,19 +55,16 @@ class NavigationSidebar extends StatelessWidget {
                     ),
                     Text(
                       'Alt Store TV',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          
+
           SizedBox(height: 20),
-          
+
           // Navigation items
           _NavItem(
             icon: Icons.explore,
@@ -109,7 +106,7 @@ class _NavItem extends StatefulWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final bool autofocus;
-  
+
   const _NavItem({
     required this.icon,
     required this.label,
@@ -117,7 +114,7 @@ class _NavItem extends StatefulWidget {
     required this.onTap,
     this.autofocus = false,
   });
-  
+
   @override
   _NavItemState createState() => _NavItemState();
 }
@@ -160,15 +157,13 @@ class _NavItemState extends State<_NavItem> {
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: widget.isSelected
-                ? AppTheme.primaryGreen.withOpacity(0.1)
+                ? AppTheme.primaryGreen.withValues(alpha: 0.1)
                 : isFocused
-                    ? Colors.grey.withOpacity(0.1)
-                    : Colors.transparent,
+                ? Colors.grey.withValues(alpha: 0.1)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isFocused
-                  ? AppTheme.primaryGreen
-                  : Colors.transparent,
+              color: isFocused ? AppTheme.primaryGreen : Colors.transparent,
               width: 2,
             ),
           ),

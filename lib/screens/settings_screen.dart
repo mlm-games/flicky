@@ -17,11 +17,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _syncRepositories() async {
     setState(() => _isSyncing = true);
-    
+
     try {
-      await ref.read(repositorySyncServiceProvider).syncAllRepositories(force: true);
+      await ref
+          .read(repositorySyncServiceProvider)
+          .syncAllRepositories(force: true);
       ref.invalidate(appsProvider);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Repositories synced successfully')),
@@ -47,7 +49,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final syncService = ref.watch(repositorySyncServiceProvider);
-    
+
     return Scaffold(
       body: ListView(
         padding: EdgeInsets.all(20),
@@ -56,16 +58,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               Text(
                 'Settings',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               Spacer(),
               // Sync button
               ElevatedButton.icon(
                 onPressed: _isSyncing ? null : _syncRepositories,
-                icon: _isSyncing 
+                icon: _isSyncing
                     ? SizedBox(
                         width: 16,
                         height: 16,
@@ -109,7 +108,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
           SizedBox(height: 20),
-          
+
           _SettingsSection(
             title: 'Appearance',
             children: [
@@ -121,18 +120,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
-          
+
           _SettingsSection(
             title: 'Repositories',
             children: [
-              ...ref.watch(repositoriesProvider).map((repo) => 
-                _TVFriendlyRepositoryTile(
-                  repository: repo,
-                  onToggle: (enabled) {
-                    ref.read(repositoriesProvider.notifier).toggleRepository(repo.url);
-                  },
-                ),
-              ),
+              ...ref
+                  .watch(repositoriesProvider)
+                  .map(
+                    (repo) => _TVFriendlyRepositoryTile(
+                      repository: repo,
+                      onToggle: (enabled) {
+                        ref
+                            .read(repositoriesProvider.notifier)
+                            .toggleRepository(repo.url);
+                      },
+                    ),
+                  ),
               SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: () => _showAddRepositoryDialog(context),
@@ -147,7 +150,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
-          
+
           _SettingsSection(
             title: 'Downloads',
             children: [
@@ -171,7 +174,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
-          
+
           // About section
           _SettingsSection(
             title: 'About',
@@ -194,12 +197,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: Text('Source Code'),
                 subtitle: Text('View on GitHub'),
                 onTap: () async {
-                    const url = 'https://github.com/mlm-games/flicky';
-                    if (await canLaunch(url)) {
+                  const url = 'https://github.com/mlm-games/flicky';
+                  if (await canLaunch(url)) {
                     await launch(url);
-                    } else {
+                  } else {
                     throw 'Could not launch $url';
-                    }
+                  }
                 },
               ),
               ListTile(
@@ -212,12 +215,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: Text('Donate'),
                 subtitle: Text('Support me! (if you like the app)'),
                 onTap: () async {
-                    const url = 'https://github.com/mlm-games/flicky';
-                    if (await canLaunch(url)) {
+                  const url = 'https://github.com/mlm-games/flicky';
+                  if (await canLaunch(url)) {
                     await launch(url);
-                    } else {
+                  } else {
                     throw 'Could not launch $url';
-                    }
+                  }
                 },
               ),
             ],
@@ -230,7 +233,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _showAddRepositoryDialog(BuildContext context) {
     final urlController = TextEditingController();
     final nameController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -265,19 +268,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ElevatedButton(
             onPressed: () {
               if (urlController.text.isNotEmpty) {
-                final name = nameController.text.isEmpty 
-                    ? Uri.parse(urlController.text).host 
+                final name = nameController.text.isEmpty
+                    ? Uri.parse(urlController.text).host
                     : nameController.text;
-                ref.read(repositoriesProvider.notifier).addRepository(
-                  Repository(
-                    name: name,
-                    url: urlController.text,
-                    description: 'Custom repository',
-                    enabled: true,
-                    lastUpdated: DateTime.now(),
-                    publicKey: '',
-                  ),
-                );
+                ref
+                    .read(repositoriesProvider.notifier)
+                    .addRepository(
+                      Repository(
+                        name: name,
+                        url: urlController.text,
+                        description: 'Custom repository',
+                        enabled: true,
+                        lastUpdated: DateTime.now(),
+                        publicKey: '',
+                      ),
+                    );
                 Navigator.pop(context);
               }
             },
@@ -295,14 +300,14 @@ class _TVFriendlySwitch extends StatefulWidget {
   final String subtitle;
   final bool value;
   final Function(bool) onChanged;
-  
+
   const _TVFriendlySwitch({
     required this.title,
     required this.subtitle,
     required this.value,
     required this.onChanged,
   });
-  
+
   @override
   _TVFriendlySwitchState createState() => _TVFriendlySwitchState();
 }
@@ -311,7 +316,7 @@ class _TVFriendlySwitchState extends State<_TVFriendlySwitch> {
   late FocusNode _focusNode;
   bool _isFocused = false;
   bool _value = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -323,20 +328,20 @@ class _TVFriendlySwitchState extends State<_TVFriendlySwitch> {
       });
     });
   }
-  
+
   @override
   void dispose() {
     _focusNode.dispose();
     super.dispose();
   }
-  
+
   void _toggle() {
     setState(() {
       _value = !_value;
     });
     widget.onChanged(_value);
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -346,7 +351,9 @@ class _TVFriendlySwitchState extends State<_TVFriendlySwitch> {
         duration: Duration(milliseconds: 200),
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: _isFocused ? Colors.grey.withOpacity(0.1) : Colors.transparent,
+          color: _isFocused
+              ? Colors.grey.withValues(alpha: 0.1)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: _isFocused ? AppTheme.primaryGreen : Colors.transparent,
@@ -383,16 +390,12 @@ class _TVFriendlySwitchState extends State<_TVFriendlySwitch> {
   }
 }
 
-
 class _SettingsSection extends StatelessWidget {
   final String title;
   final List<Widget> children;
-  
-  const _SettingsSection({
-    required this.title,
-    required this.children,
-  });
-  
+
+  const _SettingsSection({required this.title, required this.children});
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -409,9 +412,7 @@ class _SettingsSection extends StatelessWidget {
             ),
           ),
         ),
-        Card(
-          child: Column(children: children),
-        ),
+        Card(child: Column(children: children)),
         SizedBox(height: 20),
       ],
     );
@@ -421,12 +422,12 @@ class _SettingsSection extends StatelessWidget {
 class _ThemeSelector extends StatelessWidget {
   final ThemeMode currentTheme;
   final Function(ThemeMode) onThemeChanged;
-  
+
   const _ThemeSelector({
     required this.currentTheme,
     required this.onThemeChanged,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -436,10 +437,7 @@ class _ThemeSelector extends StatelessWidget {
         children: [
           Text(
             'Theme',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           SizedBox(height: 12),
           Row(
@@ -477,14 +475,14 @@ class _ThemeOption extends StatefulWidget {
   final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
-  
+
   const _ThemeOption({
     required this.title,
     required this.icon,
     required this.isSelected,
     required this.onTap,
   });
-  
+
   @override
   _ThemeOptionState createState() => _ThemeOptionState();
 }
@@ -492,7 +490,7 @@ class _ThemeOption extends StatefulWidget {
 class _ThemeOptionState extends State<_ThemeOption> {
   late FocusNode _focusNode;
   bool _isFocused = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -503,13 +501,13 @@ class _ThemeOptionState extends State<_ThemeOption> {
       });
     });
   }
-  
+
   @override
   void dispose() {
     _focusNode.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Expanded(
@@ -522,23 +520,23 @@ class _ThemeOptionState extends State<_ThemeOption> {
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: widget.isSelected
-                ? AppTheme.primaryGreen.withOpacity(0.1)
+                ? AppTheme.primaryGreen.withValues(alpha: 0.1)
                 : _isFocused
-                    ? Colors.grey.withOpacity(0.2)
-                    : Colors.grey.withOpacity(0.1),
+                ? Colors.grey.withValues(alpha: 0.2)
+                : Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _isFocused
                   ? AppTheme.primaryGreen
                   : widget.isSelected
-                      ? AppTheme.primaryGreen
-                      : Colors.grey.withOpacity(0.3),
+                  ? AppTheme.primaryGreen
+                  : Colors.grey.withValues(alpha: 0.3),
               width: _isFocused ? 3 : (widget.isSelected ? 2 : 1),
             ),
             boxShadow: _isFocused
                 ? [
                     BoxShadow(
-                      color: AppTheme.primaryGreen.withOpacity(0.3),
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.3),
                       blurRadius: 8,
                       spreadRadius: 0,
                     ),
@@ -549,14 +547,18 @@ class _ThemeOptionState extends State<_ThemeOption> {
             children: [
               Icon(
                 widget.icon,
-                color: widget.isSelected || _isFocused ? AppTheme.primaryGreen : null,
+                color: widget.isSelected || _isFocused
+                    ? AppTheme.primaryGreen
+                    : null,
               ),
               SizedBox(height: 8),
               Text(
                 widget.title,
                 style: TextStyle(
                   fontWeight: widget.isSelected ? FontWeight.bold : null,
-                  color: widget.isSelected || _isFocused ? AppTheme.primaryGreen : null,
+                  color: widget.isSelected || _isFocused
+                      ? AppTheme.primaryGreen
+                      : null,
                 ),
               ),
             ],
@@ -570,21 +572,22 @@ class _ThemeOptionState extends State<_ThemeOption> {
 class _TVFriendlyRepositoryTile extends StatefulWidget {
   final Repository repository;
   final Function(bool) onToggle;
-  
+
   const _TVFriendlyRepositoryTile({
     required this.repository,
     required this.onToggle,
   });
-  
+
   @override
-  _TVFriendlyRepositoryTileState createState() => _TVFriendlyRepositoryTileState();
+  _TVFriendlyRepositoryTileState createState() =>
+      _TVFriendlyRepositoryTileState();
 }
 
 class _TVFriendlyRepositoryTileState extends State<_TVFriendlyRepositoryTile> {
   late FocusNode _focusNode;
   bool _isFocused = false;
   bool _isEnabled = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -596,20 +599,20 @@ class _TVFriendlyRepositoryTileState extends State<_TVFriendlyRepositoryTile> {
       });
     });
   }
-  
+
   @override
   void dispose() {
     _focusNode.dispose();
     super.dispose();
   }
-  
+
   void _toggle() {
     setState(() {
       _isEnabled = !_isEnabled;
     });
     widget.onToggle(_isEnabled);
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -619,7 +622,9 @@ class _TVFriendlyRepositoryTileState extends State<_TVFriendlyRepositoryTile> {
         duration: Duration(milliseconds: 200),
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: _isFocused ? Colors.grey.withOpacity(0.1) : Colors.transparent,
+          color: _isFocused
+              ? Colors.grey.withValues(alpha: 0.1)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: _isFocused ? AppTheme.primaryGreen : Colors.transparent,
