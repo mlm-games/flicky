@@ -10,6 +10,7 @@
 
 ## Installation
 **Option 1**: Direct APK download from github using Downloader app by AFTV, or any other web broswer. 
+
 **Option 2**: Share through localsend (or send files to tv)
 
 ## FOSS apps for Android TVs (reference)
