@@ -1,9 +1,9 @@
 import 'dart:convert';
+import 'package:flicky/core/models/fdroid_app.dart';
+import 'package:flicky/core/models/repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:crypto/crypto.dart';
-import '../models/fdroid_app.dart';
-import '../models/repository.dart';
 import 'fdroid_service.dart';
 
 class RepositorySyncService {

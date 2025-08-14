@@ -1,20 +1,21 @@
+import 'package:flicky/core/models/fdroid_app.dart';
+import 'package:flicky/screens/app_detail/app_detail_screen.dart';
+import 'package:flicky/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../models/fdroid_app.dart';
-import '../theme/app_theme.dart';
-import '../screens/app_detail_screen.dart';
 
-class AppCard extends StatefulWidget {
+class TVAppCard extends StatefulWidget {
   final FDroidApp app;
   final bool autofocus;
 
-  const AppCard({super.key, required this.app, this.autofocus = false});
+  const TVAppCard({Key? key, required this.app, this.autofocus = false})
+    : super(key: key);
 
   @override
-  _AppCardState createState() => _AppCardState();
+  State<TVAppCard> createState() => _TVAppCardState();
 }
 
-class _AppCardState extends State<AppCard> {
+class _TVAppCardState extends State<TVAppCard> {
   bool isFocused = false;
   late FocusNode _focusNode;
 
@@ -56,7 +57,7 @@ class _AppCardState extends State<AppCard> {
         onTap: _handleSelect,
         borderRadius: BorderRadius.circular(16),
         child: AnimatedContainer(
-          duration: Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 200),
           transform: Matrix4.identity()..scale(isFocused ? 1.05 : 1.0),
           decoration: BoxDecoration(
             color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
@@ -64,20 +65,20 @@ class _AppCardState extends State<AppCard> {
             border: Border.all(
               color: isFocused
                   ? AppTheme.primaryGreen
-                  : Colors.grey.withValues(alpha: 0.3),
+                  : Colors.grey.withOpacity(0.3),
               width: isFocused ? 3 : 1,
             ),
             boxShadow: isFocused
                 ? [
                     BoxShadow(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.3),
+                      color: AppTheme.primaryGreen.withOpacity(0.3),
                       blurRadius: 12,
                       spreadRadius: 2,
                     ),
                   ]
                 : [],
           ),
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               // Icon
@@ -90,18 +91,18 @@ class _AppCardState extends State<AppCard> {
                       imageUrl: widget.app.iconUrl,
                       fit: BoxFit.contain,
                       placeholder: (context, url) => Container(
-                        color: Colors.grey.withValues(alpha: 0.2),
-                        child: Icon(Icons.android, size: 48),
+                        color: Colors.grey.withOpacity(0.2),
+                        child: const Icon(Icons.android, size: 48),
                       ),
                       errorWidget: (context, url, error) => Container(
-                        color: Colors.grey.withValues(alpha: 0.2),
-                        child: Icon(Icons.android, size: 48),
+                        color: Colors.grey.withOpacity(0.2),
+                        child: const Icon(Icons.android, size: 48),
                       ),
                     ),
                   ),
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               // Name
               Text(
                 widget.app.name,
@@ -116,7 +117,7 @@ class _AppCardState extends State<AppCard> {
               // Summary
               Text(
                 widget.app.summary,
-                style: TextStyle(fontSize: 11, color: Colors.grey),
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,

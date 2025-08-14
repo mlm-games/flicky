@@ -1,7 +1,7 @@
+import 'package:flicky/core/models/fdroid_app.dart';
+import 'package:flicky/core/models/repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/fdroid_app.dart';
-import '../models/repository.dart';
 import '../services/fdroid_service.dart';
 import '../services/installation_service.dart';
 import '../services/package_info_service.dart';

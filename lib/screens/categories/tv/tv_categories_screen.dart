@@ -1,96 +1,24 @@
-import 'package:flicky/utils/device_utils.dart';
+import 'package:flicky/providers/app_providers.dart';
+import 'package:flicky/theme/app_theme.dart';
+import 'package:flicky/widgets/tv/tv_app_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/app_providers.dart';
-import '../widgets/app_card.dart';
-import '../theme/app_theme.dart';
 
-class CategoriesScreen extends ConsumerStatefulWidget {
-  const CategoriesScreen({super.key});
+class TVCategoriesScreen extends ConsumerStatefulWidget {
+  const TVCategoriesScreen({Key? key}) : super(key: key);
 
   @override
-  CategoriesScreenState createState() => CategoriesScreenState();
+  ConsumerState<TVCategoriesScreen> createState() => _TVCategoriesScreenState();
 }
 
-class CategoriesScreenState extends ConsumerState<CategoriesScreen> {
+class _TVCategoriesScreenState extends ConsumerState<TVCategoriesScreen> {
   String selectedCategory = 'All';
 
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider);
     final apps = ref.watch(appsProvider);
-    final isMobile = DeviceUtils.isMobile(context);
-    final isPortrait =
-        MediaQuery.of(context).orientation == Orientation.portrait;
 
-    if (isMobile && isPortrait) {
-      return Scaffold(
-        appBar: AppBar(title: Text('Categories')),
-        body: apps.when(
-          data: (appList) {
-            final filteredApps = selectedCategory == 'All'
-                ? appList
-                : appList
-                      .where((app) => app.category == selectedCategory)
-                      .toList();
-
-            return Column(
-              children: [
-                // Horizontal scrollable categories
-                Container(
-                  height: 50,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      _buildCategoryChip(
-                        'All',
-                        apps.maybeWhen(
-                          data: (list) => list.length,
-                          orElse: () => 0,
-                        ),
-                      ),
-                      ...categories.map(
-                        (category) => _buildCategoryChip(
-                          category,
-                          apps.maybeWhen(
-                            data: (list) => list
-                                .where((app) => app.category == category)
-                                .length,
-                            orElse: () => 0,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Divider(height: 1),
-                // Apps grid
-                Expanded(
-                  child: GridView.builder(
-                    padding: EdgeInsets.all(16),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.8,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                    ),
-                    itemCount: filteredApps.length,
-                    itemBuilder: (context, index) {
-                      return AppCard(app: filteredApps[index]);
-                    },
-                  ),
-                ),
-              ],
-            );
-          },
-          loading: () => Center(child: CircularProgressIndicator()),
-          error: (error, stack) => Center(child: Text('Error: $error')),
-        ),
-      );
-    }
-
-    // Original TV/Desktop layout
     return Scaffold(
       body: Row(
         children: [
@@ -100,14 +28,14 @@ class CategoriesScreenState extends ConsumerState<CategoriesScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
               border: Border(
-                right: BorderSide(color: Colors.grey..withValues(alpha: 0.2)),
+                right: BorderSide(color: Colors.grey.withOpacity(0.2)),
               ),
             ),
             child: Column(
               children: [
                 Container(
-                  padding: EdgeInsets.all(20),
-                  child: Text(
+                  padding: const EdgeInsets.all(20),
+                  child: const Text(
                     'Categories',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
@@ -115,7 +43,7 @@ class CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                 Expanded(
                   child: ListView(
                     children: [
-                      _CategoryItem(
+                      TVCategoryItem(
                         title: 'All',
                         icon: Icons.apps,
                         isSelected: selectedCategory == 'All',
@@ -124,9 +52,10 @@ class CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                           data: (list) => list.length,
                           orElse: () => 0,
                         ),
+                        autofocus: selectedCategory == 'All',
                       ),
                       ...categories.map(
-                        (category) => _CategoryItem(
+                        (category) => TVCategoryItem(
                           title: category,
                           icon: _getCategoryIcon(category),
                           isSelected: selectedCategory == category,
@@ -160,23 +89,23 @@ class CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                 return Column(
                   children: [
                     Container(
-                      padding: EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(20),
                       child: Row(
                         children: [
                           Icon(_getCategoryIcon(selectedCategory)),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           Text(
                             selectedCategory,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           Chip(
                             label: Text('${filteredApps.length} apps'),
-                            backgroundColor: AppTheme.primaryGreen.withValues(
-                              alpha: 0.1,
+                            backgroundColor: AppTheme.primaryGreen.withOpacity(
+                              0.1,
                             ),
                           ),
                         ],
@@ -184,7 +113,7 @@ class CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                     ),
                     Expanded(
                       child: GridView.builder(
-                        padding: EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(20),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: _getGridCount(context),
                           childAspectRatio: 0.8,
@@ -193,35 +122,21 @@ class CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                         ),
                         itemCount: filteredApps.length,
                         itemBuilder: (context, index) {
-                          return AppCard(app: filteredApps[index]);
+                          return TVAppCard(
+                            app: filteredApps[index],
+                            autofocus: index == 0 && selectedCategory == 'All',
+                          );
                         },
                       ),
                     ),
                   ],
                 );
               },
-              loading: () => Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => Center(child: Text('Error: $error')),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryChip(String category, int count) {
-    final isSelected = selectedCategory == category;
-
-    return Padding(
-      padding: EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text('$category ($count)'),
-        selected: isSelected,
-        onSelected: (_) => setState(() => selectedCategory = category),
-        backgroundColor: isSelected
-            ? AppTheme.primaryGreen.withOpacity(0.1)
-            : null,
-        selectedColor: AppTheme.primaryGreen.withOpacity(0.2),
       ),
     );
   }
@@ -278,26 +193,29 @@ class CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   }
 }
 
-class _CategoryItem extends StatefulWidget {
+class TVCategoryItem extends StatefulWidget {
   final String title;
   final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
   final int count;
+  final bool autofocus;
 
-  const _CategoryItem({
+  const TVCategoryItem({
+    Key? key,
     required this.title,
     required this.icon,
     required this.isSelected,
     required this.onTap,
     required this.count,
-  });
+    this.autofocus = false,
+  }) : super(key: key);
 
   @override
-  _CategoryItemState createState() => _CategoryItemState();
+  State<TVCategoryItem> createState() => _TVCategoryItemState();
 }
 
-class _CategoryItemState extends State<_CategoryItem> {
+class _TVCategoryItemState extends State<TVCategoryItem> {
   bool isFocused = false;
   late FocusNode _focusNode;
 
@@ -324,25 +242,25 @@ class _CategoryItemState extends State<_CategoryItem> {
   Widget build(BuildContext context) {
     return InkWell(
       focusNode: _focusNode,
-      autofocus: widget.title == 'All' && widget.isSelected,
+      autofocus: widget.autofocus,
       onTap: widget.onTap,
       borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
-        margin: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: widget.isSelected
-              ? AppTheme.primaryGreen.withValues(alpha: 0.1)
+              ? AppTheme.primaryGreen.withOpacity(0.1)
               : isFocused
-              ? Colors.grey.withValues(alpha: 0.1)
+              ? Colors.grey.withOpacity(0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isFocused
                 ? AppTheme.primaryGreen
                 : widget.isSelected
-                ? AppTheme.primaryGreen.withValues(alpha: 0.5)
+                ? AppTheme.primaryGreen.withOpacity(0.5)
                 : Colors.transparent,
             width: isFocused ? 3 : (widget.isSelected ? 2 : 0),
           ),
@@ -356,7 +274,7 @@ class _CategoryItemState extends State<_CategoryItem> {
                   ? AppTheme.primaryGreen
                   : null,
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 widget.title,
@@ -371,11 +289,11 @@ class _CategoryItemState extends State<_CategoryItem> {
               ),
             ),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: widget.isSelected || isFocused
                     ? AppTheme.primaryGreen
-                    : Colors.grey.withValues(alpha: 0.2),
+                    : Colors.grey.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(

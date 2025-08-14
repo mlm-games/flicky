@@ -1,15 +1,13 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flicky/core/models/fdroid_app.dart';
+import 'package:flicky/core/models/repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import '../models/fdroid_app.dart';
-import '../models/repository.dart';
 import 'apk_installer.dart';
 import 'package:path/path.dart' as path;
 import 'package:collection/collection.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package_info_service.dart';
 
 final fdroidServiceProvider = Provider<FDroidService>((ref) {

@@ -1,15 +1,16 @@
+import 'package:flicky/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/app_theme.dart';
 
-class NavigationSidebar extends StatelessWidget {
+class TVNavigationSidebar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onIndexChanged;
 
-  const NavigationSidebar({
+  const TVNavigationSidebar({
+    Key? key,
     required this.selectedIndex,
     required this.onIndexChanged,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +18,9 @@ class NavigationSidebar extends StatelessWidget {
 
     return Container(
       width: 280,
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? Color(0xFF25282C) : Colors.white,
+        color: isDark ? const Color(0xFF25282C) : Colors.white,
         border: Border(
           right: BorderSide(
             color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
@@ -30,7 +31,7 @@ class NavigationSidebar extends StatelessWidget {
         children: [
           // Logo
           Container(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Row(
               children: [
                 Container(
@@ -40,12 +41,12 @@ class NavigationSidebar extends StatelessWidget {
                     color: AppTheme.primaryGreen,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.shop_2, color: Colors.white),
+                  child: const Icon(Icons.shop_2, color: Colors.white),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  children: const [
                     Text(
                       'Flicky',
                       style: TextStyle(
@@ -54,7 +55,7 @@ class NavigationSidebar extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Alt Store TV',
+                      'F-Droid for TV',
                       style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
@@ -63,31 +64,31 @@ class NavigationSidebar extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
 
           // Navigation items
-          _NavItem(
+          TVNavItem(
             icon: Icons.explore,
             label: 'Browse',
             isSelected: selectedIndex == 0,
             onTap: () => onIndexChanged(0),
             autofocus: selectedIndex == 0,
           ),
-          _NavItem(
+          TVNavItem(
             icon: Icons.category,
             label: 'Categories',
             isSelected: selectedIndex == 1,
             onTap: () => onIndexChanged(1),
             autofocus: selectedIndex == 1,
           ),
-          _NavItem(
+          TVNavItem(
             icon: Icons.update,
             label: 'Updates',
             isSelected: selectedIndex == 2,
             onTap: () => onIndexChanged(2),
             autofocus: selectedIndex == 2,
           ),
-          _NavItem(
+          TVNavItem(
             icon: Icons.settings,
             label: 'Settings',
             isSelected: selectedIndex == 3,
@@ -100,26 +101,27 @@ class NavigationSidebar extends StatelessWidget {
   }
 }
 
-class _NavItem extends StatefulWidget {
+class TVNavItem extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
   final bool autofocus;
 
-  const _NavItem({
+  const TVNavItem({
+    Key? key,
     required this.icon,
     required this.label,
     required this.isSelected,
     required this.onTap,
     this.autofocus = false,
-  });
+  }) : super(key: key);
 
   @override
-  _NavItemState createState() => _NavItemState();
+  State<TVNavItem> createState() => _TVNavItemState();
 }
 
-class _NavItemState extends State<_NavItem> {
+class _TVNavItemState extends State<TVNavItem> {
   bool isFocused = false;
   late FocusNode _focusNode;
 
@@ -152,14 +154,14 @@ class _NavItemState extends State<_NavItem> {
         onTap: widget.onTap,
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
-          duration: Duration(milliseconds: 200),
-          margin: EdgeInsets.symmetric(vertical: 4),
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: widget.isSelected
-                ? AppTheme.primaryGreen.withValues(alpha: 0.1)
+                ? AppTheme.primaryGreen.withOpacity(0.1)
                 : isFocused
-                ? Colors.grey.withValues(alpha: 0.1)
+                ? Colors.grey.withOpacity(0.1)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
@@ -173,7 +175,7 @@ class _NavItemState extends State<_NavItem> {
                 widget.icon,
                 color: widget.isSelected ? AppTheme.primaryGreen : null,
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Text(
                 widget.label,
                 style: TextStyle(

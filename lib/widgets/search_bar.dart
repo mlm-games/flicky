@@ -6,7 +6,7 @@ import 'tv_search_field.dart';
 
 class SearchBar extends ConsumerStatefulWidget {
   const SearchBar({Key? key}) : super(key: key);
-  
+
   @override
   ConsumerState<SearchBar> createState() => _SearchBarState();
 }
@@ -34,7 +34,7 @@ class _SearchBarState extends ConsumerState<SearchBar> {
 
   void _showFilterDialog() {
     final sortOption = ref.read(sortOptionProvider);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -44,18 +44,20 @@ class _SearchBarState extends ConsumerState<SearchBar> {
           children: [
             const Text('Sort by:'),
             const SizedBox(height: 8),
-            ...SortOption.values.map((option) => RadioListTile<SortOption>(
-              title: Text(_getSortOptionLabel(option)),
-              value: option,
-              groupValue: sortOption,
-              onChanged: (value) {
-                if (value != null) {
-                  ref.read(sortOptionProvider.notifier).state = value;
-                  Navigator.pop(context);
-                }
-              },
-              autofocus: option == sortOption,
-            )),
+            ...SortOption.values.map(
+              (option) => RadioListTile<SortOption>(
+                title: Text(_getSortOptionLabel(option)),
+                value: option,
+                groupValue: sortOption,
+                onChanged: (value) {
+                  if (value != null) {
+                    ref.read(sortOptionProvider.notifier).state = value;
+                    Navigator.pop(context);
+                  }
+                },
+                autofocus: option == sortOption,
+              ),
+            ),
           ],
         ),
         actions: [
@@ -90,10 +92,7 @@ class _SearchBarState extends ConsumerState<SearchBar> {
             alignment: Alignment.centerRight,
             children: [
               const TVSearchField(),
-              Positioned(
-                right: 48,
-                child: VoiceSearchButton(), 
-              ),
+              Positioned(right: 48, child: VoiceSearchButton()),
             ],
           ),
         ),
@@ -106,13 +105,13 @@ class _SearchBarState extends ConsumerState<SearchBar> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _filterFocused 
+              color: _filterFocused
                   ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: _filterFocused 
-                    ? Theme.of(context).primaryColor 
+                color: _filterFocused
+                    ? Theme.of(context).primaryColor
                     : Colors.grey.withValues(alpha: 0.3),
                 width: _filterFocused ? 2 : 1,
               ),
