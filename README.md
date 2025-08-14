@@ -3,7 +3,8 @@
 
 ![Banner](assets/banner.svg)
 
-> The UI is TV oriented, Android UI is secondary
+> The UI is TV oriented, Android UI is secondary.
+> 
 > For android (mobile) devices, would recommend Droidify or Fdroid Basic for security and better UI
 
 
