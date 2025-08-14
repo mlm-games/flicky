@@ -16,32 +16,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isSyncing = false;
 
   Future<void> _syncRepositories() async {
-    setState(() => _isSyncing = true);
+    await ref.read(syncNotifierProvider.notifier).syncRepositories(force: true);
 
-    try {
-      await ref
-          .read(repositorySyncServiceProvider)
-          .syncAllRepositories(force: true);
-      ref.invalidate(appsProvider);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Repositories synced successfully')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sync failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSyncing = false);
-      }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Repositories synced successfully')),
+      );
     }
   }
 
@@ -49,6 +29,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final syncService = ref.watch(repositorySyncServiceProvider);
+    final syncState = ref.watch(syncNotifierProvider); // Add this
 
     return Scaffold(
       body: ListView(
@@ -61,17 +42,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               Spacer(),
-              // Sync button
+              // Updated sync button
               ElevatedButton.icon(
-                onPressed: _isSyncing ? null : _syncRepositories,
-                icon: _isSyncing
+                onPressed: syncState.isSyncing ? null : _syncRepositories,
+                icon: syncState.isSyncing
                     ? SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Icon(Icons.sync),
-                label: Text(_isSyncing ? 'Syncing...' : 'Sync Now'),
+                label: Text(syncState.isSyncing ? 'Syncing...' : 'Sync Now'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryGreen,
                   foregroundColor: Colors.white,
@@ -79,6 +60,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
+
           SizedBox(height: 8),
           FutureBuilder<DateTime?>(
             future: syncService.getLastSyncTime(),

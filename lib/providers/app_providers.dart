@@ -7,18 +7,24 @@ import '../services/installation_service.dart';
 import '../services/package_info_service.dart';
 import '../services/repository_sync_service.dart';
 
-final repositoriesProvider = StateNotifierProvider<RepositoryNotifier, List<Repository>>((ref) {
-  return RepositoryNotifier();
-});
+final repositoriesProvider =
+    StateNotifierProvider<RepositoryNotifier, List<Repository>>((ref) {
+      return RepositoryNotifier();
+    });
+
+final syncStatusProvider = StateProvider<String>((ref) => '');
+final syncProgressProvider = StateProvider<double>((ref) => 0.0);
+final isSyncingProvider = StateProvider<bool>((ref) => false);
 
 class RepositoryNotifier extends StateNotifier<List<Repository>> {
-  RepositoryNotifier() : super([
-    Repository.fdroid(),
-    Repository.izzyOnDroid(),
-    Repository.fdroidArchive(),
-    Repository.guardian(),
-  ]);
-  
+  RepositoryNotifier()
+    : super([
+        Repository.fdroid(),
+        Repository.izzyOnDroid(),
+        Repository.fdroidArchive(),
+        Repository.guardian(),
+      ]);
+
   void toggleRepository(String url) {
     state = state.map((repo) {
       if (repo.url == url) {
@@ -34,11 +40,11 @@ class RepositoryNotifier extends StateNotifier<List<Repository>> {
       return repo;
     }).toList();
   }
-  
+
   void addRepository(Repository repo) {
     state = [...state, repo];
   }
-  
+
   void removeRepository(String url) {
     state = state.where((repo) => repo.url != url).toList();
   }
@@ -47,36 +53,35 @@ class RepositoryNotifier extends StateNotifier<List<Repository>> {
 final repositorySyncServiceProvider = Provider<RepositorySyncService>((ref) {
   final repositories = ref.watch(repositoriesProvider);
   final fdroidService = ref.watch(fdroidServiceProvider);
-  
-  return RepositorySyncService(
-    ref,
-    () => repositories,  
-    fdroidService,       
-  );
+
+  return RepositorySyncService(ref, () => repositories, fdroidService);
 });
 
 final appsProvider = FutureProvider<List<FDroidApp>>((ref) async {
   final syncService = ref.watch(repositorySyncServiceProvider);
-  
+
   // Try to get cached data first
   final cached = await syncService.getCachedApps();
   if (cached.isNotEmpty) {
     // Check if we should sync in background
     if (await syncService.shouldSync()) {
       // Sync in background without blocking UI
-      syncService.syncAllRepositories().then((freshApps) {
-        if (freshApps.isNotEmpty) {
-          // Invalidate provider to reload with fresh data
-          ref.invalidateSelf();
-        }
-      }).catchError((error) {
-        // Silent fail for background sync
-      });
+      syncService
+          .syncAllRepositories(force: false)
+          .then((freshApps) {
+            if (freshApps.isNotEmpty) {
+              // Invalidate provider to reload with fresh data
+              ref.invalidateSelf();
+            }
+          })
+          .catchError((error) {
+            // Silent fail for background sync
+          });
     }
-    
+
     return cached;
   }
-  
+
   // No cache, do full sync
   try {
     return await syncService.syncAllRepositories(force: true);
@@ -103,49 +108,115 @@ final installationServiceProvider = Provider<InstallationService>((ref) {
 
 final installedAppsProvider = FutureProvider<List<FDroidApp>>((ref) async {
   final allApps = await ref.watch(appsProvider.future);
-  final installedPackageNames = await PackageInfoService.getInstalledPackageNames();
-  
-  return allApps.where((app) => installedPackageNames.contains(app.packageName)).toList();
+  final installedPackageNames =
+      await PackageInfoService.getInstalledPackageNames();
+
+  return allApps
+      .where((app) => installedPackageNames.contains(app.packageName))
+      .toList();
 });
 
 final availableUpdatesProvider = FutureProvider<List<FDroidApp>>((ref) async {
   final installed = await ref.watch(installedAppsProvider.future);
   final allApps = await ref.watch(appsProvider.future);
-  
+
   final updates = <FDroidApp>[];
-  
+
   for (final installedApp in installed) {
-    final currentVersion = await PackageInfoService.getAppVersion(installedApp.packageName);
+    final currentVersion = await PackageInfoService.getAppVersion(
+      installedApp.packageName,
+    );
     if (currentVersion != null) {
       final latestApp = allApps.firstWhere(
         (app) => app.packageName == installedApp.packageName,
         orElse: () => installedApp,
       );
-      
+
       if (latestApp.version != currentVersion) {
         updates.add(latestApp);
       }
     }
   }
-  
+
   return updates;
 });
 
-final downloadProgressProvider = StateProvider<Map<String, double>>((ref) => {});
+class SyncNotifier extends StateNotifier<SyncState> {
+  final Ref ref;
+
+  SyncNotifier(this.ref) : super(SyncState());
+
+  Future<void> syncRepositories({bool force = false}) async {
+    if (state.isSyncing) return;
+
+    state = state.copyWith(
+      isSyncing: true,
+      status: 'Starting sync...',
+      progress: 0.0,
+    );
+
+    try {
+      final syncService = ref.read(repositorySyncServiceProvider);
+      final apps = await syncService.syncAllRepositories(
+        force: force,
+        onProgress: (status, progress) {
+          state = state.copyWith(status: status, progress: progress);
+        },
+      );
+
+      // Refresh the apps provider
+      ref.invalidate(appsProvider);
+
+      state = state.copyWith(isSyncing: false, status: '', progress: 0.0);
+    } catch (e) {
+      state = state.copyWith(
+        isSyncing: false,
+        status: 'Sync failed',
+        progress: 0.0,
+      );
+    }
+  }
+}
+
+class SyncState {
+  final bool isSyncing;
+  final String status;
+  final double progress;
+
+  SyncState({this.isSyncing = false, this.status = '', this.progress = 0.0});
+
+  SyncState copyWith({bool? isSyncing, String? status, double? progress}) {
+    return SyncState(
+      isSyncing: isSyncing ?? this.isSyncing,
+      status: status ?? this.status,
+      progress: progress ?? this.progress,
+    );
+  }
+}
+
+final syncNotifierProvider = StateNotifierProvider<SyncNotifier, SyncState>((
+  ref,
+) {
+  return SyncNotifier(ref);
+});
+
+final downloadProgressProvider = StateProvider<Map<String, double>>(
+  (ref) => {},
+);
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
 final filteredAppsProvider = Provider<AsyncValue<List<FDroidApp>>>((ref) {
   final query = ref.watch(searchQueryProvider).toLowerCase();
   final apps = ref.watch(appsProvider);
-  
+
   return apps.whenData((appList) {
     if (query.isEmpty) return appList;
-    
+
     return appList.where((app) {
       return app.name.toLowerCase().contains(query) ||
-             app.summary.toLowerCase().contains(query) ||
-             app.packageName.toLowerCase().contains(query);
+          app.summary.toLowerCase().contains(query) ||
+          app.packageName.toLowerCase().contains(query);
     }).toList();
   });
 });
@@ -154,7 +225,7 @@ final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
 
 final categoriesProvider = Provider<List<String>>((ref) {
   final apps = ref.watch(appsProvider);
-  
+
   return apps.maybeWhen(
     data: (appList) {
       final categories = appList.map((app) => app.category).toSet().toList();
@@ -167,15 +238,17 @@ final categoriesProvider = Provider<List<String>>((ref) {
 
 enum SortOption { name, updated, size, added }
 
-final sortOptionProvider = StateProvider<SortOption>((ref) => SortOption.updated);
+final sortOptionProvider = StateProvider<SortOption>(
+  (ref) => SortOption.updated,
+);
 
 final sortedAppsProvider = Provider<AsyncValue<List<FDroidApp>>>((ref) {
   final apps = ref.watch(filteredAppsProvider);
   final sortOption = ref.watch(sortOptionProvider);
-  
+
   return apps.whenData((appList) {
     final sorted = List<FDroidApp>.from(appList);
-    
+
     switch (sortOption) {
       case SortOption.name:
         sorted.sort((a, b) => a.name.compareTo(b.name));
@@ -190,7 +263,7 @@ final sortedAppsProvider = Provider<AsyncValue<List<FDroidApp>>>((ref) {
         sorted.sort((a, b) => b.added.compareTo(a.added));
         break;
     }
-    
+
     return sorted;
   });
 });

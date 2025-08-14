@@ -1,3 +1,4 @@
+import 'package:flicky/utils/device_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,16 +17,28 @@ void main() async {
   await PackageInfoService.init();
   await RepositorySyncService.init();
 
-  // Set TV orientation
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
+  final isTV = await DeviceUtils.isTV();
+  if (isTV) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  } else {
+    // Mobile/Tablet - all orientations
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  }
 
   runApp(ProviderScope(child: FDroidTV()));
 }
 
 class FDroidTV extends ConsumerWidget {
+  const FDroidTV({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);

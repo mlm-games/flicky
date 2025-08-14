@@ -1,3 +1,5 @@
+import 'package:flicky/utils/device_utils.dart';
+import 'package:flicky/widgets/sync_progress_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_providers.dart';
@@ -22,6 +24,7 @@ class BrowseScreen extends ConsumerWidget {
                 children: [
                   custom.SearchBar(),
                   SizedBox(height: 10),
+                  SyncProgressIndicator(),
                   // Show loading status
                   apps.when(
                     data: (appList) => Text(
@@ -93,6 +96,18 @@ class BrowseScreen extends ConsumerWidget {
 
   int _getGridCrossAxisCount(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
+    final isMobile = DeviceUtils.isMobile(context);
+
+    if (isMobile) {
+      // Mobile in portrait
+      if (MediaQuery.of(context).orientation == Orientation.portrait) {
+        return width > 600 ? 3 : 2;
+      }
+      // Mobile in landscape
+      return width > 900 ? 4 : 3;
+    }
+
+    // TV/Desktop
     if (width > 1400) return 6;
     if (width > 1200) return 5;
     if (width > 900) return 4;

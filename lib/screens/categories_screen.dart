@@ -1,3 +1,4 @@
+import 'package:flicky/utils/device_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_providers.dart';
@@ -18,7 +19,78 @@ class CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider);
     final apps = ref.watch(appsProvider);
+    final isMobile = DeviceUtils.isMobile(context);
+    final isPortrait =
+        MediaQuery.of(context).orientation == Orientation.portrait;
 
+    if (isMobile && isPortrait) {
+      return Scaffold(
+        appBar: AppBar(title: Text('Categories')),
+        body: apps.when(
+          data: (appList) {
+            final filteredApps = selectedCategory == 'All'
+                ? appList
+                : appList
+                      .where((app) => app.category == selectedCategory)
+                      .toList();
+
+            return Column(
+              children: [
+                // Horizontal scrollable categories
+                Container(
+                  height: 50,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    children: [
+                      _buildCategoryChip(
+                        'All',
+                        apps.maybeWhen(
+                          data: (list) => list.length,
+                          orElse: () => 0,
+                        ),
+                      ),
+                      ...categories.map(
+                        (category) => _buildCategoryChip(
+                          category,
+                          apps.maybeWhen(
+                            data: (list) => list
+                                .where((app) => app.category == category)
+                                .length,
+                            orElse: () => 0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1),
+                // Apps grid
+                Expanded(
+                  child: GridView.builder(
+                    padding: EdgeInsets.all(16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.8,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount: filteredApps.length,
+                    itemBuilder: (context, index) {
+                      return AppCard(app: filteredApps[index]);
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+          loading: () => Center(child: CircularProgressIndicator()),
+          error: (error, stack) => Center(child: Text('Error: $error')),
+        ),
+      );
+    }
+
+    // Original TV/Desktop layout
     return Scaffold(
       body: Row(
         children: [
@@ -133,6 +205,23 @@ class CategoriesScreenState extends ConsumerState<CategoriesScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryChip(String category, int count) {
+    final isSelected = selectedCategory == category;
+
+    return Padding(
+      padding: EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: Text('$category ($count)'),
+        selected: isSelected,
+        onSelected: (_) => setState(() => selectedCategory = category),
+        backgroundColor: isSelected
+            ? AppTheme.primaryGreen.withOpacity(0.1)
+            : null,
+        selectedColor: AppTheme.primaryGreen.withOpacity(0.2),
       ),
     );
   }
