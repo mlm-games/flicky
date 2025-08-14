@@ -1,0 +1,134 @@
+<resources>
+    <string name="app">App</string>
+    <string name="set_as_default_launcher">Imposta come launcher predefinito</string>
+    <string name="set_as_default_launcher_u"><u>Imposta come launcher predefinito</u></string>
+    <string name="set_as_default_launcher_first">Imposta come launcher predefinito</string>
+    <string name="app_text_color"> Colore del testo</string>
+    <string name="double_tap_to_lock_screen">Tocca due volte per bloccare</string>
+    <string name="admin_permission_message">Flicky userà l’autorizzazione della schermata di blocco in modo responsabile. Flicky non raccoglie né condivide alcun dato.</string>
+    <string name="about">Info</string>
+    <string name="off">Off</string>
+    <string name="on">On</string>
+    <string name="black">Scuro</string>
+    <string name="white">Chiaro</string>
+    <string name="change_default_launcher">Cambia il launcher  predefinito</string>
+    <string name="privacy">Privacy</string>
+    <string name="share">Condividi</string>
+    <string name="share_now">Condividi</string>
+    <string name="rate">Valuta</string>
+    <string name="rate_now">Valuta</string>
+    <string name="follow">Segui</string>
+    <string name="email">E-mail</string>
+
+    <string name="donate">Donazioni</string>
+    <string name="swipe_up_for_apps">1. Scorri verso l\'alto per tutte le app\n2. Premi a lungo in qualsiasi punto per le impostazioni</string>
+    <string name="apps_on_home_screen">App sulla schermata iniziale</string>
+    <string name="left">Sinistra</string>
+    <string name="right">Destra</string>
+    <string name="center">Centrato</string>
+    <string name="home_layout_alignment">Allineamento app in Home screen</string>
+    <string name="swipe_left_app">Scorri verso sinistra</string>
+    <string name="swipe_right_app">Scorri verso destra l\'app</string>
+    <string name="_0">0</string>
+    <string name="_1">1</string>
+    <string name="_2">2</string>
+    <string name="_3">3</string>
+    <string name="_4">4</string>
+    <string name="_5">5</string>
+    <string name="_6">6</string>
+    <string name="_7">7</string>
+    <string name="_8">8</string>
+    <string name="app_drawer_tips">Suggerimento: inizia a digitare il nome di un\'app per avviarla automaticamente</string>
+    <string name="okay">OK</string>
+    <string name="cool">Freddo</string>
+    <string name="auto_show_keyboard">Tastiera di visualizzazione automatica</string>
+    <string name="hide">Nascondi</string>
+    <string name="status_bar">Mostra la barra di stato</string>
+    <string name="rename">Rinomina</string>
+    <string name="show_date_time">Mostra data e ora</string>
+    <string name="appearance">Aspetto</string>
+    <string name="gestures">Gesti</string>
+    <string name="theme_mode">Modalità tema</string>
+    <string name="system_default">di sistema</string>
+    <string name="dark">Scuro</string>
+    <string name="light">Chiaro</string>
+    <string name="welcome_to_flicky_settings">Benvenuto nelle impostazioni!
+        \n\nRicorda, se hai domande, la nostra pagina Informazioni ha la risposta.</string>
+    <string name="rate_us_message">Ehi, trovi utile Flicky? Se sì, una valutazione a 5 stelle è il modo migliore per sostenerci.
+        \n\nGrazie e non lo vedrai più.</string>
+    <string name="share_message">Ciao, abbiamo bisogno del tuo aiuto! L\'anno scorso abbiamo superato il milione di download. Quest’anno vogliamo raggiungere un milione in più ma non possiamo farcela da soli.
+        \n\nSaresti così gentile da condividere Flicky con i tuoi amici, per favore? Grazie e buona giornata!</string>
+    <string name="keyboard_message">Ciao, la tastiera è il modo più veloce per trovare e avviare le app in Flicky. Possiamo chiederti di metterlo alla prova ancora per qualche giorno e poi decidere?
+        \n\nSei sempre tu a scegliere.</string>
+    <string name="digital_wellbeing_message">Se desideri impostare limiti di tempo per determinate app, la funzionalità Benessere digitale di Android può aiutarti a farlo.
+        \n\nCerca Benessere digitale nelle impostazioni del telefono e attivalo.</string>
+    <string name="app_usage_message">Per visualizzare/nascondere il tempo di utilizzo dello schermo sulla schermata iniziale, conceda o neghi il permesso di utilizzo dell\'app.
+        \n\nNota: Non vengono raccolti dati sull\'utilizzo dell\'app. Tutto viene elaborato sul tuo dispositivo.</string>
+    <string name="accessibility_service_description">L\'autorizzazione di accessibilità è necessaria per abilitare il doppio tocco per il blocco schermo. Qualsiasi dato acquisito da Flicky tramite questo servizio rimarrà all’interno del telefono</string>
+    <string name="support_flicky_for_free">Supporta Flicky gratuitamente utilizzando il nostro link di affiliazione su Amazon.</string>
+    <string name="support_flicky_message">Ogni volta che acquisti qualcosa utilizzando il nostro link, riceviamo una piccola commissione. Salva il link e usalo ogni volta che fai acquisti online.\n Grazie!</string>
+    <string name="open">Link aperto</string>
+    <string name="copy">copia</string>
+    <string name="close">chiudi</string>
+    <string name="not_now">Non ora</string>
+    <string name="public_roadmap">Roadmap pubblica di Flicky</string>
+    <string name="instagram">Instagram</string>
+    <string name="twitter">Twitter</string>
+    <string name="roadmap">Roadmap</string>
+    <string name="date">Data</string>
+    <string name="date_only">Solo data</string>
+    <string name="bottom_on">In basso: acceso</string>
+    <string name="bottom_off">In basso: spento</string>
+    <string name="please_set_flicky_as_default_first">Imposta Flicky come launcher predefinito</string>
+    <string name="affiliate">Affiliazione</string>
+    <string name="tip_start_typing_for_rename">Suggerimento: inizia a digitare per RINOMINARE l\'app</string>
+    <string name="hidden_apps_message">Nota: tocca \'Flicky\' nella parte superiore di questa pagina per trovare le tue app nascoste.
+        \n\nUlteriori dettagli sono disponibili nella pagina Informazioni di seguito.</string>
+    <string name="swipe_down_for">Scorri verso il basso per</string>
+    <string name="search">Ricerca</string>
+    <string name="notifications">Notifiche</string>
+    <string name="accessibility_disclosure">Attiva o disattiva il servizio di accessibilità di Flicky nelle impostazioni del tuo dispositivo per abilitare o disabilitare questa funzione.
+        \n\n Questo servizio viene utilizzato solo per consentirti di spegnere lo schermo del tuo dispositivo utilizzando il gesto del doppio tocco. Il nostro servizio di accessibilità non raccoglie né condivide alcun dato.</string>
+    <string name="accept">Accetta</string>
+    <string name="permission">Autorizza</string>
+    <string name="double_tap_lock">Tocca due volte per bloccare</string>
+    <string name="enable">Abilita</string>
+    <string name="disable">disattiva</string>
+    <string name="not_working"><u>Problemi?</u></string>
+    <string name="info" formatted="false">Informazioni</string>
+    <string name="delete">Elimina</string>
+    <string name="text_size">Dimensione del testo</string>
+    <string name="enabled">Abilitato</string>
+    <string name="disabled">Disabilitato</string>
+    <string name="please_turn_on_double_tap_to_unlock">Attiva il doppio tocco per sbloccare</string>
+    <string name="launcher_failed_to_lock_device">Flicky non è riuscito a bloccare il dispositivo.\nControlla le impostazioni dell\'app.</string>
+    <string name="long_press_to_select_app">Premere a lungo per selezionare l\'app</string>
+    <string name="unable_to_open_app">Impossibile aprire l\'app</string>
+    <string name="copied">Copiato</string>
+    <string name="system_app_cannot_delete">Impossibile eliminare le app di sistema</string>
+    <string name="type_a_new_app_name_first">Digita prima un nuovo nome per l\'app</string>
+    <string name="app_not_found">App non trovata</string>
+    <string name="unable_to_launch_app">Impossibile avviare l\'app</string>
+    <string name="search_for_Launcher_or_home_app">Cerca Launcher o l\'app Home</string>
+    <string name="swipe_left_app_enabled">Scorri verso sinistra per abilitare app </string>
+    <string name="swipe_right_app_enabled">Scorri verso destra per abilitare app</string>
+    <string name="swipe_left_app_disabled">Scorri verso sinistra per disabilitare l’app</string>
+    <string name="swipe_right_app_disabled">Scorri verso destra per disabilitare app </string>
+    <string name="change_to_your_preferred_wallpaper_in_settings">Lo sfondo verrà aggiornato a breve</string>
+    <string name="flicky_is_not_default_launcher">Flicky non è il programma di avvio predefinito.\nL\'aggiornamento giornaliero dello sfondo potrebbe non riuscire.</string>
+    <string name="long_press_to_enable">Premere a lungo per abilitare</string>
+    <string name="no_hidden_apps">Nessuna app nascosta</string>
+    <string name="hidden_apps">App nascoste</string>
+    <string name="adapter_show">mostra</string>
+    <string name="adapter_hide">nascondi</string>
+    <string name="are_you_using_your_phone_or_is_your_phone_using_you">Stai usando il tuo telefono, o è il tuo telefono che sta usando te?</string>
+    <string name="about_flicky">Info Flicky</string>
+    <string name="learn_more">Saperne di più</string>
+    <string name="screen_time">Tempo di schermo</string>
+    <string name="did_you_know">Lo sapevate?</string>
+    <string name="leave_a_review">Lascia una recensione</string>
+    <string name="review_message">Flicky è e sarà sempre completamente gratuito. Non ha pubblicità. Non raccoglie dati. Ancora più importante, ti aiuta a ridurre il tempo trascorso davanti allo schermo e a vivere una vita digitale più sana.
+        \n\nCrediamo che passare a un launcher minimale sia un\'ottima decisione. Anche se siamo ovviamente di parte, ci auguriamo che l\'esperienza ti piaccia. Sentitevi liberi di condividere i tuoi pensieri con noi!</string>
+    <string name="alignment_changed">Allineamento cambiato ✅</string>
+    <string name="home_screen">Schermata principale</string>
+</resources>

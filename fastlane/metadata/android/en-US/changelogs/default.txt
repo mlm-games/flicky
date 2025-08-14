@@ -1,0 +1,1 @@
+Check the commit names as they usually highlight differences (or comparing tag diffs gives all changes between 2 versions)

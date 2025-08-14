@@ -1,0 +1,75 @@
+name: Dependabot auto-merge
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  actions: read
+  statuses: read
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.user.login }} == 'dependabot[bot]'
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR_URL: ${{github.event.pull_request.html_url}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: SetUp auto-merge
+        id: auto-merge
+        uses: dependabot/fetch-metadata@v2.2.0
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          
+      - name: Wait 5 minutes for other checks to complete
+        run: sleep 300
+        
+      - name: Check if all workflows have passed
+        run: |
+          MAX_RETRIES=6
+          RETRY_INTERVAL=300  # Specify 5 minutes in seconds
+          ATTEMPT=0
+          CURRENT_WORKFLOW="Dependabot auto-merge"
+
+          while [ $ATTEMPT -lt $MAX_RETRIES ]; do
+            echo "Fetching PR status checks..."
+            WORKFLOWS=$(gh pr view "$PR_URL" --json statusCheckRollup -q '.statusCheckRollup')
+
+            # Debug: Output the status of all checks
+            echo "Debug: Current status of all checks:"
+            WORKFLOW_STATUS=$(jq -r '[.[] | {name: (.workflowName // .name // .context), type: .["__typename"], status: .status, state: .state, conclusion: .conclusion}]' <<< "$WORKFLOWS")
+
+            # Check if all checks except the current workflow have succeeded
+            all_passed=true
+            while IFS= read -r check; do
+              name=$(jq -r '.name' <<< "$check")
+              type=$(jq -r '.type' <<< "$check")
+              status=$(jq -r 'if .type == "CheckRun" then .conclusion else .state end' <<< "$check")
+              if [[ "$name" != "$CURRENT_WORKFLOW" && "$status" != "SUCCESS" ]]; then
+                all_passed=false
+                echo "Failed check: $name ($type) - Status: $status"
+                break
+              fi
+            done < <(echo "$WORKFLOW_STATUS" | jq -c '.[]')
+
+            if $all_passed; then
+              echo "All other checks have passed"
+              exit 0
+            else
+              echo "Some status checks have not passed. Attempt $((ATTEMPT + 1)) of $MAX_RETRIES."
+              echo "Retrying in $RETRY_INTERVAL seconds..."
+              sleep $RETRY_INTERVAL
+              ATTEMPT=$((ATTEMPT + 1))
+            fi
+          done
+          echo "Failed to merge the PR after $MAX_RETRIES attempts due to failing status checks."
+          exit 1
+          
+      - name: Auto-merge for Dependabot PRs
+        run: gh pr merge --auto --merge "$PR_URL"

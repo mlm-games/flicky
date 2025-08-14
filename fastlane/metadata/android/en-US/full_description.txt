@@ -1,0 +1,4 @@
+An FDroid client with a TV friendly UI. 
+
+
+Does support android devices, but UI is not prioritized for it, You can use FDroid Basic or Droidify for a better experience

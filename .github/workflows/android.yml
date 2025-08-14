@@ -1,0 +1,172 @@
+name: Android App Releases
+
+on:
+  schedule:
+    - cron: '0 0 1 */2 *'  # Every other month on the 1st
+  workflow_dispatch: 
+    inputs:
+      upload_releases:
+        description: 'Upload releases'
+        required: true
+        default: 'true'
+        type: boolean
+      mark_prerelease:
+        description: 'Mark as prerelease'
+        required: true
+        default: 'false'
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  JAVA_VERSION: '21'
+  JAVA_DISTRIBUTION: 'corretto'
+  BUILD_GRADLE_PATH: 'app/build.gradle.kts'
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2 -Dorg.gradle.caching=true"
+
+jobs:
+  prepare-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      old_version_name: ${{ steps.version.outputs.old_version_name }}
+      version_name: ${{ steps.version.outputs.version_name }}
+      base_version_code: ${{ steps.version.outputs.version_code }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      release_notes: ${{ steps.release-notes.outputs.release-notes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'gradle'
+      
+      - id: version
+        name: Update Version Numbers
+        run: |
+          OLD_VERSION_CODE=$(grep "versionCode" $BUILD_GRADLE_PATH | head -1 | grep -oE '[0-9]+')
+          OLD_VERSION_NAME=$(grep "versionName" $BUILD_GRADLE_PATH | head -1 | grep -oE '"([^"]+)"' | tr -d '"')
+          
+          NEW_VERSION_CODE=$((OLD_VERSION_CODE + 10))
+          
+          IFS='.' read -ra VERSION_PARTS <<< "$OLD_VERSION_NAME"
+          MINOR=$((VERSION_PARTS[2] + 1))
+          VERSION_PARTS[2]=$MINOR
+          NEW_VERSION_NAME="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.${VERSION_PARTS[2]}"
+          
+          BUILD_DATE=$(date +'%Y%m%d')
+
+          echo "old_version_name=$OLD_VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "version_name=$NEW_VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "version_code=$NEW_VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+          # Update build.gradle.kts
+          sed -i "s/versionCode = $OLD_VERSION_CODE/versionCode = $NEW_VERSION_CODE/" $BUILD_GRADLE_PATH
+          sed -i "s/versionName = \"$OLD_VERSION_NAME\"/versionName = \"$NEW_VERSION_NAME\"/" $BUILD_GRADLE_PATH
+
+      - name: Generate Release Notes
+        id: release-notes
+        uses: mlm-games/release-notes-generator@main
+        with:
+          version: ${{ steps.version.outputs.version_name }}
+          changelog-path: 'CHANGELOG.md'
+          version-file-path: './fastlane/metadata/android/en-US/changelogs/${{ steps.version.outputs.version_code }}.txt'
+          version-code: '${{ steps.version.outputs.version_code }}'
+          format: '- {{subject}}'
+          exclude-patterns: 'chore:,ci:,docs:,build:,Bump version,Merge pull request,[skip ci]'
+          auto-commit: 'false'
+
+      - name: Commit Changes
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add .
+          git commit -m "chore: bump version to ${{ steps.version.outputs.version_name }} [skip ci]" || echo "No changes to commit"
+          git push
+
+  build-and-release:
+    needs: prepare-version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'gradle'
+          
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+          
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE }}" > release.keystore.asc
+          gpg -d --passphrase "${{ secrets.KEYSTORE_PASSPHRASE }}" --batch release.keystore.asc > release.keystore
+
+      - name: Build APKs
+        run: |
+          ./gradlew clean assembleRelease \
+            -Pandroid.injected.signing.store.file=$PWD/release.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.STORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+
+      - name: Prepare APKs
+        run: |
+          mkdir -p artifacts
+          
+          # Rename APKs with version
+          for apk in app/build/outputs/apk/release/*.apk; do
+            if [ -f "$apk" ]; then
+              arch=$(echo "$apk" | grep -oE '(arm64-v8a|armeabi-v7a|x86_64|x86)')
+              if [ -n "$arch" ]; then
+                cp "$apk" "artifacts/flicky-${{ needs.prepare-version.outputs.version_name }}-${arch}.apk"
+              fi
+            fi
+          done
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        if: inputs.upload_releases == false || github.event_name != 'workflow_dispatch'
+        with:
+          name: release-${{ needs.prepare-version.outputs.version_name }}
+          path: artifacts/*.apk
+
+      - name: Create GitHub Release
+        if: github.event_name == 'workflow_dispatch' && inputs.upload_releases == true
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.apk
+          name: Flicky ${{ needs.prepare-version.outputs.version_name }}
+          tag_name: ${{ needs.prepare-version.outputs.version_name }}
+          prerelease: ${{ inputs.mark_prerelease }}
+          body: |
+            ## What's New
+            ${{ needs.prepare-version.outputs.release_notes }}
+            
+            ### Downloads
+            | Architecture | APK |
+            |-------------|-----|
+            | ARM64 (Most phones) | `flicky-${{ needs.prepare-version.outputs.version_name }}-arm64-v8a.apk` |
+            | ARM32 (Older phones) | `flicky-${{ needs.prepare-version.outputs.version_name }}-armeabi-v7a.apk` |
+            | x86_64 (Emulators) | `flicky-${{ needs.prepare-version.outputs.version_name }}-x86_64.apk` |
+            | x86 (Old emulators) | `flicky-${{ needs.prepare-version.outputs.version_name }}-x86.apk` |
