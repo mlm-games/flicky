@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
@@ -18,6 +19,7 @@ import app.flicky.ui.components.cards.AdaptiveAppCard
 @Composable
 fun BrowseScreen(
     apps: List<FDroidApp>,
+    query: String,
     sort: SortOption,
     onSortChange: (SortOption)->Unit,
     onSearchChange: (String)->Unit,
@@ -47,9 +49,9 @@ fun BrowseScreen(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(20.dp)) {
             // Header row: Search + Voice + Sync + Sort + Menu
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Row(verticalAlignment = CenterVertically) {
                 TextField(
-                    value = "",
+                    value = query,
                     onValueChange = onSearchChange,
                     placeholder = { Text("Search apps...") },
                     modifier = Modifier.weight(1f)
@@ -125,7 +127,7 @@ private fun SortButton(sort: SortOption, onSortChange: (SortOption)->Unit) {
             title = { Text("Sort by") },
             text = {
                 Column {
-                    SortOption.values().forEach {
+                    SortOption.entries.forEach {
                         TextButton(onClick = { onSortChange(it); open=false }) { Text(it.name) }
                     }
                 }

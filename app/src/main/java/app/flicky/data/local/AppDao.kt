@@ -1,6 +1,9 @@
 package app.flicky.data.local
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import app.flicky.data.model.FDroidApp
 import kotlinx.coroutines.flow.Flow
 
@@ -8,6 +11,9 @@ import kotlinx.coroutines.flow.Flow
 interface AppDao {
     @Query("SELECT * FROM apps")
     fun observeAll(): Flow<List<FDroidApp>>
+
+    @Query("SELECT COUNT(*) FROM apps")
+    suspend fun count(): Int
 
     @Query("SELECT * FROM apps WHERE name LIKE '%' || :q || '%' OR summary LIKE '%' || :q || '%' OR packageName LIKE '%' || :q || '%'")
     fun search(q: String): Flow<List<FDroidApp>>

@@ -39,12 +39,10 @@ fun SystemUIController(
  * Non-composable function to safely update status bar visibility
  */
 fun updateStatusBarVisibility(activity: Activity?, showStatusBar: Boolean) {
-    if (activity == null || !activity.window.isActive) return
-
+    if (activity == null) return
     try {
         val window = activity.window
         val decorView = window.decorView
-
         if (showStatusBar) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 window.insetsController?.show(WindowInsets.Type.statusBars())
@@ -66,7 +64,6 @@ fun updateStatusBarVisibility(activity: Activity?, showStatusBar: Boolean) {
             }
         }
     } catch (e: Exception) {
-        // Safely handle any exceptions
         e.printStackTrace()
     }
 }

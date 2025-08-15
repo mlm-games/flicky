@@ -34,8 +34,8 @@ fun SettingsScreen(vm: SettingsViewModel) {
                             val current = prop.get(settings) as? Boolean ?: false
                             SettingsToggle(
                                 title = ann.title,
-                                checked = current,
-                                onCheckedChange = { vm.update(prop.name, it) }
+                                isChecked = current,
+                                onCheckedChange = { vm.update(prop.name, it) },
                             )
                         }
 

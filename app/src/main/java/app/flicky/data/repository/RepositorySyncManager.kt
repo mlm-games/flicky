@@ -1,5 +1,6 @@
 package app.flicky.data.repository
 
+import android.util.Log
 import app.flicky.data.local.AppDao
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.remote.FDroidApi
@@ -49,9 +50,11 @@ class RepositorySyncManager(
                     totalApps += batch.size
                     batch.clear()
                 }
-                if (!force && headers != null) {
+                if (headers != null) {
                     headersStore.put(repo.url, RepoHeader(etag = headers.etag, lastModified = headers.lastModified))
                 }
+                val inserted = dao.count()
+                Log.d("Sync", "Repo ${repo.name}: total rows now = $inserted")
             } catch (e: Exception) {
                 onRepoError?.invoke(repo.name, e.message ?: "Unknown error")
             }

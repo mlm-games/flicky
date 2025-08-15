@@ -7,6 +7,7 @@ import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppRepository
 import app.flicky.data.repository.RepositorySyncManager
 import app.flicky.data.repository.SettingsRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -20,6 +21,15 @@ data class BrowseUiState(
     val progress: Float = 0f,
     val errorMessage: String? = null
 )
+
+data class Quintuple<A, B, C, D, E>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D,
+    val fifth: E
+)
+
 
 class BrowseViewModel(
     private val repo: AppRepository,
@@ -37,6 +47,7 @@ class BrowseViewModel(
     private val hideAnti = settings.settingsFlow.map { it.hideAntiFeatures }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
     private val categoriesFlow = repo.categories().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private val appsFlow: StateFlow<List<FDroidApp>> =
         combine(_query, _sort, hideAnti) { q, s, hide -> Triple(q, s, hide) }
             .flatMapLatest { (q, s, hide) -> repo.appsFlow(q, s, hide) }
@@ -45,7 +56,9 @@ class BrowseViewModel(
     val uiState: StateFlow<BrowseUiState> =
         combine(
             combine(_query, _sort, appsFlow) { q, s, apps -> Triple(q, s, apps) },
-            combine(categoriesFlow, _isSyncing, _status) { cats, syncing, status -> Triple(cats, syncing, status) }
+            combine(categoriesFlow, _isSyncing, _status, _progress, _error) { cats, syncing, status, prog, err ->
+                Quintuple(cats, syncing, status, prog, err)
+            }
         ) { first, second ->
             BrowseUiState(
                 query = first.first,
@@ -53,9 +66,12 @@ class BrowseViewModel(
                 apps = first.third,
                 categories = second.first,
                 isSyncing = second.second,
-                status = second.third
+                status = second.third,
+                progress = second.fourth,
+                errorMessage = second.fifth
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, BrowseUiState())
+
 
     init {
         // Initialize sort from settings.defaultSort
@@ -101,10 +117,10 @@ class BrowseViewModel(
                         perRepoErrors.add("$repoName: $msg")
                     }
                 )
-            }.onSuccess { list ->
+            }.onSuccess { totalApps ->
                 if (perRepoErrors.isNotEmpty()) {
                     _error.value = "Some repositories failed:\n" + perRepoErrors.joinToString("\n")
-                } else if (list.isEmpty()) {
+                } else if (totalApps == 0) {
                     _error.value = if (force) "No data fetched (servers returned no changes)" else "No new changes"
                 }
                 _status.value = "Done"

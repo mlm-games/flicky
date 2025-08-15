@@ -19,7 +19,9 @@ object AppGraph {
 
     fun init(context: Context) {
         if (::db.isInitialized) return
-        db = Room.databaseBuilder(context, AppDatabase::class.java, "flicky.db").build()
+        db = Room.databaseBuilder(context, AppDatabase::class.java, "flicky.db")
+            .fallbackToDestructiveMigration(false)
+            .build()
         settings = SettingsRepository(context)
         api = FDroidApi(context)
         headersStore = RepoHeadersStore(settings)

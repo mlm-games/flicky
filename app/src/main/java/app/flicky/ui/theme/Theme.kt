@@ -257,7 +257,7 @@ fun FlickyTheme(
     content: @Composable () -> Unit,
 ) {
 
-    val context = LocalContext.current
+    LocalContext.current
 
     val settingTheme = settings.settingsFlow.collectAsState(initial = AppSettings()).value.themeMode
 

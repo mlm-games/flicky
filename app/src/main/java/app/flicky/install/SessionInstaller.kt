@@ -65,7 +65,7 @@ class SessionInstaller(private val context: Context) {
         session.close()
 
         // Await result
-        val (sid, status) = SessionInstallBus.events.first { it.first == sessionId }
+        val (_, status) = SessionInstallBus.events.first { it.first == sessionId }
         return status == PackageInstaller.STATUS_SUCCESS
     }
 

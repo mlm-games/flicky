@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
             // Observe settings for theme + scheduling
             val settingsState by AppGraph.settings.settingsFlow.collectAsState(initial = null)
             val themeMode = settingsState?.themeMode ?: 2
-            val dark = when (themeMode) { 0 -> false; 1 -> false; else -> true }
+            when (themeMode) { 0 -> false; 1 -> false; else -> true }
 
             // Schedule WorkManager based on settings
             LaunchedEffect(settingsState?.wifiOnly, settingsState?.syncIntervalIndex) {
@@ -86,34 +86,15 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     ) {
-                    }
-                } else {
-                    MobileMainScaffold(
-                        selectedIndex = selectedIndex,
-                        onSelect = { idx ->
-                            val route = when (idx) {
-                                0 -> Routes.Browse
-                                1 -> Routes.Categories
-                                2 -> Routes.Updates
-                                else -> Routes.Settings
-                            }
-                            navController.navigate(route) {
-                                popUpTo(Routes.Browse) { inclusive = false }
-                                launchSingleTop = true
-                            }
-                        }
-                    ) {
                         FlickyNavHost(
                             navController = navController,
                             browseContent = {
                                 BrowseScreen(
                                     apps = browseUi.apps.filter {
                                         query.isBlank() || it.name.contains(query, true) ||
-                                                it.summary.contains(
-                                                    query,
-                                                    true
-                                                ) || it.packageName.contains(query, true)
+                                                it.summary.contains(query, true) || it.packageName.contains(query, true)
                                     },
+                                    query = query,
                                     sort = sort,
                                     onSortChange = { s -> sort = s; browseVM.setSort(s) },
                                     onSearchChange = { q -> query = q; browseVM.setQuery(q) },
@@ -139,7 +120,96 @@ class MainActivity : ComponentActivity() {
                                     updates = updatesUi.updates,
                                     onUpdateAll = {
                                         lifecycleScope.launch {
-                                            updatesUi.updates.forEach { app -> AppGraph.installer.install(app) {} }
+                                            // serialize installs to avoid overwhelming DM / user prompts
+                                            for (app in updatesUi.updates) {
+                                                AppGraph.installer.install(app) {}
+                                            }
+                                        }
+                                    },
+                                    onUpdateOne = { app ->
+                                        lifecycleScope.launch { AppGraph.installer.install(app) {} }
+                                    }
+                                )
+                            },
+                            settingsContent = { SettingsScreen(vm = settingsVM) },
+                            detailContent = { pkg ->
+                                val detailVM = viewModelFactoryOvr {
+                                    AppDetailViewModel(
+                                        dao = AppGraph.db.appDao(),
+                                        installedRepo = AppGraph.installedRepo,
+                                        installer = AppGraph.installer,
+                                        packageName = pkg
+                                    )
+                                }
+                                val ui by detailVM.ui.collectAsState()
+                                val app = ui.app ?: return@FlickyNavHost
+                                AppDetailScreen(
+                                    app = app,
+                                    installedVersionCode = ui.installedVersionCode,
+                                    isInstalling = ui.isInstalling,
+                                    progress = ui.progress,
+                                    onInstall = { detailVM.install() },
+                                    onOpen = { detailVM.openApp() },
+                                    onUninstall = { detailVM.uninstall() },
+                                    error = ui.error
+                                )
+                            }
+                        )
+                    }
+                } else {
+                    MobileMainScaffold(
+                        selectedIndex = selectedIndex,
+                        onSelect = { idx ->
+                            val route = when (idx) {
+                                0 -> Routes.Browse
+                                1 -> Routes.Categories
+                                2 -> Routes.Updates
+                                else -> Routes.Settings
+                            }
+                            navController.navigate(route) {
+                                popUpTo(Routes.Browse) { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        }
+                    ) {
+                        FlickyNavHost(
+                            navController = navController,
+                            browseContent = {
+                                BrowseScreen(
+                                    apps = browseUi.apps.filter {
+                                        query.isBlank() || it.name.contains(query, true) ||
+                                                it.summary.contains(query, true) || it.packageName.contains(query, true)
+                                    },
+                                    query = query,
+                                    sort = sort,
+                                    onSortChange = { s -> sort = s; browseVM.setSort(s) },
+                                    onSearchChange = { q -> query = q; browseVM.setQuery(q) },
+                                    onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
+                                    onSyncClick = { browseVM.syncRepos() },
+                                    onForceSyncClick = { browseVM.forceSyncRepos() },
+                                    isSyncing = browseUi.isSyncing,
+                                    progress = browseUi.progress,
+                                    errorMessage = browseUi.errorMessage,
+                                    onDismissError = { browseVM.clearError() }
+                                )
+                            },
+                            categoriesContent = {
+                                CategoriesScreen(
+                                    onSyncClick = { browseVM.syncRepos() },
+                                    isSyncing = browseUi.isSyncing,
+                                    progress = browseUi.progress
+                                )
+                            },
+                            updatesContent = {
+                                UpdatesScreen(
+                                    installed = updatesUi.installed,
+                                    updates = updatesUi.updates,
+                                    onUpdateAll = {
+                                        lifecycleScope.launch {
+                                            // serialize installs to avoid overwhelming DM / user prompts
+                                            for (app in updatesUi.updates) {
+                                                AppGraph.installer.install(app) {}
+                                            }
                                         }
                                     },
                                     onUpdateOne = { app ->

@@ -50,6 +50,24 @@ class FDroidApi(
         val versionName: String = "1.0"
     )
 
+    private data class AppMeta(
+        val packageName: String,
+        val name: String,
+        val summary: String,
+        val description: String,
+        val iconUrl: String,
+        val license: String,
+        val category: String,
+        val author: String,
+        val website: String,
+        val sourceCode: String,
+        val added: Long,
+        val lastUpdated: Long,
+        val screenshots: List<String>,
+        val repository: String
+    )
+
+
     data class RepoHeaders(val etag: String?, val lastModified: String?)
 
     companion object {
@@ -69,7 +87,7 @@ class FDroidApi(
         repo: RepositoryInfo,
         previous: RepoHeaders,
         force: Boolean = false,
-        onApp: ((FDroidApp) -> Unit)
+        onApp: suspend (FDroidApp) -> Unit
     ): RepoHeaders? {
         val bases = if (repo.url.contains("f-droid.org")) F_DROID_MIRRORS else listOf(repo.url)
         for (base0 in bases) {
@@ -153,8 +171,15 @@ class FDroidApi(
     }
 
     // Streaming: read packages -> compute best variant per pkg; read apps -> emit app with best
-    private suspend fun parseIndexStreaming(resp: HttpResponse, base: String, repoName: String, onApp: (FDroidApp) -> Unit) {
+    private suspend fun parseIndexStreaming(
+        resp: HttpResponse,
+        base: String,
+        repoName: String,
+        onApp: suspend (FDroidApp) -> Unit
+    ) {
         val bestByPackage = HashMap<String, ApkVariant>(64_000)
+        val appMetaByPackage = HashMap<String, AppMeta>(64_000)
+
         val inputStream = resp.bodyAsChannel().toInputStream()
         inputStream.use { isr ->
             JsonReader(InputStreamReader(isr, Charsets.UTF_8)).use { r ->
@@ -162,13 +187,125 @@ class FDroidApi(
                 while (r.hasNext()) {
                     when (r.nextName()) {
                         "packages" -> parsePackagesObject(r, base, bestByPackage)
-                        "apps" -> parseAppsArray(r, base, repoName, bestByPackage, onApp)
+                        "apps" -> parseAppsArrayMeta(r, base, repoName, appMetaByPackage)
                         else -> r.skipValue()
                     }
                 }
                 r.endObject()
             }
         }
+
+        for ((pkg, meta) in appMetaByPackage) {
+            val v = bestByPackage[pkg] ?: continue
+            if (v.url.isBlank()) continue
+
+            val app = FDroidApp(
+                packageName = pkg,
+                name = meta.name.ifBlank { pkg },
+                summary = meta.summary,
+                description = meta.description,
+                iconUrl = meta.iconUrl,
+                version = v.versionName.ifBlank { "1.0" },
+                versionCode = v.versionCode.toInt(),
+                size = v.size,
+                apkUrl = v.url,
+                license = meta.license,
+                category = meta.category,
+                author = meta.author,
+                website = meta.website,
+                sourceCode = meta.sourceCode,
+                added = meta.added,
+                lastUpdated = meta.lastUpdated,
+                screenshots = meta.screenshots,
+                antiFeatures = emptyList(),
+                downloads = 0L,
+                isInstalled = false,
+                repository = meta.repository,
+                sha256 = v.sha256
+            )
+            onApp(app)
+        }
+        android.util.Log.d("FDroidApi", "packages=${bestByPackage.size}, apps=${appMetaByPackage.size}")
+    }
+
+    private fun parseAppsArrayMeta(
+        r: JsonReader,
+        base: String,
+        repoName: String,
+        out: MutableMap<String, AppMeta>
+    ) {
+        r.beginArray()
+        while (r.hasNext()) {
+            parseSingleAppMeta(r, base, repoName)?.let { meta ->
+                out[meta.packageName] = meta
+            }
+        }
+        r.endArray()
+    }
+
+    private fun parseSingleAppMeta(
+        r: JsonReader,
+        base: String,
+        repoName: String
+    ): AppMeta? {
+        var pkg = ""
+        var name = ""
+        var summary = ""
+        var desc = ""
+        var iconUrl = "https://f-droid.org/assets/ic_repo_app_default.png"
+        var license = "Unknown"
+        var category = "Other"
+        var author = "Unknown"
+        var website = ""
+        var source = ""
+        var added = 0L
+        var updated = 0L
+        var screenshots: List<String> = emptyList()
+
+        r.beginObject()
+        while (r.hasNext()) {
+            when (r.nextName()) {
+                "packageName" -> pkg = safeString(r)
+                "name" -> name = readLocalizedString(r)
+                "summary" -> summary = readLocalizedString(r)
+                "description" -> desc = readLocalizedString(r)
+                "icon" -> {
+                    val ic = safeString(r)
+                    iconUrl = when {
+                        ic.startsWith("http") -> ic
+                        ic.isNotBlank() -> "$base/icons-640/$ic"
+                        else -> iconUrl
+                    }
+                }
+                "license" -> license = safeString(r, "Unknown")
+                "categories" -> category = readFirstStringFromArray(r)?.let { normalizeCategory(it) } ?: "Other"
+                "authorName" -> author = safeString(r, "Unknown")
+                "webSite" -> website = safeString(r)
+                "sourceCode" -> source = safeString(r)
+                "added" -> added = safeLong(r)
+                "lastUpdated" -> updated = safeLong(r)
+                "screenshots" -> screenshots = readScreenshotsAny(r, base)
+                else -> r.skipValue()
+            }
+        }
+        r.endObject()
+
+        return if (pkg.isBlank()) null else AppMeta(
+            packageName = pkg,
+            name = name,
+            summary = summary,
+            description = desc,
+            iconUrl = iconUrl,
+            license = license,
+            category = category,
+            author = author,
+            website = website,
+            sourceCode = source,
+            added = added,
+            lastUpdated = updated,
+            screenshots = screenshots,
+            repository = repoName
+        )
     }
 
     private fun parsePackagesObject(r: JsonReader, base: String, bestByPackage: MutableMap<String, ApkVariant>) {
@@ -203,13 +340,16 @@ class FDroidApi(
         r.beginObject()
         while (r.hasNext()) {
             when (r.nextName()) {
+                // v2-style: { "file": { "name": "...", "size": 123, "sha256": "..." } }
                 "file" -> {
                     r.beginObject()
                     while (r.hasNext()) {
                         when (r.nextName()) {
                             "name" -> {
                                 val name = safeString(r)
-                                url = if (name.startsWith("http")) name else "$base/$name"
+                                if (name.isNotBlank()) {
+                                    url = if (name.startsWith("http")) name else "$base/$name"
+                                }
                             }
                             "size" -> size = safeLong(r)
                             "sha256" -> sha = safeString(r)
@@ -218,6 +358,29 @@ class FDroidApi(
                     }
                     r.endObject()
                 }
+
+                // v1-style: fields are at the top level of the version entry
+                "apkName" -> {
+                    val name = safeString(r)
+                    if (name.isNotBlank()) {
+                        url = if (name.startsWith("http")) name else "$base/$name"
+                    }
+                }
+                "apkBytes", "apkSize", "size" -> size = safeLong(r)
+
+                // v1: hashes { sha256: "..." }
+                "hashes" -> {
+                    r.beginObject()
+                    while (r.hasNext()) {
+                        when (r.nextName()) {
+                            "sha256" -> sha = safeString(r)
+                            else -> r.skipValue()
+                        }
+                    }
+                    r.endObject()
+                }
+
+                // Manifest-like info (sometimes nested under "manifest", sometimes flat)
                 "manifest" -> {
                     r.beginObject()
                     while (r.hasNext()) {
@@ -225,7 +388,7 @@ class FDroidApi(
                             "minSdkVersion" -> minSdk = safeInt(r, 1)
                             "maxSdkVersion" -> maxSdk = safeInt(r, Int.MAX_VALUE)
                             "nativecode" -> abis = readStringArray(r)
-                            "supportsScreens" -> densities = readStringArray(r)
+                            "supportsScreens", "densities" -> densities = readStringArray(r)
                             "versionCode" -> versionCode = safeLong(r)
                             "versionName" -> versionName = safeString(r)
                             else -> r.skipValue()
@@ -233,25 +396,36 @@ class FDroidApi(
                     }
                     r.endObject()
                 }
+
+                // Sometimes present at the top level (v1)
+                "minSdkVersion" -> minSdk = safeInt(r, 1)
+                "maxSdkVersion" -> maxSdk = safeInt(r, Int.MAX_VALUE)
+                "nativecode" -> abis = readStringArray(r)
+                "supportsScreens", "densities" -> densities = readStringArray(r)
+
+                // Common fields
                 "versionCode" -> versionCode = safeLong(r)
                 "versionName" -> versionName = safeString(r)
+
+                // Any other fields we don't care about
                 else -> r.skipValue()
             }
         }
         r.endObject()
+
         return ApkVariant(url, size, sha, abis, minSdk, maxSdk, densities, versionCode, versionName)
     }
 
-    private fun parseAppsArray(
+    private suspend fun parseAppsArray(
         r: JsonReader,
         base: String,
         repoName: String,
         bestByPackage: Map<String, ApkVariant>,
-        onApp: (FDroidApp) -> Unit
+        onApp: suspend (FDroidApp) -> Unit
     ) {
         r.beginArray()
         while (r.hasNext()) {
-            parseSingleAppObject(r, base, repoName, bestByPackage)?.let(onApp)
+            parseSingleAppObject(r, base, repoName, bestByPackage)?.let {app -> onApp(app)}
         }
         r.endArray()
     }
@@ -309,7 +483,7 @@ class FDroidApi(
 
         return FDroidApp(
             packageName = pkg,
-            name = if (name.isNotBlank()) name else pkg,
+            name = name.ifBlank { pkg },
             summary = summary,
             description = desc,
             iconUrl = iconUrl,
@@ -333,7 +507,20 @@ class FDroidApi(
         )
     }
 
-    // Util: safer reading
+    private fun isCompatible(v: ApkVariant): Boolean {
+        // ABI: accept if unspecified or matches any supported ABI
+        val abiOk = v.abis.isEmpty() || v.abis.any { abi ->
+            abi.equals("all", ignoreCase = true) || Build.SUPPORTED_ABIS.any { it.equals(abi, ignoreCase = true) }
+        }
+        // SDK
+        val sdkOk = Build.VERSION.SDK_INT in v.minSdk..v.maxSdk
+        // Density: accept if unspecified, or "any"/"nodpi", or matches device bucket
+        val deviceDensity = densityQualifier(metrics)
+        val densityOk = v.densities.isEmpty() ||
+                v.densities.any { it.equals("any", true) || it.equals("nodpi", true) || it.equals(deviceDensity, true) }
+        return abiOk && sdkOk && densityOk
+    }
+
     private fun safeString(r: JsonReader, def: String = ""): String = when (r.peek()) {
         com.google.gson.stream.JsonToken.STRING -> r.nextString()
         com.google.gson.stream.JsonToken.NULL -> { r.nextNull(); def }
@@ -418,7 +605,19 @@ class FDroidApi(
     }
     private fun pickBetter(a: ApkVariant?, b: ApkVariant): ApkVariant {
         if (a == null) return b
-        return if (b.versionCode > a.versionCode) b else if (b.versionCode == a.versionCode && b.size > a.size) b else a
+        val ac = isCompatible(a)
+        val bc = isCompatible(b)
+        return when {
+            ac && !bc -> a
+            !ac && bc -> b
+            else -> when {
+                b.versionCode > a.versionCode -> b
+                b.versionCode < a.versionCode -> a
+                // same versionCode: pick the one with larger size (mostly "full" vs split)
+                b.size > a.size -> b
+                else -> a
+            }
+        }
     }
 
     private fun normalizeCategory(source: String): String {

@@ -29,7 +29,7 @@ class UpdatesViewModel(
 
                 val updates = installed.filter { app ->
                     val cur = installedMap[app.packageName]?.versionCode ?: 0L
-                    app.versionCode > cur
+                    app.versionCode.toLong() > cur
                 }
 
                 _ui.value = UpdatesUiState(installed = installed, updates = updates)

@@ -30,7 +30,12 @@ fun VoiceSearchButton(onResult: (String) -> Unit) {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to search apps")
         }
-        launcher.launch(intent)
+        val pm = context.packageManager
+        if (intent.resolveActivity(pm) != null) {
+            launcher.launch(intent)
+        } else {
+            android.widget.Toast.makeText(context, "Voice search not available", android.widget.Toast.LENGTH_SHORT).show()
+        }
     }) {
         Icon(Icons.Default.Mic, contentDescription = "Voice search")
     }
