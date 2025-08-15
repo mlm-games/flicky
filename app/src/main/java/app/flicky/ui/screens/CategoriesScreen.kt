@@ -21,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.DefaultShadowColor
+import androidx.compose.ui.graphics.vector.DefaultTintColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -28,11 +30,7 @@ import app.flicky.AppGraph
 import app.flicky.data.model.FDroidApp
 import app.flicky.ui.components.cards.MobileAppCard
 import app.flicky.ui.components.cards.TVAppCard
-import app.flicky.ui.theme.AppColors
-import coil.compose.AsyncImage
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+
 
 @Composable
 fun CategoriesScreen(
@@ -243,28 +241,30 @@ private fun TVCategoryItem(
     autofocus: Boolean
 ) {
     var focused by remember { mutableStateOf(false) }
-    val borderColor = when {
-        focused -> AppColors.PrimaryGreen
-        isSelected -> AppColors.PrimaryGreen.copy(alpha = 0.6f)
-        else -> Color.Transparent
-    }
-    val bgColor = when {
-        isSelected -> AppColors.PrimaryGreen.copy(alpha = 0.08f)
-        focused -> Color.Gray.copy(alpha = 0.08f)
-        else -> Color.Transparent
-    }
+//    val borderColor = when {
+//        focused -> AppColors.PrimaryGreen
+//        isSelected -> AppColors.PrimaryGreen.copy(alpha = 0.6f)
+//        else -> Color.Transparent
+//    }
+//    val bgColor = when {
+//        isSelected -> AppColors.PrimaryGreen.copy(alpha = 0.08f)
+//        focused -> Color.Gray.copy(alpha = 0.08f)
+//        else -> Color.Transparent
+//    }
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp)
             .border(
-                BorderStroke(if (focused) 2.dp else if (isSelected) 1.dp else 0.dp, borderColor),
+                BorderStroke(if (focused) 2.dp else if (isSelected) 1.dp else 0.dp,
+                    DefaultTintColor
+                ),
                 RoundedCornerShape(12.dp)
             )
             .onFocusChanged { focused = it.isFocused }
             .focusable()
-            .background(bgColor, RoundedCornerShape(12.dp)),
+            .background(DefaultShadowColor, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
         onClick = onTap,
         tonalElevation = if (focused || isSelected) 1.dp else 0.dp
@@ -278,17 +278,17 @@ private fun TVCategoryItem(
             Icon(
                 imageVector = getCategoryIcon(title),
                 contentDescription = null,
-                tint = if (focused || isSelected) AppColors.PrimaryGreen else LocalContentColor.current
+                tint = if (focused || isSelected) DefaultTintColor else LocalContentColor.current
             )
             Spacer(Modifier.width(12.dp))
             Text(
                 text = title,
                 style = if (isSelected) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
-                color = if (focused || isSelected) AppColors.PrimaryGreen else LocalContentColor.current,
+                color = if (focused || isSelected) DefaultTintColor else LocalContentColor.current,
                 modifier = Modifier.weight(1f)
             )
             Surface(
-                color = if (focused || isSelected) AppColors.PrimaryGreen else Color.Gray.copy(alpha = 0.2f),
+                color = if (focused || isSelected) DefaultTintColor else Color.Gray.copy(alpha = 0.2f),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(

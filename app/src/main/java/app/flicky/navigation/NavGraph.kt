@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 
+@Suppress("ConstPropertyName")
 object Routes {
     const val Browse = "browse"
     const val Categories = "categories"

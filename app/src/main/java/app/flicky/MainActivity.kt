@@ -24,7 +24,6 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.flicky.data.external.UpdatesPreferences
 import app.flicky.helper.DeviceUtils
-import kotlinx.coroutines.GlobalScope
 
 class MainActivity : ComponentActivity() {
 
@@ -59,6 +58,20 @@ class MainActivity : ComponentActivity() {
                 return UpdatesViewModel(
                     AppGraph.appRepo,
                     AppGraph.installedRepo
+                ) as T
+            }
+        }
+    }
+
+    private val appDetailViewModel: AppDetailViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return AppDetailViewModel(
+                    AppGraph.db.appDao(),
+                    AppGraph.installedRepo,
+                    AppGraph.installer,
+                    ""
                 ) as T
             }
         }
@@ -177,16 +190,30 @@ class MainActivity : ComponentActivity() {
                                 UpdatesScreen(
                                     installed = updatesUi.installed,
                                     updates = updatesUi.updates,
+                                    installingPackages = updatesUi.installingPackages,
+                                    installProgress = updatesUi.installProgress,
                                     onUpdateAll = {
                                         lifecycleScope.launch {
-                                            // serialize installs to avoid overwhelming DM / user prompts
                                             for (app in updatesUi.updates) {
-                                                AppGraph.installer.install(app) {}
+                                                updatesViewModel.setInstalling(app.packageName, true)
+                                                AppGraph.installer.install(app) { progress ->
+                                                    updatesViewModel.updateInstallProgress(app.packageName, progress)
+                                                }
+                                                updatesViewModel.setInstalling(app.packageName, false)
                                             }
                                         }
                                     },
                                     onUpdateOne = { app ->
-                                        lifecycleScope.launch { AppGraph.installer.install(app) {} }
+                                        lifecycleScope.launch {
+                                            updatesViewModel.setInstalling(app.packageName, true)
+                                            AppGraph.installer.install(app) { progress ->
+                                                updatesViewModel.updateInstallProgress(app.packageName, progress)
+                                            }
+                                            updatesViewModel.setInstalling(app.packageName, false)
+                                        }
+                                    },
+                                    onAppClick = { app ->
+                                        navController.navigate(Routes.detail(app.packageName))
                                     }
                                 )
                             },
@@ -263,16 +290,30 @@ class MainActivity : ComponentActivity() {
                                 UpdatesScreen(
                                     installed = updatesUi.installed,
                                     updates = updatesUi.updates,
+                                    installingPackages = updatesUi.installingPackages,
+                                    installProgress = updatesUi.installProgress,
                                     onUpdateAll = {
                                         lifecycleScope.launch {
-                                            // serialize installs to avoid overwhelming DM / user prompts
                                             for (app in updatesUi.updates) {
-                                                AppGraph.installer.install(app) {}
+                                                updatesViewModel.setInstalling(app.packageName, true)
+                                                AppGraph.installer.install(app) { progress ->
+                                                    updatesViewModel.updateInstallProgress(app.packageName, progress)
+                                                }
+                                                updatesViewModel.setInstalling(app.packageName, false)
                                             }
                                         }
                                     },
                                     onUpdateOne = { app ->
-                                        lifecycleScope.launch { AppGraph.installer.install(app) {} }
+                                        lifecycleScope.launch {
+                                            updatesViewModel.setInstalling(app.packageName, true)
+                                            AppGraph.installer.install(app) { progress ->
+                                                updatesViewModel.updateInstallProgress(app.packageName, progress)
+                                            }
+                                            updatesViewModel.setInstalling(app.packageName, false)
+                                        }
+                                    },
+                                    onAppClick = { app ->
+                                        navController.navigate(Routes.detail(app.packageName))
                                     }
                                 )
                             },

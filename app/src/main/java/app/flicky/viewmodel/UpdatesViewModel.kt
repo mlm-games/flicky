@@ -55,6 +55,11 @@ class UpdatesViewModel(
                 _ui.value.installingPackages + packageName
             } else {
                 _ui.value.installingPackages - packageName
+            },
+            installProgress = if (!installing) {
+                _ui.value.installProgress - packageName
+            } else {
+                _ui.value.installProgress
             }
         )
     }
