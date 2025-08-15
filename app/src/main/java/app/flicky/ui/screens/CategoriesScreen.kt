@@ -2,7 +2,6 @@ package app.flicky.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
@@ -21,8 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.DefaultShadowColor
-import androidx.compose.ui.graphics.vector.DefaultTintColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -30,26 +27,7 @@ import app.flicky.AppGraph
 import app.flicky.data.model.FDroidApp
 import app.flicky.ui.components.cards.MobileAppCard
 import app.flicky.ui.components.cards.TVAppCard
-
-
-@Composable
-fun CategoriesScreen(
-    onSyncClick: () -> Unit,
-                     isSyncing: Boolean,
-                     progress: Float
-) {
-    val pm = LocalContext.current.packageManager
-    val config = LocalConfiguration.current
-    val isTV = pm.hasSystemFeature("android.software.leanback") || pm.hasSystemFeature("android.hardware.type.television")
-    val widthDp = config.screenWidthDp
-    val isTablet = widthDp >= 900
-
-    if (isTV || isTablet) {
-        TVCategoriesScreen(onSyncClick = onSyncClick, isSyncing = isSyncing, progress = progress)
-    } else {
-        MobileCategoriesScreen()
-    }
-}
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +44,11 @@ private fun MobileCategoriesScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Categories") }
+                title = { Text("Categories") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
     ) { padding ->
@@ -109,7 +91,6 @@ private fun MobileCategoriesScreen() {
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(filtered, key = { it.packageName }) { app ->
-
                     MobileAppCard(app = app)
                 }
             }
@@ -125,8 +106,187 @@ private fun FilterChipCategory(label: String, count: Int, selected: Boolean, onS
         label = { Text("$label ($count)") },
         leadingIcon = {
             if (selected) Icon(Icons.Default.Check, contentDescription = null)
-        }
+        },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     )
+}
+
+@Composable
+private fun TVCategoryItem(
+    title: String,
+    isSelected: Boolean,
+    count: Int,
+    onTap: () -> Unit,
+    autofocus: Boolean
+) {
+    var focused by remember { mutableStateOf(false) }
+    val colors = MaterialTheme.colorScheme
+
+    val borderColor = when {
+        focused -> colors.primary
+        isSelected -> colors.primary.copy(alpha = 0.6f)
+        else -> Color.Transparent
+    }
+    val bgColor = when {
+        isSelected -> colors.primaryContainer.copy(alpha = 0.3f)
+        focused -> colors.surfaceVariant.copy(alpha = 0.5f)
+        else -> Color.Transparent
+    }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .border(
+                BorderStroke(if (focused) 2.dp else if (isSelected) 1.dp else 0.dp, borderColor),
+                RoundedCornerShape(12.dp)
+            )
+            .onFocusChanged { focused = it.isFocused }
+            .focusable()
+            .background(bgColor, RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
+        onClick = onTap,
+        tonalElevation = if (focused || isSelected) 1.dp else 0.dp,
+        color = bgColor
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = getCategoryIcon(title),
+                contentDescription = null,
+                tint = if (focused || isSelected) colors.primary else colors.onSurfaceVariant
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = title,
+                style = if (isSelected) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+                color = if (focused || isSelected) colors.primary else colors.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            Surface(
+                color = if (focused || isSelected) colors.primary else colors.surfaceVariant,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    "$count",
+                    color = if (focused || isSelected) colors.onPrimary else colors.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryHeaderTV(
+    category: String,
+    count: Int,
+    onSyncClick: () -> Unit,
+    isSyncing: Boolean,
+    progress: Float
+) {
+    val animatedProgress by animateFloatAsState(targetValue = progress, label = "tv_sync_progress")
+    val colors = MaterialTheme.colorScheme
+
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(20.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = getCategoryIcon(category),
+                contentDescription = null,
+                tint = colors.primary
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = category,
+                style = MaterialTheme.typography.titleLarge,
+                color = colors.onBackground
+            )
+            Spacer(Modifier.width(12.dp))
+            AssistChip(
+                onClick = {},
+                label = { Text("$count apps") },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = colors.secondaryContainer,
+                    labelColor = colors.onSecondaryContainer
+                )
+            )
+            Spacer(Modifier.weight(1f))
+            Button(
+                onClick = onSyncClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.primary,
+                    contentColor = colors.onPrimary
+                )
+            ) {
+                Text("Sync Now")
+            }
+        }
+        if (isSyncing) {
+            Spacer(Modifier.height(10.dp))
+            LinearProgressIndicator(
+                progress = { animatedProgress },
+                modifier = Modifier.fillMaxWidth(),
+                color = colors.primary,
+                trackColor = colors.primaryContainer
+            )
+        }
+    }
+}
+
+private fun getCategoryIcon(category: String): androidx.compose.ui.graphics.vector.ImageVector {
+    return when (category.lowercase()) {
+        "all" -> Icons.Default.Apps
+        "connectivity" -> Icons.Default.Wifi
+        "development" -> Icons.Default.Code
+        "games" -> Icons.Default.Games
+        "graphics" -> Icons.Default.Palette
+        "internet" -> Icons.Default.Language
+        "money" -> Icons.Default.AttachMoney
+        "multimedia" -> Icons.Default.Movie
+        "navigation" -> Icons.Default.Navigation
+        "phone & sms", "phone sms" -> Icons.Default.Phone
+        "reading" -> Icons.Default.Book
+        "science & education", "science education" -> Icons.Default.School
+        "security" -> Icons.Default.Security
+        "sports & health", "sports health" -> Icons.Default.FitnessCenter
+        "system" -> Icons.Default.SettingsApplications
+        "theming" -> Icons.Default.ColorLens
+        "time" -> Icons.Default.AccessTime
+        "writing" -> Icons.Default.Edit
+        else -> Icons.Default.Category
+    }
+}
+
+@Composable
+fun CategoriesScreen(
+    onSyncClick: () -> Unit,
+    isSyncing: Boolean,
+    progress: Float
+) {
+    val pm = LocalContext.current.packageManager
+    val config = LocalConfiguration.current
+    val isTV = pm.hasSystemFeature("android.software.leanback") || pm.hasSystemFeature("android.hardware.type.television")
+    val widthDp = config.screenWidthDp
+    val isTablet = widthDp >= 900
+
+    if (isTV || isTablet) {
+        TVCategoriesScreen(onSyncClick = onSyncClick, isSyncing = isSyncing, progress = progress)
+    } else {
+        MobileCategoriesScreen()
+    }
 }
 
 @Composable
@@ -165,39 +325,6 @@ private fun TVCategoriesScreen(
 }
 
 @Composable
-private fun CategoryHeaderTV(
-    category: String,
-    count: Int,
-    onSyncClick: () -> Unit,
-    isSyncing: Boolean,
-    progress: Float
-) {
-    val animatedProgress by animateFloatAsState(targetValue = progress, label = "tv_sync_progress")
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(20.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(imageVector = getCategoryIcon(category), contentDescription = null)
-            Spacer(Modifier.width(12.dp))
-            Text(text = category, style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.width(12.dp))
-            AssistChip(onClick = {}, label = { Text("$count apps") })
-            Spacer(Modifier.weight(1f))
-            Button(onClick = onSyncClick) { Text("Sync Now") }
-        }
-        if (isSyncing) {
-            Spacer(Modifier.height(10.dp))
-            LinearProgressIndicator(
-                progress = animatedProgress,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
-@Composable
 private fun CategoriesSidebarTV(
     categories: List<String>,
     apps: List<FDroidApp>,
@@ -212,6 +339,7 @@ private fun CategoriesSidebarTV(
             Text(
                 "Categories",
                 style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(20.dp)
             )
             LazyColumn(
@@ -233,78 +361,8 @@ private fun CategoriesSidebarTV(
 }
 
 @Composable
-private fun TVCategoryItem(
-    title: String,
-    isSelected: Boolean,
-    count: Int,
-    onTap: () -> Unit,
-    autofocus: Boolean
-) {
-    var focused by remember { mutableStateOf(false) }
-//    val borderColor = when {
-//        focused -> AppColors.PrimaryGreen
-//        isSelected -> AppColors.PrimaryGreen.copy(alpha = 0.6f)
-//        else -> Color.Transparent
-//    }
-//    val bgColor = when {
-//        isSelected -> AppColors.PrimaryGreen.copy(alpha = 0.08f)
-//        focused -> Color.Gray.copy(alpha = 0.08f)
-//        else -> Color.Transparent
-//    }
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
-            .border(
-                BorderStroke(if (focused) 2.dp else if (isSelected) 1.dp else 0.dp,
-                    DefaultTintColor
-                ),
-                RoundedCornerShape(12.dp)
-            )
-            .onFocusChanged { focused = it.isFocused }
-            .focusable()
-            .background(DefaultShadowColor, RoundedCornerShape(12.dp)),
-        shape = RoundedCornerShape(12.dp),
-        onClick = onTap,
-        tonalElevation = if (focused || isSelected) 1.dp else 0.dp
-    ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = getCategoryIcon(title),
-                contentDescription = null,
-                tint = if (focused || isSelected) DefaultTintColor else LocalContentColor.current
-            )
-            Spacer(Modifier.width(12.dp))
-            Text(
-                text = title,
-                style = if (isSelected) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
-                color = if (focused || isSelected) DefaultTintColor else LocalContentColor.current,
-                modifier = Modifier.weight(1f)
-            )
-            Surface(
-                color = if (focused || isSelected) DefaultTintColor else Color.Gray.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    "$count",
-                    color = if (focused || isSelected) Color.White else LocalContentColor.current,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun TVAppGrid(apps: List<FDroidApp>) {
-    val widthDp = LocalConfiguration.current.screenWidthDp - 250 // subtract sidebar
+    val widthDp = LocalConfiguration.current.screenWidthDp - 250
     val columns = when {
         widthDp > 1400 -> 6
         widthDp > 1200 -> 5
@@ -321,30 +379,5 @@ private fun TVAppGrid(apps: List<FDroidApp>) {
         items(apps, key = { it.packageName }) { app ->
             TVAppCard(app = app, autofocus = false)
         }
-    }
-}
-
-@Composable
-private fun getCategoryIcon(category: String): androidx.compose.ui.graphics.vector.ImageVector {
-    return when (category.lowercase()) {
-        "all" -> Icons.Default.Apps
-        "connectivity" -> Icons.Default.Wifi
-        "development" -> Icons.Default.Code
-        "games" -> Icons.Default.Games
-        "graphics" -> Icons.Default.Palette
-        "internet" -> Icons.Default.Language
-        "money" -> Icons.Default.AttachMoney
-        "multimedia" -> Icons.Default.Movie
-        "navigation" -> Icons.Default.Navigation
-        "phone & sms", "phone sms" -> Icons.Default.Phone
-        "reading" -> Icons.Default.Book
-        "science & education", "science education" -> Icons.Default.School
-        "security" -> Icons.Default.Security
-        "sports & health", "sports health" -> Icons.Default.FitnessCenter
-        "system" -> Icons.Default.SettingsApplications
-        "theming" -> Icons.Default.ColorLens
-        "time" -> Icons.Default.AccessTime
-        "writing" -> Icons.Default.Edit
-        else -> Icons.Default.Category
     }
 }

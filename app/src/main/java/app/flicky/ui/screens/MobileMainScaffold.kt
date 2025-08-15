@@ -23,10 +23,19 @@ fun MobileMainScaffold(
         Row(Modifier.fillMaxSize()) {
             NavigationRail(
                 modifier = Modifier.fillMaxHeight(),
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 header = {
                     Column(Modifier.padding(12.dp)) {
-                        Icon(Icons.Default.Shop, contentDescription = null)
-                        Text("Flicky")
+                        Icon(
+                            Icons.Default.Shop, 
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            "Flicky",
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             ) {
@@ -34,58 +43,118 @@ fun MobileMainScaffold(
                     selected = selectedIndex == 0,
                     onClick = { onSelect(0) },
                     icon = { Icon(Icons.Default.Explore, null) },
-                    label = { Text("Browse") }
+                    label = { Text("Browse") },
+                    colors = NavigationRailItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
                 NavigationRailItem(
                     selected = selectedIndex == 1,
                     onClick = { onSelect(1) },
                     icon = { Icon(Icons.Default.Category, null) },
-                    label = { Text("Categories") }
+                    label = { Text("Categories") },
+                    colors = NavigationRailItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
                 NavigationRailItem(
                     selected = selectedIndex == 2,
                     onClick = { onSelect(2) },
                     icon = { Icon(Icons.Default.Update, null) },
-                    label = { Text("Updates") }
+                    label = { Text("Updates") },
+                    colors = NavigationRailItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
                 NavigationRailItem(
                     selected = selectedIndex == 3,
                     onClick = { onSelect(3) },
                     icon = { Icon(Icons.Default.Settings, null) },
-                    label = { Text("Settings") }
+                    label = { Text("Settings") },
+                    colors = NavigationRailItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
             }
-            Divider()
+            VerticalDivider()
             Box(Modifier.weight(1f)) { content() }
         }
     } else {
         // Bottom Navigation for phones
         Scaffold(
             bottomBar = {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tonalElevation = 3.dp
+                ) {
                     NavigationBarItem(
                         selected = selectedIndex == 0,
                         onClick = { onSelect(0) },
                         icon = { Icon(Icons.Default.Explore, null) },
-                        label = { Text("Browse") }
+                        label = { Text("Browse") },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                     NavigationBarItem(
                         selected = selectedIndex == 1,
                         onClick = { onSelect(1) },
                         icon = { Icon(Icons.Default.Category, null) },
-                        label = { Text("Categories") }
+                        label = { Text("Categories") },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                     NavigationBarItem(
                         selected = selectedIndex == 2,
                         onClick = { onSelect(2) },
                         icon = { Icon(Icons.Default.Update, null) },
-                        label = { Text("Updates") }
+                        label = { Text("Updates") },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                     NavigationBarItem(
                         selected = selectedIndex == 3,
                         onClick = { onSelect(3) },
                         icon = { Icon(Icons.Default.Settings, null) },
-                        label = { Text("Settings") }
+                        label = { Text("Settings") },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                 }
             }
