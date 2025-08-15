@@ -173,6 +173,62 @@ private fun defaultTypography() = Typography(
     )
 )
 
+object AppColors {
+    val PrimaryGreen = Color(0xFF00D26A)
+    val PrimaryGreenDark = Color(0xFF00A653)
+    val AccentBlue = Color(0xFF2196F3)
+
+    val SurfaceLight = Color(0xFFF5F7FA) // Scaffold background (light)
+    val SurfaceDark = Color(0xFF1A1D21)  // Scaffold background (dark)
+
+    val CardLight = Color(0xFFFFFFFF)
+    val CardDark = Color(0xFF2A2D31)
+
+    val ErrorRed = Color(0xFFE74C3C)
+    val OnLight = Color(0xFF2C3E50)
+    val OnDark = Color(0xFFECEFF1)
+}
+
+private val LightColors = lightColorScheme(
+    primary = AppColors.PrimaryGreen,
+    onPrimary = Color.White,
+    primaryContainer = AppColors.PrimaryGreen.copy(alpha = 0.20f),
+    onPrimaryContainer = AppColors.OnLight,
+
+    secondary = AppColors.AccentBlue,
+    onSecondary = Color.White,
+    secondaryContainer = AppColors.AccentBlue.copy(alpha = 0.20f),
+    onSecondaryContainer = AppColors.OnLight,
+
+    surface = AppColors.CardLight,
+    onSurface = AppColors.OnLight,
+    background = AppColors.SurfaceLight,
+    onBackground = AppColors.OnLight,
+
+    error = AppColors.ErrorRed,
+    onError = Color.White
+)
+
+private val DarkColors = darkColorScheme(
+    primary = AppColors.PrimaryGreen,
+    onPrimary = Color.White,
+    primaryContainer = AppColors.PrimaryGreenDark,
+    onPrimaryContainer = Color.White,
+
+    secondary = AppColors.AccentBlue,
+    onSecondary = Color.White,
+    secondaryContainer = AppColors.AccentBlue.copy(alpha = 0.25f),
+    onSecondaryContainer = Color.White,
+
+    surface = AppColors.CardDark,
+    onSurface = AppColors.OnDark,
+    background = AppColors.SurfaceDark,
+    onBackground = AppColors.OnDark,
+
+    error = AppColors.ErrorRed,
+    onError = Color.White
+)
+
 @Composable
 fun scaledTypography(scaleFactor: Double): Typography {
     val defaultTypo = defaultTypography()

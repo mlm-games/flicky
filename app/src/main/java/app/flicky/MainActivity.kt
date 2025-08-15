@@ -15,13 +15,11 @@ import app.flicky.viewmodel.*
 import app.flicky.work.SyncScheduler
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import app.flicky.helper.DeviceUtils
 
 class MainActivity : ComponentActivity() {
 
@@ -69,77 +67,111 @@ class MainActivity : ComponentActivity() {
             var sort by remember { mutableStateOf(SortOption.Updated) }
             var query by remember { mutableStateOf("") }
 
+            val isTV = DeviceUtils.isTV(packageManager)
+
             FlickyTheme {
-                TvMainScreen(selectedIndex = selectedIndex, onSelect = { idx ->
-                    val route = when (idx) {
-                        0 -> Routes.Browse
-                        1 -> Routes.Categories
-                        2 -> Routes.Updates
-                        else -> Routes.Settings
+                if (isTV) {
+                    TvMainScreen(
+                        selectedIndex = selectedIndex,
+                        onSelect = { idx ->
+                            val route = when (idx) {
+                                0 -> Routes.Browse
+                                1 -> Routes.Categories
+                                2 -> Routes.Updates
+                                else -> Routes.Settings
+                            }
+                            navController.navigate(route) {
+                                popUpTo(Routes.Browse) { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        }
+                    ) {
                     }
-                    navController.navigate(route) {
-                        popUpTo(Routes.Browse) { inclusive = false }
-                        launchSingleTop = true
-                    }
-                }) {
-                    FlickyNavHost(
-                        navController = navController,
-                        browseContent = {
-                            BrowseScreen(
-                                apps = browseUi.apps.filter {
-                                    query.isBlank() || it.name.contains(query,true) ||
-                                            it.summary.contains(query,true) || it.packageName.contains(query,true)
-                                },
-                                sort = sort,
-                                onSortChange = { s -> sort = s; browseVM.setSort(s) },
-                                onSearchChange = { q -> query = q; browseVM.setQuery(q) },
-                                onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) }
-                            )
-                        },
-                        categoriesContent = {
-                            val cats by AppGraph.appRepo.categories().collectAsState(initial = emptyList())
-                            CategoriesScreen(categories = cats)
-                        },
-                        updatesContent = {
-                            UpdatesScreen(
-                                installed = updatesUi.installed,
-                                updates = updatesUi.updates,
-                                onUpdateAll = {
-                                    lifecycleScope.launch {
-                                        updatesUi.updates.forEach { app -> AppGraph.installer.install(app) {} }
+                } else {
+                    MobileMainScaffold(
+                        selectedIndex = selectedIndex,
+                        onSelect = { idx ->
+                            val route = when (idx) {
+                                0 -> Routes.Browse
+                                1 -> Routes.Categories
+                                2 -> Routes.Updates
+                                else -> Routes.Settings
+                            }
+                            navController.navigate(route) {
+                                popUpTo(Routes.Browse) { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        }
+                    ) {
+                        FlickyNavHost(
+                            navController = navController,
+                            browseContent = {
+                                BrowseScreen(
+                                    apps = browseUi.apps.filter {
+                                        query.isBlank() || it.name.contains(query, true) ||
+                                                it.summary.contains(
+                                                    query,
+                                                    true
+                                                ) || it.packageName.contains(query, true)
+                                    },
+                                    sort = sort,
+                                    onSortChange = { s -> sort = s; browseVM.setSort(s) },
+                                    onSearchChange = { q -> query = q; browseVM.setQuery(q) },
+                                    onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
+                                    onSyncClick = { browseVM.syncRepos() },
+                                    onForceSyncClick = { browseVM.forceSyncRepos() },
+                                    isSyncing = browseUi.isSyncing,
+                                    progress = browseUi.progress,
+                                    errorMessage = browseUi.errorMessage,
+                                    onDismissError = { browseVM.clearError() }
+                                )
+                            },
+                            categoriesContent = {
+                                CategoriesScreen(
+                                    onSyncClick = { browseVM.syncRepos() },
+                                    isSyncing = browseUi.isSyncing,
+                                    progress = browseUi.progress
+                                )
+                            },
+                            updatesContent = {
+                                UpdatesScreen(
+                                    installed = updatesUi.installed,
+                                    updates = updatesUi.updates,
+                                    onUpdateAll = {
+                                        lifecycleScope.launch {
+                                            updatesUi.updates.forEach { app -> AppGraph.installer.install(app) {} }
+                                        }
+                                    },
+                                    onUpdateOne = { app ->
+                                        lifecycleScope.launch { AppGraph.installer.install(app) {} }
                                     }
-                                },
-                                onUpdateOne = { app ->
-                                    lifecycleScope.launch { AppGraph.installer.install(app) {} }
+                                )
+                            },
+                            settingsContent = { SettingsScreen(vm = settingsVM) },
+                            detailContent = { pkg ->
+                                val detailVM = viewModelFactoryOvr {
+                                    AppDetailViewModel(
+                                        dao = AppGraph.db.appDao(),
+                                        installedRepo = AppGraph.installedRepo,
+                                        installer = AppGraph.installer,
+                                        packageName = pkg
+                                    )
                                 }
-                            )
-                        },
-                        settingsContent = {
-                            SettingsScreenGenerated(vm = settingsVM)
-                        },
-                        detailContent = { pkg ->
-                            val detailVM = viewModelFactoryOvr {
-                                AppDetailViewModel(
-                                    dao = AppGraph.db.appDao(),
-                                    installedRepo = AppGraph.installedRepo,
-                                    installer = AppGraph.installer,
-                                    packageName = pkg
+                                val ui by detailVM.ui.collectAsState()
+                                val app = ui.app ?: return@FlickyNavHost
+                                AppDetailScreen(
+                                    app = app,
+                                    installedVersionCode = ui.installedVersionCode,
+                                    isInstalling = ui.isInstalling,
+                                    progress = ui.progress,
+                                    onInstall = { detailVM.install() },
+                                    onOpen = { detailVM.openApp() },
+                                    onUninstall = { detailVM.uninstall() },
+                                    error = ui.error
                                 )
                             }
-                            val ui by detailVM.ui.collectAsState()
-                            val app = ui.app ?: return@FlickyNavHost
-                            AppDetailScreen(
-                                app = app,
-                                installedVersionCode = ui.installedVersionCode,
-                                isInstalling = ui.isInstalling,
-                                progress = ui.progress,
-                                onInstall = { detailVM.install() },
-                                onOpen = { detailVM.openApp() },
-                                onUninstall = { detailVM.uninstall() },
-                                error = ui.error
-                            )
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }

@@ -3,47 +3,40 @@ package app.flicky.data.remote
 import android.content.Context
 import android.os.Build
 import android.util.DisplayMetrics
-import androidx.collection.emptyLongSet
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.RepositoryInfo
-import app.flicky.data.trust.RepoSignatureVerifier
 import app.flicky.data.trust.HttpsOnlyVerifier
+import app.flicky.data.trust.RepoSignatureVerifier
+import com.google.gson.stream.JsonReader
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
-import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.longOrNull
+import io.ktor.utils.io.jvm.javaio.toInputStream
+import java.io.InputStreamReader
 
 class FDroidApi(
     context: Context,
     private val verifier: RepoSignatureVerifier = HttpsOnlyVerifier()
 ) {
     private val client = HttpClient(Android) {
-        install(ContentNegotiation) { json() }
         install(HttpTimeout) {
             requestTimeoutMillis = 60_000
             connectTimeoutMillis = 30_000
         }
-        defaultRequest { header("User-Agent", "Flicky/1.1 (Android TV)") }
+        defaultRequest {
+            header("User-Agent", "Flicky/1.1 (Android TV)")
+            header("Accept", "application/json")
+        }
     }
 
-    private val metrics: DisplayMetrics = context.resources.displayMetrics
+    private val metrics: DisplayMetrics = context.applicationContext.resources.displayMetrics
 
     data class ApkVariant(
         val url: String,
@@ -53,7 +46,8 @@ class FDroidApi(
         val minSdk: Int = 1,
         val maxSdk: Int = Int.MAX_VALUE,
         val densities: List<String> = emptyList(),
-        val versionCode: Long = 0
+        val versionCode: Long = 0,
+        val versionName: String = "1.0"
     )
 
     data class RepoHeaders(val etag: String?, val lastModified: String?)
@@ -73,161 +67,358 @@ class FDroidApi(
 
     suspend fun fetchWithCache(
         repo: RepositoryInfo,
-        previous: RepoHeaders
-    ): Pair<List<FDroidApp>, RepoHeaders?> {
+        previous: RepoHeaders,
+        force: Boolean = false,
+        onApp: ((FDroidApp) -> Unit)
+    ): RepoHeaders? {
         val bases = if (repo.url.contains("f-droid.org")) F_DROID_MIRRORS else listOf(repo.url)
         for (base0 in bases) {
             val base = normalizeUrl(base0)
             if (!verifier.isTrustedRepoUrl(base)) continue
-            try {
-                // Try entry.json -> index (v2)
-                val entryResp = client.get("$base/entry.json") {
-                    previous.etag?.let { header(HttpHeaders.IfNoneMatch, it) }
-                    previous.lastModified?.let { header(HttpHeaders.IfModifiedSince, it) }
-                }
-                if (entryResp.status.value == 304) {
-                    return emptyList<FDroidApp>() to RepoHeaders(previous.etag, previous.lastModified)
-                }
-                if (entryResp.status.isSuccess()) {
-                    val entry = entryResp.body<JsonObject>()
-                    val indexName = entry["index"]?.jsonObject?.get("name")?.jsonPrimitive?.content
-                    val indexUrl = if (indexName != null) "$base/$indexName" else "$base/index-v1.json"
-                    val indexResp = client.get(indexUrl) {
-                        previous.etag?.let { header(HttpHeaders.IfNoneMatch, it) }
-                        previous.lastModified?.let { header(HttpHeaders.IfModifiedSince, it) }
-                    }
-                    if (indexResp.status.value == 304) {
-                        return emptyList<FDroidApp>() to RepoHeaders(previous.etag, previous.lastModified)
-                    }
-                    if (indexResp.status.isSuccess()) {
-                        val nextEtag = indexResp.headers[HttpHeaders.ETag]
-                        val nextLastMod = indexResp.headers[HttpHeaders.LastModified]
-                        val index = indexResp.body<JsonObject>()
-                        val apps = parseIndex(index, repo.name, base)
-                        return apps to RepoHeaders(nextEtag, nextLastMod)
-                    }
-                }
 
-                // Fallback to v1 directly
-                val v1Resp = client.get("$base/index-v1.json") {
-                    previous.etag?.let { header(HttpHeaders.IfNoneMatch, it) }
-                    previous.lastModified?.let { header(HttpHeaders.IfModifiedSince, it) }
-                }
-                if (v1Resp.status.value == 304) {
-                    return emptyList<FDroidApp>() to RepoHeaders(previous.etag, previous.lastModified)
-                }
-                if (v1Resp.status.isSuccess()) {
-                    val nextEtag = v1Resp.headers[HttpHeaders.ETag]
-                    val nextLastMod = v1Resp.headers[HttpHeaders.LastModified]
-                    val v1 = v1Resp.body<JsonObject>()
-                    val apps = parseIndex(v1, repo.name, base)
-                    return apps to RepoHeaders(nextEtag, nextLastMod)
+            // Try v2 entry.json -> index
+            try {
+                val entry = get("$base/entry.json", if (force) null else previous.etag, if (force) null else previous.lastModified)
+                if (entry.status304) return RepoHeaders(previous.etag, previous.lastModified)
+                if (entry.res?.status?.isSuccess() == true) {
+                    // Remove .use here - HttpResponse doesn't need it
+                    val resp = entry.res
+                    val (indexName) = parseEntryIndexName(resp)
+                    val indexUrl = if (!indexName.isNullOrBlank()) "$base/$indexName" else "$base/index-v1.json"
+                    val idx = get(indexUrl, if (force) null else previous.etag, if (force) null else previous.lastModified)
+                    if (idx.status304) return RepoHeaders(previous.etag, previous.lastModified)
+                    if (idx.res?.status?.isSuccess() == true) {
+                        // Remove .use here too
+                        val r = idx.res
+                        parseIndexStreaming(r, base, repoName = repo.name, onApp = onApp)
+                        val etag = r.headers[HttpHeaders.ETag] ?: entry.res.headers[HttpHeaders.ETag]
+                        val last = r.headers[HttpHeaders.LastModified] ?: entry.res.headers[HttpHeaders.LastModified]
+                        return RepoHeaders(etag, last)
+                    }
                 }
             } catch (_: Exception) {
-                // try next mirror
+                // fallback to v1 or next mirror
+            }
+
+            // Try v1 directly
+            try {
+                val v1 = get("$base/index-v1.json", if (force) null else previous.etag, if (force) null else previous.lastModified)
+                if (v1.status304) return RepoHeaders(previous.etag, previous.lastModified)
+                if (v1.res?.status?.isSuccess() == true) {
+                    // Remove .use here as well
+                    val resp = v1.res
+                    parseIndexStreaming(resp, base, repoName = repo.name, onApp = onApp)
+                    val etag = resp.headers[HttpHeaders.ETag]
+                    val last = resp.headers[HttpHeaders.LastModified]
+                    return RepoHeaders(etag, last)
+                }
+            } catch (_: Exception) {
+                // next mirror
             }
         }
-        return emptyList<FDroidApp>() to null
+        return null
     }
 
-    private fun parseIndex(root: JsonObject, repoName: String, base: String): List<FDroidApp> {
-        val result = mutableListOf<FDroidApp>()
-        val packages = root["packages"]?.jsonObject
-        val appsArray = root["apps"]?.jsonArray
+    private data class Resp(val res: HttpResponse?, val status304: Boolean)
+    private suspend fun get(url: String, etag: String?, lastModified: String?): Resp {
+        val resp = client.get(url) {
+            etag?.let { header(HttpHeaders.IfNoneMatch, it) }
+            lastModified?.let { header(HttpHeaders.IfModifiedSince, it) }
+        }
+        return Resp(resp, resp.status.value == 304)
+    }
 
-        if (appsArray != null && packages != null) {
-            for (app in appsArray) {
-                val a = app.jsonObject
-                val pkg = a["packageName"]?.jsonPrimitive?.content ?: continue
-                val versions = packages[pkg]?.jsonArray ?: continue
-
-                val parsedVariants = versions.mapNotNull { v ->
-                    parseVariant(v.jsonObject, base)
+    private suspend fun parseEntryIndexName(resp: HttpResponse): Pair<String?, String?> {
+        val inputStream = resp.bodyAsChannel().toInputStream()
+        inputStream.use { stream ->
+            JsonReader(InputStreamReader(stream, Charsets.UTF_8)).use { r ->
+                var name: String? = null
+                r.beginObject()
+                while (r.hasNext()) {
+                    val n = r.nextName()
+                    if (n == "index" && r.peek() == com.google.gson.stream.JsonToken.BEGIN_OBJECT) {
+                        r.beginObject()
+                        while (r.hasNext()) {
+                            val k = r.nextName()
+                            if (k == "name" && r.peek() == com.google.gson.stream.JsonToken.STRING) name = r.nextString()
+                            else r.skipValue()
+                        }
+                        r.endObject()
+                    } else r.skipValue()
                 }
-                val best = selectBestVariant(parsedVariants)
-
-                val icon = a["icon"]?.jsonPrimitive?.contentOrNull ?: ""
-                val iconUrl = when {
-                    icon.startsWith("http") -> icon
-                    icon.isNotBlank() -> "$base/icons-640/$icon"
-                    else -> "https://f-droid.org/assets/ic_repo_app_default.png"
-                }
-
-                val latestVersionObj = versions.firstOrNull()?.jsonObject
-                val latestVersionName = latestVersionObj?.get("versionName")?.jsonPrimitive?.content ?: "1.0"
-                val latestVersionCode = latestVersionObj?.get("versionCode")?.jsonPrimitive?.longOrNull ?: 1L
-                val category = normalizeCategory(a["categories"]?.jsonArray?.firstOrNull()?.jsonPrimitive?.content ?: "Other")
-
-                val screenshots = parseScreenshotsV1(a["screenshots"], base).ifEmpty {
-                    parseScreenshotsV2(a["screenshots"], base)
-                }
-
-                result += FDroidApp(
-                    packageName = pkg,
-                    name = getLocalizedString(a["name"]) ?: pkg,
-                    summary = getLocalizedString(a["summary"]) ?: "",
-                    description = getLocalizedString(a["description"]) ?: "",
-                    iconUrl = iconUrl,
-                    version = latestVersionName,
-                    versionCode = latestVersionCode.toInt(),
-                    size = best?.size ?: 0L,
-                    apkUrl = best?.url ?: "",
-                    license = (a["license"]?.jsonPrimitive?.content ?: "Unknown"),
-                    category = category,
-                    author = (a["authorName"]?.jsonPrimitive?.content ?: "Unknown"),
-                    website = (a["webSite"]?.jsonPrimitive?.content ?: ""),
-                    sourceCode = (a["sourceCode"]?.jsonPrimitive?.content ?: ""),
-                    added = (a["added"]?.jsonPrimitive?.longOrNull ?: 0L),
-                    lastUpdated = (a["lastUpdated"]?.jsonPrimitive?.longOrNull ?: 0L),
-                    screenshots = screenshots,
-                    antiFeatures = parseAntiFeatures(latestVersionObj?.get("antiFeatures")),
-                    downloads = 0L,
-                    isInstalled = false,
-                    repository = repoName,
-                    sha256 = best?.sha256 ?: ""
-                )
+                r.endObject()
+                return name to null
             }
         }
-        return result
     }
 
-    private fun parseVariant(v: JsonObject, base: String): ApkVariant? {
-        val file = v["file"]?.jsonObject ?: return null
-        val name = file["name"]?.jsonPrimitive?.content ?: return null
-        val url = if (name.startsWith("http")) name else "$base/$name"
-        val size = file["size"]?.jsonPrimitive?.longOrNull ?: 0L
-        val sha = file["sha256"]?.jsonPrimitive?.content ?: ""
-        val manifest = v["manifest"]?.jsonObject ?: JsonObject(emptyMap())
-        val native = manifest["nativecode"]?.jsonArray?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
-        val minSdk = manifest["minSdkVersion"]?.jsonPrimitive?.intOrNull ?: 1
-        val maxSdk = manifest["maxSdkVersion"]?.jsonPrimitive?.intOrNull ?: Int.MAX_VALUE
-        val densities = manifest["supportsScreens"]?.jsonArray?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
-        val vc = manifest["versionCode"]?.jsonPrimitive?.longOrNull
-            ?: v["versionCode"]?.jsonPrimitive?.longOrNull
-            ?: 0L
-        return ApkVariant(url, size, sha, native, minSdk, maxSdk, densities, vc)
-    }
-
-    private fun getLocalizedString(value: JsonElement?): String? {
-        if (value == null) return null
-        return when (value) {
-            is JsonPrimitive -> value.content
-            is JsonObject -> {
-                val keys = listOf("en-US","en","en_US","en_GB")
-                for (k in keys) {
-                    value[k]?.let { v ->
-                        if (v is JsonPrimitive) return v.content
-                        if (v is JsonObject && v["name"] is JsonPrimitive) return v["name"]!!.jsonPrimitive.content
+    // Streaming: read packages -> compute best variant per pkg; read apps -> emit app with best
+    private suspend fun parseIndexStreaming(resp: HttpResponse, base: String, repoName: String, onApp: (FDroidApp) -> Unit) {
+        val bestByPackage = HashMap<String, ApkVariant>(64_000)
+        val inputStream = resp.bodyAsChannel().toInputStream()
+        inputStream.use { isr ->
+            JsonReader(InputStreamReader(isr, Charsets.UTF_8)).use { r ->
+                r.beginObject()
+                while (r.hasNext()) {
+                    when (r.nextName()) {
+                        "packages" -> parsePackagesObject(r, base, bestByPackage)
+                        "apps" -> parseAppsArray(r, base, repoName, bestByPackage, onApp)
+                        else -> r.skipValue()
                     }
                 }
-                value.values.firstOrNull()?.let {
-                    if (it is JsonPrimitive) return it.content
-                    if (it is JsonObject && it["name"] is JsonPrimitive) return it["name"]!!.jsonPrimitive.content
-                }
-                null
+                r.endObject()
             }
-            else -> null
         }
+    }
+
+    private fun parsePackagesObject(r: JsonReader, base: String, bestByPackage: MutableMap<String, ApkVariant>) {
+        r.beginObject()
+        while (r.hasNext()) {
+            val pkg = r.nextName()
+            if (r.peek() == com.google.gson.stream.JsonToken.BEGIN_ARRAY) {
+                var best: ApkVariant? = null
+                r.beginArray()
+                while (r.hasNext()) {
+                    val v = parseVersionObject(r, base)
+                    best = pickBetter(best, v)
+                }
+                r.endArray()
+                if (best != null) bestByPackage[pkg] = best
+            } else r.skipValue()
+        }
+        r.endObject()
+    }
+
+    private fun parseVersionObject(r: JsonReader, base: String): ApkVariant {
+        var url = ""
+        var size = 0L
+        var sha = ""
+        var versionCode = 0L
+        var versionName = "1.0"
+        var minSdk = 1
+        var maxSdk = Int.MAX_VALUE
+        var abis: List<String> = emptyList()
+        var densities: List<String> = emptyList()
+
+        r.beginObject()
+        while (r.hasNext()) {
+            when (r.nextName()) {
+                "file" -> {
+                    r.beginObject()
+                    while (r.hasNext()) {
+                        when (r.nextName()) {
+                            "name" -> {
+                                val name = safeString(r)
+                                url = if (name.startsWith("http")) name else "$base/$name"
+                            }
+                            "size" -> size = safeLong(r)
+                            "sha256" -> sha = safeString(r)
+                            else -> r.skipValue()
+                        }
+                    }
+                    r.endObject()
+                }
+                "manifest" -> {
+                    r.beginObject()
+                    while (r.hasNext()) {
+                        when (r.nextName()) {
+                            "minSdkVersion" -> minSdk = safeInt(r, 1)
+                            "maxSdkVersion" -> maxSdk = safeInt(r, Int.MAX_VALUE)
+                            "nativecode" -> abis = readStringArray(r)
+                            "supportsScreens" -> densities = readStringArray(r)
+                            "versionCode" -> versionCode = safeLong(r)
+                            "versionName" -> versionName = safeString(r)
+                            else -> r.skipValue()
+                        }
+                    }
+                    r.endObject()
+                }
+                "versionCode" -> versionCode = safeLong(r)
+                "versionName" -> versionName = safeString(r)
+                else -> r.skipValue()
+            }
+        }
+        r.endObject()
+        return ApkVariant(url, size, sha, abis, minSdk, maxSdk, densities, versionCode, versionName)
+    }
+
+    private fun parseAppsArray(
+        r: JsonReader,
+        base: String,
+        repoName: String,
+        bestByPackage: Map<String, ApkVariant>,
+        onApp: (FDroidApp) -> Unit
+    ) {
+        r.beginArray()
+        while (r.hasNext()) {
+            parseSingleAppObject(r, base, repoName, bestByPackage)?.let(onApp)
+        }
+        r.endArray()
+    }
+
+    private fun parseSingleAppObject(
+        r: JsonReader,
+        base: String,
+        repoName: String,
+        bestByPackage: Map<String, ApkVariant>
+    ): FDroidApp? {
+        var pkg = ""
+        var name = ""
+        var summary = ""
+        var desc = ""
+        var iconUrl = "https://f-droid.org/assets/ic_repo_app_default.png"
+        var license = "Unknown"
+        var category = "Other"
+        var author = "Unknown"
+        var website = ""
+        var source = ""
+        var added = 0L
+        var updated = 0L
+        var screenshots: List<String> = emptyList()
+
+        r.beginObject()
+        while (r.hasNext()) {
+            when (r.nextName()) {
+                "packageName" -> pkg = safeString(r)
+                "name" -> name = readLocalizedString(r)
+                "summary" -> summary = readLocalizedString(r)
+                "description" -> desc = readLocalizedString(r)
+                "icon" -> {
+                    val ic = safeString(r)
+                    iconUrl = when {
+                        ic.startsWith("http") -> ic
+                        ic.isNotBlank() -> "$base/icons-640/$ic"
+                        else -> iconUrl
+                    }
+                }
+                "license" -> license = safeString(r, "Unknown")
+                "categories" -> category = readFirstStringFromArray(r)?.let { normalizeCategory(it) } ?: "Other"
+                "authorName" -> author = safeString(r, "Unknown")
+                "webSite" -> website = safeString(r)
+                "sourceCode" -> source = safeString(r)
+                "added" -> added = safeLong(r)
+                "lastUpdated" -> updated = safeLong(r)
+                "screenshots" -> screenshots = readScreenshotsAny(r, base)
+                else -> r.skipValue()
+            }
+        }
+        r.endObject()
+
+        val v = bestByPackage[pkg] ?: return null
+        if (pkg.isBlank() || v.url.isBlank()) return null
+
+        return FDroidApp(
+            packageName = pkg,
+            name = if (name.isNotBlank()) name else pkg,
+            summary = summary,
+            description = desc,
+            iconUrl = iconUrl,
+            version = v.versionName.ifBlank { "1.0" },
+            versionCode = v.versionCode.toInt(),
+            size = v.size,
+            apkUrl = v.url,
+            license = license,
+            category = category,
+            author = author,
+            website = website,
+            sourceCode = source,
+            added = added,
+            lastUpdated = updated,
+            screenshots = screenshots,
+            antiFeatures = emptyList(),
+            downloads = 0L,
+            isInstalled = false,
+            repository = repoName,
+            sha256 = v.sha256
+        )
+    }
+
+    // Util: safer reading
+    private fun safeString(r: JsonReader, def: String = ""): String = when (r.peek()) {
+        com.google.gson.stream.JsonToken.STRING -> r.nextString()
+        com.google.gson.stream.JsonToken.NULL -> { r.nextNull(); def }
+        else -> { r.skipValue(); def }
+    }
+    private fun safeLong(r: JsonReader, def: Long = 0L): Long = when (r.peek()) {
+        com.google.gson.stream.JsonToken.NUMBER -> try { r.nextLong() } catch (_: Exception) { r.nextString().toLongOrNull() ?: def }
+        com.google.gson.stream.JsonToken.STRING -> r.nextString().toLongOrNull() ?: def
+        com.google.gson.stream.JsonToken.NULL -> { r.nextNull(); def }
+        else -> { r.skipValue(); def }
+    }
+    private fun safeInt(r: JsonReader, def: Int = 0): Int = when (r.peek()) {
+        com.google.gson.stream.JsonToken.NUMBER -> try { r.nextInt() } catch (_: Exception) { r.nextString().toIntOrNull() ?: def }
+        com.google.gson.stream.JsonToken.STRING -> r.nextString().toIntOrNull() ?: def
+        com.google.gson.stream.JsonToken.NULL -> { r.nextNull(); def }
+        else -> { r.skipValue(); def }
+    }
+    private fun readStringArray(r: JsonReader): List<String> {
+        if (r.peek() != com.google.gson.stream.JsonToken.BEGIN_ARRAY) { r.skipValue(); return emptyList() }
+        val out = ArrayList<String>()
+        r.beginArray()
+        while (r.hasNext()) {
+            if (r.peek() == com.google.gson.stream.JsonToken.STRING) out += r.nextString() else r.skipValue()
+        }
+        r.endArray()
+        return out
+    }
+    private fun readFirstStringFromArray(r: JsonReader): String? {
+        if (r.peek() != com.google.gson.stream.JsonToken.BEGIN_ARRAY) { r.skipValue(); return null }
+        var res: String? = null
+        r.beginArray()
+        if (r.hasNext() && r.peek() == com.google.gson.stream.JsonToken.STRING) res = r.nextString() else if (r.hasNext()) r.skipValue()
+        while (r.hasNext()) r.skipValue()
+        r.endArray()
+        return res
+    }
+    private fun readScreenshotsAny(r: JsonReader, base: String): List<String> {
+        return when (r.peek()) {
+            com.google.gson.stream.JsonToken.BEGIN_ARRAY -> {
+                val list = ArrayList<String>()
+                r.beginArray()
+                while (r.hasNext()) if (r.peek() == com.google.gson.stream.JsonToken.STRING) {
+                    val s = r.nextString()
+                    list += if (s.startsWith("http")) s else "$base/$s"
+                } else r.skipValue()
+                r.endArray()
+                list
+            }
+            com.google.gson.stream.JsonToken.BEGIN_OBJECT -> {
+                var out: List<String> = emptyList()
+                r.beginObject()
+                while (r.hasNext()) {
+                    val k = r.nextName()
+                    if (r.peek() == com.google.gson.stream.JsonToken.BEGIN_ARRAY && (k == "en" || k == "en-US" || k == "en_US" || k == "en_GB")) {
+                        out = readScreenshotsAny(r, base)
+                    } else r.skipValue()
+                }
+                r.endObject()
+                out
+            }
+            else -> { r.skipValue(); emptyList() }
+        }
+    }
+    private fun readLocalizedString(r: JsonReader): String {
+        return when (r.peek()) {
+            com.google.gson.stream.JsonToken.STRING -> r.nextString()
+            com.google.gson.stream.JsonToken.BEGIN_OBJECT -> {
+                var res = ""
+                r.beginObject()
+                while (r.hasNext()) {
+                    val name = r.nextName()
+                    if (r.peek() == com.google.gson.stream.JsonToken.STRING &&
+                        (name == "en" || name == "en-US" || name == "en_US" || name == "en_GB")) {
+                        res = r.nextString()
+                    } else r.skipValue()
+                }
+                r.endObject()
+                res
+            }
+            else -> { r.skipValue(); "" }
+        }
+    }
+    private fun pickBetter(a: ApkVariant?, b: ApkVariant): ApkVariant {
+        if (a == null) return b
+        return if (b.versionCode > a.versionCode) b else if (b.versionCode == a.versionCode && b.size > a.size) b else a
     }
 
     private fun normalizeCategory(source: String): String {
@@ -243,30 +434,6 @@ class FDroidApi(
         return map[cleaned] ?: cleaned.ifBlank { "Other" }
     }
 
-    private fun parseAntiFeatures(value: JsonElement?): List<String> {
-        return when (value) {
-            is JsonArray -> value.mapNotNull { it.jsonPrimitive.contentOrNull }
-            is JsonObject -> value.keys.toList()
-            else -> emptyList()
-        }
-    }
-
-    private fun selectBestVariant(variants: List<ApkVariant>): ApkVariant? {
-        if (variants.isEmpty()) return null
-        val sdk = Build.VERSION.SDK_INT
-        val abis = Build.SUPPORTED_ABIS.toList()
-        val densityBucket = densityQualifier(metrics)
-
-        val compatible = variants.filter { v ->
-            sdk in v.minSdk..v.maxSdk &&
-                    (v.abis.isEmpty() || v.abis.any { abis.contains(it) }) &&
-                    (v.densities.isEmpty() || v.densities.any { it.equals(densityBucket, true) || it.equals("nodpi", true) })
-        }
-        if (compatible.isEmpty()) return null
-        return compatible.maxByOrNull { it.versionCode }
-            ?: compatible.maxByOrNull { it.size }
-    }
-
     private fun densityQualifier(m: DisplayMetrics): String {
         val dpi = m.densityDpi
         return when {
@@ -277,34 +444,5 @@ class FDroidApi(
             dpi <= 480 -> "xxhdpi"
             else -> "xxxhdpi"
         }
-    }
-
-    private fun parseScreenshotsV1(value: JsonElement?, base: String): List<String> {
-        if (value !is JsonArray) return emptyList()
-        return value.mapNotNull { it.jsonPrimitive.contentOrNull }
-            .map { if (it.startsWith("http")) it else "$base/$it" }
-    }
-
-    private fun parseScreenshotsV2(value: JsonElement?, base: String): List<String> {
-        when (value) {
-            is JsonArray -> return value.mapNotNull { it.jsonPrimitive.contentOrNull }
-                .map { if (it.startsWith("http")) it else "$base/$it" }
-            is JsonObject -> {
-                val keys = listOf("en-US","en","en_US","en_GB")
-                for (k in keys) {
-                    val arr = value[k] as? JsonArray
-                    if (arr != null) {
-                        return arr.mapNotNull { it.jsonPrimitive.contentOrNull }
-                            .map { if (it.startsWith("http")) it else "$base/$it" }
-                    }
-                }
-                val first = value.values.firstOrNull() as? JsonArray ?: return emptyList()
-                return first.mapNotNull { it.jsonPrimitive.contentOrNull }
-                    .map { if (it.startsWith("http")) it else "$base/$it" }
-            }
-
-            else -> {}
-        }
-        return emptyList()
     }
 }

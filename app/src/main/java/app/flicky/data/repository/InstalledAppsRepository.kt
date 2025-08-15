@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 
+@Suppress("DEPRECATION")
 class InstalledAppsRepository(private val context: Context) {
 
     data class Installed(val packageName: String, val versionCode: Long)
@@ -13,7 +14,7 @@ class InstalledAppsRepository(private val context: Context) {
         val flags = PackageManager.GET_META_DATA
         val pkgs = pm.getInstalledPackages(flags)
         return pkgs.mapNotNull { pi ->
-            val pkg = pi.packageName ?: return@mapNotNull null
+            val pkg = pi.packageName
             val vc = if (Build.VERSION.SDK_INT >= 28) pi.longVersionCode else pi.versionCode.toLong()
             Installed(pkg, vc)
         }

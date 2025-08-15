@@ -13,25 +13,53 @@ class RepositorySyncManager(
     private val settings: SettingsRepository,
     private val headersStore: RepoHeadersStore
 ) {
-    suspend fun syncAll(force: Boolean = false): List<FDroidApp> = withContext(Dispatchers.IO) {
-        val repos = settings.repositoriesFlow.first()
-        val all = mutableListOf<FDroidApp>()
+    suspend fun syncAll(
+        force: Boolean = false,
+        onProgress: ((current: Int, total: Int, repoName: String) -> Unit)? = null,
+        onRepoError: ((repoName: String, message: String) -> Unit)? = null
+    ): Int = withContext(Dispatchers.IO) {
+        val repos = settings.repositoriesFlow.first().filter { it.enabled }
+        if (repos.isEmpty()) throw IllegalStateException("No enabled repositories")
 
+        val total = repos.size
+        var processed = 0
+        var totalApps = 0
 
-        for (repo in repos) {
-            val prev = headersStore.get(repo.url)
-            val (apps, newHeaders) = api.fetchWithCache(repo, FDroidApi.RepoHeaders(prev.etag, prev.lastModified))
-            if (apps.isNotEmpty()) {
-                all += apps
-                if (newHeaders != null) headersStore.put(repo.url, RepoHeader(newHeaders.etag, newHeaders.lastModified))
+        repos.forEachIndexed { index, repo ->
+            onProgress?.invoke(index, total, repo.name)
+            try {
+                val prev = if (force) RepoHeader(null, null) else headersStore.get(repo.url)
+                val batch = ArrayList<FDroidApp>(1000)
+
+                val headers = api.fetchWithCache(
+                    repo = repo,
+                    previous = FDroidApi.RepoHeaders(prev.etag, prev.lastModified),
+                    force = force
+                ) { app ->
+                    batch += app
+                    if (batch.size >= 500) {
+                        dao.upsertAll(batch)
+                        totalApps += batch.size
+                        batch.clear()
+                    }
+                }
+                // flush remaining
+                if (batch.isNotEmpty()) {
+                    dao.upsertAll(batch)
+                    totalApps += batch.size
+                    batch.clear()
+                }
+                if (!force && headers != null) {
+                    headersStore.put(repo.url, RepoHeader(etag = headers.etag, lastModified = headers.lastModified))
+                }
+            } catch (e: Exception) {
+                onRepoError?.invoke(repo.name, e.message ?: "Unknown error")
             }
+            processed = index + 1
+            onProgress?.invoke(processed, total, repo.name)
         }
-        if (all.isNotEmpty()) {
-            dao.clear()
-            dao.upsertAll(all)
-            settings.setLastSync(System.currentTimeMillis())
-        }
-        all
-    }
 
+        settings.setLastSync(System.currentTimeMillis())
+        totalApps
+    }
 }

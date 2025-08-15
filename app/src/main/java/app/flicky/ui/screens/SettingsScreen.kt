@@ -12,7 +12,7 @@ import app.flicky.ui.components.SettingsToggle
 import app.flicky.viewmodel.SettingsViewModel
 
 @Composable
-fun SettingsScreenGenerated(vm: SettingsViewModel) {
+fun SettingsScreen(vm: SettingsViewModel) {
     val settings by vm.settings.collectAsState()
     val repos by vm.repositories.collectAsState()
     val manager = remember { SettingsManager() }
