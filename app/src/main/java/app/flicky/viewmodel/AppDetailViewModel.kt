@@ -1,5 +1,6 @@
 package app.flicky.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.flicky.data.local.AppDao
@@ -39,14 +40,48 @@ class AppDetailViewModel(
 
     fun install() {
         val app = _ui.value.app ?: return
+
         viewModelScope.launch {
-            _ui.value = _ui.value.copy(isInstalling = true, progress = 0f, error = null)
-            val ok = installer.install(app) { p ->
-                _ui.value = _ui.value.copy(progress = p)
+            _ui.value = _ui.value.copy(
+                isInstalling = true,
+                progress = 0f,
+                error = null
+            )
+
+            try {
+                Log.d("AppDetailViewModel", "Starting install for ${app.packageName}")
+                Log.d("AppDetailViewModel", "APK URL: ${app.apkUrl}")
+
+                val success = installer.install(app) { progress ->
+                    Log.d("AppDetailViewModel", "Download progress: ${(progress * 100).toInt()}%")
+                    _ui.value = _ui.value.copy(progress = progress)
+                }
+
+                if (success) {
+                    // Installation initiated, wait for system to complete
+                    _ui.value = _ui.value.copy(
+                        isInstalling = false,
+                        progress = 1f
+                    )
+                } else {
+                    _ui.value = _ui.value.copy(
+                        isInstalling = false,
+                        error = "Installation failed"
+                    )
+                }
+
+                // Check if installed after a delay
+                kotlinx.coroutines.delay(1000)
+                val newInstalled = installedRepo.getVersionCode(packageName)
+                _ui.value = _ui.value.copy(installedVersionCode = newInstalled)
+
+            } catch (e: Exception) {
+                Log.e("AppDetailViewModel", "Install error", e)
+                _ui.value = _ui.value.copy(
+                    isInstalling = false,
+                    error = "Install failed: ${e.message}"
+                )
             }
-            val newInstalled = installedRepo.getVersionCode(packageName)
-            _ui.value = _ui.value.copy(isInstalling = false, installedVersionCode = newInstalled)
-            if (!ok) _ui.value = _ui.value.copy(error = "Install failed")
         }
     }
 
@@ -56,7 +91,10 @@ class AppDetailViewModel(
 
     fun uninstall() {
         installer.uninstall(packageName)
-        val newInstalled = installedRepo.getVersionCode(packageName)
-        _ui.value = _ui.value.copy(installedVersionCode = newInstalled)
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(1000)
+            val newInstalled = installedRepo.getVersionCode(packageName)
+            _ui.value = _ui.value.copy(installedVersionCode = newInstalled)
+        }
     }
 }
