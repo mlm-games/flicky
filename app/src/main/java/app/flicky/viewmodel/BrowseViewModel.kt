@@ -44,8 +44,10 @@ class BrowseViewModel(
     private val _progress = MutableStateFlow(0f)
     private val _error = MutableStateFlow<String?>(null)
 
-    private val hideAnti = settings.settingsFlow.map { it.hideAntiFeatures }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
-    private val categoriesFlow = repo.categories().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    private val hideAnti = settings.settingsFlow.map { it.hideAntiFeatures }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    private val categoriesFlow =
+        repo.categories().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val appsFlow: StateFlow<List<FDroidApp>> =
@@ -56,7 +58,13 @@ class BrowseViewModel(
     val uiState: StateFlow<BrowseUiState> =
         combine(
             combine(_query, _sort, appsFlow) { q, s, apps -> Triple(q, s, apps) },
-            combine(categoriesFlow, _isSyncing, _status, _progress, _error) { cats, syncing, status, prog, err ->
+            combine(
+                categoriesFlow,
+                _isSyncing,
+                _status,
+                _progress,
+                _error
+            ) { cats, syncing, status, prog, err ->
                 Quintuple(cats, syncing, status, prog, err)
             }
         ) { first, second ->
@@ -89,9 +97,17 @@ class BrowseViewModel(
         }
     }
 
-    fun setQuery(q: String) { _query.value = q }
-    fun setSort(s: SortOption) { _sort.value = s }
-    fun clearError() { _error.value = null }
+    fun setQuery(q: String) {
+        _query.value = q
+    }
+
+    fun setSort(s: SortOption) {
+        _sort.value = s
+    }
+
+    fun clearError() {
+        _error.value = null
+    }
 
     fun syncRepos() = doSync(force = false)
     fun forceSyncRepos() = doSync(force = true)
@@ -106,10 +122,10 @@ class BrowseViewModel(
             val perRepoErrors = mutableListOf<String>()
 
             runCatching {
-                sync.syncAll(
+                val appCount = sync.syncAll(
                     force = force,
                     onProgress = { current, total, repoName ->
-                        _status.value = "Syncing $repoName..."
+                        _status.value = "Syncing $repoName ($current/$total)..."
                         val p = (current.toFloat() / total.toFloat()).coerceIn(0f, 1f)
                         _progress.value = p
                     },
@@ -117,17 +133,43 @@ class BrowseViewModel(
                         perRepoErrors.add("$repoName: $msg")
                     }
                 )
+                appCount
             }.onSuccess { totalApps ->
-                if (perRepoErrors.isNotEmpty()) {
-                    _error.value = "Some repositories failed:\n" + perRepoErrors.joinToString("\n")
-                } else if (totalApps == 0) {
-                    _error.value = if (force) "No data fetched (servers returned no changes)" else "No new changes"
+                when {
+                    perRepoErrors.size == repo.categories().first().size && totalApps == 0 -> {
+                        _error.value = "All repositories failed. Check your internet connection."
+                    }
+
+                    perRepoErrors.isNotEmpty() -> {
+                        _error.value =
+                            "Partial sync completed with errors:\n${perRepoErrors.joinToString("\n")}"
+                    }
+
+                    totalApps == 0 && !force -> {
+                        _status.value = "No updates available"
+                    }
+
+                    totalApps == 0 && force -> {
+                        _error.value = "No apps fetched. Repository might be empty or unreachable."
+                    }
+
+                    else -> {
+                        _status.value = "Sync complete: $totalApps apps"
+                    }
                 }
-                _status.value = "Done"
                 _progress.value = 1f
             }.onFailure { e ->
-                _error.value = e.message ?: "Sync failed"
+                _error.value = when {
+                    e.message?.contains("No enabled repositories") == true ->
+                        "No repositories enabled. Enable at least one in Settings."
+
+                    e.message?.contains("timeout", ignoreCase = true) == true ->
+                        "Connection timeout. Please check your internet connection."
+
+                    else -> e.message ?: "Sync failed"
+                }
                 _status.value = "Sync failed"
+                _progress.value = 0f
             }
 
             _isSyncing.value = false

@@ -1,6 +1,7 @@
 package app.flicky
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -21,7 +22,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import app.flicky.data.external.UpdatesPreferences
 import app.flicky.helper.DeviceUtils
+import kotlinx.coroutines.GlobalScope
 
 class MainActivity : ComponentActivity() {
 
@@ -66,6 +69,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppGraph.init(applicationContext)
+        UpdatesPreferences.init(applicationContext)
 
         setContent {
             // Observe settings for theme + scheduling
@@ -99,7 +103,25 @@ class MainActivity : ComponentActivity() {
             }
 
             // Initial sync (first frame)
-            LaunchedEffect(Unit) { lifecycleScope.launch { AppGraph.syncManager.syncAll(true) } }
+            LaunchedEffect(Unit) {
+                // Delay initial sync slightly to ensure everything is initialized
+                kotlinx.coroutines.delay(500)
+                lifecycleScope.launch {
+                    try {
+                        Log.d("MainActivity", "Starting initial sync")
+                        val count = AppGraph.db.appDao().count()
+                        if (count == 0) {
+                            Log.d("MainActivity", "Database empty, forcing initial sync")
+                            AppGraph.syncManager.syncAll(force = true)
+                        } else {
+                            Log.d("MainActivity", "Database has $count apps, normal sync")
+                            AppGraph.syncManager.syncAll(force = false)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "Initial sync failed", e)
+                    }
+                }
+            }
 
             var sort by remember { mutableStateOf(SortOption.Updated) }
             var query by remember { mutableStateOf("") }

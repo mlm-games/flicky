@@ -18,6 +18,10 @@ class RepositorySyncManager(
     private val settings: SettingsRepository,
     private val headersStore: RepoHeadersStore
 ) {
+    companion object {
+        private const val TAG = "RepositorySyncManager"
+    }
+
     private val syncMutex = Mutex()
 
     suspend fun syncAll(
@@ -26,72 +30,91 @@ class RepositorySyncManager(
         onRepoError: ((repoName: String, message: String) -> Unit)? = null
     ): Int = withContext(Dispatchers.IO) {
         syncMutex.withLock {
+            Log.d(TAG, "Starting sync (force=$force)")
+
             val repos = settings.repositoriesFlow.first().filter { it.enabled }
-            if (repos.isEmpty()) throw IllegalStateException("No enabled repositories")
+            if (repos.isEmpty()) {
+                Log.e(TAG, "No enabled repositories")
+                throw IllegalStateException("No enabled repositories")
+            }
+
+            Log.d(TAG, "Found ${repos.size} enabled repositories")
 
             val total = repos.size
             var totalApps = 0
             val allApps = mutableListOf<FDroidApp>()
+            var hasAnySuccess = false
 
             repos.forEachIndexed { index, repo ->
+                Log.d(TAG, "Syncing repository ${index + 1}/$total: ${repo.name}")
                 onProgress?.invoke(index, total, repo.name)
 
                 try {
-                    val prev = if (force) RepoHeader(null, null) else headersStore.get(repo.url)
-                    val batch = mutableListOf<FDroidApp>()
+                    val prev = if (force) {
+                        Log.d(TAG, "Force sync - ignoring cache headers")
+                        RepoHeader(null, null)
+                    } else {
+                        headersStore.get(repo.url)
+                    }
+
+                    val repoApps = mutableListOf<FDroidApp>()
 
                     val headers = api.fetchWithCache(
                         repo = repo,
                         previous = FDroidApi.RepoHeaders(prev.etag, prev.lastModified),
                         force = force
                     ) { app ->
-                        batch.add(app)
-                        // Smaller batch size to reduce memory pressure
-                        if (batch.size >= 100) {
-                            allApps.addAll(batch)
-                            totalApps += batch.size
-                            batch.clear()
-                        }
+                        repoApps.add(app)
                     }
 
-                    // Flush remaining
-                    if (batch.isNotEmpty()) {
-                        allApps.addAll(batch)
-                        totalApps += batch.size
+                    Log.d(TAG, "Repository ${repo.name} returned ${repoApps.size} apps")
+
+                    if (repoApps.isNotEmpty()) {
+                        allApps.addAll(repoApps)
+                        totalApps += repoApps.size
+                        hasAnySuccess = true
                     }
 
                     if (headers != null) {
                         headersStore.put(repo.url, RepoHeader(headers.etag, headers.lastModified))
+                        Log.d(TAG, "Updated cache headers for ${repo.name}")
                     }
 
                 } catch (e: Exception) {
-                    Log.e("Sync", "Error syncing ${repo.name}", e)
+                    Log.e(TAG, "Error syncing ${repo.name}", e)
                     onRepoError?.invoke(repo.name, e.message ?: "Unknown error")
+                    // Continue with next repository instead of failing entirely
                 }
 
                 onProgress?.invoke(index + 1, total, repo.name)
             }
 
-            // Insert all apps in a single transaction
+            // Only update database if we have apps
             if (allApps.isNotEmpty()) {
+                Log.d(TAG, "Updating database with $totalApps apps")
                 try {
                     AppGraph.db.withTransaction {
-                        if (force) {
-                            dao.clear() // Clear old data if force sync
+                        if (force && hasAnySuccess) {
+                            Log.d(TAG, "Force sync - clearing old data")
+                            dao.clear()
                         }
-                        // Insert in smaller chunks to avoid transaction size limits
-                        allApps.chunked(500).forEach { chunk ->
+                        // Insert in chunks to avoid transaction size limits
+                        allApps.chunked(500).forEachIndexed { chunkIndex, chunk ->
+                            Log.d(TAG, "Inserting chunk ${chunkIndex + 1} with ${chunk.size} apps")
                             dao.upsertAll(chunk)
                         }
                     }
+                    Log.d(TAG, "Database update complete")
                 } catch (e: Exception) {
-                    Log.e("Sync", "Database transaction failed", e)
+                    Log.e(TAG, "Database transaction failed", e)
                     throw e
                 }
+            } else if (force) {
+                Log.w(TAG, "Force sync returned no apps - not clearing database")
             }
 
             settings.setLastSync(System.currentTimeMillis())
-            Log.d("Sync", "Sync complete: $totalApps apps")
+            Log.d(TAG, "Sync complete: $totalApps apps from ${repos.size} repositories")
             totalApps
         }
     }
