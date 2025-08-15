@@ -5,7 +5,7 @@
 
 > The UI is TV oriented, Android UI is secondary.
 > 
-> For android (mobile) devices, would recommend Droidify or Fdroid Basic for security and better UI
+> For android (mobile) devices, would recommend Droidify or Fdroid Basic (for security and better UI).
 
 
 ## Installation
@@ -17,4 +17,4 @@
 - https://github.com/Generator/Awesome-Android-TV-FOSS-Apps
 
 ## License
-GPL-3.0
+GPL-3.0 (Derived)
