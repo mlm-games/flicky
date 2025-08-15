@@ -3,6 +3,7 @@ package app.flicky
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -16,12 +17,51 @@ import app.flicky.work.SyncScheduler
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.flicky.helper.DeviceUtils
 
 class MainActivity : ComponentActivity() {
+
+    private val browseViewModel: BrowseViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return BrowseViewModel(
+                    AppGraph.appRepo,
+                    AppGraph.syncManager,
+                    AppGraph.settings
+                ) as T
+            }
+        }
+    }
+
+    private val settingsViewModel: SettingsViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return SettingsViewModel(
+                    AppGraph.settings
+                ) as T
+            }
+        }
+    }
+
+    private val updatesViewModel: UpdatesViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return UpdatesViewModel(
+                    AppGraph.appRepo,
+                    AppGraph.installedRepo
+                ) as T
+            }
+        }
+    }
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,11 +82,8 @@ class MainActivity : ComponentActivity() {
                 SyncScheduler.schedule(applicationContext, wifiOnly, hours)
             }
 
-            val browseVM = viewModelFactoryOvr { BrowseViewModel(AppGraph.appRepo, AppGraph.syncManager, AppGraph.settings) }
-            val settingsVM = viewModelFactoryOvr { SettingsViewModel(AppGraph.settings) }
-            val updatesVM = viewModelFactoryOvr { UpdatesViewModel(AppGraph.appRepo, AppGraph.installedRepo) }
-            val browseUi by browseVM.uiState.collectAsState()
-            val updatesUi by updatesVM.ui.collectAsState()
+            val browseUi by browseViewModel.uiState.collectAsState()
+            val updatesUi by updatesViewModel.ui.collectAsState()
 
             val navController = rememberNavController()
             val backStack by navController.currentBackStackEntryAsState()
@@ -96,20 +133,20 @@ class MainActivity : ComponentActivity() {
                                     },
                                     query = query,
                                     sort = sort,
-                                    onSortChange = { s -> sort = s; browseVM.setSort(s) },
-                                    onSearchChange = { q -> query = q; browseVM.setQuery(q) },
+                                    onSortChange = { s -> sort = s; browseViewModel.setSort(s) },
+                                    onSearchChange = { q -> query = q; browseViewModel.setQuery(q) },
                                     onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
-                                    onSyncClick = { browseVM.syncRepos() },
-                                    onForceSyncClick = { browseVM.forceSyncRepos() },
+                                    onSyncClick = { browseViewModel.syncRepos() },
+                                    onForceSyncClick = { browseViewModel.forceSyncRepos() },
                                     isSyncing = browseUi.isSyncing,
                                     progress = browseUi.progress,
                                     errorMessage = browseUi.errorMessage,
-                                    onDismissError = { browseVM.clearError() }
+                                    onDismissError = { browseViewModel.clearError() }
                                 )
                             },
                             categoriesContent = {
                                 CategoriesScreen(
-                                    onSyncClick = { browseVM.syncRepos() },
+                                    onSyncClick = { browseViewModel.syncRepos() },
                                     isSyncing = browseUi.isSyncing,
                                     progress = browseUi.progress
                                 )
@@ -131,7 +168,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             },
-                            settingsContent = { SettingsScreen(vm = settingsVM) },
+                            settingsContent = { SettingsScreen(vm = settingsViewModel) },
                             detailContent = { pkg ->
                                 val detailVM = viewModelFactoryOvr {
                                     AppDetailViewModel(
@@ -182,20 +219,20 @@ class MainActivity : ComponentActivity() {
                                     },
                                     query = query,
                                     sort = sort,
-                                    onSortChange = { s -> sort = s; browseVM.setSort(s) },
-                                    onSearchChange = { q -> query = q; browseVM.setQuery(q) },
+                                    onSortChange = { s -> sort = s; browseViewModel.setSort(s) },
+                                    onSearchChange = { q -> query = q; browseViewModel.setQuery(q) },
                                     onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
-                                    onSyncClick = { browseVM.syncRepos() },
-                                    onForceSyncClick = { browseVM.forceSyncRepos() },
+                                    onSyncClick = { browseViewModel.syncRepos() },
+                                    onForceSyncClick = { browseViewModel.forceSyncRepos() },
                                     isSyncing = browseUi.isSyncing,
                                     progress = browseUi.progress,
                                     errorMessage = browseUi.errorMessage,
-                                    onDismissError = { browseVM.clearError() }
+                                    onDismissError = { browseViewModel.clearError() }
                                 )
                             },
                             categoriesContent = {
                                 CategoriesScreen(
-                                    onSyncClick = { browseVM.syncRepos() },
+                                    onSyncClick = { browseViewModel.syncRepos() },
                                     isSyncing = browseUi.isSyncing,
                                     progress = browseUi.progress
                                 )
@@ -217,7 +254,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             },
-                            settingsContent = { SettingsScreen(vm = settingsVM) },
+                            settingsContent = { SettingsScreen(vm = settingsViewModel) },
                             detailContent = { pkg ->
                                 val detailVM = viewModelFactoryOvr {
                                     AppDetailViewModel(

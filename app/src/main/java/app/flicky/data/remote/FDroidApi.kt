@@ -3,15 +3,16 @@ package app.flicky.data.remote
 import android.content.Context
 import android.os.Build
 import android.util.DisplayMetrics
+import android.util.Log
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.RepositoryInfo
 import app.flicky.data.trust.HttpsOnlyVerifier
 import app.flicky.data.trust.RepoSignatureVerifier
 import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.*
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
@@ -19,19 +20,48 @@ import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.jvm.javaio.toInputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.InputStreamReader
 
 class FDroidApi(
     context: Context,
     private val verifier: RepoSignatureVerifier = HttpsOnlyVerifier()
 ) {
+    companion object {
+        private const val TAG = "FDroidApi"
+        private const val BATCH_SIZE = 100
+        private const val INITIAL_MAP_CAPACITY = 1000
+        private const val CONNECTION_TIMEOUT_MS = 30_000
+        private const val REQUEST_TIMEOUT_MS = 60_000
+        private const val MAX_RETRIES = 3
+
+        val F_DROID_MIRRORS = listOf(
+            "https://f-droid.org/repo",
+            "https://mirror.f-droid.org/repo"
+        )
+    }
+
     private val client = HttpClient(Android) {
         install(HttpTimeout) {
-            requestTimeoutMillis = 60_000
-            connectTimeoutMillis = 30_000
+            requestTimeoutMillis = REQUEST_TIMEOUT_MS.toLong()
+            connectTimeoutMillis = CONNECTION_TIMEOUT_MS.toLong()
+            socketTimeoutMillis = CONNECTION_TIMEOUT_MS.toLong()
         }
+
+        install(HttpRequestRetry) {
+            retryOnServerErrors(maxRetries = MAX_RETRIES)
+            exponentialDelay()
+        }
+
+        engine {
+            connectTimeout = CONNECTION_TIMEOUT_MS
+            socketTimeout = CONNECTION_TIMEOUT_MS
+            // Don't use deprecated threadsCount
+        }
+
         defaultRequest {
-            header("User-Agent", "Flicky/1.1 (Android TV)")
+            header("User-Agent", "Flicky/1.1 (Android ${Build.VERSION.RELEASE})")
             header("Accept", "application/json")
         }
     }
@@ -64,374 +94,188 @@ class FDroidApi(
         val added: Long,
         val lastUpdated: Long,
         val screenshots: List<String>,
-        val repository: String
+        val repository: String,
+        val antiFeatures: List<String> = emptyList()
     )
 
-
     data class RepoHeaders(val etag: String?, val lastModified: String?)
-
-    companion object {
-        val F_DROID_MIRRORS = listOf(
-            "https://f-droid.org/repo",
-            "https://mirror.f-droid.org/repo"
-        )
-    }
-
-    private fun normalizeUrl(u: String): String {
-        var url = u.trimEnd('/')
-        if (!url.startsWith("http")) url = "https://$url"
-        return url
-    }
 
     suspend fun fetchWithCache(
         repo: RepositoryInfo,
         previous: RepoHeaders,
         force: Boolean = false,
         onApp: suspend (FDroidApp) -> Unit
-    ): RepoHeaders? {
+    ): RepoHeaders? = withContext(Dispatchers.IO) {
         val bases = if (repo.url.contains("f-droid.org")) F_DROID_MIRRORS else listOf(repo.url)
+
         for (base0 in bases) {
             val base = normalizeUrl(base0)
             if (!verifier.isTrustedRepoUrl(base)) continue
 
-            // Try v2 entry.json -> index
+            // Try v2 format first
             try {
-                val entry = get("$base/entry.json", if (force) null else previous.etag, if (force) null else previous.lastModified)
-                if (entry.status304) return RepoHeaders(previous.etag, previous.lastModified)
-                if (entry.res?.status?.isSuccess() == true) {
-                    // Remove .use here - HttpResponse doesn't need it
-                    val resp = entry.res
-                    val (indexName) = parseEntryIndexName(resp)
-                    val indexUrl = if (!indexName.isNullOrBlank()) "$base/$indexName" else "$base/index-v1.json"
-                    val idx = get(indexUrl, if (force) null else previous.etag, if (force) null else previous.lastModified)
-                    if (idx.status304) return RepoHeaders(previous.etag, previous.lastModified)
-                    if (idx.res?.status?.isSuccess() == true) {
-                        // Remove .use here too
-                        val r = idx.res
-                        parseIndexStreaming(r, base, repoName = repo.name, onApp = onApp)
-                        val etag = r.headers[HttpHeaders.ETag] ?: entry.res.headers[HttpHeaders.ETag]
-                        val last = r.headers[HttpHeaders.LastModified] ?: entry.res.headers[HttpHeaders.LastModified]
-                        return RepoHeaders(etag, last)
+                val entryResp = get("$base/entry.json", if (force) null else previous.etag, if (force) null else previous.lastModified)
+                if (entryResp.status304) return@withContext previous
+
+                if (entryResp.res?.status?.isSuccess() == true) {
+                    val indexName = parseEntryIndexName(entryResp.res) ?: "index-v1.json"
+                    val indexUrl = "$base/$indexName"
+
+                    val indexResp = get(indexUrl, if (force) null else previous.etag, if (force) null else previous.lastModified)
+                    if (indexResp.status304) return@withContext previous
+
+                    if (indexResp.res?.status?.isSuccess() == true) {
+                        parseIndexStreamingOptimized(indexResp.res, base, repo.name, onApp)
+
+                        val etag = indexResp.res.headers[HttpHeaders.ETag] ?: entryResp.res.headers[HttpHeaders.ETag]
+                        val lastMod = indexResp.res.headers[HttpHeaders.LastModified] ?: entryResp.res.headers[HttpHeaders.LastModified]
+                        return@withContext RepoHeaders(etag, lastMod)
                     }
                 }
-            } catch (_: Exception) {
-                // fallback to v1 or next mirror
+            } catch (e: Exception) {
+                Log.e(TAG, "Error with v2 format for ${repo.name}: ${e.message}")
+                // Continue to v1 fallback
             }
 
-            // Try v1 directly
+            // Try v1 format as fallback
             try {
-                val v1 = get("$base/index-v1.json", if (force) null else previous.etag, if (force) null else previous.lastModified)
-                if (v1.status304) return RepoHeaders(previous.etag, previous.lastModified)
-                if (v1.res?.status?.isSuccess() == true) {
-                    // Remove .use here as well
-                    val resp = v1.res
-                    parseIndexStreaming(resp, base, repoName = repo.name, onApp = onApp)
-                    val etag = resp.headers[HttpHeaders.ETag]
-                    val last = resp.headers[HttpHeaders.LastModified]
-                    return RepoHeaders(etag, last)
+                val v1Resp = get("$base/index-v1.json", if (force) null else previous.etag, if (force) null else previous.lastModified)
+                if (v1Resp.status304) return@withContext previous
+
+                if (v1Resp.res?.status?.isSuccess() == true) {
+                    parseIndexStreamingOptimized(v1Resp.res, base, repo.name, onApp)
+
+                    val etag = v1Resp.res.headers[HttpHeaders.ETag]
+                    val lastMod = v1Resp.res.headers[HttpHeaders.LastModified]
+                    return@withContext RepoHeaders(etag, lastMod)
                 }
-            } catch (_: Exception) {
-                // next mirror
+            } catch (e: Exception) {
+                Log.e(TAG, "Error with v1 format for ${repo.name}: ${e.message}")
+                // Continue to next mirror
             }
         }
-        return null
+        null
     }
 
     private data class Resp(val res: HttpResponse?, val status304: Boolean)
+
     private suspend fun get(url: String, etag: String?, lastModified: String?): Resp {
         val resp = client.get(url) {
             etag?.let { header(HttpHeaders.IfNoneMatch, it) }
             lastModified?.let { header(HttpHeaders.IfModifiedSince, it) }
         }
-        return Resp(resp, resp.status.value == 304)
+        return Resp(
+            res = if (resp.status.value == 304) null else resp,
+            status304 = resp.status.value == 304
+        )
     }
 
-    private suspend fun parseEntryIndexName(resp: HttpResponse): Pair<String?, String?> {
-        val inputStream = resp.bodyAsChannel().toInputStream()
-        inputStream.use { stream ->
-            JsonReader(InputStreamReader(stream, Charsets.UTF_8)).use { r ->
-                var name: String? = null
-                r.beginObject()
-                while (r.hasNext()) {
-                    val n = r.nextName()
-                    if (n == "index" && r.peek() == com.google.gson.stream.JsonToken.BEGIN_OBJECT) {
-                        r.beginObject()
-                        while (r.hasNext()) {
-                            val k = r.nextName()
-                            if (k == "name" && r.peek() == com.google.gson.stream.JsonToken.STRING) name = r.nextString()
-                            else r.skipValue()
+    private suspend fun parseEntryIndexName(resp: HttpResponse): String? = withContext(Dispatchers.IO) {
+        try {
+            val inputStream = resp.bodyAsChannel().toInputStream()
+            inputStream.use { stream ->
+                JsonReader(InputStreamReader(stream, Charsets.UTF_8)).use { reader ->
+                    reader.beginObject()
+                    while (reader.hasNext()) {
+                        if (reader.nextName() == "index" && reader.peek() == JsonToken.BEGIN_OBJECT) {
+                            reader.beginObject()
+                            while (reader.hasNext()) {
+                                if (reader.nextName() == "name" && reader.peek() == JsonToken.STRING) {
+                                    return@withContext reader.nextString()
+                                } else {
+                                    reader.skipValue()
+                                }
+                            }
+                            reader.endObject()
+                        } else {
+                            reader.skipValue()
                         }
-                        r.endObject()
-                    } else r.skipValue()
+                    }
+                    reader.endObject()
                 }
-                r.endObject()
-                return name to null
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing entry.json", e)
         }
+        null
     }
 
-    // Streaming: read packages -> compute best variant per pkg; read apps -> emit app with best
-    private suspend fun parseIndexStreaming(
+    private suspend fun parseIndexStreamingOptimized(
         resp: HttpResponse,
         base: String,
         repoName: String,
         onApp: suspend (FDroidApp) -> Unit
-    ) {
-        val bestByPackage = HashMap<String, ApkVariant>(64_000)
-        val appMetaByPackage = HashMap<String, AppMeta>(64_000)
+    ) = withContext(Dispatchers.IO) {
+        val bestByPackage = HashMap<String, ApkVariant>(INITIAL_MAP_CAPACITY)
+        val batch = mutableListOf<FDroidApp>()
 
-        val inputStream = resp.bodyAsChannel().toInputStream()
-        inputStream.use { isr ->
-            JsonReader(InputStreamReader(isr, Charsets.UTF_8)).use { r ->
-                r.beginObject()
-                while (r.hasNext()) {
-                    when (r.nextName()) {
-                        "packages" -> parsePackagesObject(r, base, bestByPackage)
-                        "apps" -> parseAppsArrayMeta(r, base, repoName, appMetaByPackage)
-                        else -> r.skipValue()
-                    }
-                }
-                r.endObject()
-            }
-        }
-
-        for ((pkg, meta) in appMetaByPackage) {
-            val v = bestByPackage[pkg] ?: continue
-            if (v.url.isBlank()) continue
-
-            val app = FDroidApp(
-                packageName = pkg,
-                name = meta.name.ifBlank { pkg },
-                summary = meta.summary,
-                description = meta.description,
-                iconUrl = meta.iconUrl,
-                version = v.versionName.ifBlank { "1.0" },
-                versionCode = v.versionCode.toInt(),
-                size = v.size,
-                apkUrl = v.url,
-                license = meta.license,
-                category = meta.category,
-                author = meta.author,
-                website = meta.website,
-                sourceCode = meta.sourceCode,
-                added = meta.added,
-                lastUpdated = meta.lastUpdated,
-                screenshots = meta.screenshots,
-                antiFeatures = emptyList(),
-                downloads = 0L,
-                isInstalled = false,
-                repository = meta.repository,
-                sha256 = v.sha256
-            )
-            onApp(app)
-        }
-        android.util.Log.d("FDroidApi", "packages=${bestByPackage.size}, apps=${appMetaByPackage.size}")
-    }
-
-    private fun parseAppsArrayMeta(
-        r: JsonReader,
-        base: String,
-        repoName: String,
-        out: MutableMap<String, AppMeta>
-    ) {
-        r.beginArray()
-        while (r.hasNext()) {
-            parseSingleAppMeta(r, base, repoName)?.let { meta ->
-                out[meta.packageName] = meta
-            }
-        }
-        r.endArray()
-    }
-
-    private fun parseSingleAppMeta(
-        r: JsonReader,
-        base: String,
-        repoName: String
-    ): AppMeta? {
-        var pkg = ""
-        var name = ""
-        var summary = ""
-        var desc = ""
-        var iconUrl = "https://f-droid.org/assets/ic_repo_app_default.png"
-        var license = "Unknown"
-        var category = "Other"
-        var author = "Unknown"
-        var website = ""
-        var source = ""
-        var added = 0L
-        var updated = 0L
-        var screenshots: List<String> = emptyList()
-
-        r.beginObject()
-        while (r.hasNext()) {
-            when (r.nextName()) {
-                "packageName" -> pkg = safeString(r)
-                "name" -> name = readLocalizedString(r)
-                "summary" -> summary = readLocalizedString(r)
-                "description" -> desc = readLocalizedString(r)
-                "icon" -> {
-                    val ic = safeString(r)
-                    iconUrl = when {
-                        ic.startsWith("http") -> ic
-                        ic.isNotBlank() -> "$base/icons-640/$ic"
-                        else -> iconUrl
-                    }
-                }
-                "license" -> license = safeString(r, "Unknown")
-                "categories" -> category = readFirstStringFromArray(r)?.let { normalizeCategory(it) } ?: "Other"
-                "authorName" -> author = safeString(r, "Unknown")
-                "webSite" -> website = safeString(r)
-                "sourceCode" -> source = safeString(r)
-                "added" -> added = safeLong(r)
-                "lastUpdated" -> updated = safeLong(r)
-                "screenshots" -> screenshots = readScreenshotsAny(r, base)
-                else -> r.skipValue()
-            }
-        }
-        r.endObject()
-
-        return if (pkg.isBlank()) null else AppMeta(
-            packageName = pkg,
-            name = name,
-            summary = summary,
-            description = desc,
-            iconUrl = iconUrl,
-            license = license,
-            category = category,
-            author = author,
-            website = website,
-            sourceCode = source,
-            added = added,
-            lastUpdated = updated,
-            screenshots = screenshots,
-            repository = repoName
-        )
-    }
-
-    private fun parsePackagesObject(r: JsonReader, base: String, bestByPackage: MutableMap<String, ApkVariant>) {
-        r.beginObject()
-        while (r.hasNext()) {
-            val pkg = r.nextName()
-            if (r.peek() == com.google.gson.stream.JsonToken.BEGIN_ARRAY) {
-                var best: ApkVariant? = null
-                r.beginArray()
-                while (r.hasNext()) {
-                    val v = parseVersionObject(r, base)
-                    best = pickBetter(best, v)
-                }
-                r.endArray()
-                if (best != null) bestByPackage[pkg] = best
-            } else r.skipValue()
-        }
-        r.endObject()
-    }
-
-    private fun parseVersionObject(r: JsonReader, base: String): ApkVariant {
-        var url = ""
-        var size = 0L
-        var sha = ""
-        var versionCode = 0L
-        var versionName = "1.0"
-        var minSdk = 1
-        var maxSdk = Int.MAX_VALUE
-        var abis: List<String> = emptyList()
-        var densities: List<String> = emptyList()
-
-        r.beginObject()
-        while (r.hasNext()) {
-            when (r.nextName()) {
-                // v2-style: { "file": { "name": "...", "size": 123, "sha256": "..." } }
-                "file" -> {
-                    r.beginObject()
-                    while (r.hasNext()) {
-                        when (r.nextName()) {
-                            "name" -> {
-                                val name = safeString(r)
-                                if (name.isNotBlank()) {
-                                    url = if (name.startsWith("http")) name else "$base/$name"
+        try {
+            val inputStream = resp.bodyAsChannel().toInputStream()
+            inputStream.use { stream ->
+                JsonReader(InputStreamReader(stream, Charsets.UTF_8)).use { reader ->
+                    reader.beginObject()
+                    while (reader.hasNext()) {
+                        when (reader.nextName()) {
+                            "packages" -> parsePackagesObject(reader, base, bestByPackage)
+                            "apps" -> parseAppsArray(reader, base, repoName, bestByPackage) { app ->
+                                batch.add(app)
+                                if (batch.size >= BATCH_SIZE) {
+                                    batch.forEach { onApp(it) }
+                                    batch.clear()
                                 }
                             }
-                            "size" -> size = safeLong(r)
-                            "sha256" -> sha = safeString(r)
-                            else -> r.skipValue()
+                            else -> reader.skipValue()
                         }
                     }
-                    r.endObject()
+                    reader.endObject()
                 }
-
-                // v1-style: fields are at the top level of the version entry
-                "apkName" -> {
-                    val name = safeString(r)
-                    if (name.isNotBlank()) {
-                        url = if (name.startsWith("http")) name else "$base/$name"
-                    }
-                }
-                "apkBytes", "apkSize", "size" -> size = safeLong(r)
-
-                // v1: hashes { sha256: "..." }
-                "hashes" -> {
-                    r.beginObject()
-                    while (r.hasNext()) {
-                        when (r.nextName()) {
-                            "sha256" -> sha = safeString(r)
-                            else -> r.skipValue()
-                        }
-                    }
-                    r.endObject()
-                }
-
-                // Manifest-like info (sometimes nested under "manifest", sometimes flat)
-                "manifest" -> {
-                    r.beginObject()
-                    while (r.hasNext()) {
-                        when (r.nextName()) {
-                            "minSdkVersion" -> minSdk = safeInt(r, 1)
-                            "maxSdkVersion" -> maxSdk = safeInt(r, Int.MAX_VALUE)
-                            "nativecode" -> abis = readStringArray(r)
-                            "supportsScreens", "densities" -> densities = readStringArray(r)
-                            "versionCode" -> versionCode = safeLong(r)
-                            "versionName" -> versionName = safeString(r)
-                            else -> r.skipValue()
-                        }
-                    }
-                    r.endObject()
-                }
-
-                // Sometimes present at the top level (v1)
-                "minSdkVersion" -> minSdk = safeInt(r, 1)
-                "maxSdkVersion" -> maxSdk = safeInt(r, Int.MAX_VALUE)
-                "nativecode" -> abis = readStringArray(r)
-                "supportsScreens", "densities" -> densities = readStringArray(r)
-
-                // Common fields
-                "versionCode" -> versionCode = safeLong(r)
-                "versionName" -> versionName = safeString(r)
-
-                // Any other fields we don't care about
-                else -> r.skipValue()
             }
+            // Emit remaining apps
+            batch.forEach { onApp(it) }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing index for $repoName", e)
+            throw e
         }
-        r.endObject()
-
-        return ApkVariant(url, size, sha, abis, minSdk, maxSdk, densities, versionCode, versionName)
     }
 
-    private suspend fun parseAppsArray(
-        r: JsonReader,
+    private fun parsePackagesObject(reader: JsonReader, base: String, bestByPackage: MutableMap<String, ApkVariant>) {
+        reader.beginObject()
+        while (reader.hasNext()) {
+            val pkg = reader.nextName()
+            if (reader.peek() == JsonToken.BEGIN_ARRAY) {
+                var best: ApkVariant? = null
+                reader.beginArray()
+                while (reader.hasNext()) {
+                    val v = parseVersionObject(reader, base)
+                    best = pickBetter(best, v)
+                }
+                reader.endArray()
+                if (best != null) bestByPackage[pkg] = best
+            } else {
+                reader.skipValue()
+            }
+        }
+        reader.endObject()
+    }
+
+    private inline fun parseAppsArray(
+        reader: JsonReader,
         base: String,
         repoName: String,
         bestByPackage: Map<String, ApkVariant>,
-        onApp: suspend (FDroidApp) -> Unit
+        onApp: (FDroidApp) -> Unit
     ) {
-        r.beginArray()
-        while (r.hasNext()) {
-            parseSingleAppObject(r, base, repoName, bestByPackage)?.let {app -> onApp(app)}
+        reader.beginArray()
+        while (reader.hasNext()) {
+            parseSingleAppObject(reader, base, repoName, bestByPackage)?.let { app ->
+                onApp(app)
+            }
         }
-        r.endArray()
+        reader.endArray()
     }
 
     private fun parseSingleAppObject(
-        r: JsonReader,
+        reader: JsonReader,
         base: String,
         repoName: String,
         bestByPackage: Map<String, ApkVariant>
@@ -449,34 +293,36 @@ class FDroidApi(
         var added = 0L
         var updated = 0L
         var screenshots: List<String> = emptyList()
+        var antiFeatures: List<String> = emptyList()
 
-        r.beginObject()
-        while (r.hasNext()) {
-            when (r.nextName()) {
-                "packageName" -> pkg = safeString(r)
-                "name" -> name = readLocalizedString(r)
-                "summary" -> summary = readLocalizedString(r)
-                "description" -> desc = readLocalizedString(r)
+        reader.beginObject()
+        while (reader.hasNext()) {
+            when (reader.nextName()) {
+                "packageName" -> pkg = safeString(reader)
+                "name" -> name = readLocalizedString(reader)
+                "summary" -> summary = readLocalizedString(reader)
+                "description" -> desc = readLocalizedString(reader)
                 "icon" -> {
-                    val ic = safeString(r)
+                    val ic = safeString(reader)
                     iconUrl = when {
                         ic.startsWith("http") -> ic
                         ic.isNotBlank() -> "$base/icons-640/$ic"
                         else -> iconUrl
                     }
                 }
-                "license" -> license = safeString(r, "Unknown")
-                "categories" -> category = readFirstStringFromArray(r)?.let { normalizeCategory(it) } ?: "Other"
-                "authorName" -> author = safeString(r, "Unknown")
-                "webSite" -> website = safeString(r)
-                "sourceCode" -> source = safeString(r)
-                "added" -> added = safeLong(r)
-                "lastUpdated" -> updated = safeLong(r)
-                "screenshots" -> screenshots = readScreenshotsAny(r, base)
-                else -> r.skipValue()
+                "license" -> license = safeString(reader, "Unknown")
+                "categories" -> category = readFirstStringFromArray(reader)?.let { normalizeCategory(it) } ?: "Other"
+                "authorName" -> author = safeString(reader, "Unknown")
+                "webSite" -> website = safeString(reader)
+                "sourceCode" -> source = safeString(reader)
+                "added" -> added = safeLong(reader)
+                "lastUpdated" -> updated = safeLong(reader)
+                "screenshots" -> screenshots = readScreenshotsAny(reader, base)
+                "antiFeatures" -> antiFeatures = readStringArray(reader)
+                else -> reader.skipValue()
             }
         }
-        r.endObject()
+        reader.endObject()
 
         val v = bestByPackage[pkg] ?: return null
         if (pkg.isBlank() || v.url.isBlank()) return null
@@ -499,7 +345,7 @@ class FDroidApi(
             added = added,
             lastUpdated = updated,
             screenshots = screenshots,
-            antiFeatures = emptyList(),
+            antiFeatures = antiFeatures,
             downloads = 0L,
             isInstalled = false,
             repository = repoName,
@@ -507,102 +353,94 @@ class FDroidApi(
         )
     }
 
+    private fun parseVersionObject(reader: JsonReader, base: String): ApkVariant {
+        var url = ""
+        var size = 0L
+        var sha = ""
+        var versionCode = 0L
+        var versionName = "1.0"
+        var minSdk = 1
+        var maxSdk = Int.MAX_VALUE
+        var abis: List<String> = emptyList()
+        var densities: List<String> = emptyList()
+
+        reader.beginObject()
+        while (reader.hasNext()) {
+            when (reader.nextName()) {
+                "file" -> {
+                    reader.beginObject()
+                    while (reader.hasNext()) {
+                        when (reader.nextName()) {
+                            "name" -> {
+                                val name = safeString(reader)
+                                if (name.isNotBlank()) {
+                                    url = if (name.startsWith("http")) name else "$base/$name"
+                                }
+                            }
+                            "size" -> size = safeLong(reader)
+                            "sha256" -> sha = safeString(reader)
+                            else -> reader.skipValue()
+                        }
+                    }
+                    reader.endObject()
+                }
+                "apkName" -> {
+                    val name = safeString(reader)
+                    if (name.isNotBlank()) {
+                        url = if (name.startsWith("http")) name else "$base/$name"
+                    }
+                }
+                "apkBytes", "apkSize", "size" -> size = safeLong(reader)
+                "hashes" -> {
+                    reader.beginObject()
+                    while (reader.hasNext()) {
+                        when (reader.nextName()) {
+                            "sha256" -> sha = safeString(reader)
+                            else -> reader.skipValue()
+                        }
+                    }
+                    reader.endObject()
+                }
+                "manifest" -> {
+                    reader.beginObject()
+                    while (reader.hasNext()) {
+                        when (reader.nextName()) {
+                            "minSdkVersion" -> minSdk = safeInt(reader, 1)
+                            "maxSdkVersion" -> maxSdk = safeInt(reader, Int.MAX_VALUE)
+                            "nativecode" -> abis = readStringArray(reader)
+                            "supportsScreens", "densities" -> densities = readStringArray(reader)
+                            "versionCode" -> versionCode = safeLong(reader)
+                            "versionName" -> versionName = safeString(reader)
+                            else -> reader.skipValue()
+                        }
+                    }
+                    reader.endObject()
+                }
+                "minSdkVersion" -> minSdk = safeInt(reader, 1)
+                "maxSdkVersion" -> maxSdk = safeInt(reader, Int.MAX_VALUE)
+                "nativecode" -> abis = readStringArray(reader)
+                "supportsScreens", "densities" -> densities = readStringArray(reader)
+                "versionCode" -> versionCode = safeLong(reader)
+                "versionName" -> versionName = safeString(reader)
+                else -> reader.skipValue()
+            }
+        }
+        reader.endObject()
+
+        return ApkVariant(url, size, sha, abis, minSdk, maxSdk, densities, versionCode, versionName)
+    }
+
     private fun isCompatible(v: ApkVariant): Boolean {
-        // ABI: accept if unspecified or matches any supported ABI
         val abiOk = v.abis.isEmpty() || v.abis.any { abi ->
             abi.equals("all", ignoreCase = true) || Build.SUPPORTED_ABIS.any { it.equals(abi, ignoreCase = true) }
         }
-        // SDK
         val sdkOk = Build.VERSION.SDK_INT in v.minSdk..v.maxSdk
-        // Density: accept if unspecified, or "any"/"nodpi", or matches device bucket
         val deviceDensity = densityQualifier(metrics)
         val densityOk = v.densities.isEmpty() ||
                 v.densities.any { it.equals("any", true) || it.equals("nodpi", true) || it.equals(deviceDensity, true) }
         return abiOk && sdkOk && densityOk
     }
 
-    private fun safeString(r: JsonReader, def: String = ""): String = when (r.peek()) {
-        com.google.gson.stream.JsonToken.STRING -> r.nextString()
-        com.google.gson.stream.JsonToken.NULL -> { r.nextNull(); def }
-        else -> { r.skipValue(); def }
-    }
-    private fun safeLong(r: JsonReader, def: Long = 0L): Long = when (r.peek()) {
-        com.google.gson.stream.JsonToken.NUMBER -> try { r.nextLong() } catch (_: Exception) { r.nextString().toLongOrNull() ?: def }
-        com.google.gson.stream.JsonToken.STRING -> r.nextString().toLongOrNull() ?: def
-        com.google.gson.stream.JsonToken.NULL -> { r.nextNull(); def }
-        else -> { r.skipValue(); def }
-    }
-    private fun safeInt(r: JsonReader, def: Int = 0): Int = when (r.peek()) {
-        com.google.gson.stream.JsonToken.NUMBER -> try { r.nextInt() } catch (_: Exception) { r.nextString().toIntOrNull() ?: def }
-        com.google.gson.stream.JsonToken.STRING -> r.nextString().toIntOrNull() ?: def
-        com.google.gson.stream.JsonToken.NULL -> { r.nextNull(); def }
-        else -> { r.skipValue(); def }
-    }
-    private fun readStringArray(r: JsonReader): List<String> {
-        if (r.peek() != com.google.gson.stream.JsonToken.BEGIN_ARRAY) { r.skipValue(); return emptyList() }
-        val out = ArrayList<String>()
-        r.beginArray()
-        while (r.hasNext()) {
-            if (r.peek() == com.google.gson.stream.JsonToken.STRING) out += r.nextString() else r.skipValue()
-        }
-        r.endArray()
-        return out
-    }
-    private fun readFirstStringFromArray(r: JsonReader): String? {
-        if (r.peek() != com.google.gson.stream.JsonToken.BEGIN_ARRAY) { r.skipValue(); return null }
-        var res: String? = null
-        r.beginArray()
-        if (r.hasNext() && r.peek() == com.google.gson.stream.JsonToken.STRING) res = r.nextString() else if (r.hasNext()) r.skipValue()
-        while (r.hasNext()) r.skipValue()
-        r.endArray()
-        return res
-    }
-    private fun readScreenshotsAny(r: JsonReader, base: String): List<String> {
-        return when (r.peek()) {
-            com.google.gson.stream.JsonToken.BEGIN_ARRAY -> {
-                val list = ArrayList<String>()
-                r.beginArray()
-                while (r.hasNext()) if (r.peek() == com.google.gson.stream.JsonToken.STRING) {
-                    val s = r.nextString()
-                    list += if (s.startsWith("http")) s else "$base/$s"
-                } else r.skipValue()
-                r.endArray()
-                list
-            }
-            com.google.gson.stream.JsonToken.BEGIN_OBJECT -> {
-                var out: List<String> = emptyList()
-                r.beginObject()
-                while (r.hasNext()) {
-                    val k = r.nextName()
-                    if (r.peek() == com.google.gson.stream.JsonToken.BEGIN_ARRAY && (k == "en" || k == "en-US" || k == "en_US" || k == "en_GB")) {
-                        out = readScreenshotsAny(r, base)
-                    } else r.skipValue()
-                }
-                r.endObject()
-                out
-            }
-            else -> { r.skipValue(); emptyList() }
-        }
-    }
-    private fun readLocalizedString(r: JsonReader): String {
-        return when (r.peek()) {
-            com.google.gson.stream.JsonToken.STRING -> r.nextString()
-            com.google.gson.stream.JsonToken.BEGIN_OBJECT -> {
-                var res = ""
-                r.beginObject()
-                while (r.hasNext()) {
-                    val name = r.nextName()
-                    if (r.peek() == com.google.gson.stream.JsonToken.STRING &&
-                        (name == "en" || name == "en-US" || name == "en_US" || name == "en_GB")) {
-                        res = r.nextString()
-                    } else r.skipValue()
-                }
-                r.endObject()
-                res
-            }
-            else -> { r.skipValue(); "" }
-        }
-    }
     private fun pickBetter(a: ApkVariant?, b: ApkVariant): ApkVariant {
         if (a == null) return b
         val ac = isCompatible(a)
@@ -613,10 +451,99 @@ class FDroidApi(
             else -> when {
                 b.versionCode > a.versionCode -> b
                 b.versionCode < a.versionCode -> a
-                // same versionCode: pick the one with larger size (mostly "full" vs split)
                 b.size > a.size -> b
                 else -> a
             }
+        }
+    }
+
+    // Keep all the helper methods from original
+    private fun safeString(reader: JsonReader, def: String = ""): String = when (reader.peek()) {
+        JsonToken.STRING -> reader.nextString()
+        JsonToken.NULL -> { reader.nextNull(); def }
+        else -> { reader.skipValue(); def }
+    }
+
+    private fun safeLong(reader: JsonReader, def: Long = 0L): Long = when (reader.peek()) {
+        JsonToken.NUMBER -> try { reader.nextLong() } catch (_: Exception) { reader.nextString().toLongOrNull() ?: def }
+        JsonToken.STRING -> reader.nextString().toLongOrNull() ?: def
+        JsonToken.NULL -> { reader.nextNull(); def }
+        else -> { reader.skipValue(); def }
+    }
+
+    private fun safeInt(reader: JsonReader, def: Int = 0): Int = when (reader.peek()) {
+        JsonToken.NUMBER -> try { reader.nextInt() } catch (_: Exception) { reader.nextString().toIntOrNull() ?: def }
+        JsonToken.STRING -> reader.nextString().toIntOrNull() ?: def
+        JsonToken.NULL -> { reader.nextNull(); def }
+        else -> { reader.skipValue(); def }
+    }
+
+    private fun readStringArray(reader: JsonReader): List<String> {
+        if (reader.peek() != JsonToken.BEGIN_ARRAY) { reader.skipValue(); return emptyList() }
+        val out = ArrayList<String>()
+        reader.beginArray()
+        while (reader.hasNext()) {
+            if (reader.peek() == JsonToken.STRING) out += reader.nextString() else reader.skipValue()
+        }
+        reader.endArray()
+        return out
+    }
+
+    private fun readFirstStringFromArray(reader: JsonReader): String? {
+        if (reader.peek() != JsonToken.BEGIN_ARRAY) { reader.skipValue(); return null }
+        var res: String? = null
+        reader.beginArray()
+        if (reader.hasNext() && reader.peek() == JsonToken.STRING) res = reader.nextString() else if (reader.hasNext()) reader.skipValue()
+        while (reader.hasNext()) reader.skipValue()
+        reader.endArray()
+        return res
+    }
+
+    private fun readScreenshotsAny(reader: JsonReader, base: String): List<String> {
+        return when (reader.peek()) {
+            JsonToken.BEGIN_ARRAY -> {
+                val list = ArrayList<String>()
+                reader.beginArray()
+                while (reader.hasNext()) if (reader.peek() == JsonToken.STRING) {
+                    val s = reader.nextString()
+                    list += if (s.startsWith("http")) s else "$base/$s"
+                } else reader.skipValue()
+                reader.endArray()
+                list
+            }
+            JsonToken.BEGIN_OBJECT -> {
+                var out: List<String> = emptyList()
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    val k = reader.nextName()
+                    if (reader.peek() == JsonToken.BEGIN_ARRAY && (k == "en" || k == "en-US" || k == "en_US" || k == "en_GB")) {
+                        out = readScreenshotsAny(reader, base)
+                    } else reader.skipValue()
+                }
+                reader.endObject()
+                out
+            }
+            else -> { reader.skipValue(); emptyList() }
+        }
+    }
+
+    private fun readLocalizedString(reader: JsonReader): String {
+        return when (reader.peek()) {
+            JsonToken.STRING -> reader.nextString()
+            JsonToken.BEGIN_OBJECT -> {
+                var res = ""
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    val name = reader.nextName()
+                    if (reader.peek() == JsonToken.STRING &&
+                        (name == "en" || name == "en-US" || name == "en_US" || name == "en_GB")) {
+                        res = reader.nextString()
+                    } else reader.skipValue()
+                }
+                reader.endObject()
+                res
+            }
+            else -> { reader.skipValue(); "" }
         }
     }
 
@@ -643,5 +570,11 @@ class FDroidApi(
             dpi <= 480 -> "xxhdpi"
             else -> "xxxhdpi"
         }
+    }
+
+    private fun normalizeUrl(u: String): String {
+        var url = u.trimEnd('/')
+        if (!url.startsWith("http")) url = "https://$url"
+        return url
     }
 }

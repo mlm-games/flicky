@@ -8,26 +8,50 @@ import app.flicky.data.repository.*
 import app.flicky.install.Installer
 
 object AppGraph {
-    lateinit var db: AppDatabase
-    lateinit var settings: SettingsRepository
-    lateinit var api: FDroidApi
-    lateinit var headersStore: RepoHeadersStore
-    lateinit var syncManager: RepositorySyncManager
-    lateinit var appRepo: AppRepository
-    lateinit var installer: Installer
-    lateinit var installedRepo: InstalledAppsRepository
+    @Volatile
+    private var INSTANCE: AppGraphInstance? = null
+    private val LOCK = Any()
 
-    fun init(context: Context) {
-        if (::db.isInitialized) return
-        db = Room.databaseBuilder(context, AppDatabase::class.java, "flicky.db")
+    private class AppGraphInstance(context: Context) {
+        val db: AppDatabase = Room.databaseBuilder(
+            context.applicationContext,
+            AppDatabase::class.java,
+            "flicky.db"
+        )
+            .addMigrations(AppDatabase.MIGRATION_1_2)
             .fallbackToDestructiveMigration(false)
             .build()
-        settings = SettingsRepository(context)
-        api = FDroidApi(context)
-        headersStore = RepoHeadersStore(settings)
-        syncManager = RepositorySyncManager(api, db.appDao(), settings, headersStore)
-        appRepo = AppRepository(db.appDao())
-        installer = Installer(context)
-        installedRepo = InstalledAppsRepository(context)
+
+
+        val settings = SettingsRepository(context.applicationContext)
+        val api = FDroidApi(context.applicationContext)
+        val headersStore = RepoHeadersStore(settings)
+        val syncManager = RepositorySyncManager(api, db.appDao(), settings, headersStore)
+        val appRepo = AppRepository(db.appDao())
+        val installer = Installer(context.applicationContext)
+        val installedRepo = InstalledAppsRepository(context.applicationContext)
+    }
+
+    private fun getInstance(context: Context): AppGraphInstance {
+        return INSTANCE ?: synchronized(LOCK) {
+            INSTANCE ?: AppGraphInstance(context).also { INSTANCE = it }
+        }
+    }
+
+    val db: AppDatabase get() = getInstance(appContext).db
+    val settings: SettingsRepository get() = getInstance(appContext).settings
+    val api: FDroidApi get() = getInstance(appContext).api
+    val headersStore: RepoHeadersStore get() = getInstance(appContext).headersStore
+    val syncManager: RepositorySyncManager get() = getInstance(appContext).syncManager
+    val appRepo: AppRepository get() = getInstance(appContext).appRepo
+    val installer: Installer get() = getInstance(appContext).installer
+    val installedRepo: InstalledAppsRepository get() = getInstance(appContext).installedRepo
+
+    private lateinit var appContext: Context
+
+    fun init(context: Context) {
+        if (!::appContext.isInitialized) {
+            appContext = context.applicationContext
+        }
     }
 }
