@@ -11,10 +11,16 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun TvNavigationSidebar(selected: Int, onSelect: (Int)->Unit) {
     Surface(
-        modifier = Modifier.width(280.dp),
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(280.dp),
         color = MaterialTheme.colorScheme.surface
     ) {
-        Column(Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
             Row(Modifier.padding(8.dp)) {
                 Icon(
                     Icons.Default.Shop,
@@ -29,17 +35,21 @@ fun TvNavigationSidebar(selected: Int, onSelect: (Int)->Unit) {
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        "F-Droid for TV",
+                        "F-Droid (Unofficial) Client for TV",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
+
             Spacer(Modifier.height(24.dp))
+
             NavItem("Browse", Icons.Default.Explore, selected == 0) { onSelect(0) }
             NavItem("Categories", Icons.Default.Category, selected == 1) { onSelect(1) }
             NavItem("Updates", Icons.Default.Update, selected == 2) { onSelect(2) }
             NavItem("Settings", Icons.Default.Settings, selected == 3) { onSelect(3) }
+
+            Spacer(Modifier.weight(1f))
         }
     }
 }
@@ -55,7 +65,9 @@ private fun NavItem(
 
     FilledTonalButton(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
         colors = ButtonDefaults.filledTonalButtonColors(
             containerColor = if (selected) colors.primaryContainer else colors.surfaceVariant,
             contentColor = if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant

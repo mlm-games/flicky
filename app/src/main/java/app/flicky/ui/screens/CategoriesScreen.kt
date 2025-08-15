@@ -1,97 +1,159 @@
 package app.flicky.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.*
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.flicky.AppGraph
 import app.flicky.data.model.FDroidApp
-import app.flicky.ui.components.cards.MobileAppCard
-import app.flicky.ui.components.cards.TVAppCard
-import kotlinx.coroutines.flow.collectLatest
+import app.flicky.data.model.SortOption
+import app.flicky.ui.components.cards.AdaptiveAppCard
+import kotlin.Unit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MobileCategoriesScreen() {
+fun CategoriesScreen(
+    onSyncClick: () -> Unit,
+    isSyncing: Boolean,
+    onAppClick: (FDroidApp) -> Unit,
+    progress: Float
+) {
     val categories by AppGraph.appRepo.categories().collectAsState(initial = emptyList())
-    val appsFlow = AppGraph.appRepo.appsFlow("", app.flicky.data.model.SortOption.Name, hideAnti = false)
-    val apps by appsFlow.collectAsState(initial = emptyList())
+    val apps by AppGraph.appRepo.appsFlow("", SortOption.Updated, hideAnti = false)
+        .collectAsState(initial = emptyList())
 
     var selected by remember { mutableStateOf("All") }
-    val filtered = remember(selected, apps) {
-        if (selected == "All") apps else apps.filter { it.category == selected }
+    val filtered by remember(selected, apps) {
+        mutableStateOf(if (selected == "All") apps else apps.filter { it.category == selected })
     }
+
+    val cfg = LocalConfiguration.current
+    val gridCells = remember(cfg.screenWidthDp) { GridCells.Adaptive(minSize = 220.dp) }
+    val animatedProgress by animateFloatAsState(progress, label = "categories_sync_progress")
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Categories") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        }
-    ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
-            // Chip row
-            Row(
-                Modifier
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 3.dp
             ) {
-                FilterChipCategory(
-                    label = "All",
-                    count = apps.size,
-                    selected = selected == "All",
-                    onSelect = { selected = "All" }
-                )
-                Spacer(Modifier.width(8.dp))
-                categories.forEach { c ->
-                    val count = apps.count { it.category == c }
-                    FilterChipCategory(
-                        label = c,
-                        count = count,
-                        selected = selected == c,
-                        onSelect = { selected = c }
+                TopAppBar(
+                    title = {
+                        Text(
+                            "Categories",
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(Modifier.width(8.dp))
-                }
+                )
             }
-
-            // Grid
-            val columns = when {
-                LocalConfiguration.current.screenWidthDp > 900 -> 4
-                LocalConfiguration.current.screenWidthDp > 600 -> 3
-                else -> 2
-            }
+        }
+    ) { paddingValues ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            color = MaterialTheme.colorScheme.background
+        ) {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(columns),
-                contentPadding = PaddingValues(16.dp),
+                columns = gridCells,
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(filtered, key = { it.packageName }) { app ->
-                    MobileAppCard(app = app)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxSize()
+            )
+            {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+//                            FilledTonalButton(
+//                                onClick = onSyncClick,
+//                                enabled = !isSyncing
+//                            ) {
+//                                if (isSyncing) {
+//                                    CircularProgressIndicator(
+//                                        modifier = Modifier.size(16.dp),
+//                                        strokeWidth = 2.dp
+//                                    )
+//                                    Spacer(Modifier.width(8.dp))
+//                                    Text("Syncing…")
+//                                } else {
+//                                    Text("Sync Now")
+//                                }
+//                            }
+                        }
+                        if (isSyncing) {
+                            Spacer(Modifier.height(8.dp))
+                            LinearProgressIndicator(
+                                progress = { animatedProgress },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+
+                // Filter chips row
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Row(
+                        modifier = Modifier
+                            .horizontalScroll(rememberScrollState())
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChipCategory(
+                            label = "All",
+                            count = apps.size,
+                            selected = selected == "All",
+                            onSelect = { selected = "All" }
+                        )
+                        categories.forEach { c ->
+                            val count = apps.count { it.category == c }
+                            FilterChipCategory(
+                                label = c,
+                                count = count,
+                                selected = selected == c,
+                                onSelect = { selected = c }
+                            )
+                        }
+                    }
+                }
+
+                if (filtered.isEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Text(
+                            "No apps in this category",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    // Grid of apps
+                    items(filtered, key = { it.packageName }) { app ->
+                        AdaptiveAppCard(
+                            app = app,
+                            autofocus = false,
+                            onClick = { onAppClick(app) }
+                        )
+                    }
                 }
             }
         }
@@ -113,271 +175,4 @@ private fun FilterChipCategory(label: String, count: Int, selected: Boolean, onS
             selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
         )
     )
-}
-
-@Composable
-private fun TVCategoryItem(
-    title: String,
-    isSelected: Boolean,
-    count: Int,
-    onTap: () -> Unit,
-    autofocus: Boolean
-) {
-    var focused by remember { mutableStateOf(false) }
-    val colors = MaterialTheme.colorScheme
-
-    val borderColor = when {
-        focused -> colors.primary
-        isSelected -> colors.primary.copy(alpha = 0.6f)
-        else -> Color.Transparent
-    }
-    val bgColor = when {
-        isSelected -> colors.primaryContainer.copy(alpha = 0.3f)
-        focused -> colors.surfaceVariant.copy(alpha = 0.5f)
-        else -> Color.Transparent
-    }
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
-            .border(
-                BorderStroke(if (focused) 2.dp else if (isSelected) 1.dp else 0.dp, borderColor),
-                RoundedCornerShape(12.dp)
-            )
-            .onFocusChanged { focused = it.isFocused }
-            .focusable()
-            .background(bgColor, RoundedCornerShape(12.dp)),
-        shape = RoundedCornerShape(12.dp),
-        onClick = onTap,
-        tonalElevation = if (focused || isSelected) 1.dp else 0.dp,
-        color = bgColor
-    ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = getCategoryIcon(title),
-                contentDescription = null,
-                tint = if (focused || isSelected) colors.primary else colors.onSurfaceVariant
-            )
-            Spacer(Modifier.width(12.dp))
-            Text(
-                text = title,
-                style = if (isSelected) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
-                color = if (focused || isSelected) colors.primary else colors.onSurface,
-                modifier = Modifier.weight(1f)
-            )
-            Surface(
-                color = if (focused || isSelected) colors.primary else colors.surfaceVariant,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    "$count",
-                    color = if (focused || isSelected) colors.onPrimary else colors.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CategoryHeaderTV(
-    category: String,
-    count: Int,
-    onSyncClick: () -> Unit,
-    isSyncing: Boolean,
-    progress: Float
-) {
-    val animatedProgress by animateFloatAsState(targetValue = progress, label = "tv_sync_progress")
-    val colors = MaterialTheme.colorScheme
-
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(20.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = getCategoryIcon(category),
-                contentDescription = null,
-                tint = colors.primary
-            )
-            Spacer(Modifier.width(12.dp))
-            Text(
-                text = category,
-                style = MaterialTheme.typography.titleLarge,
-                color = colors.onBackground
-            )
-            Spacer(Modifier.width(12.dp))
-            AssistChip(
-                onClick = {},
-                label = { Text("$count apps") },
-                colors = AssistChipDefaults.assistChipColors(
-                    containerColor = colors.secondaryContainer,
-                    labelColor = colors.onSecondaryContainer
-                )
-            )
-            Spacer(Modifier.weight(1f))
-            Button(
-                onClick = onSyncClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.primary,
-                    contentColor = colors.onPrimary
-                )
-            ) {
-                Text("Sync Now")
-            }
-        }
-        if (isSyncing) {
-            Spacer(Modifier.height(10.dp))
-            LinearProgressIndicator(
-                progress = { animatedProgress },
-                modifier = Modifier.fillMaxWidth(),
-                color = colors.primary,
-                trackColor = colors.primaryContainer
-            )
-        }
-    }
-}
-
-private fun getCategoryIcon(category: String): androidx.compose.ui.graphics.vector.ImageVector {
-    return when (category.lowercase()) {
-        "all" -> Icons.Default.Apps
-        "connectivity" -> Icons.Default.Wifi
-        "development" -> Icons.Default.Code
-        "games" -> Icons.Default.Games
-        "graphics" -> Icons.Default.Palette
-        "internet" -> Icons.Default.Language
-        "money" -> Icons.Default.AttachMoney
-        "multimedia" -> Icons.Default.Movie
-        "navigation" -> Icons.Default.Navigation
-        "phone & sms", "phone sms" -> Icons.Default.Phone
-        "reading" -> Icons.Default.Book
-        "science & education", "science education" -> Icons.Default.School
-        "security" -> Icons.Default.Security
-        "sports & health", "sports health" -> Icons.Default.FitnessCenter
-        "system" -> Icons.Default.SettingsApplications
-        "theming" -> Icons.Default.ColorLens
-        "time" -> Icons.Default.AccessTime
-        "writing" -> Icons.Default.Edit
-        else -> Icons.Default.Category
-    }
-}
-
-@Composable
-fun CategoriesScreen(
-    onSyncClick: () -> Unit,
-    isSyncing: Boolean,
-    progress: Float
-) {
-    val pm = LocalContext.current.packageManager
-    val config = LocalConfiguration.current
-    val isTV = pm.hasSystemFeature("android.software.leanback") || pm.hasSystemFeature("android.hardware.type.television")
-    val widthDp = config.screenWidthDp
-    val isTablet = widthDp >= 900
-
-    if (isTV || isTablet) {
-        TVCategoriesScreen(onSyncClick = onSyncClick, isSyncing = isSyncing, progress = progress)
-    } else {
-        MobileCategoriesScreen()
-    }
-}
-
-@Composable
-private fun TVCategoriesScreen(
-    onSyncClick: () -> Unit,
-    isSyncing: Boolean,
-    progress: Float
-) {
-    val categories by AppGraph.appRepo.categories().collectAsState(initial = emptyList())
-    val apps by AppGraph.appRepo.appsFlow("", app.flicky.data.model.SortOption.Updated, hideAnti = false)
-        .collectAsState(initial = emptyList())
-
-    var selected by remember { mutableStateOf("All") }
-    val filtered = remember(selected, apps) {
-        if (selected == "All") apps else apps.filter { it.category == selected }
-    }
-
-    Row(Modifier.fillMaxSize()) {
-        CategoriesSidebarTV(
-            categories = listOf("All") + categories,
-            apps = apps,
-            selected = selected,
-            onSelect = { selected = it }
-        )
-        Column(Modifier.weight(1f)) {
-            CategoryHeaderTV(
-                category = selected,
-                count = filtered.size,
-                onSyncClick = onSyncClick,
-                isSyncing = isSyncing,
-                progress = progress
-            )
-            TVAppGrid(apps = filtered)
-        }
-    }
-}
-
-@Composable
-private fun CategoriesSidebarTV(
-    categories: List<String>,
-    apps: List<FDroidApp>,
-    selected: String,
-    onSelect: (String) -> Unit
-) {
-    Surface(
-        Modifier.width(250.dp),
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        Column(Modifier.fillMaxSize()) {
-            Text(
-                "Categories",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(20.dp)
-            )
-            LazyColumn(
-                contentPadding = PaddingValues(bottom = 20.dp)
-            ) {
-                items(categories) { cat ->
-                    val count = if (cat == "All") apps.size else apps.count { it.category == cat }
-                    TVCategoryItem(
-                        title = cat,
-                        isSelected = selected == cat,
-                        count = count,
-                        onTap = { onSelect(cat) },
-                        autofocus = selected == cat
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TVAppGrid(apps: List<FDroidApp>) {
-    val widthDp = LocalConfiguration.current.screenWidthDp - 250
-    val columns = when {
-        widthDp > 1400 -> 6
-        widthDp > 1200 -> 5
-        widthDp > 900 -> 4
-        widthDp > 600 -> 3
-        else -> 2
-    }
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(apps, key = { it.packageName }) { app ->
-            TVAppCard(app = app, autofocus = false)
-        }
-    }
 }

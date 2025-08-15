@@ -6,7 +6,7 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
-    target-branch: "compose"  # default branch name
+    target-branch: "kotlin"  # default branch name
     labels:
       - "dependencies"
       - "android"
@@ -15,7 +15,7 @@ updates:
     
   # Configure updates for GitHub Actions
   - package-ecosystem: "github-actions"
-    directory: ".github/worfklows"
+    directory: ".github/workflows"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10

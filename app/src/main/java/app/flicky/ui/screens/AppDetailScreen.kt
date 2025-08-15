@@ -1,38 +1,396 @@
 package app.flicky.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.flicky.data.model.FDroidApp
+import app.flicky.helper.openUrl
 import coil.compose.AsyncImage
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.wrapContentWidth
+import kotlin.math.log10
+import kotlin.math.pow
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppDetailScreen(
     app: FDroidApp,
     installedVersionCode: Long?,
     isInstalling: Boolean,
     progress: Float,
-    onInstall: ()->Unit,
-    onOpen: ()->Unit,
-    onUninstall: ()->Unit,
+    onInstall: () -> Unit,
+    onOpen: () -> Unit,
+    onUninstall: () -> Unit,
+    error: String?
+) {
+    val cfg = LocalConfiguration.current
+    val isWide = cfg.screenWidthDp >= 900
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        app.name,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
+            )
+        }
+    ) { paddingValues ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            if (isWide) {
+                DesktopLayout(
+                    app = app,
+                    installedVersionCode = installedVersionCode,
+                    isInstalling = isInstalling,
+                    progress = progress,
+                    onInstall = onInstall,
+                    onOpen = onOpen,
+                    onUninstall = onUninstall,
+                    error = error
+                )
+            } else {
+                MobileLayout(
+                    app = app,
+                    installedVersionCode = installedVersionCode,
+                    isInstalling = isInstalling,
+                    progress = progress,
+                    onInstall = onInstall,
+                    onOpen = onOpen,
+                    onUninstall = onUninstall,
+                    error = error
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DesktopLayout(
+    app: FDroidApp,
+    installedVersionCode: Long?,
+    isInstalling: Boolean,
+    progress: Float,
+    onInstall: () -> Unit,
+    onOpen: () -> Unit,
+    onUninstall: () -> Unit,
     error: String?
 ) {
     Row(Modifier.fillMaxSize()) {
-        Column(Modifier.width(360.dp).padding(20.dp)) {
-            AsyncImage(model = app.iconUrl, contentDescription = app.name, modifier = Modifier.size(120.dp))
+        // Left side panel
+        Surface(
+            modifier = Modifier
+                .width(380.dp)
+                .fillMaxHeight(),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 1.dp
+        ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    AppHeader(
+                        app = app,
+                        installedVersionCode = installedVersionCode,
+                        isInstalling = isInstalling,
+                        progress = progress,
+                        onInstall = onInstall,
+                        onOpen = onOpen,
+                        onUninstall = onUninstall,
+                        error = error,
+                        iconSize = 96.dp
+                    )
+                }
+                item { ChipsSection(app) }
+                item { DetailsSection(app) }
+                if (app.antiFeatures.isNotEmpty()) {
+                    item { AntiFeaturesSection(app.antiFeatures) }
+                }
+                if (app.website.isNotBlank() || app.sourceCode.isNotBlank()) {
+                    item { LinksSection(app) }
+                }
+            }
+        }
+
+        // Vertical divider
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(1.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant)
+        )
+
+        // Right content panel
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+            contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            if (app.summary.isNotBlank()) {
+                item {
+                    Column {
+                        SectionTitle("Overview")
+                        Text(
+                            app.summary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                }
+            }
+            if (app.screenshots.isNotEmpty()) {
+                item { ScreenshotsSection(app.screenshots) }
+            }
+            if (app.description.isNotBlank()) {
+                item {
+                    Column {
+                        SectionTitle("About")
+                        ExpandableText(app.description)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MobileLayout(
+    app: FDroidApp,
+    installedVersionCode: Long?,
+    isInstalling: Boolean,
+    progress: Float,
+    onInstall: () -> Unit,
+    onOpen: () -> Unit,
+    onUninstall: () -> Unit,
+    error: String?
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            ElevatedCard(
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            ) {
+                AppHeader(
+                    app = app,
+                    installedVersionCode = installedVersionCode,
+                    isInstalling = isInstalling,
+                    progress = progress,
+                    onInstall = onInstall,
+                    onOpen = onOpen,
+                    onUninstall = onUninstall,
+                    error = error,
+                    iconSize = 88.dp,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+        item { ChipsSection(app) }
+        if (app.summary.isNotBlank()) {
+            item {
+                Column {
+                    SectionTitle("Overview")
+                    Text(
+                        app.summary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+        }
+        if (app.screenshots.isNotEmpty()) {
+            item { ScreenshotsSection(app.screenshots) }
+        }
+        if (app.description.isNotBlank()) {
+            item {
+                Column {
+                    SectionTitle("About")
+                    ExpandableText(app.description)
+                }
+            }
+        }
+        item { DetailsSection(app) }
+        if (app.antiFeatures.isNotEmpty()) {
+            item { AntiFeaturesSection(app.antiFeatures) }
+        }
+        if (app.website.isNotBlank() || app.sourceCode.isNotBlank()) {
+            item { LinksSection(app) }
+        }
+        item { Spacer(Modifier.height(24.dp)) }
+    }
+}
+
+@Composable
+private fun AppHeader(
+    app: FDroidApp,
+    installedVersionCode: Long?,
+    isInstalling: Boolean,
+    progress: Float,
+    onInstall: () -> Unit,
+    onOpen: () -> Unit,
+    onUninstall: () -> Unit,
+    error: String?,
+    iconSize: androidx.compose.ui.unit.Dp,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(
+                model = app.iconUrl,
+                contentDescription = app.name,
+                modifier = Modifier.size(iconSize)
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    app.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    app.packageName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (app.author.isNotBlank()) {
+                    Text(
+                        app.author,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        if (isInstalling) {
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Installing… ${(progress * 100).toInt()}%",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            if (installedVersionCode != null) {
+                Row {
+                    Button(
+                        onClick = onOpen,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Open")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    OutlinedButton(
+                        onClick = onUninstall,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Uninstall")
+                    }
+                }
+            } else {
+                Button(
+                    onClick = onInstall,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Install")
+                }
+            }
+        }
+
+        error?.takeIf { it.isNotBlank() }?.let {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun HeaderCard(
+    app: FDroidApp,
+    installedVersionCode: Long?,
+    isInstalling: Boolean,
+    progress: Float,
+    onInstall: () -> Unit,
+    onOpen: () -> Unit,
+    onUninstall: () -> Unit,
+    error: String?
+) {
+    ElevatedCard {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                AsyncImage(
+                    model = app.iconUrl,
+                    contentDescription = app.name,
+                    modifier = Modifier.size(88.dp)
+                )
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(app.name, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(app.packageName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (app.author.isNotBlank()) {
+                        Text(app.author, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
             Spacer(Modifier.height(12.dp))
-            Text(app.name, style = MaterialTheme.typography.titleLarge)
-            Text(app.packageName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
-            Spacer(Modifier.height(16.dp))
 
             if (isInstalling) {
-                LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(8.dp))
-                Text("Installing... ${(progress * 100).toInt()}%")
+                LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth(),
+                color = ProgressIndicatorDefaults.linearColor,
+                trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text("Installing… ${(progress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
             } else {
                 if (installedVersionCode != null) {
                     Row {
@@ -44,55 +402,170 @@ fun AppDetailScreen(
                     Button(onClick = onInstall, modifier = Modifier.fillMaxWidth()) { Text("Install") }
                 }
             }
-            if (!error.isNullOrBlank()) {
-                Spacer(Modifier.height(8.dp))
-                Text(error, color = MaterialTheme.colorScheme.error)
-            }
 
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(onClick = {}, label = { Text("v${app.version}") })
-                AssistChip(onClick = {}, label = { Text(app.category) })
-                AssistChip(onClick = {}, label = { Text("${app.size / (1024*1024)} MB") })
-            }
-            if (app.antiFeatures.isNotEmpty()) {
+            error?.takeIf { it.isNotBlank() }?.let {
                 Spacer(Modifier.height(8.dp))
-                Text("Anti-features:", color = MaterialTheme.colorScheme.tertiary)
-                FlowRowSpaced(app.antiFeatures) { Text(it, color = MaterialTheme.colorScheme.tertiary) }
+                Text(it, color = MaterialTheme.colorScheme.error)
             }
         }
-        Divider()
-        Column(Modifier.weight(1f).padding(20.dp)) {
-            Text(app.summary, style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(12.dp))
-            if (app.screenshots.isNotEmpty()) {
-                Text("Screenshots", style = MaterialTheme.typography.titleSmall)
-                Spacer(Modifier.height(8.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(app.screenshots) { url ->
-                        AsyncImage(model = url, contentDescription = null, modifier = Modifier.size(240.dp))
-                    }
-                }
-                Spacer(Modifier.height(16.dp))
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ChipsSection(app: FDroidApp) {
+    Column {
+        SectionTitle("Info")
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ElevatedAssistChip(onClick = {}, label = { Text("v${app.version}") })
+            ElevatedAssistChip(onClick = {}, label = { Text(formatBytes(app.size)) })
+            if (app.license.isNotBlank()) {
+                AssistChip(onClick = {}, label = { Text(app.license) })
             }
-            Text(app.description, style = MaterialTheme.typography.bodyMedium)
+            AssistChip(onClick = {}, label = { Text(app.repository) })
+            if (app.category.isNotBlank()) {
+                AssistChip(onClick = {}, label = { Text(app.category) })
+            }
         }
     }
 }
 
 @Composable
-private fun FlowRowSpaced(items: List<String>, item: @Composable (String)->Unit) {
+private fun DetailsSection(app: FDroidApp) {
     Column {
-        var row = mutableListOf<String>()
-        items.forEachIndexed { idx, s ->
-            row.add(s)
-            if (row.size == 3 || idx == items.lastIndex) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    row.forEach { item(it) }
-                }
-                Spacer(Modifier.height(4.dp))
-                row = mutableListOf()
+        SectionTitle("Details")
+        InfoRow("Package", app.packageName)
+        InfoRow("Version code", app.versionCode.toString())
+        if (app.lastUpdated > 0) InfoRow("Updated", formatDate(app.lastUpdated))
+        if (app.added > 0) InfoRow("Added", formatDate(app.added))
+    }
+}
+
+@Composable
+private fun AntiFeaturesSection(tags: List<String>) {
+    Column {
+        SectionTitle("Anti-features")
+        Spacer(Modifier.height(4.dp))
+        AssistChipsFlow(tags)
+    }
+}
+
+@Composable
+private fun LinksSection(app: FDroidApp) {
+    val ctx = LocalContext.current
+    Column {
+        SectionTitle("Links")
+        Spacer(Modifier.height(4.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (app.website.isNotBlank()) {
+                AssistChip(onClick = { openUrl(ctx, app.website) }, label = { Text("Website") })
+            }
+            if (app.sourceCode.isNotBlank()) {
+                AssistChip(onClick = { openUrl(ctx, app.sourceCode) }, label = { Text("Source Code") })
             }
         }
+    }
+}
+
+@Composable
+private fun ScreenshotsSection(urls: List<String>) {
+    Column {
+        SectionTitle("Screenshots")
+        Spacer(Modifier.height(8.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(urls) { url ->
+                AsyncImage(model = url, contentDescription = null, modifier = Modifier.size(260.dp))
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(bottom = 4.dp)
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AssistChipsFlow(items: List<String>) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items.forEach { tag ->
+            AssistChip(onClick = {}, label = { Text(tag) })
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.widthIn(min = 96.dp).wrapContentWidth(Alignment.Start)
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+private fun ExpandableText(full: String) {
+    var expanded by remember { mutableStateOf(false) }
+    val maxLines = if (expanded) Int.MAX_VALUE else 6
+
+    Column {
+        Text(
+            text = full,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis
+        )
+        if (!expanded && full.length > 300) { // Only show if text is actually long
+            TextButton(onClick = { expanded = true }) {
+                Text("Read more")
+            }
+        }
+    }
+}
+
+private fun formatBytes(bytes: Long): String {
+    if (bytes <= 0) return "0 B"
+    val units = arrayOf("B", "KB", "MB", "GB")
+    val digitGroups = (log10(bytes.toDouble()) / log10(1024.0)).toInt().coerceIn(0, units.lastIndex)
+    val value = bytes / 1024.0.pow(digitGroups.toDouble())
+    return String.format(Locale.getDefault(), if (digitGroups <= 1) "%.0f %s" else "%.1f %s", value, units[digitGroups])
+}
+
+private fun formatDate(epochMillis: Long): String {
+    return try {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        sdf.format(Date(epochMillis))
+    } catch (_: Exception) {
+        epochMillis.toString()
     }
 }

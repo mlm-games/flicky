@@ -183,7 +183,8 @@ class MainActivity : ComponentActivity() {
                                 CategoriesScreen(
                                     onSyncClick = { browseViewModel.syncRepos() },
                                     isSyncing = browseUi.isSyncing,
-                                    progress = browseUi.progress
+                                    progress = browseUi.progress,
+                                    onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
                                 )
                             },
                             updatesContent = {
@@ -283,7 +284,8 @@ class MainActivity : ComponentActivity() {
                                 CategoriesScreen(
                                     onSyncClick = { browseViewModel.syncRepos() },
                                     isSyncing = browseUi.isSyncing,
-                                    progress = browseUi.progress
+                                    progress = browseUi.progress,
+                                    onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) }
                                 )
                             },
                             updatesContent = {

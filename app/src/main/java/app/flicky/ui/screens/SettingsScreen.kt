@@ -15,6 +15,7 @@ import app.flicky.data.repository.Setting
 import app.flicky.data.repository.SettingCategory
 import app.flicky.data.repository.SettingType
 import app.flicky.data.repository.SettingsManager
+import app.flicky.ui.components.MyScreenScaffold
 import app.flicky.ui.components.SettingsAction
 import app.flicky.ui.components.SettingsItem
 import app.flicky.ui.components.SettingsToggle
@@ -39,144 +40,149 @@ fun SettingsScreen(vm: SettingsViewModel) {
     // roughly 420dp per cell feels good on TV/phone acc. to ... u know
     val gridCells = remember(cfg.screenWidthDp) { GridCells.Adaptive(minSize = 420.dp) }
 
-    LazyVerticalGrid(
-        columns = gridCells,
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // Generate sections by category
-        for (category in SettingCategory.entries) {
-            val itemsForCat = grouped[category] ?: emptyList()
-            if (itemsForCat.isEmpty()) continue
+    MyScreenScaffold(title = "Settings")
+    {
+        LazyVerticalGrid(
+            columns = gridCells,
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Generate sections by category
+            for (category in SettingCategory.entries) {
+                val itemsForCat = grouped[category] ?: emptyList()
+                if (itemsForCat.isEmpty()) continue
 
-            // Category header
+                // Category header
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        text = category.name.lowercase().replaceFirstChar { it.uppercase() },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
+                    )
+                }
+
+                // category wise
+                items(itemsForCat, key = { it.first.name }) { (prop, ann) ->
+                    val enabled = manager.isEnabled(settings, prop, ann)
+
+                    when (ann.type) {
+                        SettingType.TOGGLE -> {
+                            val value = prop.get(settings) as? Boolean ?: false
+                            SettingsToggle(
+                                title = ann.title,
+                                description = ann.description.takeIf { it.isNotBlank() },
+                                isChecked = value,
+                                enabled = enabled,
+                                onCheckedChange = { vm.updateSetting(prop.name, it) }
+                            )
+                        }
+
+                        SettingType.DROPDOWN -> {
+                            val idx = prop.get(settings) as? Int ?: 0
+                            val options = ann.options.toList()
+                            SettingsItem(
+                                title = ann.title,
+                                subtitle = options.getOrNull(idx) ?: "Unknown",
+                                description = ann.description.takeIf { it.isNotBlank() },
+                                enabled = enabled
+                            ) {
+                                currentProp = prop
+                                currentAnn = ann
+                                showDropdown = true
+                            }
+                        }
+
+                        SettingType.SLIDER -> {
+                            val valueText = when (val v = prop.get(settings)) {
+                                is Int -> v.toString()
+                                is Float -> String.format("%.1f", v)
+                                else -> ""
+                            }
+                            SettingsItem(
+                                title = ann.title,
+                                subtitle = valueText,
+                                description = ann.description.takeIf { it.isNotBlank() },
+                                enabled = enabled
+                            ) {
+                                currentProp = prop
+                                currentAnn = ann
+                                showSlider = true
+                            }
+                        }
+
+                        SettingType.BUTTON -> {
+                            SettingsAction(
+                                title = ann.title,
+                                description = ann.description.takeIf { it.isNotBlank() },
+                                buttonText = "Run",
+                                enabled = enabled,
+                                onClick = {
+                                    vm.performAction(prop.name)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Repositories header
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Text(
-                    text = category.name.lowercase().replaceFirstChar { it.uppercase() },
+                    text = "Repositories",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
+                    modifier = Modifier.padding(start = 4.dp, top = 12.dp, bottom = 4.dp)
                 )
             }
 
-            // category wise
-            items(itemsForCat, key = { it.first.name }) { (prop, ann) ->
-                val enabled = manager.isEnabled(settings, prop, ann)
-
-                when (ann.type) {
-                    SettingType.TOGGLE -> {
-                        val value = prop.get(settings) as? Boolean ?: false
-                        SettingsToggle(
-                            title = ann.title,
-                            description = ann.description.takeIf { it.isNotBlank() },
-                            isChecked = value,
-                            enabled = enabled,
-                            onCheckedChange = { vm.updateSetting(prop.name, it) }
-                        )
-                    }
-
-                    SettingType.DROPDOWN -> {
-                        val idx = prop.get(settings) as? Int ?: 0
-                        val options = ann.options.toList()
-                        SettingsItem(
-                            title = ann.title,
-                            subtitle = options.getOrNull(idx) ?: "Unknown",
-                            description = ann.description.takeIf { it.isNotBlank() },
-                            enabled = enabled
-                        ) {
-                            currentProp = prop
-                            currentAnn = ann
-                            showDropdown = true
-                        }
-                    }
-
-                    SettingType.SLIDER -> {
-                        val valueText = when (val v = prop.get(settings)) {
-                            is Int -> v.toString()
-                            is Float -> String.format("%.1f", v)
-                            else -> ""
-                        }
-                        SettingsItem(
-                            title = ann.title,
-                            subtitle = valueText,
-                            description = ann.description.takeIf { it.isNotBlank() },
-                            enabled = enabled
-                        ) {
-                            currentProp = prop
-                            currentAnn = ann
-                            showSlider = true
-                        }
-                    }
-
-                    SettingType.BUTTON -> {
-                        SettingsAction(
-                            title = ann.title,
-                            description = ann.description.takeIf { it.isNotBlank() },
-                            buttonText = "Run",
-                            enabled = enabled,
-                            onClick = {
-                                vm.performAction(prop.name)
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
-        // Repositories header
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            Text(
-                text = "Repositories",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 4.dp, top = 12.dp, bottom = 4.dp)
-            )
-        }
-
-        // Repository items
-        items(repos, key = { it.url }) { r ->
-            Surface(
-                tonalElevation = 1.dp,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+            // Repository items
+            items(repos, key = { it.url }) { r ->
+                Surface(
+                    tonalElevation = 1.dp,
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(r.name, style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            r.url,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(r.name, style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                r.url,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = r.enabled,
+                            onCheckedChange = { vm.toggleRepository(r.url) })
                     }
-                    Switch(checked = r.enabled, onCheckedChange = { vm.toggleRepository(r.url) })
                 }
             }
-        }
 
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            var showAdd by remember { mutableStateOf(false) }
-            Button(
-                onClick = { showAdd = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Add Repository")
-            }
-            if (showAdd) {
-                AddRepoDialog(
-                    onDismiss = { showAdd = false },
-                    onAdd = { name, url ->
-                        vm.addRepository(name, url)
-                        showAdd = false
-                    }
-                )
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                var showAdd by remember { mutableStateOf(false) }
+                Button(
+                    onClick = { showAdd = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Add Repository")
+                }
+                if (showAdd) {
+                    AddRepoDialog(
+                        onDismiss = { showAdd = false },
+                        onAdd = { name, url ->
+                            vm.addRepository(name, url)
+                            showAdd = false
+                        }
+                    )
+                }
             }
         }
     }
