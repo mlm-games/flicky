@@ -1,12 +1,14 @@
 package app.flicky.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.DividerDefaults
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import app.flicky.ui.components.TvNavigationSidebar
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import app.flicky.ui.components.TvNavigationSidebar
 
 @Composable
 fun TvMainScreen(
@@ -16,7 +18,6 @@ fun TvMainScreen(
 ) {
     Row(Modifier.fillMaxSize()) {
         TvNavigationSidebar(selectedIndex, onSelect)
-        HorizontalDivider(Modifier.width(1.dp), DividerDefaults.Thickness, DividerDefaults.color)
         Box(Modifier.weight(1f)) { content() }
     }
 }
