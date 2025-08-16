@@ -25,14 +25,14 @@ enum class SettingType { TOGGLE, DROPDOWN, SLIDER, BUTTON }
 
 data class AppSettings(
 
-    // To Add Later when UI suits mobile (adapted from CCL)
-//    @Setting(
-//        title = "Default Sort",
-//        description = "Default sorting for app lists",
-//        category = SettingCategory.GENERAL,
-//        type = SettingType.DROPDOWN,
-//        options = ["Name", "Recently Updated", "Size", "Recently Added"]
-//    )
+    // To Add Later when UI suits mobile (adapted from CCL and Droidify)
+    @Setting(
+        title = "Default Sort",
+        description = "Default sorting for app lists",
+        category = SettingCategory.GENERAL,
+        type = SettingType.DROPDOWN,
+        options = ["Name", "Recently Updated", "Size", "Recently Added"]
+    )
     val defaultSort: Int = 1,
 
 //    @Setting(
@@ -83,12 +83,12 @@ data class AppSettings(
 //    )
     val autoUpdate: Boolean = false,
 
-//    @Setting(
-//        title = "Update over Wi‑Fi only",
-//        category = SettingCategory.DOWNLOADS,
-//        type = SettingType.TOGGLE,
-//        dependsOn = "autoUpdate"
-//    )
+    @Setting(
+        title = "Update over Wi‑Fi only",
+        category = SettingCategory.DOWNLOADS,
+        type = SettingType.TOGGLE,
+        dependsOn = "autoUpdate"
+    )
     val wifiOnly: Boolean = true,
 
     @Setting(
@@ -122,26 +122,26 @@ data class AppSettings(
     )
     val hideAntiFeatures: Boolean = false,
 
-    @Setting(
-        title = "Show incompatible versions",
-        category = SettingCategory.FILTERS,
-        type = SettingType.TOGGLE
-    )
+//    @Setting(
+//        title = "Show incompatible versions",
+//        category = SettingCategory.FILTERS,
+//        type = SettingType.TOGGLE
+//    )
     val showIncompatible: Boolean = false,
 
-    @Setting(
-        title = "Show unstable updates",
-        category = SettingCategory.FILTERS,
-        type = SettingType.TOGGLE
-    )
+//    @Setting(
+//        title = "Show unstable updates",
+//        category = SettingCategory.FILTERS,
+//        type = SettingType.TOGGLE
+//    )
     val unstableUpdates: Boolean = false,
 
-    @Setting(
-        title = "Ignore signature",
-        description = "Allow updates with different signatures (unsafe)",
-        category = SettingCategory.FILTERS,
-        type = SettingType.TOGGLE
-    )
+//    @Setting(
+//        title = "Ignore signature",
+//        description = "Allow updates with different signatures (unsafe)",
+//        category = SettingCategory.FILTERS,
+//        type = SettingType.TOGGLE
+//    )
     val ignoreSignature: Boolean = false,
 
     // Misc (advanced, not needed for ui)
