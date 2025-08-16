@@ -34,7 +34,7 @@ android {
         applicationId = "app.flicky"
         minSdk = 24
         targetSdk = 36
-        versionCode = 130
+        versionCode = 150
         versionName = "v2.1.1"
 
         androidResources {
@@ -54,23 +54,25 @@ android {
     }
 
     applicationVariants.all {
+        val buildingApk = gradle.startParameter.taskNames.any { it.contains("assemble", ignoreCase = true) }
+        if (!buildingApk) return@all
+
         val variant = this
         outputs.all {
-            val output = this as BaseVariantOutputImpl
-            val abiName = output.filters.find { it.filterType == "ABI" }?.identifier
-
-            if (abiName != null) {
-                val baseVersionCode = variant.versionCode
-                val abiVersionCode = when (abiName) {
-                    "x86" -> baseVersionCode - 3
-                    "x86_64" -> baseVersionCode - 2
-                    "armeabi-v7a" -> baseVersionCode - 1
-                    "arm64-v8a" -> baseVersionCode
-                    else -> baseVersionCode
+            if (this is ApkVariantOutputImpl) {
+                val abiName = filters.find { it.filterType == "ABI" }?.identifier
+                if (abiName != null) {
+                    val base = variant.versionCode
+                    val abiVersionCode = when (abiName) {
+                        "x86" -> base - 3
+                        "x86_64" -> base - 2
+                        "armeabi-v7a" -> base - 1
+                        "arm64-v8a" -> base
+                        else -> base
+                    }
+                    versionCodeOverride = abiVersionCode
+                    outputFileName = "flicky-${variant.versionName}-${abiName}.apk"
                 }
-
-                (output as ApkVariantOutputImpl).versionCodeOverride = abiVersionCode
-                output.outputFileName = ("flicky-${variant.versionName}-${abiName}.apk")
             }
         }
     }

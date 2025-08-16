@@ -15,6 +15,12 @@ on:
         required: true
         default: 'false'
         type: boolean
+      play_track:
+        description: 'Google Play track (internal, alpha, beta, production)'
+        required: true
+        default: 'internal'
+        type: choice
+        options: [internal, alpha, beta, production]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -38,7 +44,7 @@ jobs:
       build_date: ${{ steps.version.outputs.build_date }}
       release_notes: ${{ steps.release-notes.outputs.release-notes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -101,7 +107,7 @@ jobs:
       contents: write
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.ref }}
       
@@ -113,7 +119,7 @@ jobs:
           cache: 'gradle'
           
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           gradle-home-cache-cleanup: true
           
@@ -122,9 +128,16 @@ jobs:
           echo "${{ secrets.KEYSTORE }}" > release.keystore.asc
           gpg -d --passphrase "${{ secrets.KEYSTORE_PASSPHRASE }}" --batch release.keystore.asc > release.keystore
 
-      - name: Build APKs
+      - name: Build AAB (for Play) and APK splits (for side-channels)
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          ./gradlew clean assembleRelease \
+          ./gradlew clean \
+            :app:bundleRelease \
+            :app:assembleRelease \
             -Pandroid.injected.signing.store.file=$PWD/release.keystore \
             -Pandroid.injected.signing.store.password=${{ secrets.STORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
@@ -133,8 +146,6 @@ jobs:
       - name: Prepare APKs
         run: |
           mkdir -p artifacts
-          
-          # Rename APKs with version
           for apk in app/build/outputs/apk/release/*.apk; do
             if [ -f "$apk" ]; then
               arch=$(echo "$apk" | grep -oE '(arm64-v8a|armeabi-v7a|x86_64|x86)')
@@ -143,19 +154,33 @@ jobs:
               fi
             fi
           done
+          echo  "copy the AAB for releases/artifacts"
+          cp app/build/outputs/bundle/release/app-release.aab "artifacts/flicky-${{ needs.prepare-version.outputs.version_name }}.aab"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         if: inputs.upload_releases == false || github.event_name != 'workflow_dispatch'
         with:
           name: release-${{ needs.prepare-version.outputs.version_name }}
-          path: artifacts/*.apk
+          path: artifacts/*
+
+      - name: Upload AAB to Google Play
+        if: github.event_name == 'workflow_dispatch' && inputs.upload_releases == true
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlain: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: app.flicky
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          track: ${{ inputs.play_track }}
+          status: completed
+          # Uses fastlane metadata generated above: .../en-US/changelogs/<versionCode>.txt
+          whatsNewDirectory: fastlane/metadata/android
 
       - name: Create GitHub Release
         if: github.event_name == 'workflow_dispatch' && inputs.upload_releases == true
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*.apk
+          files: artifacts/*
           name: Flicky ${{ needs.prepare-version.outputs.version_name }}
           tag_name: ${{ needs.prepare-version.outputs.version_name }}
           prerelease: ${{ inputs.mark_prerelease }}
@@ -170,3 +195,4 @@ jobs:
             | ARM32 (Older phones) | `flicky-${{ needs.prepare-version.outputs.version_name }}-armeabi-v7a.apk` |
             | x86_64 (Emulators) | `flicky-${{ needs.prepare-version.outputs.version_name }}-x86_64.apk` |
             | x86 (Old emulators) | `flicky-${{ needs.prepare-version.outputs.version_name }}-x86.apk` |
+            | App Bundle | `flicky-${{ needs.prepare-version.outputs.version_name }}.aab` |
