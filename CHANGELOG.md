@@ -1,3 +1,12 @@
+## v2.1.1
+
+- Bump build.gradle.kts
+- Add default sort and wifi-only setting
+- Add theme and dynamic theme settings
+- Add theme and dynamic theme setting
+- Remove odd divider for TV
+
+
 ## v2.0.1
 
 - revert build.gradle.kts
