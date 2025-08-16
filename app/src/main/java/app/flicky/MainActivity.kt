@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -28,55 +29,38 @@ import androidx.compose.runtime.collectAsState
 
 class MainActivity : ComponentActivity() {
 
+    private inline fun <reified T : ViewModel> viewModelFactory(
+        crossinline creator: () -> T
+    ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+        override fun <VM : ViewModel> create(modelClass: Class<VM>): VM {
+            @Suppress("UNCHECKED_CAST")
+            return creator() as VM
+        }
+    }
+
     private val browseViewModel: BrowseViewModel by viewModels {
-        object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                @Suppress("UNCHECKED_CAST")
-                return BrowseViewModel(
-                    AppGraph.appRepo,
-                    AppGraph.syncManager,
-                    AppGraph.settings
-                ) as T
-            }
+        viewModelFactory {
+            BrowseViewModel(
+                AppGraph.appRepo,
+                AppGraph.syncManager,
+                AppGraph.settings
+            )
         }
     }
 
     private val settingsViewModel: SettingsViewModel by viewModels {
-        object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                @Suppress("UNCHECKED_CAST")
-                return SettingsViewModel(
-                    AppGraph.settings
-                ) as T
-            }
-        }
+        viewModelFactory { SettingsViewModel(AppGraph.settings) }
     }
 
     private val updatesViewModel: UpdatesViewModel by viewModels {
-        object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                @Suppress("UNCHECKED_CAST")
-                return UpdatesViewModel(
-                    AppGraph.appRepo,
-                    AppGraph.installedRepo
-                ) as T
-            }
+        viewModelFactory {
+            UpdatesViewModel(
+                AppGraph.appRepo,
+                AppGraph.installedRepo
+            )
         }
     }
 
-    private val appDetailViewModel: AppDetailViewModel by viewModels {
-        object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                @Suppress("UNCHECKED_CAST")
-                return AppDetailViewModel(
-                    AppGraph.db.appDao(),
-                    AppGraph.installedRepo,
-                    AppGraph.installer,
-                    ""
-                ) as T
-            }
-        }
-    }
 
 
 
@@ -87,8 +71,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val settingsState by AppGraph.settings.settingsFlow.collectAsState(initial = null)
-//            val themeMode = settingsState?.themeMode ?: 2
-//            when (themeMode) { 0 -> false; 1 -> false; else -> true }
 
             // Schedule WorkManager based on settings
             LaunchedEffect(settingsState?.wifiOnly, settingsState?.syncIntervalIndex) {
@@ -143,11 +125,14 @@ class MainActivity : ComponentActivity() {
 
             val settings = settingsViewModel.settings.collectAsState().value
 
-            val themeDark = settings.themeMode == 2
+            val themeMode = settings.themeMode
             val dynamicColors = settings.dynamicTheme
 
+
             FlickyTheme(
-                themeDark,
+                when (themeMode) { 0 -> isSystemInDarkTheme(); 1 -> false; else -> true
+                }
+                ,
                 dynamicColors
             ) {
                 if (isTV) {
