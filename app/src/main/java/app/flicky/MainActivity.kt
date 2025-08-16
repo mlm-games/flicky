@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.flicky.data.external.UpdatesPreferences
 import app.flicky.helper.DeviceUtils
+import androidx.compose.runtime.collectAsState
 
 class MainActivity : ComponentActivity() {
 
@@ -85,10 +86,9 @@ class MainActivity : ComponentActivity() {
         UpdatesPreferences.init(applicationContext)
 
         setContent {
-            // Observe settings for theme + scheduling
             val settingsState by AppGraph.settings.settingsFlow.collectAsState(initial = null)
-            val themeMode = settingsState?.themeMode ?: 2
-            when (themeMode) { 0 -> false; 1 -> false; else -> true }
+//            val themeMode = settingsState?.themeMode ?: 2
+//            when (themeMode) { 0 -> false; 1 -> false; else -> true }
 
             // Schedule WorkManager based on settings
             LaunchedEffect(settingsState?.wifiOnly, settingsState?.syncIntervalIndex) {
@@ -141,7 +141,15 @@ class MainActivity : ComponentActivity() {
 
             val isTV = DeviceUtils.isTV(packageManager)
 
-            FlickyTheme {
+            val settings = settingsViewModel.settings.collectAsState().value
+
+            val themeDark = settings.themeMode == 2
+            val dynamicColors = settings.dynamicTheme
+
+            FlickyTheme(
+                themeDark,
+                dynamicColors
+            ) {
                 if (isTV) {
                     TvMainScreen(
                         selectedIndex = selectedIndex,

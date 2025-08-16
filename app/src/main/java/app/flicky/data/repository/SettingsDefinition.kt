@@ -44,20 +44,20 @@ data class AppSettings(
 //    )
     val appsPerRow: Int = 4,
 
-//    @Setting(
-//        title = "Theme",
-//        category = SettingCategory.APPEARANCE,
-//        type = SettingType.DROPDOWN,
-//        options = ["System", "Light", "Dark"]
-//    )
+    @Setting(
+        title = "Theme",
+        category = SettingCategory.APPEARANCE,
+        type = SettingType.DROPDOWN,
+        options = ["System", "Light", "Dark"]
+    )
     val themeMode: Int = 2,
 
-//    @Setting(
-//        title = "Use dynamic colors",
-//        description = "Use Material You colors (Android 12+)",
-//        category = SettingCategory.APPEARANCE,
-//        type = SettingType.TOGGLE
-//    )
+    @Setting(
+        title = "Use dynamic colors",
+        description = "Use Material You colors (Android 12+)",
+        category = SettingCategory.APPEARANCE,
+        type = SettingType.TOGGLE
+    )
     val dynamicTheme: Boolean = false,
 
 //    @Setting(
