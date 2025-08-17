@@ -129,12 +129,19 @@ jobs:
           gpg -d --passphrase "${{ secrets.KEYSTORE_PASSPHRASE }}" --batch release.keystore.asc > release.keystore
 
       - name: Build AAB (Play)
-        run: ./gradlew :app:bundleRelease \
-          -Pandroid.injected.signing.store.file=${{ github.workspace }}/release.keystore \
-          -Pandroid.injected.signing.store.password=${{ secrets.STORE_PASSWORD }} \
-          -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-          -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
-
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:bundleRelease
+      
+      - name: Prepare AAB artifact
+        run: |
+          mkdir -p artifacts
+          cp app/build/outputs/bundle/release/app-release.aab \
+             "artifacts/flicky-${{ needs.prepare-version.outputs.version_name }}.aab"
+      
       - name: Upload AAB to Google Play
         if: github.event_name == 'workflow_dispatch' && inputs.upload_releases == true
         uses: r0adkll/upload-google-play@v1
@@ -145,16 +152,17 @@ jobs:
           track: ${{ inputs.play_track }}
           status: completed
           whatsNewDirectory: fastlane/metadata/android
-
+      
       - name: Clean before APK build
         run: ./gradlew clean
-
+      
       - name: Build APK splits
-        run: ./gradlew :app:assembleRelease \
-          -Pandroid.injected.signing.store.file=${{ github.workspace }}/release.keystore \
-          -Pandroid.injected.signing.store.password=${{ secrets.STORE_PASSWORD }} \
-          -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-          -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease
           
       - name: Prepare APKs
         run: |
