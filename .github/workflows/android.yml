@@ -128,21 +128,34 @@ jobs:
           echo "${{ secrets.KEYSTORE }}" > release.keystore.asc
           gpg -d --passphrase "${{ secrets.KEYSTORE_PASSPHRASE }}" --batch release.keystore.asc > release.keystore
 
-      - name: Build AAB (for Play) and APK splits (for side-channels)
-        env:
-          KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          ./gradlew clean \
-            :app:bundleRelease \
-            :app:assembleRelease \
-            -Pandroid.injected.signing.store.file=$PWD/release.keystore \
-            -Pandroid.injected.signing.store.password=${{ secrets.STORE_PASSWORD }} \
-            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+      - name: Build AAB (Play)
+        run: ./gradlew :app:bundleRelease \
+          -Pandroid.injected.signing.store.file=$PWD/release.keystore \
+          -Pandroid.injected.signing.store.password=${{ secrets.STORE_PASSWORD }} \
+          -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+          -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
 
+      - name: Upload AAB to Google Play
+        if: github.event_name == 'workflow_dispatch' && inputs.upload_releases == true
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: app.flicky
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          track: ${{ inputs.play_track }}
+          status: completed
+          whatsNewDirectory: fastlane/metadata/android
+
+      - name: Clean before APK build
+        run: ./gradlew clean
+
+      - name: Build APK splits
+        run: ./gradlew :app:assembleRelease \
+          -Pandroid.injected.signing.store.file=$PWD/release.keystore \
+          -Pandroid.injected.signing.store.password=${{ secrets.STORE_PASSWORD }} \
+          -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+          -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+          
       - name: Prepare APKs
         run: |
           mkdir -p artifacts
@@ -163,18 +176,6 @@ jobs:
         with:
           name: release-${{ needs.prepare-version.outputs.version_name }}
           path: artifacts/*
-
-      - name: Upload AAB to Google Play
-        if: github.event_name == 'workflow_dispatch' && inputs.upload_releases == true
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlain: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: app.flicky
-          releaseFiles: app/build/outputs/bundle/release/app-release.aab
-          track: ${{ inputs.play_track }}
-          status: completed
-          # Uses fastlane metadata generated above: .../en-US/changelogs/<versionCode>.txt
-          whatsNewDirectory: fastlane/metadata/android
 
       - name: Create GitHub Release
         if: github.event_name == 'workflow_dispatch' && inputs.upload_releases == true
