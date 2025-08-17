@@ -10,9 +10,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import app.flicky.data.model.FDroidApp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+
 
 @Composable
 fun TVAppCard(
@@ -41,8 +45,13 @@ fun TVAppCard(
     ) {
         Column(Modifier.padding(16.dp)) {
             AsyncImage(
-                model = app.iconUrl,
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(app.iconUrl)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = app.name,
+                placeholder = painterResource(android.R.drawable.star_on),
+                error = painterResource(android.R.drawable.star_on),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp)

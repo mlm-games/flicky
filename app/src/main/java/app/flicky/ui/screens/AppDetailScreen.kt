@@ -22,10 +22,11 @@ import java.util.Locale
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.ui.res.painterResource
 import app.flicky.ui.components.SmartExpandableText
 import kotlin.math.log10
 import kotlin.math.pow
-
+import app.flicky.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppDetailScreen(
@@ -272,7 +273,9 @@ private fun AppHeader(
             AsyncImage(
                 model = app.iconUrl,
                 contentDescription = app.name,
-                modifier = Modifier.size(iconSize)
+                modifier = Modifier.size(iconSize),
+                placeholder = painterResource(R.drawable.ic_app_placeholder),
+                error = painterResource(R.drawable.ic_app_placeholder)
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
@@ -369,6 +372,8 @@ private fun HeaderCard(
                 AsyncImage(
                     model = app.iconUrl,
                     contentDescription = app.name,
+                    placeholder = painterResource(R.drawable.ic_app_placeholder),
+                    error = painterResource(R.drawable.ic_app_placeholder),
                     modifier = Modifier.size(88.dp)
                 )
                 Spacer(Modifier.width(12.dp))

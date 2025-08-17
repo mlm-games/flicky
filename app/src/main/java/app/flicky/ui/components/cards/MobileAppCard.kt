@@ -6,10 +6,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.flicky.data.model.FDroidApp
 import coil.compose.AsyncImage
+import app.flicky.R
+import coil.request.ImageRequest
 
 @Composable
 fun MobileAppCard(
@@ -22,8 +26,13 @@ fun MobileAppCard(
     ) {
         Column(Modifier.padding(12.dp)) {
             AsyncImage(
-                model = app.iconUrl,
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(app.iconUrl)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = app.name,
+                placeholder = painterResource(R.drawable.ic_app_placeholder),
+                error = painterResource(R.drawable.ic_app_placeholder),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp)

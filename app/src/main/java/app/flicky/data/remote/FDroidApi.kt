@@ -190,7 +190,7 @@ class FDroidApi(context: Context) {
                 if (!iconName.isNullOrBlank()) "$baseUrl/$iconName"
                 else "$baseUrl/icons/$packageName.png"
             }
-            // Archive often omits icon metadata; fallback to main repo path
+            // Archive omits icon metadata; fallback to main repo path (might work in future from fdroid changes)
             repoName == "F-Droid Archive" -> "https://f-droid.org/repo/icons/$packageName.png"
             else -> "$baseUrl/icons/$packageName.png"
         }
