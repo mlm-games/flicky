@@ -8,6 +8,7 @@ import app.flicky.data.repository.AppRepository
 import app.flicky.data.repository.RepositorySyncManager
 import app.flicky.data.repository.SettingsRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -31,6 +32,7 @@ data class Quintuple<A, B, C, D, E>(
 )
 
 
+@OptIn(FlowPreview::class)
 class BrowseViewModel(
     private val repo: AppRepository,
     private val sync: RepositorySyncManager,
@@ -95,6 +97,18 @@ class BrowseViewModel(
                 _sort.value = sort
             }
         }
+
+        viewModelScope.launch {
+            settings.repositoriesFlow
+                .map { repos -> repos.filter { it.enabled }.map { it.url }.sorted() }
+                .distinctUntilChanged()
+                .drop(1)
+                .debounce(350)
+                .collect {
+                    forceSyncRepos()
+                }
+        }
+
     }
 
     fun setQuery(q: String) {
