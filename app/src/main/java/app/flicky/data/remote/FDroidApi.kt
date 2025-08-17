@@ -7,40 +7,29 @@ import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.RepositoryInfo
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.android.Android
-import io.ktor.client.plugins.*
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsChannel
-import io.ktor.http.HttpHeaders
-import io.ktor.http.isSuccess
-import io.ktor.utils.io.jvm.javaio.toInputStream
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import java.io.InputStreamReader
+import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 class FDroidApi(context: Context) {
     companion object {
         private const val TAG = "FDroidApi"
         private const val BATCH_SIZE = 50 // for TV memory constraints
+        private const val MAX_RETRIES = 2
+        private const val RETRY_BACKOFF_MS = 1200L
     }
 
-    private val client = HttpClient(Android) {
-        install(HttpTimeout) {
-            requestTimeoutMillis = 60_000L
-            connectTimeoutMillis = 30_000L
-        }
-        install(HttpRequestRetry) {
-            retryOnServerErrors(maxRetries = 3)
-            exponentialDelay()
-        }
-        defaultRequest {
-            header("User-Agent", "Flicky/1.1 TV")
-            header("Accept", "application/json")
-        }
-    }
+    private val client = OkHttpClient.Builder()
+        .callTimeout(60, TimeUnit.SECONDS)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
+        .build()
 
     data class RepoHeaders(val etag: String?, val lastModified: String?)
 
@@ -52,94 +41,138 @@ class FDroidApi(context: Context) {
     ): RepoHeaders? = withContext(Dispatchers.IO) {
         val baseUrl = repo.url.trimEnd('/')
 
-        try {
-            // Try index-v2.json directly (most repos use this now)
-            val resp = client.get("$baseUrl/index-v2.json") {
-                if (!force) {
-                    previous.etag?.let { header(HttpHeaders.IfNoneMatch, it) }
-                    previous.lastModified?.let { header(HttpHeaders.IfModifiedSince, it) }
-                }
+        fun buildRequest(): Request {
+            val builder = Request.Builder()
+                .url("$baseUrl/index-v2.json")
+                .get()
+                .header("User-Agent", "Flicky/1.1 TV")
+                .header("Accept", "application/json")
+            if (!force) {
+                previous.etag?.let { builder.header("If-None-Match", it) }
+                previous.lastModified?.let { builder.header("If-Modified-Since", it) }
             }
-
-            if (resp.status.value == 304) {
-                Log.d(TAG, "Repository ${repo.name} has not changed (304)")
-                return@withContext previous
-            }
-
-            if (resp.status.isSuccess()) {
-                Log.d(TAG, "Parsing index for ${repo.name}")
-                parseIndexV2(resp, baseUrl, repo.name, onApp)
-
-                val etag = resp.headers[HttpHeaders.ETag]
-                val lastMod = resp.headers[HttpHeaders.LastModified]
-                return@withContext RepoHeaders(etag, lastMod)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error fetching ${repo.name}: ${e.message}", e)
+            return builder.build()
         }
 
+        // Simple retry for transient network issues or 5xx
+        var attempt = 0
+        var lastException: Exception? = null
+        while (attempt <= MAX_RETRIES) {
+            try {
+                client.newCall(buildRequest()).execute().use { resp ->
+                    // 304: unchanged
+                    if (resp.code == 304) {
+                        Log.d(TAG, "Repository ${repo.name} has not changed (304)")
+                        return@withContext previous
+                    }
+
+                    if (!resp.isSuccessful) {
+                        val code = resp.code
+                        Log.w(TAG, "Non-success ${code} for ${repo.name}")
+                        if (code >= 500 && attempt < MAX_RETRIES) {
+                            attempt++
+                            delay(RETRY_BACKOFF_MS * attempt)
+                            return@use // retry loop
+                        }
+                        return@withContext null
+                    }
+
+                    // Stream parse directly from response body
+                    Log.d(TAG, "Parsing index for ${repo.name}")
+                    parseIndexV2(resp, baseUrl, repo.name, onApp)
+
+                    val etag = resp.header("ETag")
+                    val lastMod = resp.header("Last-Modified")
+                    return@withContext RepoHeaders(etag, lastMod)
+                }
+            } catch (e: Exception) {
+                lastException = e
+                Log.w(TAG, "Error fetching ${repo.name} (attempt $attempt): ${e.message}")
+                if (attempt < MAX_RETRIES) {
+                    attempt++
+                    delay(RETRY_BACKOFF_MS * attempt)
+                } else {
+                    break
+                }
+            }
+        }
+        Log.e(TAG, "Failed to fetch ${repo.name}", lastException)
         null
     }
 
     private suspend fun parseIndexV2(
-        resp: HttpResponse,
+        resp: Response,
         baseUrl: String,
         repoName: String,
         onApp: suspend (FDroidApp) -> Unit
     ) = withContext(Dispatchers.IO) {
-        val batch = mutableListOf<FDroidApp>()
         var totalApps = 0
+        val batch = mutableListOf<FDroidApp>()
 
-        JsonReader(InputStreamReader(resp.bodyAsChannel().toInputStream())).use { reader ->
-            reader.beginObject()
-            while (reader.hasNext()) {
-                when (reader.nextName()) {
-                    "packages" -> {
-                        Log.d(TAG, "Found packages section")
-                        reader.beginObject() // packages object
-                        while (reader.hasNext()) {
-                            val packageName = reader.nextName()
-                            val app = parsePackage(reader, packageName, baseUrl, repoName)
-                            if (app != null) {
-                                batch.add(app)
-                                totalApps++
-                                if (batch.size >= BATCH_SIZE) {
-                                    batch.forEach { onApp(it) }
-                                    batch.clear()
+        val body = resp.body ?: return@withContext
+        InputStreamReader(body.byteStream()).use { isr ->
+            JsonReader(isr).use { reader ->
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    when (reader.nextName()) {
+                        "packages" -> {
+                            reader.beginObject() // packages object
+                            while (reader.hasNext()) {
+                                val packageName = reader.nextName()
+                                val app = parsePackageStreamingBest(reader, packageName, baseUrl, repoName)
+                                if (app != null) {
+                                    batch.add(app)
+                                    totalApps++
+                                    if (batch.size >= BATCH_SIZE) {
+                                        // emit and clear to keep memory low
+                                        batch.forEach { onApp(it) }
+                                        batch.clear()
+                                    }
+                                } else {
+                                    // no compatible version; skip
                                 }
                             }
+                            reader.endObject()
                         }
-                        reader.endObject()
+                        else -> reader.skipValue()
                     }
-                    else -> reader.skipValue()
                 }
+                reader.endObject()
             }
-            reader.endObject()
         }
 
-        // Emit remaining apps
-        batch.forEach { onApp(it) }
+        // Flush residue
+        if (batch.isNotEmpty()) {
+            batch.forEach { onApp(it) }
+            batch.clear()
+        }
         Log.d(TAG, "Parsed $totalApps apps from $repoName")
     }
 
-    private fun parsePackage(
+    /**
+     * Best-version selection (to avoid building large per-package lists (prevents OOM))
+     */
+    private fun parsePackageStreamingBest(
         reader: JsonReader,
         packageName: String,
         baseUrl: String,
         repoName: String
     ): FDroidApp? {
         var metadata: Metadata? = null
-        val versions = mutableListOf<Version>()
+        var best: Version? = null
 
         reader.beginObject()
         while (reader.hasNext()) {
             when (reader.nextName()) {
-                "metadata" -> metadata = parseMetadata(reader, baseUrl)
+                "metadata" -> metadata = parseMetadata(reader)
                 "versions" -> {
                     reader.beginObject()
                     while (reader.hasNext()) {
-                        reader.nextName() // version hash
-                        versions.add(parseVersion(reader, baseUrl))
+                        reader.nextName() // version hash (ignored)
+                        val v = parseVersion(reader)
+                        if (isCompatible(v) && (best == null || v.versionCode > best!!.versionCode)) {
+                            best = v
+                        }
                     }
                     reader.endObject()
                 }
@@ -149,18 +182,25 @@ class FDroidApi(context: Context) {
         reader.endObject()
 
         val meta = metadata ?: return null
-        val bestVersion = versions
-            .filter { isCompatible(it) }
-            .maxByOrNull { it.versionCode }
-            ?: return null
+        val bestVersion = best ?: return null
+
+        val resolvedIconUrl = when {
+            meta.icon != null -> {
+                val iconName = meta.icon["en-US"]?.name
+                if (!iconName.isNullOrBlank()) "$baseUrl/$iconName"
+                else "$baseUrl/icons/$packageName.png"
+            }
+            // Archive often omits icon metadata; fallback to main repo path
+            repoName == "F-Droid Archive" -> "https://f-droid.org/repo/icons/$packageName.png"
+            else -> "$baseUrl/icons/$packageName.png"
+        }
 
         return FDroidApp(
             packageName = packageName,
             name = meta.name?.get("en-US") ?: packageName,
             summary = meta.summary?.get("en-US") ?: "",
             description = meta.description?.get("en-US") ?: "",
-            iconUrl = meta.icon?.let { "$baseUrl/${it.get("en-US")?.name ?: "icons/$packageName.png"}" }
-                ?: "$baseUrl/icons/$packageName.png",
+            iconUrl = resolvedIconUrl,
             version = bestVersion.versionName,
             versionCode = bestVersion.versionCode,
             size = bestVersion.size,
@@ -208,7 +248,8 @@ class FDroidApi(context: Context) {
         val nativecode: List<String> = emptyList()
     )
 
-    private fun parseMetadata(reader: JsonReader, baseUrl: String): Metadata {
+
+    private fun parseMetadata(reader: JsonReader): Metadata {
         var name: Map<String, String>? = null
         var summary: Map<String, String>? = null
         var description: Map<String, String>? = null
@@ -248,7 +289,7 @@ class FDroidApi(context: Context) {
         )
     }
 
-    private fun parseVersion(reader: JsonReader, baseUrl: String): Version {
+    private fun parseVersion(reader: JsonReader): Version {
         var versionCode = 0
         var versionName = "1.0"
         var file = ""
