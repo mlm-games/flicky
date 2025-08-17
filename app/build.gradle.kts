@@ -177,7 +177,6 @@ dependencies {
     implementation(libs.kotlin.reflect)
     implementation(libs.androidbrowserhelper)
     implementation(libs.androidx.datastore.preferences.core)
-    implementation(libs.firebase.crashlytics.buildtools)
 
     implementation(libs.androidx.tv.material)
     implementation(libs.androidx.tv.foundation)
