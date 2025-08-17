@@ -1,3 +1,17 @@
+## v2.2.3
+
+- Update android.yml
+- Update android.yml
+- Add app placeholder icons (if no icon)
+- Force sync on changing repositories
+- Fix fdroid archive crash on sync
+- Try improving installer to prevent duplicate sha256 checks
+- Fix app descriptions with <html> tags
+- add tv screenshots
+- add aab upload (try fooling gplay to allow?)
+- Fix crash due to duplicate keys in updates screen
+
+
 ## v2.2.2
 
 - Update android.yml
