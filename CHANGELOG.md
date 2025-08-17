@@ -1,3 +1,8 @@
+## v2.2.7
+
+- Remove unused firebase lib and downgrade gradle for fdroid compat
+
+
 ## v2.2.6
 
 - fix workflow
