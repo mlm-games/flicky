@@ -22,6 +22,7 @@ import java.util.Locale
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.wrapContentWidth
+import app.flicky.ui.components.SmartExpandableText
 import kotlin.math.log10
 import kotlin.math.pow
 
@@ -174,7 +175,7 @@ private fun DesktopLayout(
                 item {
                     Column {
                         SectionTitle("About")
-                        ExpandableText(app.description)
+                        SmartExpandableText(app.description)
                     }
                 }
             }
@@ -238,7 +239,7 @@ private fun MobileLayout(
             item {
                 Column {
                     SectionTitle("About")
-                    ExpandableText(app.description)
+                    SmartExpandableText(app.description)
                 }
             }
         }
