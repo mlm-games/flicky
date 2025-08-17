@@ -43,9 +43,11 @@ android {
         vectorDrawables.useSupportLibrary = true
     }
 
+    val enableApkSplits = (providers.gradleProperty("enableApkSplits").orNull ?: "false").toBoolean()
+
     splits {
         abi {
-            isEnable = true
+            isEnable = enableApkSplits
             reset()
             include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
             isUniversalApk = false
