@@ -44,12 +44,19 @@ android {
     }
 
     val enableApkSplits = (providers.gradleProperty("enableApkSplits").orNull ?: "false").toBoolean()
+    val targetAbi = providers.gradleProperty("targetAbi").orNull
 
     splits {
         abi {
             isEnable = enableApkSplits
             reset()
-            include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+            if (enableApkSplits) {
+                if (targetAbi != null) {
+                    include(targetAbi)
+                } else {
+                    include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+                }
+            }
             isUniversalApk = false
         }
     }
