@@ -27,6 +27,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  APP_NAME: 'Flicky'      
+  APP_SLUG: 'flicky'     
+  APPLICATION_ID: 'app.flicky'
+
   JAVA_VERSION: '21'
   JAVA_DISTRIBUTION: 'corretto'
   BUILD_GRADLE_PATH: 'app/build.gradle.kts'
@@ -140,14 +144,14 @@ jobs:
         run: |
           mkdir -p artifacts
           cp app/build/outputs/bundle/release/app-release.aab \
-             "artifacts/flicky-${{ needs.prepare-version.outputs.version_name }}.aab"
+             "artifacts/${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}.aab"
       
       - name: Upload AAB to Google Play
         if: github.event_name == 'workflow_dispatch' && inputs.upload_releases == true
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: app.flicky
+          packageName: ${{ env.APPLICATION_ID }}
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
           track: ${{ inputs.play_track }}
           status: completed
@@ -171,7 +175,7 @@ jobs:
             if [ -f "$apk" ]; then
               arch=$(echo "$apk" | grep -oE '(arm64-v8a|armeabi-v7a|x86_64|x86)')
               if [ -n "$arch" ]; then
-                cp "$apk" "artifacts/flicky-${{ needs.prepare-version.outputs.version_name }}-${arch}.apk"
+                cp "$apk" "artifacts/${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-${arch}.apk"
               fi
             fi
           done
@@ -188,7 +192,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/*
-          name: Flicky ${{ needs.prepare-version.outputs.version_name }}
+          name: ${{ env.APP_NAME }} ${{ needs.prepare-version.outputs.version_name }}
           tag_name: ${{ needs.prepare-version.outputs.version_name }}
           prerelease: ${{ inputs.mark_prerelease }}
           body: |
@@ -198,8 +202,8 @@ jobs:
             ### Downloads
             | Architecture | APK |
             |-------------|-----|
-            | ARM64 (Most phones) | `flicky-${{ needs.prepare-version.outputs.version_name }}-arm64-v8a.apk` |
-            | ARM32 (Older phones) | `flicky-${{ needs.prepare-version.outputs.version_name }}-armeabi-v7a.apk` |
-            | x86_64 (Emulators) | `flicky-${{ needs.prepare-version.outputs.version_name }}-x86_64.apk` |
-            | x86 (Old emulators) | `flicky-${{ needs.prepare-version.outputs.version_name }}-x86.apk` |
-            | App Bundle | `flicky-${{ needs.prepare-version.outputs.version_name }}.aab` |
+            | ARM64 (Most phones) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-arm64-v8a.apk` |
+            | ARM32 (Older phones) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-armeabi-v7a.apk` |
+            | x86_64 (Emulators) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-x86_64.apk` |
+            | x86 (Old emulators) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-x86.apk` |
+            | App Bundle | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}.aab` |
