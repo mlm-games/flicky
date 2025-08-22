@@ -33,8 +33,8 @@ android {
         applicationId = "app.flicky"
         minSdk = 24
         targetSdk = 36
-        versionCode = 250
-        versionName = "2.3.2"
+        versionCode = 260
+        versionName = "2.3.3"
 
         androidResources {
             localeFilters += setOf("en", "ar", "de", "es-rES", "es-rUS", "fr", "hr", "hu", "in", "it", "ja", "pl", "pt-rBR", "ru-rRU", "sv", "tr", "uk", "zh")

@@ -1,3 +1,16 @@
+## v2.3.3
+
+- rm unused files
+- Add proper syncing for screenshots and show what's new if present
+- Update android.yml to fix gradle error
+- Use mobile placeholder for tv too
+- Try getting screenshots (overflow? or no tv space), fix read more button in tv
+- Fix sort button, ui reflects for initial syncs
+- Fix sort button, ui reflects for initial syncs
+- make yml edit friendly for mobile
+- Update build.gradle.kts
+
+
 ## v2.3.2
 
 - Add proper syncing for screenshots and show what's new if present
