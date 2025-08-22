@@ -1,3 +1,13 @@
+## v2.2.8
+
+- Use mobile placeholder for tv too
+- Try getting screenshots (overflow? or no tv space), fix read more button in tv
+- Fix sort button, ui reflects for initial syncs
+- Fix sort button, ui reflects for initial syncs
+- make yml edit friendly for mobile
+- Update build.gradle.kts
+
+
 ## v2.2.7
 
 - Remove unused firebase lib and downgrade gradle for fdroid compat
