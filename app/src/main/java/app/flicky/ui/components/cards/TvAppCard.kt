@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import app.flicky.data.model.FDroidApp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import app.flicky.R
 
 
 @Composable
@@ -50,8 +51,8 @@ fun TVAppCard(
                     .crossfade(true)
                     .build(),
                 contentDescription = app.name,
-                placeholder = painterResource(android.R.drawable.star_on),
-                error = painterResource(android.R.drawable.star_on),
+                placeholder = painterResource(R.drawable.ic_app_placeholder),
+                error = painterResource(R.drawable.ic_app_placeholder),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp)

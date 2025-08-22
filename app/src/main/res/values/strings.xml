@@ -75,16 +75,9 @@
         \n\nRemember, if you have any questions, our About page has the answer.</string>
     <string name="rate_us_message">Hi, you won\'t see this message again.
         \n\nIf you\'re finding Flicky useful, could you please leave a 5-star review? It\'ll mean the world to us. Thank you!</string>
-    <string name="share_message">We need your help! We crossed a million downloads last year. This year, we want to reach a million more, but we can\'t do it alone.
-         \n\nFlicky needs people, and people need Flicky. Could you please share Flicky with others?</string>
-    <!--    <string name="share_message">Your monthly reminder - you should use your phone, not the other way round. Stay strong. You\'re doing great!-->
-    <!--         \n\nIf you have a moment to spare, could you please share Flicky with others? Flicky needs people. More importantly, people need Flicky.</string>-->
+    <string name="share_message">We need your help! Could you please share Flicky with others?</string>
     <string name="keyboard_message">Hi, keyboard is the fastest way to find and launch apps in Flicky. Can we request you to keep this On for a few more days and then decide?
         \n\nThe choice is always yours.</string>
-    <string name="digital_wellbeing_message">If you want to set time limits for certain apps, Digital Wellbeing feature of Android can help you do it.
-        \n\nPlease search for Digital Wellbeing in your phone settings and enable it.</string>
-    <string name="app_usage_message">To show/hide your screen time on the home screen, please allow or disallow the app usage permission.
-        \n\nNote: No app usage data is collected. Everything is processed on your device.</string>
     <string name="accessibility_service_description">The accessibility permission is required to enable double tap to lock. Any data acquired by Flicky via this service will not leave your device.</string>
     <string name="support_flicky_for_free">Support Flicky for free by using our Amazon affiliate link.</string>
     <string name="support_flicky_message">Every time you buy something using our link, we get a small commission. Please save the link and use it whenever you shop online.\nThank you!</string>
@@ -149,19 +142,4 @@
     <string name="leave_a_review">Leave a review</string>
     <string name="review_message">Flicky is free and always will be. It has no ads, collects no data, and helps you reduce screen time for a healthier digital life.
         \n\nWe believe a minimal launcher is a great choice, and we hope you enjoy it. Tell the world what you think!</string>
-    <string name="alignment_changed">Alignment changed ✅</string>
-    <string name="home_screen">Home screen</string>
-    <string name="show_app_names">Show app names</string>
-    <string name="set">Set</string>
-    <string name="widget_permission_failed">Failed to request widget permission: %1$s</string>
-    <string name="widget_configuration_failed">Failed to configure widget. Please check app permissions.</string>
-    <string name="tap_to_move_app">Tap where you want to move the app</string>
-    <string name="tap_to_move_widget">Tap where you want to move the widget</string>
-    <string name="private_space">Private Space</string>
-    <string name="private_space_locked">Private Space is locked</string>
-    <string name="private_space_unlocked">Private Space is unlocked</string>
-    <string name="private_space_not_setup">Private Space is not set up</string>
-    <string name="private_space_toggle">Toggle Private Space</string>
-    <string name="private_space_unsupported">Private Space requires Android 15 or higher</string>
-    <string name="private_space_description">Private Space allows you to hide apps and data from your main profile. Apps in Private Space are only accessible when it\'s unlocked.</string>
 </resources>

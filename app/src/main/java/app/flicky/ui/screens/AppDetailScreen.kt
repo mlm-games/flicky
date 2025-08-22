@@ -451,7 +451,7 @@ private fun LinksSection(app: FDroidApp) {
 @Composable
 private fun ScreenshotsSection(urls: List<String>) {
     var showViewer by remember { mutableStateOf(false) }
-    var startIndex by remember { mutableStateOf(0) }
+    var startIndex by remember { mutableIntStateOf(0) }
 
     Column {
         SectionTitle("Screenshots")
