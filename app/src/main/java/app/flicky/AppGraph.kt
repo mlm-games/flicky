@@ -18,10 +18,9 @@ object AppGraph {
             AppDatabase::class.java,
             "flicky.db"
         )
-            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
             .fallbackToDestructiveMigration(false)
             .build()
-
 
         val settings = SettingsRepository(context.applicationContext)
         val api = FDroidApi(context.applicationContext)

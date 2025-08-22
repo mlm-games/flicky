@@ -31,7 +31,6 @@ data class Quintuple<A, B, C, D, E>(
     val fifth: E
 )
 
-
 @OptIn(FlowPreview::class)
 class BrowseViewModel(
     private val repo: AppRepository,
@@ -82,7 +81,6 @@ class BrowseViewModel(
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, BrowseUiState())
 
-
     init {
         // Initialize sort from settings.defaultSort
         viewModelScope.launch {
@@ -98,6 +96,7 @@ class BrowseViewModel(
             }
         }
 
+        // Trigger resync when repositories change
         viewModelScope.launch {
             settings.repositoriesFlow
                 .map { repos -> repos.filter { it.enabled }.map { it.url }.sorted() }
@@ -109,6 +108,18 @@ class BrowseViewModel(
                 }
         }
 
+        // Collect global sync state so UI reflects WorkManager-driven syncs too
+        viewModelScope.launch {
+            sync.state.collect { st ->
+                _isSyncing.value = st.active
+                _progress.value = st.progress
+                _status.value = if (st.active) {
+                    "Syncing ${st.repoName} (${st.current}/${st.total})"
+                } else {
+                    st.message
+                }
+            }
+        }
     }
 
     fun setQuery(q: String) {
@@ -128,20 +139,16 @@ class BrowseViewModel(
 
     private fun doSync(force: Boolean) {
         viewModelScope.launch {
-            _isSyncing.value = true
-            _status.value = "Starting sync..."
-            _progress.value = 0f
             _error.value = null
-
+            // We rely on global sync.state for isSyncing/progress/status.
             val perRepoErrors = mutableListOf<String>()
 
             runCatching {
                 val appCount = sync.syncAll(
                     force = force,
                     onProgress = { current, total, repoName ->
+                        // Optional: still nudge local status text for immediate feedback
                         _status.value = "Syncing $repoName ($current/$total)..."
-                        val p = (current.toFloat() / total.toFloat()).coerceIn(0f, 1f)
-                        _progress.value = p
                     },
                     onRepoError = { repoName, msg ->
                         perRepoErrors.add("$repoName: $msg")
@@ -150,43 +157,20 @@ class BrowseViewModel(
                 appCount
             }.onSuccess { totalApps ->
                 when {
-                    perRepoErrors.size == repo.categories().first().size && totalApps == 0 -> {
-                        _error.value = "All repositories failed. Check your internet connection."
-                    }
-
-                    perRepoErrors.isNotEmpty() -> {
-                        _error.value =
-                            "Partial sync completed with errors:\n${perRepoErrors.joinToString("\n")}"
-                    }
-
-                    totalApps == 0 && !force -> {
-                        _status.value = "No updates available"
-                    }
-
-                    totalApps == 0 && force -> {
-                        _error.value = "No apps fetched. Repository might be empty or unreachable."
-                    }
-
-                    else -> {
-                        _status.value = "Sync complete: $totalApps apps"
-                    }
+                    perRepoErrors.isNotEmpty() && totalApps == 0 ->
+                        _error.value = "Sync completed with errors:\n${perRepoErrors.joinToString("\n")}"
+                    perRepoErrors.isNotEmpty() ->
+                        _error.value = "Partial sync completed:\n${perRepoErrors.joinToString("\n")}"
                 }
-                _progress.value = 1f
             }.onFailure { e ->
                 _error.value = when {
                     e.message?.contains("No enabled repositories") == true ->
                         "No repositories enabled. Enable at least one in Settings."
-
                     e.message?.contains("timeout", ignoreCase = true) == true ->
                         "Connection timeout. Please check your internet connection."
-
                     else -> e.message ?: "Sync failed"
                 }
-                _status.value = "Sync failed"
-                _progress.value = 0f
             }
-
-            _isSyncing.value = false
         }
     }
 }

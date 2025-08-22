@@ -3,7 +3,6 @@ package app.flicky.data.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
-import java.time.Instant
 
 @Serializable
 @Entity(tableName = "apps")
@@ -30,4 +29,5 @@ data class FDroidApp(
     val isInstalled: Boolean = false,
     val repository: String = "F-Droid",
     val sha256: String = "",
+    val whatsNew: String = ""
 )

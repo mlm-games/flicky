@@ -38,8 +38,7 @@ class InstalledAppsRepository(private val context: Context) {
     fun isInstalled(packageName: String): Boolean = getVersionCode(packageName) != null
 
     /**
-     * Emits a unit whenever a package is added, changed, replaced, or removed.
-     * Used to refresh update lists immediately after installs/updates.
+     * Emits when a package is added/changed/replaced/removed.
      */
     fun packageChangesFlow(): Flow<Unit> = callbackFlow {
         val filter = IntentFilter().apply {

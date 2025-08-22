@@ -8,7 +8,7 @@ import kotlinx.serialization.json.Json
 
 @Database(
     entities = [FDroidApp::class],
-    version = 2, // Not that imp, but to prevent CCLauncher style update setting corruption
+    version = 3, // bumped for whatsNew column
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -18,7 +18,13 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                /* givemesql? migrate me (ADD MIGRATIONS(name) to HERE) */
+                /* kept intentionally empty (no-op migration retained for history) */
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE apps ADD COLUMN whatsNew TEXT NOT NULL DEFAULT ''")
             }
         }
     }

@@ -1,6 +1,7 @@
 package app.flicky.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -27,6 +28,7 @@ import app.flicky.ui.components.SmartExpandableText
 import kotlin.math.log10
 import kotlin.math.pow
 import app.flicky.R
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppDetailScreen(
@@ -169,6 +171,14 @@ private fun DesktopLayout(
                     }
                 }
             }
+            if (app.whatsNew.isNotBlank()) {
+                item {
+                    Column {
+                        SectionTitle("What's new")
+                        SmartExpandableText(app.whatsNew)
+                    }
+                }
+            }
             if (app.screenshots.isNotEmpty()) {
                 item { ScreenshotsSection(app.screenshots) }
             }
@@ -230,6 +240,14 @@ private fun MobileLayout(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onBackground
                     )
+                }
+            }
+        }
+        if (app.whatsNew.isNotBlank()) {
+            item {
+                Column {
+                    SectionTitle("What's new")
+                    SmartExpandableText(app.whatsNew)
                 }
             }
         }
@@ -354,69 +372,6 @@ private fun AppHeader(
     }
 }
 
-
-@Composable
-private fun HeaderCard(
-    app: FDroidApp,
-    installedVersionCode: Long?,
-    isInstalling: Boolean,
-    progress: Float,
-    onInstall: () -> Unit,
-    onOpen: () -> Unit,
-    onUninstall: () -> Unit,
-    error: String?
-) {
-    ElevatedCard {
-        Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AsyncImage(
-                    model = app.iconUrl,
-                    contentDescription = app.name,
-                    placeholder = painterResource(R.drawable.ic_app_placeholder),
-                    error = painterResource(R.drawable.ic_app_placeholder),
-                    modifier = Modifier.size(88.dp)
-                )
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(app.name, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Text(app.packageName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (app.author.isNotBlank()) {
-                        Text(app.author, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-
-            if (isInstalling) {
-                LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier.fillMaxWidth(),
-                color = ProgressIndicatorDefaults.linearColor,
-                trackColor = ProgressIndicatorDefaults.linearTrackColor,
-                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
-                )
-                Spacer(Modifier.height(6.dp))
-                Text("Installing… ${(progress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
-            } else {
-                if (installedVersionCode != null) {
-                    Row {
-                        Button(onClick = onOpen, modifier = Modifier.weight(1f)) { Text("Open") }
-                        Spacer(Modifier.width(8.dp))
-                        OutlinedButton(onClick = onUninstall, modifier = Modifier.weight(1f)) { Text("Uninstall") }
-                    }
-                } else {
-                    Button(onClick = onInstall, modifier = Modifier.fillMaxWidth()) { Text("Install") }
-                }
-            }
-
-            error?.takeIf { it.isNotBlank() }?.let {
-                Spacer(Modifier.height(8.dp))
-                Text(it, color = MaterialTheme.colorScheme.error)
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ChipsSection(app: FDroidApp) {
@@ -479,17 +434,37 @@ private fun LinksSection(app: FDroidApp) {
 
 @Composable
 private fun ScreenshotsSection(urls: List<String>) {
+    var showViewer by remember { mutableStateOf(false) }
+    var startIndex by remember { mutableIntStateOf(0) }
+
     Column {
         SectionTitle("Screenshots")
         Spacer(Modifier.height(8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(urls) { url ->
-                AsyncImage(model = url, contentDescription = null, modifier = Modifier.size(260.dp))
+                val idx = urls.indexOf(url)
+                AsyncImage(
+                    model = url,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(260.dp)
+                        .clickable {
+                            startIndex = idx
+                            showViewer = true
+                        }
+                )
             }
         }
     }
-}
 
+    if (showViewer) {
+        FullscreenImageViewer(
+            images = urls,
+            initialPage = startIndex,
+            onClose = { showViewer = false }
+        )
+    }
+}
 
 @Composable
 private fun SectionTitle(text: String) {
@@ -535,27 +510,6 @@ private fun InfoRow(label: String, value: String) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
-    }
-}
-
-@Composable
-private fun ExpandableText(full: String) {
-    var expanded by remember { mutableStateOf(false) }
-    val maxLines = if (expanded) Int.MAX_VALUE else 6
-
-    Column {
-        Text(
-            text = full,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = maxLines,
-            overflow = TextOverflow.Ellipsis
-        )
-        if (!expanded && full.length > 300) { // Only show if text is actually long
-            TextButton(onClick = { expanded = true }) {
-                Text("Read more")
-            }
-        }
     }
 }
 

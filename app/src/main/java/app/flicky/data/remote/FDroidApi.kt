@@ -113,7 +113,7 @@ class FDroidApi(context: Context) {
                 while (reader.hasNext()) {
                     when (reader.nextName()) {
                         "packages" -> {
-                            reader.beginObject()
+                            reader.beginObject() // packages object
                             while (reader.hasNext()) {
                                 val packageName = reader.nextName()
                                 val app = parsePackageStreamingBest(reader, packageName, baseUrl, repoName)
@@ -143,9 +143,8 @@ class FDroidApi(context: Context) {
     }
 
     /**
-     * Best-version selection:
-     * - Pick the highest versionCode compatible with device
-     * - If multiple variants share the same versionCode (e.g., different ABIs), prefer the one with the smaller size
+     * Best-version selection with size tie-breaker for equal versionCode.
+     * Also extracts screenshots and what's new (localized if available).
      */
     private fun parsePackageStreamingBest(
         reader: JsonReader,
@@ -166,11 +165,13 @@ class FDroidApi(context: Context) {
                         reader.nextName() // version hash
                         val v = parseVersion(reader)
                         if (!isCompatible(v)) continue
-
                         best = when {
                             best == null -> v
-                            v.versionCode > best.versionCode -> v
-                            v.versionCode == best.versionCode && v.size in 1..Long.MAX_VALUE && best.size in 1..Long.MAX_VALUE && v.size < best.size -> v
+                            v.versionCode > best!!.versionCode -> v
+                            v.versionCode == best!!.versionCode &&
+                                    v.size in 1..Long.MAX_VALUE &&
+                                    best!!.size in 1..Long.MAX_VALUE &&
+                                    v.size < best!!.size -> v
                             else -> best
                         }
                     }
@@ -190,8 +191,13 @@ class FDroidApi(context: Context) {
                 if (!iconName.isNullOrBlank()) "$baseUrl/$iconName"
                 else "$baseUrl/icons/$packageName.png"
             }
+            // archive fallback
             repoName == "F-Droid Archive" -> "https://f-droid.org/repo/icons/$packageName.png"
             else -> "$baseUrl/icons/$packageName.png"
+        }
+
+        val shotUrls = (meta.screenshots ?: emptyList()).map { s ->
+            if (s.startsWith("http://") || s.startsWith("https://")) s else "$baseUrl/$s"
         }
 
         return FDroidApp(
@@ -211,10 +217,11 @@ class FDroidApi(context: Context) {
             sourceCode = meta.sourceCode ?: "",
             added = meta.added,
             lastUpdated = meta.lastUpdated,
-            screenshots = meta.screenshots ?: emptyList(),
+            screenshots = shotUrls,
             antiFeatures = meta.antiFeatures,
             repository = repoName,
-            sha256 = bestVersion.sha256
+            sha256 = bestVersion.sha256,
+            whatsNew = bestVersion.whatsNew ?: ""
         )
     }
 
@@ -244,7 +251,8 @@ class FDroidApi(context: Context) {
         val sha256: String,
         val minSdkVersion: Int,
         val targetSdkVersion: Int,
-        val nativecode: List<String> = emptyList()
+        val nativecode: List<String> = emptyList(),
+        val whatsNew: String? = null
     )
 
     private fun parseMetadata(reader: JsonReader): Metadata {
@@ -260,6 +268,7 @@ class FDroidApi(context: Context) {
         var sourceCode: String? = null
         var added = 0L
         var lastUpdated = 0L
+        var screenshots: List<String>? = null
 
         reader.beginObject()
         while (reader.hasNext()) {
@@ -276,6 +285,7 @@ class FDroidApi(context: Context) {
                 "sourceCode" -> sourceCode = reader.nextString()
                 "added" -> added = reader.nextLong()
                 "lastUpdated" -> lastUpdated = reader.nextLong()
+                "screenshots" -> screenshots = parseScreenshotsArray(reader)
                 else -> reader.skipValue()
             }
         }
@@ -283,7 +293,7 @@ class FDroidApi(context: Context) {
 
         return Metadata(
             name, summary, description, icon, categories, antiFeatures,
-            license, authorName, webSite, sourceCode, added, lastUpdated
+            license, authorName, webSite, sourceCode, added, lastUpdated, screenshots
         )
     }
 
@@ -296,6 +306,7 @@ class FDroidApi(context: Context) {
         var minSdk = 1
         var targetSdk = 1
         var nativecode = emptyList<String>()
+        var whatsNew: String? = null
 
         reader.beginObject()
         while (reader.hasNext()) {
@@ -335,12 +346,26 @@ class FDroidApi(context: Context) {
                     }
                     reader.endObject()
                 }
+                "whatsNew" -> {
+                    whatsNew = when (reader.peek()) {
+                        JsonToken.STRING -> reader.nextString()
+                        JsonToken.BEGIN_OBJECT -> {
+                            val map = parseLocalizedStrings(reader)
+                            // prefer en-US, then any first
+                            map["en-US"] ?: map.values.firstOrNull()
+                        }
+                        else -> {
+                            reader.skipValue()
+                            null
+                        }
+                    }
+                }
                 else -> reader.skipValue()
             }
         }
         reader.endObject()
 
-        return Version(versionCode, versionName, file, size, sha256, minSdk, targetSdk, nativecode)
+        return Version(versionCode, versionName, file, size, sha256, minSdk, targetSdk, nativecode, whatsNew)
     }
 
     private fun isCompatible(version: Version): Boolean {
@@ -393,6 +418,34 @@ class FDroidApi(context: Context) {
                 list.add(reader.nextString())
             } else {
                 reader.skipValue()
+            }
+        }
+        reader.endArray()
+        return list
+    }
+
+    /**
+     * Screenshots can be strings or objects with a "name" field; accept both.
+     */
+    private fun parseScreenshotsArray(reader: JsonReader): List<String> {
+        val list = mutableListOf<String>()
+        reader.beginArray()
+        while (reader.hasNext()) {
+            when (reader.peek()) {
+                JsonToken.STRING -> list.add(reader.nextString())
+                JsonToken.BEGIN_OBJECT -> {
+                    var name: String? = null
+                    reader.beginObject()
+                    while (reader.hasNext()) {
+                        when (reader.nextName()) {
+                            "name" -> name = reader.nextString()
+                            else -> reader.skipValue()
+                        }
+                    }
+                    reader.endObject()
+                    name?.let { list.add(it) }
+                }
+                else -> reader.skipValue()
             }
         }
         reader.endArray()
