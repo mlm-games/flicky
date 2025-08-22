@@ -54,13 +54,11 @@ class FDroidApi(context: Context) {
             return builder.build()
         }
 
-        // Simple retry for transient network issues or 5xx
         var attempt = 0
         var lastException: Exception? = null
         while (attempt <= MAX_RETRIES) {
             try {
                 client.newCall(buildRequest()).execute().use { resp ->
-                    // 304: unchanged
                     if (resp.code == 304) {
                         Log.d(TAG, "Repository ${repo.name} has not changed (304)")
                         return@withContext previous
@@ -72,12 +70,11 @@ class FDroidApi(context: Context) {
                         if (code >= 500 && attempt < MAX_RETRIES) {
                             attempt++
                             delay(RETRY_BACKOFF_MS * attempt)
-                            return@use // retry loop
+                            return@use
                         }
                         return@withContext null
                     }
 
-                    // Stream parse directly from response body
                     Log.d(TAG, "Parsing index for ${repo.name}")
                     parseIndexV2(resp, baseUrl, repo.name, onApp)
 
@@ -116,7 +113,7 @@ class FDroidApi(context: Context) {
                 while (reader.hasNext()) {
                     when (reader.nextName()) {
                         "packages" -> {
-                            reader.beginObject() // packages object
+                            reader.beginObject()
                             while (reader.hasNext()) {
                                 val packageName = reader.nextName()
                                 val app = parsePackageStreamingBest(reader, packageName, baseUrl, repoName)
@@ -124,12 +121,9 @@ class FDroidApi(context: Context) {
                                     batch.add(app)
                                     totalApps++
                                     if (batch.size >= BATCH_SIZE) {
-                                        // emit and clear to keep memory low
                                         batch.forEach { onApp(it) }
                                         batch.clear()
                                     }
-                                } else {
-                                    // no compatible version; skip
                                 }
                             }
                             reader.endObject()
@@ -141,7 +135,6 @@ class FDroidApi(context: Context) {
             }
         }
 
-        // Flush residue
         if (batch.isNotEmpty()) {
             batch.forEach { onApp(it) }
             batch.clear()
@@ -150,7 +143,9 @@ class FDroidApi(context: Context) {
     }
 
     /**
-     * Best-version selection (to avoid building large per-package lists (prevents OOM))
+     * Best-version selection:
+     * - Pick the highest versionCode compatible with device
+     * - If multiple variants share the same versionCode (e.g., different ABIs), prefer the one with the smaller size
      */
     private fun parsePackageStreamingBest(
         reader: JsonReader,
@@ -168,10 +163,15 @@ class FDroidApi(context: Context) {
                 "versions" -> {
                     reader.beginObject()
                     while (reader.hasNext()) {
-                        reader.nextName() // version hash (ignored)
+                        reader.nextName() // version hash
                         val v = parseVersion(reader)
-                        if (isCompatible(v) && (best == null || v.versionCode > best!!.versionCode)) {
-                            best = v
+                        if (!isCompatible(v)) continue
+
+                        best = when {
+                            best == null -> v
+                            v.versionCode > best.versionCode -> v
+                            v.versionCode == best.versionCode && v.size in 1..Long.MAX_VALUE && best.size in 1..Long.MAX_VALUE && v.size < best.size -> v
+                            else -> best
                         }
                     }
                     reader.endObject()
@@ -190,7 +190,6 @@ class FDroidApi(context: Context) {
                 if (!iconName.isNullOrBlank()) "$baseUrl/$iconName"
                 else "$baseUrl/icons/$packageName.png"
             }
-            // Archive omits icon metadata; fallback to main repo path (might work in future from fdroid changes)
             repoName == "F-Droid Archive" -> "https://f-droid.org/repo/icons/$packageName.png"
             else -> "$baseUrl/icons/$packageName.png"
         }
@@ -247,7 +246,6 @@ class FDroidApi(context: Context) {
         val targetSdkVersion: Int,
         val nativecode: List<String> = emptyList()
     )
-
 
     private fun parseMetadata(reader: JsonReader): Metadata {
         var name: Map<String, String>? = null

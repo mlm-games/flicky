@@ -24,8 +24,12 @@ class UpdatesViewModel(
     val ui: StateFlow<UpdatesUiState> = _ui.asStateFlow()
 
     init {
+        // Recomputes when either app catalog changes OR installed packages change (e.g., after an update)
         viewModelScope.launch {
-            repo.appsFlow("", sort = app.flicky.data.model.SortOption.Updated, hideAnti = false)
+            combine(
+                repo.appsFlow("", sort = app.flicky.data.model.SortOption.Updated, hideAnti = false),
+                installedRepo.packageChangesFlow().onStart { emit(Unit) } // emit once initially
+            ) { all, _ -> all }
                 .collect { all ->
                     val installedMap = installedRepo.getInstalled().associateBy { it.packageName }
                     val installed = all.filter { installedMap.containsKey(it.packageName) }

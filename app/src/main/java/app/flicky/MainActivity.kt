@@ -61,9 +61,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppGraph.init(applicationContext)
@@ -97,20 +94,19 @@ class MainActivity : ComponentActivity() {
                 else -> 0
             }
 
-            // Initial sync (first frame)
+            // Initial sync (first frame) -> BrowseViewModel so UI progress reacts
             LaunchedEffect(Unit) {
-                // Delay initial sync slightly to ensure everything is initialized
                 kotlinx.coroutines.delay(500)
                 lifecycleScope.launch {
                     try {
                         Log.d("MainActivity", "Starting initial sync")
                         val count = AppGraph.db.appDao().count()
                         if (count == 0) {
-                            Log.d("MainActivity", "Database empty, forcing initial sync")
-                            AppGraph.syncManager.syncAll(force = true)
+                            Log.d("MainActivity", "Database empty, forcing initial sync via VM")
+                            browseViewModel.forceSyncRepos()
                         } else {
-                            Log.d("MainActivity", "Database has $count apps, normal sync")
-                            AppGraph.syncManager.syncAll(force = false)
+                            Log.d("MainActivity", "Database has $count apps, normal sync via VM")
+                            browseViewModel.syncRepos()
                         }
                     } catch (e: Exception) {
                         Log.e("MainActivity", "Initial sync failed", e)
@@ -128,11 +124,8 @@ class MainActivity : ComponentActivity() {
             val themeMode = settings.themeMode
             val dynamicColors = settings.dynamicTheme
 
-
             FlickyTheme(
-                when (themeMode) { 0 -> isSystemInDarkTheme(); 1 -> false; else -> true
-                }
-                ,
+                when (themeMode) { 0 -> isSystemInDarkTheme(); 1 -> false; else -> true },
                 dynamicColors
             ) {
                 if (isTV) {
@@ -342,7 +335,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 
 @Composable
 inline fun <reified VM: ViewModel> viewModelFactoryOvr(crossinline create: () -> VM): VM {

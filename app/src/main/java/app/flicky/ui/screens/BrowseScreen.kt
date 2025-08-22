@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -37,6 +38,7 @@ fun BrowseScreen(
     val animatedProgress by animateFloatAsState(targetValue = progress, label = "sync_progress_anim")
     var menuOpen by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    var showSortDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
@@ -66,11 +68,11 @@ fun BrowseScreen(
                         OutlinedTextField(
                             value = query,
                             onValueChange = onSearchChange,
-                            placeholder = { 
+                            placeholder = {
                                 Text(
                                     "Search apps...",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
-                                ) 
+                                )
                             },
                             leadingIcon = {
                                 Icon(
@@ -106,7 +108,7 @@ fun BrowseScreen(
                         )
                     }
                 }
-                
+
                 // Action Bar Row
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -121,11 +123,11 @@ fun BrowseScreen(
                     ) {
                         // Sort Button
                         AssistChip(
-                            onClick = { /* Show sort dialog */ },
+                            onClick = { showSortDialog = true },
                             label = { Text("Sort: ${sort.name}") },
                             leadingIcon = {
                                 Icon(
-                                    Icons.Default.Sort,
+                                    Icons.AutoMirrored.Filled.Sort,
                                     contentDescription = "Sort",
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -136,9 +138,9 @@ fun BrowseScreen(
                                 leadingIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         )
-                        
+
                         Spacer(Modifier.weight(1f))
-                        
+
                         // Sync Button
                         FilledTonalButton(
                             onClick = onSyncClick,
@@ -158,7 +160,7 @@ fun BrowseScreen(
                             }
                             Text(if (isSyncing) "Syncing..." else "Sync")
                         }
-                        
+
                         // More Menu
                         Box {
                             IconButton(onClick = { menuOpen = true }) {
@@ -186,7 +188,7 @@ fun BrowseScreen(
                                     text = { Text("Clear Cache") },
                                     onClick = {
                                         menuOpen = false
-                                        // Add clear cache functionality
+                                        // Hook up to settings action if implemented
                                     },
                                     leadingIcon = {
                                         Icon(Icons.Default.ClearAll, contentDescription = null)
@@ -196,7 +198,7 @@ fun BrowseScreen(
                         }
                     }
                 }
-                
+
                 // Progress Bar
                 if (isSyncing) {
                     LinearProgressIndicator(
@@ -267,9 +269,8 @@ fun BrowseScreen(
             }
         }
     }
-    
+
     // Sort dialog
-    var showSortDialog by remember { mutableStateOf(false) }
     if (showSortDialog) {
         SortDialog(
             currentSort = sort,
