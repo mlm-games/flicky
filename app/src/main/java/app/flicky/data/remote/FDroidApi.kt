@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 class FDroidApi(context: Context) {
     companion object {
         private const val TAG = "FDroidApi"
-        private const val BATCH_SIZE = 50 // for TV memory constraints
+        private const val BATCH_SIZE = 50
         private const val MAX_RETRIES = 2
         private const val RETRY_BACKOFF_MS = 1200L
     }
@@ -113,7 +113,7 @@ class FDroidApi(context: Context) {
                 while (reader.hasNext()) {
                     when (reader.nextName()) {
                         "packages" -> {
-                            reader.beginObject() // packages object
+                            reader.beginObject()
                             while (reader.hasNext()) {
                                 val packageName = reader.nextName()
                                 val app = parsePackageStreamingBest(reader, packageName, baseUrl, repoName)
@@ -124,6 +124,8 @@ class FDroidApi(context: Context) {
                                         batch.forEach { onApp(it) }
                                         batch.clear()
                                     }
+                                } else {
+                                    // skip incompatible or bad entry
                                 }
                             }
                             reader.endObject()
@@ -144,7 +146,7 @@ class FDroidApi(context: Context) {
 
     /**
      * Best-version selection with size tie-breaker for equal versionCode.
-     * Also extracts screenshots and what's new (localized if available).
+     * Also extracts localized metadata and what's new.
      */
     private fun parsePackageStreamingBest(
         reader: JsonReader,
@@ -185,26 +187,36 @@ class FDroidApi(context: Context) {
         val meta = metadata ?: return null
         val bestVersion = best ?: return null
 
+        // Resolve icon URL
         val resolvedIconUrl = when {
             meta.icon != null -> {
                 val iconName = meta.icon["en-US"]?.name
-                if (!iconName.isNullOrBlank()) "$baseUrl/$iconName"
-                else "$baseUrl/icons/$packageName.png"
+                    ?: meta.icon.entries.firstOrNull()?.value?.name
+                when {
+                    iconName.isNullOrBlank() -> "$baseUrl/icons/$packageName.png"
+                    iconName.startsWith("http") -> iconName
+                    iconName.startsWith("/") -> "$baseUrl$iconName"
+                    else -> "$baseUrl/$iconName"
+                }
             }
-            // archive fallback
             repoName == "F-Droid Archive" -> "https://f-droid.org/repo/icons/$packageName.png"
             else -> "$baseUrl/icons/$packageName.png"
         }
 
+        // Normalize screenshots to absolute URLs
         val shotUrls = (meta.screenshots ?: emptyList()).map { s ->
-            if (s.startsWith("http://") || s.startsWith("https://")) s else "$baseUrl/$s"
+            when {
+                s.startsWith("http://") || s.startsWith("https://") -> s
+                s.startsWith("/") -> "$baseUrl$s"
+                else -> "$baseUrl/$s"
+            }
         }
 
         return FDroidApp(
             packageName = packageName,
-            name = meta.name?.get("en-US") ?: packageName,
-            summary = meta.summary?.get("en-US") ?: "",
-            description = meta.description?.get("en-US") ?: "",
+            name = meta.name?.get("en-US") ?: meta.name?.values?.firstOrNull() ?: packageName,
+            summary = meta.summary?.get("en-US") ?: meta.summary?.values?.firstOrNull() ?: "",
+            description = meta.description?.get("en-US") ?: meta.description?.values?.firstOrNull() ?: "",
             iconUrl = resolvedIconUrl,
             version = bestVersion.versionName,
             versionCode = bestVersion.versionCode,
@@ -255,11 +267,17 @@ class FDroidApi(context: Context) {
         val whatsNew: String? = null
     )
 
+    /**
+     * Parse metadata, handling:
+     * - metadata.name/summary/description/icon/screenshots
+     * - metadata.localized.{locale}.{name,summary,description,icon,screenshots}
+     * - metadata.screenshots being either an array or an object
+     */
     private fun parseMetadata(reader: JsonReader): Metadata {
-        var name: Map<String, String>? = null
-        var summary: Map<String, String>? = null
-        var description: Map<String, String>? = null
-        var icon: Map<String, IconInfo>? = null
+        var name: MutableMap<String, String>? = null
+        var summary: MutableMap<String, String>? = null
+        var description: MutableMap<String, String>? = null
+        var icon: MutableMap<String, IconInfo>? = null
         var categories = emptyList<String>()
         var antiFeatures = emptyList<String>()
         var license: String? = null
@@ -273,10 +291,10 @@ class FDroidApi(context: Context) {
         reader.beginObject()
         while (reader.hasNext()) {
             when (reader.nextName()) {
-                "name" -> name = parseLocalizedStrings(reader)
-                "summary" -> summary = parseLocalizedStrings(reader)
-                "description" -> description = parseLocalizedStrings(reader)
-                "icon" -> icon = parseLocalizedIcons(reader)
+                "name" -> name = (name ?: mutableMapOf()).apply { putAll(parseLocalizedStrings(reader)) }
+                "summary" -> summary = (summary ?: mutableMapOf()).apply { putAll(parseLocalizedStrings(reader)) }
+                "description" -> description = (description ?: mutableMapOf()).apply { putAll(parseLocalizedStrings(reader)) }
+                "icon" -> icon = parseLocalizedIcons(reader).toMutableMap()
                 "categories" -> categories = parseStringArray(reader)
                 "antiFeatures" -> antiFeatures = parseStringArray(reader)
                 "license" -> license = reader.nextString()
@@ -285,7 +303,17 @@ class FDroidApi(context: Context) {
                 "sourceCode" -> sourceCode = reader.nextString()
                 "added" -> added = reader.nextLong()
                 "lastUpdated" -> lastUpdated = reader.nextLong()
-                "screenshots" -> screenshots = parseScreenshotsArray(reader)
+                "screenshots" -> screenshots = parseScreenshotsFlexible(reader)
+                "localized" -> {
+                    val loc = parseLocalizedBlock(reader)
+                    name = (name ?: mutableMapOf()).apply { putAll(loc.names) }
+                    summary = (summary ?: mutableMapOf()).apply { putAll(loc.summaries) }
+                    description = (description ?: mutableMapOf()).apply { putAll(loc.descriptions) }
+                    icon = (icon ?: mutableMapOf()).apply { putAll(loc.icons) }
+                    if (screenshots.isNullOrEmpty()) {
+                        screenshots = loc.screenshots["en-US"] ?: loc.screenshots.values.firstOrNull { it.isNotEmpty() }
+                    }
+                }
                 else -> reader.skipValue()
             }
         }
@@ -295,6 +323,63 @@ class FDroidApi(context: Context) {
             name, summary, description, icon, categories, antiFeatures,
             license, authorName, webSite, sourceCode, added, lastUpdated, screenshots
         )
+    }
+
+    private data class LocalizedMeta(
+        val names: MutableMap<String, String> = mutableMapOf(),
+        val summaries: MutableMap<String, String> = mutableMapOf(),
+        val descriptions: MutableMap<String, String> = mutableMapOf(),
+        val icons: MutableMap<String, IconInfo> = mutableMapOf(),
+        val screenshots: MutableMap<String, List<String>> = mutableMapOf()
+    )
+
+    private fun parseLocalizedBlock(reader: JsonReader): LocalizedMeta {
+        val out = LocalizedMeta()
+        reader.beginObject()
+        while (reader.hasNext()) {
+            val locale = reader.nextName()
+            reader.beginObject()
+            var locName: String? = null
+            var locSummary: String? = null
+            var locDescription: String? = null
+            var locIcon: IconInfo? = null
+            var locShots: List<String>? = null
+
+            while (reader.hasNext()) {
+                when (reader.nextName()) {
+                    "name" -> if (reader.peek() == JsonToken.STRING) locName = reader.nextString() else reader.skipValue()
+                    "summary" -> if (reader.peek() == JsonToken.STRING) locSummary = reader.nextString() else reader.skipValue()
+                    "description" -> if (reader.peek() == JsonToken.STRING) locDescription = reader.nextString() else reader.skipValue()
+                    "icon" -> {
+                        when (reader.peek()) {
+                            JsonToken.STRING -> locIcon = IconInfo(reader.nextString())
+                            JsonToken.BEGIN_OBJECT -> {
+                                reader.beginObject()
+                                while (reader.hasNext()) {
+                                    when (reader.nextName()) {
+                                        "name" -> locIcon = IconInfo(reader.nextString())
+                                        else -> reader.skipValue()
+                                    }
+                                }
+                                reader.endObject()
+                            }
+                            else -> reader.skipValue()
+                        }
+                    }
+                    "screenshots" -> locShots = parseScreenshotsFlexible(reader)
+                    else -> reader.skipValue()
+                }
+            }
+            reader.endObject()
+
+            locName?.let { out.names[locale] = it }
+            locSummary?.let { out.summaries[locale] = it }
+            locDescription?.let { out.descriptions[locale] = it }
+            locIcon?.let { out.icons[locale] = it }
+            locShots?.let { out.screenshots[locale] = it }
+        }
+        reader.endObject()
+        return out
     }
 
     private fun parseVersion(reader: JsonReader): Version {
@@ -351,7 +436,6 @@ class FDroidApi(context: Context) {
                         JsonToken.STRING -> reader.nextString()
                         JsonToken.BEGIN_OBJECT -> {
                             val map = parseLocalizedStrings(reader)
-                            // prefer en-US, then any first
                             map["en-US"] ?: map.values.firstOrNull()
                         }
                         else -> {
@@ -425,8 +509,22 @@ class FDroidApi(context: Context) {
     }
 
     /**
-     * Screenshots can be strings or objects with a "name" field; accept both.
+     * Screenshots helper that accepts:
+     * - Array of strings or objects
+     * - Object (e.g., locale or device buckets) that may contain arrays/objects/strings
      */
+    private fun parseScreenshotsFlexible(reader: JsonReader): List<String> {
+        return when (reader.peek()) {
+            JsonToken.BEGIN_ARRAY -> parseScreenshotsArray(reader)
+            JsonToken.BEGIN_OBJECT -> parseScreenshotsObject(reader)
+            JsonToken.STRING -> listOf(reader.nextString())
+            else -> {
+                reader.skipValue()
+                emptyList()
+            }
+        }
+    }
+
     private fun parseScreenshotsArray(reader: JsonReader): List<String> {
         val list = mutableListOf<String>()
         reader.beginArray()
@@ -445,10 +543,33 @@ class FDroidApi(context: Context) {
                     reader.endObject()
                     name?.let { list.add(it) }
                 }
+                JsonToken.BEGIN_ARRAY -> list.addAll(parseScreenshotsArray(reader)) // nested arrays
                 else -> reader.skipValue()
             }
         }
         reader.endArray()
+        return list
+    }
+
+    private fun parseScreenshotsObject(reader: JsonReader): List<String> {
+        val list = mutableListOf<String>()
+        reader.beginObject()
+        while (reader.hasNext()) {
+            val key = reader.nextName()
+            when (reader.peek()) {
+                JsonToken.STRING -> {
+                    val value = reader.nextString()
+                    // Some repos may place direct string paths under keys like "featureGraphic" or similar.
+                    if (key == "name" || key.contains("graphic", true) || key.contains("image", true) || key.contains("screenshot", true)) {
+                        list.add(value)
+                    }
+                }
+                JsonToken.BEGIN_ARRAY -> list.addAll(parseScreenshotsArray(reader))
+                JsonToken.BEGIN_OBJECT -> list.addAll(parseScreenshotsObject(reader))
+                else -> reader.skipValue()
+            }
+        }
+        reader.endObject()
         return list
     }
 }

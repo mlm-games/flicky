@@ -24,10 +24,10 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.ui.res.painterResource
-import app.flicky.ui.components.SmartExpandableText
 import kotlin.math.log10
 import kotlin.math.pow
 import app.flicky.R
+import app.flicky.ui.components.SmartExpandableText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -143,7 +143,7 @@ private fun DesktopLayout(
             }
         }
 
-        // Vertical divider
+        // Divider
         Box(
             modifier = Modifier
                 .fillMaxHeight()
@@ -175,7 +175,11 @@ private fun DesktopLayout(
                 item {
                     Column {
                         SectionTitle("What's new")
-                        SmartExpandableText(app.whatsNew)
+                        SmartExpandableText(
+                            text = app.whatsNew,
+                            rich = true,
+                            collapsedMaxLines = 8
+                        )
                     }
                 }
             }
@@ -186,7 +190,11 @@ private fun DesktopLayout(
                 item {
                     Column {
                         SectionTitle("About")
-                        SmartExpandableText(app.description)
+                        SmartExpandableText(
+                            text = app.description,
+                            rich = true,
+                            collapsedMaxLines = 10
+                        )
                     }
                 }
             }
@@ -247,7 +255,11 @@ private fun MobileLayout(
             item {
                 Column {
                     SectionTitle("What's new")
-                    SmartExpandableText(app.whatsNew)
+                    SmartExpandableText(
+                        text = app.whatsNew,
+                        rich = true,
+                        collapsedMaxLines = 8
+                    )
                 }
             }
         }
@@ -258,7 +270,11 @@ private fun MobileLayout(
             item {
                 Column {
                     SectionTitle("About")
-                    SmartExpandableText(app.description)
+                    SmartExpandableText(
+                        text = app.description,
+                        rich = true,
+                        collapsedMaxLines = 10
+                    )
                 }
             }
         }
@@ -435,7 +451,7 @@ private fun LinksSection(app: FDroidApp) {
 @Composable
 private fun ScreenshotsSection(urls: List<String>) {
     var showViewer by remember { mutableStateOf(false) }
-    var startIndex by remember { mutableIntStateOf(0) }
+    var startIndex by remember { mutableStateOf(0) }
 
     Column {
         SectionTitle("Screenshots")
