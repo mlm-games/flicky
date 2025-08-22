@@ -7,27 +7,28 @@ import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.RepositoryInfo
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 
 class FDroidApi(context: Context) {
     companion object {
         private const val TAG = "FDroidApi"
         private const val BATCH_SIZE = 50
+        // Increase resiliency for large repos (Izzy/F-Droid) on slow networks
         private const val MAX_RETRIES = 2
         private const val RETRY_BACKOFF_MS = 1200L
     }
 
     private val client = OkHttpClient.Builder()
-        .callTimeout(60, TimeUnit.SECONDS)
+        .callTimeout(0, TimeUnit.MILLISECONDS) // no overall cap; we stream for a while
         .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(180, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
         .build()
 
@@ -125,7 +126,7 @@ class FDroidApi(context: Context) {
                                         batch.clear()
                                     }
                                 } else {
-                                    // skip incompatible or bad entry
+                                    // skipped (incompatible or bad)
                                 }
                             }
                             reader.endObject()
@@ -187,7 +188,6 @@ class FDroidApi(context: Context) {
         val meta = metadata ?: return null
         val bestVersion = best ?: return null
 
-        // Resolve icon URL
         val resolvedIconUrl = when {
             meta.icon != null -> {
                 val iconName = meta.icon["en-US"]?.name
@@ -203,7 +203,6 @@ class FDroidApi(context: Context) {
             else -> "$baseUrl/icons/$packageName.png"
         }
 
-        // Normalize screenshots to absolute URLs
         val shotUrls = (meta.screenshots ?: emptyList()).map { s ->
             when {
                 s.startsWith("http://") || s.startsWith("https://") -> s
@@ -508,11 +507,7 @@ class FDroidApi(context: Context) {
         return list
     }
 
-    /**
-     * Screenshots helper that accepts:
-     * - Array of strings or objects
-     * - Object (e.g., locale or device buckets) that may contain arrays/objects/strings
-     */
+    // Screenshots parser that accepts array/object/string and nests.
     private fun parseScreenshotsFlexible(reader: JsonReader): List<String> {
         return when (reader.peek()) {
             JsonToken.BEGIN_ARRAY -> parseScreenshotsArray(reader)
@@ -543,7 +538,7 @@ class FDroidApi(context: Context) {
                     reader.endObject()
                     name?.let { list.add(it) }
                 }
-                JsonToken.BEGIN_ARRAY -> list.addAll(parseScreenshotsArray(reader)) // nested arrays
+                JsonToken.BEGIN_ARRAY -> list.addAll(parseScreenshotsArray(reader))
                 else -> reader.skipValue()
             }
         }
@@ -555,15 +550,9 @@ class FDroidApi(context: Context) {
         val list = mutableListOf<String>()
         reader.beginObject()
         while (reader.hasNext()) {
-            val key = reader.nextName()
+            reader.nextName() // key (locale/bucket)
             when (reader.peek()) {
-                JsonToken.STRING -> {
-                    val value = reader.nextString()
-                    // Some repos may place direct string paths under keys like "featureGraphic" or similar.
-                    if (key == "name" || key.contains("graphic", true) || key.contains("image", true) || key.contains("screenshot", true)) {
-                        list.add(value)
-                    }
-                }
+                JsonToken.STRING -> list.add(reader.nextString())
                 JsonToken.BEGIN_ARRAY -> list.addAll(parseScreenshotsArray(reader))
                 JsonToken.BEGIN_OBJECT -> list.addAll(parseScreenshotsObject(reader))
                 else -> reader.skipValue()

@@ -5,7 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -457,15 +457,14 @@ private fun ScreenshotsSection(urls: List<String>) {
         SectionTitle("Screenshots")
         Spacer(Modifier.height(8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(urls) { url ->
-                val idx = urls.indexOf(url)
+            itemsIndexed(urls, key = { idx, url -> "$idx-$url" }) { index, url ->
                 AsyncImage(
                     model = url,
                     contentDescription = null,
                     modifier = Modifier
                         .size(260.dp)
                         .clickable {
-                            startIndex = idx
+                            startIndex = index
                             showViewer = true
                         }
                 )

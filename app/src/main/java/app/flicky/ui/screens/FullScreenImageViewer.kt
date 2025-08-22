@@ -21,7 +21,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import coil.size.Size
+import kotlin.math.max
+import kotlin.math.min
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -42,9 +50,14 @@ fun FullscreenImageViewer(
         }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
+            val cfg = LocalConfiguration.current
+            val targetW = max(720, cfg.screenWidthDp).coerceAtMost(1920)
+            val targetH = max(480, cfg.screenHeightDp).coerceAtMost(1080)
+
             HorizontalPager(state = pagerState) { page ->
                 var scale by remember { mutableStateOf(1f) }
                 val transformState = rememberTransformableState { zoomChange, _, _ ->
+                    // Limit zoom to prevent extreme allocations
                     scale = (scale * zoomChange).coerceIn(1f, 4f)
                 }
                 Box(
@@ -57,7 +70,20 @@ fun FullscreenImageViewer(
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    AsyncImage(model = images[page], contentDescription = null, modifier = Modifier.fillMaxSize())
+                    val context = LocalContext.current
+                    val req = ImageRequest.Builder(context)
+                        .data(images[page])
+                        .size(targetW, targetH) // downsample to screen-ish size
+                        .allowHardware(false)
+                        .crossfade(true)
+                        .build()
+
+                    AsyncImage(
+                        model = req,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
                 }
             }
         }
