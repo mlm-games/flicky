@@ -1,3 +1,10 @@
+## v2.3.5
+
+- rm default param
+- add back unused files for title
+- Update android.yml to rm deprecated parts
+
+
 ## v2.3.4
 
 - add back unused files for title
