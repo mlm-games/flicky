@@ -1,3 +1,9 @@
+## v2.3.4
+
+- add back unused files for title
+- Update android.yml to rm deprecated parts
+
+
 ## v2.3.3
 
 - rm unused files
