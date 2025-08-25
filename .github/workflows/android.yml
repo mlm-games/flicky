@@ -163,14 +163,14 @@ jobs:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease
+        run: ./gradlew :app:assembleRelease -PenableApkSplits=true -PincludeUniversalApk=true
           
       - name: Prepare APKs
         run: |
           mkdir -p artifacts
           for apk in app/build/outputs/apk/release/*.apk; do
             if [ -f "$apk" ]; then
-              arch=$(echo "$apk" | grep -oE '(arm64-v8a|armeabi-v7a|x86_64|x86)')
+              arch=$(echo "$apk" | grep -oE '(arm64-v8a|armeabi-v7a|x86_64|x86|universal)')
               if [ -n "$arch" ]; then
                 cp "$apk" "artifacts/${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-${arch}.apk"
               fi
@@ -199,6 +199,7 @@ jobs:
             ### Downloads
             | Architecture | APK |
             |-------------|-----|
+            | Universal (All ABIs) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-universal.apk` |
             | ARM64 (Most phones) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-arm64-v8a.apk` |
             | ARM32 (Older phones) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-armeabi-v7a.apk` |
             | x86_64 (Emulators) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-x86_64.apk` |

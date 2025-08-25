@@ -104,6 +104,9 @@
     \n\nPlease note that this service is only used to let you turn off your device\'s screen using the double tap gesture. Our accessibility service does not collect or share any data.</string>
     <string name="accept">Accept</string>
     <string name="permission">Permission</string>
+    <string name="alignment_changed">Alignment changed</string>
+    <string name="home_screen">Home screen</string>
+    <string name="digital_wellbeing_message">If you want to set time limits for specific apps, Android’s Digital Wellbeing feature can help.</string>
     <string name="double_tap_lock">Double tap to lock</string>
     <string name="enable">Enable</string>
     <string name="disable">Disable</string>
