@@ -3,6 +3,10 @@
 
 ![Banner](assets/banner.svg)
 
+[<img src="https://shields.rbtlog.dev/simple/app.flicky" alt="RB Status">](https://shields.rbtlog.dev/app.flicky) 
+
+[<img src="https://shields.rbtlog.dev/simple/app.flicky?style=for-the-badge" alt="RB Status">](https://shields.rbtlog.dev/app.flicky)
+
 > The UI is TV oriented, Android UI is secondary.
 > 
 > For android (mobile) devices, would recommend Droidify or Fdroid Basic (for security and better UI).
