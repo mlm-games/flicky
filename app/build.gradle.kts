@@ -43,7 +43,7 @@ android {
         vectorDrawables.useSupportLibrary = true
     }
 
-    val enableApkSplits = (providers.gradleProperty("enableApkSplits").orNull ?: "false").toBoolean()
+    val enableApkSplits = (providers.gradleProperty("enableApkSplits").orNull ?: "true").toBoolean()
     val includeUniversalApk = (providers.gradleProperty("includeUniversalApk").orNull ?: "true").toBoolean()
     val targetAbi = providers.gradleProperty("targetAbi").orNull
 
