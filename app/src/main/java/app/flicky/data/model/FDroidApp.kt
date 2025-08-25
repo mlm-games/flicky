@@ -1,11 +1,20 @@
 package app.flicky.data.model
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-@Entity(tableName = "apps")
+@Entity(
+    tableName = "apps",
+    indices = [
+        Index(value = ["name"]),
+        Index(value = ["summary"]),
+        Index(value = ["packageName"]),
+        Index(value = ["category"])
+    ]
+)
 data class FDroidApp(
     @PrimaryKey val packageName: String,
     val name: String,

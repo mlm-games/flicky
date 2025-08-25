@@ -3,6 +3,7 @@ package app.flicky.data.remote
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import app.flicky.BuildConfig
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.RepositoryInfo
 import com.google.gson.stream.JsonReader
@@ -20,13 +21,12 @@ class FDroidApi(context: Context) {
     companion object {
         private const val TAG = "FDroidApi"
         private const val BATCH_SIZE = 50
-        // Increase resiliency for large repos (Izzy/F-Droid) on slow networks
         private const val MAX_RETRIES = 2
         private const val RETRY_BACKOFF_MS = 1200L
     }
 
     private val client = OkHttpClient.Builder()
-        .callTimeout(0, TimeUnit.MILLISECONDS) // no overall cap; we stream for a while
+        .callTimeout(0, TimeUnit.MILLISECONDS)
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(180, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
@@ -46,7 +46,7 @@ class FDroidApi(context: Context) {
             val builder = Request.Builder()
                 .url("$baseUrl/index-v2.json")
                 .get()
-                .header("User-Agent", "Flicky/1.1 TV")
+                .header("User-Agent", "Flicky/${BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})")
                 .header("Accept", "application/json")
             if (!force) {
                 previous.etag?.let { builder.header("If-None-Match", it) }
@@ -67,7 +67,7 @@ class FDroidApi(context: Context) {
 
                     if (!resp.isSuccessful) {
                         val code = resp.code
-                        Log.w(TAG, "Non-success ${code} for ${repo.name}")
+                        Log.w(TAG, "Non-success $code for ${repo.name}")
                         if (code >= 500 && attempt < MAX_RETRIES) {
                             attempt++
                             delay(RETRY_BACKOFF_MS * attempt)
@@ -108,7 +108,7 @@ class FDroidApi(context: Context) {
         val batch = mutableListOf<FDroidApp>()
 
         val body = resp.body ?: return@withContext
-        InputStreamReader(body.byteStream()).use { isr ->
+        InputStreamReader(body.byteStream(), Charsets.UTF_8).use { isr ->
             JsonReader(isr).use { reader ->
                 reader.beginObject()
                 while (reader.hasNext()) {
@@ -126,7 +126,7 @@ class FDroidApi(context: Context) {
                                         batch.clear()
                                     }
                                 } else {
-                                    // skipped (incompatible or bad)
+                                    // skipped
                                 }
                             }
                             reader.endObject()
@@ -454,8 +454,8 @@ class FDroidApi(context: Context) {
     private fun isCompatible(version: Version): Boolean {
         val sdkOk = Build.VERSION.SDK_INT >= version.minSdkVersion
         val abiOk = version.nativecode.isEmpty() ||
-                version.nativecode.any { abi ->
-                    Build.SUPPORTED_ABIS.any { it.contains(abi, ignoreCase = true) }
+                version.nativecode.any { repoAbi ->
+                    Build.SUPPORTED_ABIS.any { deviceAbi -> deviceAbi.equals(repoAbi, ignoreCase = true) }
                 }
         return sdkOk && abiOk
     }

@@ -1,6 +1,5 @@
 package app.flicky.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,26 +7,26 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import app.flicky.R
 import app.flicky.data.model.FDroidApp
 import app.flicky.helper.openUrl
+import app.flicky.ui.components.SmartExpandableText
 import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.ui.res.painterResource
 import kotlin.math.log10
 import kotlin.math.pow
-import app.flicky.R
-import app.flicky.ui.components.SmartExpandableText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -147,9 +146,8 @@ private fun DesktopLayout(
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .width(1.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant)
-        )
+                .width(1.dp),
+        ) { Divider(color = MaterialTheme.colorScheme.outlineVariant) }
 
         // Right content panel
         LazyColumn(
@@ -450,8 +448,8 @@ private fun LinksSection(app: FDroidApp) {
 
 @Composable
 private fun ScreenshotsSection(urls: List<String>) {
-    var showViewer by remember { mutableStateOf(false) }
-    var startIndex by remember { mutableIntStateOf(0) }
+    var showViewer by rememberSaveable { mutableStateOf(false) }
+    var startIndex by rememberSaveable { mutableIntStateOf(0) }
 
     Column {
         SectionTitle("Screenshots")
@@ -466,18 +464,30 @@ private fun ScreenshotsSection(urls: List<String>) {
                         .clickable {
                             startIndex = index
                             showViewer = true
-                        }
+                        },
+                    placeholder = painterResource(R.drawable.ic_app_placeholder),
+                    error = painterResource(R.drawable.ic_app_placeholder)
                 )
             }
         }
     }
 
     if (showViewer) {
-        FullscreenImageViewer(
-            images = urls,
-            initialPage = startIndex,
-            onClose = { showViewer = false }
-        )
+        Dialog(
+            onDismissRequest = { showViewer = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                FullscreenImageViewer(
+                    images = urls,
+                    initialPage = startIndex,
+                    onClose = { showViewer = false }
+                )
+            }
+        }
     }
 }
 

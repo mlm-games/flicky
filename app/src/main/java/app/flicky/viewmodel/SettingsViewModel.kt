@@ -3,8 +3,8 @@ package app.flicky.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.flicky.data.model.RepositoryInfo
-import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.AppSettings
+import app.flicky.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 

@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <cache-path name="cache" path="."/>
-    <external-cache-path name="external_cache" path="."/>
-    <files-path name="files" path="."/>
+<paths>
+    <cache-path name="cache" path="flicky_downloads/" />
+    <external-cache-path name="external_cache" path="flicky_downloads/" />
+    <!-- Fallbacks -->
+    <cache-path name="cache_root" path="." />
+    <external-cache-path name="external_cache_root" path="." />
+    <root-path name="root" path="." /> <!-- future root perm? -->
 </paths>

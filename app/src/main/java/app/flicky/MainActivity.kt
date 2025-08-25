@@ -6,10 +6,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.*
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.model.SortOption
+import app.flicky.helper.DeviceUtils
 import app.flicky.navigation.FlickyNavHost
 import app.flicky.navigation.Routes
 import app.flicky.ui.screens.*
@@ -17,14 +25,6 @@ import app.flicky.ui.theme.FlickyTheme
 import app.flicky.viewmodel.*
 import app.flicky.work.SyncScheduler
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.*
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import app.flicky.data.external.UpdatesPreferences
-import app.flicky.helper.DeviceUtils
 import androidx.compose.runtime.collectAsState
 
 class MainActivity : ComponentActivity() {
@@ -69,11 +69,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settingsState by AppGraph.settings.settingsFlow.collectAsState(initial = null)
 
-            // Schedule WorkManager based on settings
             LaunchedEffect(settingsState?.wifiOnly, settingsState?.syncIntervalIndex) {
                 val wifiOnly = settingsState?.wifiOnly ?: true
                 val hours = when (settingsState?.syncIntervalIndex ?: 1) {
-                    0 -> 3; 1 -> 6; 2 -> 12; else -> 24
+                    0 -> 3     // 3 hours
+                    1 -> 6     // 6 hours
+                    2 -> 12    // 12 hours
+                    3 -> 24    // 24 hours
+                    4 -> 24 * 7 // Weekly
+                    else -> -1  // Manual only
                 }
                 SyncScheduler.schedule(applicationContext, wifiOnly, hours)
             }
@@ -94,33 +98,12 @@ class MainActivity : ComponentActivity() {
                 else -> 0
             }
 
-            // Initial sync (first frame) -> BrowseViewModel so UI progress reacts
-            LaunchedEffect(Unit) {
-                kotlinx.coroutines.delay(500)
-                lifecycleScope.launch {
-                    try {
-                        Log.d("MainActivity", "Starting initial sync")
-                        val count = AppGraph.db.appDao().count()
-                        if (count == 0) {
-                            Log.d("MainActivity", "Database empty, forcing initial sync via VM")
-                            browseViewModel.forceSyncRepos()
-                        } else {
-                            Log.d("MainActivity", "Database has $count apps, normal sync via VM")
-                            browseViewModel.syncRepos()
-                        }
-                    } catch (e: Exception) {
-                        Log.e("MainActivity", "Initial sync failed", e)
-                    }
-                }
-            }
-
             var sort by remember { mutableStateOf(SortOption.Updated) }
             var query by remember { mutableStateOf("") }
 
             val isTV = DeviceUtils.isTV(packageManager)
 
             val settings = settingsViewModel.settings.collectAsState().value
-
             val themeMode = settings.themeMode
             val dynamicColors = settings.dynamicTheme
 
@@ -148,10 +131,7 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             browseContent = {
                                 BrowseScreen(
-                                    apps = browseUi.apps.filter {
-                                        query.isBlank() || it.name.contains(query, true) ||
-                                                it.summary.contains(query, true) || it.packageName.contains(query, true)
-                                    },
+                                    apps = browseUi.apps, // rely on VM filtering/sorting
                                     query = query,
                                     sort = sort,
                                     onSortChange = { s -> sort = s; browseViewModel.setSort(s) },
@@ -249,10 +229,7 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             browseContent = {
                                 BrowseScreen(
-                                    apps = browseUi.apps.filter {
-                                        query.isBlank() || it.name.contains(query, true) ||
-                                                it.summary.contains(query, true) || it.packageName.contains(query, true)
-                                    },
+                                    apps = browseUi.apps,
                                     query = query,
                                     sort = sort,
                                     onSortChange = { s -> sort = s; browseViewModel.setSort(s) },
