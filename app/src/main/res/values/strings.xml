@@ -141,6 +141,7 @@
     <string name="about_flicky">About and FAQs</string>
     <string name="screen_time">Screen time</string>
     <string name="learn_more">Learn more</string>
+    <string name="app_usage_message">To show/hide screen time on the home screen, please allow or deny app usage permission.</string>
     <string name="did_you_know">Did you know?</string>
     <string name="leave_a_review">Leave a review</string>
     <string name="review_message">Flicky is free and always will be. It has no ads, collects no data, and helps you reduce screen time for a healthier digital life.
