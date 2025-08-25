@@ -20,52 +20,32 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keepattributes Signature
--keepattributes *Annotation*
 -dontobfuscate
 
 -keep class * implements android.os.Parcelable {
   public static final android.os.Parcelable$Creator *;
 }
 
--keep class app.flicky.data.repository.AppSettings { *; }
--keepclassmembers class app.flicky.data.repository.AppSettings { *; }
--keep @app.flicky.data.repository.Setting class * { *; }
--keepclasseswithmembers class * {
-    @app.flicky.data.repository.Setting <fields>;
-}
 
--keepattributes *Annotation*,EnclosingMethod,Signature,KotlinMetadata
-
--keep class kotlin.Metadata { *; }
-
--keep class kotlin.reflect.** { *; }
-
-
--keepattributes RuntimeVisibleAnnotations
--keepclassmembers class app.flicky.data.repository.AppSettings {
-    @app.flicky.data.repository.Setting *;
-}
-
-# Keep all Setting annotations
--keep @interface app.flicky.data.repository.Setting
+-keepattributes RuntimeVisibleAnnotations,RuntimeVisibleParameterAnnotations,AnnotationDefault,Signature
 -keepattributes *Annotation*
 
-# Keep all enum classes used in annotations
--keepclassmembers enum app.flicky.data.repository.SettingCategory { *; }
--keepclassmembers enum app.flicky.data.repository.SettingType { *; }
+ # Keep AppSettings reflection and its annotation
+ -keep @interface app.flicky.data.repository.Setting
+ -keep class app.flicky.data.repository.AppSettings { *; }
+ -keepclassmembers class app.flicky.data.repository.AppSettings {
+     @app.flicky.data.repository.Setting <fields>;
+ }
 
-# Keep all reflection metadata
--keepattributes Signature, InnerClasses
--keep class kotlin.Metadata { *; }
--keep class kotlin.reflect.** { *; }
--keep class kotlin.jvm.internal.** { *; }
+ -keep,allowobfuscation,allowshrinking class app.flicky.data.model.**$$serializer { *; }
+ -keepclassmembers class app.flicky.data.model.** {
+     *** Companion;
+ }
+ -keepclasseswithmembers class app.flicky.data.model.** {
+     kotlinx.serialization.KSerializer serializer(...);
+ }
 
--keepclassmembers class app.flicky.data.repository.AppSettings {
-    <fields>;
-    <methods>;
-}
 
--keep class app.flicky.data.repository.SettingsManager { *; }
+ -keep class app.flicky.install.InstallResultReceiver { *; }
 
--keep class app.flicky.ui.screens.SettingsScreenKt { *; }
+ # -keep class com.google.gson.stream.** { *; }
