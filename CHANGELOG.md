@@ -1,3 +1,11 @@
+## v2.3.8
+
+- try reducing proguard-rules.pro
+- fix image viewer and apk installation improvements, sync setting options fix for 24hrs+ etc
+- Update README.md
+- Update build.gradle.kts
+
+
 ## v2.3.7
 
 - Update strings.xml
