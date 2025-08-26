@@ -3,7 +3,7 @@
 
 ![Banner](assets/banner.svg)
 
-[<img src="https://shields.rbtlog.dev/simple/app.flicky" alt="RB Status">](https://shields.rbtlog.dev/app.flicky) 
+[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it at IzzyOnDroid">](https://apt.izzysoft.de/packages/app.flicky)
 
 [<img src="https://shields.rbtlog.dev/simple/app.flicky?style=for-the-badge" alt="RB Status">](https://shields.rbtlog.dev/app.flicky)
 
