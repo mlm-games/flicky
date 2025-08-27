@@ -1,12 +1,17 @@
 package app.flicky
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -20,12 +25,20 @@ import app.flicky.data.model.SortOption
 import app.flicky.helper.DeviceUtils
 import app.flicky.navigation.FlickyNavHost
 import app.flicky.navigation.Routes
-import app.flicky.ui.screens.*
+import app.flicky.ui.screens.AppDetailScreen
+import app.flicky.ui.screens.BrowseScreen
+import app.flicky.ui.screens.CategoriesScreen
+import app.flicky.ui.screens.MobileMainScaffold
+import app.flicky.ui.screens.SettingsScreen
+import app.flicky.ui.screens.TvMainScreen
+import app.flicky.ui.screens.UpdatesScreen
 import app.flicky.ui.theme.FlickyTheme
-import app.flicky.viewmodel.*
+import app.flicky.viewmodel.AppDetailViewModel
+import app.flicky.viewmodel.BrowseViewModel
+import app.flicky.viewmodel.SettingsViewModel
+import app.flicky.viewmodel.UpdatesViewModel
 import app.flicky.work.SyncScheduler
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.collectAsState
 
 class MainActivity : ComponentActivity() {
 
@@ -72,12 +85,7 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(settingsState?.wifiOnly, settingsState?.syncIntervalIndex) {
                 val wifiOnly = settingsState?.wifiOnly ?: true
                 val hours = when (settingsState?.syncIntervalIndex ?: 1) {
-                    0 -> 3     // 3 hours
-                    1 -> 6     // 6 hours
-                    2 -> 12    // 12 hours
-                    3 -> 24    // 24 hours
-                    4 -> 24 * 7 // Weekly
-                    else -> -1  // Manual only
+                    0 -> 3; 1 -> 6; 2 -> 12; 3 -> 24; 4 -> 24 * 7; else -> -1
                 }
                 SyncScheduler.schedule(applicationContext, wifiOnly, hours)
             }
@@ -111,6 +119,92 @@ class MainActivity : ComponentActivity() {
                 when (themeMode) { 0 -> isSystemInDarkTheme(); 1 -> false; else -> true },
                 dynamicColors
             ) {
+                val contentComposable: @Composable () -> Unit = {
+                    FlickyNavHost(
+                        navController = navController,
+                        browseContent = {
+                            BrowseScreen(
+                                apps = browseUi.apps,
+                                query = query,
+                                sort = sort,
+                                onSortChange = { s -> sort = s; browseViewModel.setSort(s) },
+                                onSearchChange = { q -> query = q; browseViewModel.setQuery(q) },
+                                onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
+                                onSyncClick = { browseViewModel.syncRepos() },
+                                onForceSyncClick = { browseViewModel.forceSyncRepos() },
+                                isSyncing = browseUi.isSyncing,
+                                progress = browseUi.progress,
+                                errorMessage = browseUi.errorMessage,
+                                onDismissError = { browseViewModel.clearError() }
+                            )
+                        },
+                        categoriesContent = {
+                            CategoriesScreen(
+                                onSyncClick = { browseViewModel.syncRepos() },
+                                isSyncing = browseUi.isSyncing,
+                                progress = browseUi.progress,
+                                onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
+                            )
+                        },
+                        updatesContent = {
+                            UpdatesScreen(
+                                installed = updatesUi.installed,
+                                updates = updatesUi.updates,
+                                installingPackages = updatesUi.installingPackages,
+                                installProgress = updatesUi.installProgress,
+                                installedVersionsCode = updatesUi.installedVersionsCode,
+                                installedVersionsName = updatesUi.installedVersionsName,
+                                onUpdateAll = {
+                                    lifecycleScope.launch {
+                                        for (app in updatesUi.updates) {
+                                            updatesViewModel.setInstalling(app.packageName, true)
+                                            AppGraph.installer.install(app) { progress ->
+                                                updatesViewModel.updateInstallProgress(app.packageName, progress)
+                                            }
+                                            updatesViewModel.setInstalling(app.packageName, false)
+                                        }
+                                    }
+                                },
+                                onUpdateOne = { app ->
+                                    lifecycleScope.launch {
+                                        updatesViewModel.setInstalling(app.packageName, true)
+                                        AppGraph.installer.install(app) { progress ->
+                                            updatesViewModel.updateInstallProgress(app.packageName, progress)
+                                        }
+                                        updatesViewModel.setInstalling(app.packageName, false)
+                                    }
+                                },
+                                onAppClick = { app ->
+                                    navController.navigate(Routes.detail(app.packageName))
+                                }
+                            )
+                        },
+                        settingsContent = { SettingsScreen(vm = settingsViewModel) },
+                        detailContent = { pkg ->
+                            val detailVM = viewModelFactoryOvr {
+                                AppDetailViewModel(
+                                    dao = AppGraph.db.appDao(),
+                                    installedRepo = AppGraph.installedRepo,
+                                    installer = AppGraph.installer,
+                                    packageName = pkg
+                                )
+                            }
+                            val ui by detailVM.ui.collectAsState()
+                            val app = ui.app ?: return@FlickyNavHost
+                            AppDetailScreen(
+                                app = app,
+                                installedVersionCode = ui.installedVersionCode,
+                                isInstalling = ui.isInstalling,
+                                progress = ui.progress,
+                                onInstall = { detailVM.install() },
+                                onOpen = { detailVM.openApp() },
+                                onUninstall = { detailVM.uninstall() },
+                                error = ui.error
+                            )
+                        }
+                    )
+                }
+
                 if (isTV) {
                     TvMainScreen(
                         selectedIndex = selectedIndex,
@@ -125,90 +219,9 @@ class MainActivity : ComponentActivity() {
                                 popUpTo(Routes.Browse) { inclusive = false }
                                 launchSingleTop = true
                             }
-                        }
-                    ) {
-                        FlickyNavHost(
-                            navController = navController,
-                            browseContent = {
-                                BrowseScreen(
-                                    apps = browseUi.apps, // rely on VM filtering/sorting
-                                    query = query,
-                                    sort = sort,
-                                    onSortChange = { s -> sort = s; browseViewModel.setSort(s) },
-                                    onSearchChange = { q -> query = q; browseViewModel.setQuery(q) },
-                                    onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
-                                    onSyncClick = { browseViewModel.syncRepos() },
-                                    onForceSyncClick = { browseViewModel.forceSyncRepos() },
-                                    isSyncing = browseUi.isSyncing,
-                                    progress = browseUi.progress,
-                                    errorMessage = browseUi.errorMessage,
-                                    onDismissError = { browseViewModel.clearError() }
-                                )
-                            },
-                            categoriesContent = {
-                                CategoriesScreen(
-                                    onSyncClick = { browseViewModel.syncRepos() },
-                                    isSyncing = browseUi.isSyncing,
-                                    progress = browseUi.progress,
-                                    onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
-                                )
-                            },
-                            updatesContent = {
-                                UpdatesScreen(
-                                    installed = updatesUi.installed,
-                                    updates = updatesUi.updates,
-                                    installingPackages = updatesUi.installingPackages,
-                                    installProgress = updatesUi.installProgress,
-                                    onUpdateAll = {
-                                        lifecycleScope.launch {
-                                            for (app in updatesUi.updates) {
-                                                updatesViewModel.setInstalling(app.packageName, true)
-                                                AppGraph.installer.install(app) { progress ->
-                                                    updatesViewModel.updateInstallProgress(app.packageName, progress)
-                                                }
-                                                updatesViewModel.setInstalling(app.packageName, false)
-                                            }
-                                        }
-                                    },
-                                    onUpdateOne = { app ->
-                                        lifecycleScope.launch {
-                                            updatesViewModel.setInstalling(app.packageName, true)
-                                            AppGraph.installer.install(app) { progress ->
-                                                updatesViewModel.updateInstallProgress(app.packageName, progress)
-                                            }
-                                            updatesViewModel.setInstalling(app.packageName, false)
-                                        }
-                                    },
-                                    onAppClick = { app ->
-                                        navController.navigate(Routes.detail(app.packageName))
-                                    }
-                                )
-                            },
-                            settingsContent = { SettingsScreen(vm = settingsViewModel) },
-                            detailContent = { pkg ->
-                                val detailVM = viewModelFactoryOvr {
-                                    AppDetailViewModel(
-                                        dao = AppGraph.db.appDao(),
-                                        installedRepo = AppGraph.installedRepo,
-                                        installer = AppGraph.installer,
-                                        packageName = pkg
-                                    )
-                                }
-                                val ui by detailVM.ui.collectAsState()
-                                val app = ui.app ?: return@FlickyNavHost
-                                AppDetailScreen(
-                                    app = app,
-                                    installedVersionCode = ui.installedVersionCode,
-                                    isInstalling = ui.isInstalling,
-                                    progress = ui.progress,
-                                    onInstall = { detailVM.install() },
-                                    onOpen = { detailVM.openApp() },
-                                    onUninstall = { detailVM.uninstall() },
-                                    error = ui.error
-                                )
-                            }
-                        )
-                    }
+                        },
+                        content = contentComposable
+                    )
                 } else {
                     MobileMainScaffold(
                         selectedIndex = selectedIndex,
@@ -223,90 +236,9 @@ class MainActivity : ComponentActivity() {
                                 popUpTo(Routes.Browse) { inclusive = false }
                                 launchSingleTop = true
                             }
-                        }
-                    ) {
-                        FlickyNavHost(
-                            navController = navController,
-                            browseContent = {
-                                BrowseScreen(
-                                    apps = browseUi.apps,
-                                    query = query,
-                                    sort = sort,
-                                    onSortChange = { s -> sort = s; browseViewModel.setSort(s) },
-                                    onSearchChange = { q -> query = q; browseViewModel.setQuery(q) },
-                                    onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
-                                    onSyncClick = { browseViewModel.syncRepos() },
-                                    onForceSyncClick = { browseViewModel.forceSyncRepos() },
-                                    isSyncing = browseUi.isSyncing,
-                                    progress = browseUi.progress,
-                                    errorMessage = browseUi.errorMessage,
-                                    onDismissError = { browseViewModel.clearError() }
-                                )
-                            },
-                            categoriesContent = {
-                                CategoriesScreen(
-                                    onSyncClick = { browseViewModel.syncRepos() },
-                                    isSyncing = browseUi.isSyncing,
-                                    progress = browseUi.progress,
-                                    onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) }
-                                )
-                            },
-                            updatesContent = {
-                                UpdatesScreen(
-                                    installed = updatesUi.installed,
-                                    updates = updatesUi.updates,
-                                    installingPackages = updatesUi.installingPackages,
-                                    installProgress = updatesUi.installProgress,
-                                    onUpdateAll = {
-                                        lifecycleScope.launch {
-                                            for (app in updatesUi.updates) {
-                                                updatesViewModel.setInstalling(app.packageName, true)
-                                                AppGraph.installer.install(app) { progress ->
-                                                    updatesViewModel.updateInstallProgress(app.packageName, progress)
-                                                }
-                                                updatesViewModel.setInstalling(app.packageName, false)
-                                            }
-                                        }
-                                    },
-                                    onUpdateOne = { app ->
-                                        lifecycleScope.launch {
-                                            updatesViewModel.setInstalling(app.packageName, true)
-                                            AppGraph.installer.install(app) { progress ->
-                                                updatesViewModel.updateInstallProgress(app.packageName, progress)
-                                            }
-                                            updatesViewModel.setInstalling(app.packageName, false)
-                                        }
-                                    },
-                                    onAppClick = { app ->
-                                        navController.navigate(Routes.detail(app.packageName))
-                                    }
-                                )
-                            },
-                            settingsContent = { SettingsScreen(vm = settingsViewModel) },
-                            detailContent = { pkg ->
-                                val detailVM = viewModelFactoryOvr {
-                                    AppDetailViewModel(
-                                        dao = AppGraph.db.appDao(),
-                                        installedRepo = AppGraph.installedRepo,
-                                        installer = AppGraph.installer,
-                                        packageName = pkg
-                                    )
-                                }
-                                val ui by detailVM.ui.collectAsState()
-                                val app = ui.app ?: return@FlickyNavHost
-                                AppDetailScreen(
-                                    app = app,
-                                    installedVersionCode = ui.installedVersionCode,
-                                    isInstalling = ui.isInstalling,
-                                    progress = ui.progress,
-                                    onInstall = { detailVM.install() },
-                                    onOpen = { detailVM.openApp() },
-                                    onUninstall = { detailVM.uninstall() },
-                                    error = ui.error
-                                )
-                            }
-                        )
-                    }
+                        },
+                        content = contentComposable
+                    )
                 }
             }
         }

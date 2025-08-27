@@ -12,7 +12,9 @@ data class UpdatesUiState(
     val installed: List<FDroidApp> = emptyList(),
     val updates: List<FDroidApp> = emptyList(),
     val installingPackages: Set<String> = emptySet(),
-    val installProgress: Map<String, Float> = emptyMap()
+    val installProgress: Map<String, Float> = emptyMap(),
+    val installedVersionsCode: Map<String, Long> = emptyMap(),
+    val installedVersionsName: Map<String, String> = emptyMap()
 )
 
 class UpdatesViewModel(
@@ -24,14 +26,16 @@ class UpdatesViewModel(
     val ui: StateFlow<UpdatesUiState> = _ui.asStateFlow()
 
     init {
-        // Recomputes when either app catalog changes OR installed packages change (e.g., after an update)
+        // Recompute when either app catalog changes OR installed packages change
         viewModelScope.launch {
             combine(
                 repo.appsFlow("", sort = app.flicky.data.model.SortOption.Updated, hideAnti = false),
                 installedRepo.packageChangesFlow().onStart { emit(Unit) } // emit once initially
             ) { all, _ -> all }
                 .collect { all ->
-                    val installedMap = installedRepo.getInstalled().associateBy { it.packageName }
+                    val installedDetails = installedRepo.getInstalledDetailed()
+                    val installedMap = installedDetails.associateBy { it.packageName }
+
                     val installed = all.filter { installedMap.containsKey(it.packageName) }
 
                     val updates = installed.filter { app ->
@@ -39,9 +43,14 @@ class UpdatesViewModel(
                         app.versionCode.toLong() > cur
                     }
 
+                    val codeMap = installedDetails.associate { it.packageName to it.versionCode }
+                    val nameMap = installedDetails.associate { it.packageName to (it.versionName ?: "") }
+
                     _ui.value = _ui.value.copy(
                         installed = installed,
-                        updates = updates
+                        updates = updates,
+                        installedVersionsCode = codeMap,
+                        installedVersionsName = nameMap
                     )
                 }
         }

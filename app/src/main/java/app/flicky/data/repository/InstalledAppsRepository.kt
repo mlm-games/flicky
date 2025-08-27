@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.callbackFlow
 class InstalledAppsRepository(private val context: Context) {
 
     data class Installed(val packageName: String, val versionCode: Long)
+    data class InstalledDetailed(val packageName: String, val versionCode: Long, val versionName: String?)
 
     fun getInstalled(): List<Installed> {
         val pm = context.packageManager
@@ -24,6 +25,18 @@ class InstalledAppsRepository(private val context: Context) {
             val pkg = pi.packageName
             val vc = if (Build.VERSION.SDK_INT >= 28) pi.longVersionCode else pi.versionCode.toLong()
             Installed(pkg, vc)
+        }
+    }
+
+    fun getInstalledDetailed(): List<InstalledDetailed> {
+        val pm = context.packageManager
+        val flags = PackageManager.GET_META_DATA
+        val pkgs = pm.getInstalledPackages(flags)
+        return pkgs.mapNotNull { pi ->
+            val pkg = pi.packageName
+            val vc = if (Build.VERSION.SDK_INT >= 28) pi.longVersionCode else pi.versionCode.toLong()
+            val vn = pi.versionName
+            InstalledDetailed(pkg, vc, vn)
         }
     }
 

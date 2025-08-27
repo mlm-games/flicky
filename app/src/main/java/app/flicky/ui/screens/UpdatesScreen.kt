@@ -6,14 +6,12 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.flicky.data.model.FDroidApp
+import androidx.compose.ui.text.style.TextOverflow
 import app.flicky.ui.components.MyScreenScaffold
 import coil.compose.AsyncImage
 
@@ -26,7 +24,9 @@ fun UpdatesScreen(
     onUpdateOne: (FDroidApp) -> Unit,
     onAppClick: (FDroidApp) -> Unit = {},
     installingPackages: Set<String> = emptySet(),
-    installProgress: Map<String, Float> = emptyMap()
+    installProgress: Map<String, Float> = emptyMap(),
+    installedVersionsCode: Map<String, Long> = emptyMap(),
+    installedVersionsName: Map<String, String> = emptyMap()
 ) {
     val cfg = LocalConfiguration.current
     val gridCells = remember(cfg.screenWidthDp) { GridCells.Adaptive(minSize = 320.dp) }
@@ -64,7 +64,7 @@ fun UpdatesScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(32.dp),
-                            contentAlignment = Alignment.Center
+                            contentAlignment = androidx.compose.ui.Alignment.Center
                         ) {
                             Text(
                                 "No updates available",
@@ -76,10 +76,14 @@ fun UpdatesScreen(
                 }
             } else {
                 items(updates, key = { "update_${it.packageName}" }) { app ->
+                    val installedVn = installedVersionsName[app.packageName]
+                    val installedVc = installedVersionsCode[app.packageName]
                     UpdateCard(
                         app = app,
                         installing = app.packageName in installingPackages,
                         progress = installProgress[app.packageName] ?: 0f,
+                        installedVersionName = installedVn,
+                        installedVersionCode = installedVc,
                         onUpdate = { onUpdateOne(app) },
                         onClick = { onAppClick(app) }
                     )
@@ -98,8 +102,12 @@ fun UpdatesScreen(
                     )
                 }
                 items(installed, key = { "installed_${it.packageName}" }) { app ->
+                    val installedVn = installedVersionsName[app.packageName]
+                    val installedVc = installedVersionsCode[app.packageName]
                     InstalledCard(
                         app = app,
+                        installedVersionName = installedVn,
+                        installedVersionCode = installedVc,
                         onClick = { onAppClick(app) }
                     )
                 }
@@ -113,6 +121,8 @@ private fun UpdateCard(
     app: FDroidApp,
     installing: Boolean,
     progress: Float,
+    installedVersionName: String?,
+    installedVersionCode: Long?,
     onUpdate: () -> Unit,
     onClick: () -> Unit
 ) {
@@ -142,6 +152,16 @@ private fun UpdateCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    // Show both installed and new versions
+                    val installedLabel = installedVersionName?.takeIf { it.isNotBlank() }
+                        ?: installedVersionCode?.let { "v$it" }
+                    installedLabel?.let {
+                        Text(
+                            "Installed: $it",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Text(
                         "New: ${app.version}",
                         style = MaterialTheme.typography.bodySmall,
@@ -189,6 +209,8 @@ private fun UpdateCard(
 @Composable
 private fun InstalledCard(
     app: FDroidApp,
+    installedVersionName: String?,
+    installedVersionCode: Long?,
     onClick: () -> Unit
 ) {
     ElevatedCard(
@@ -218,11 +240,23 @@ private fun InstalledCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    "v${app.version}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                val installedLabel = installedVersionName?.takeIf { it.isNotBlank() }
+                    ?: installedVersionCode?.let { "v$it" }
+                    ?: "Unknown"
+                // Show installed, and if repo version differs, show arrow to new
+                if (installedLabel == app.version) {
+                    Text(
+                        "Installed: $installedLabel",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Text(
+                        "Installed: $installedLabel → ${app.version}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Text(
                     app.summary,
                     style = MaterialTheme.typography.bodySmall,
