@@ -31,7 +31,7 @@ object AppGraph {
         val headersStore = RepoHeadersStore(settings)
         val syncManager = RepositorySyncManager(api, db.appDao(), settings, headersStore)
         val appRepo = AppRepository(db.appDao())
-        val installer = Installer(context.applicationContext)
+        val installer = Installer(context.applicationContext, settings)
         val installedRepo = InstalledAppsRepository(context.applicationContext)
     }
 

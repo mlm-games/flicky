@@ -154,11 +154,28 @@ class SettingsRepository(private val context: Context) {
     /**
      * Flow of repositories persisted as JSON
      */
-    val repositoriesFlow: Flow<List<RepositoryInfo>> = context.ds.data.map { p ->
-        p[REPOS_JSON]?.let {
-            runCatching { json.decodeFromString<List<RepositoryInfo>>(it) }.getOrNull()
-        } ?: RepositoryInfo.defaults()
-    }.distinctUntilChanged()
+    val repositoriesFlow: Flow<List<RepositoryInfo>> = context.ds.data
+        .map { p ->
+            val saved = p[REPOS_JSON]?.let {
+                runCatching { json.decodeFromString<List<RepositoryInfo>>(it) }.getOrNull()
+            }.orEmpty()
+
+            val savedByUrl = LinkedHashMap<String, RepositoryInfo>().apply {
+                saved.forEach { put(normalizeUrl(it.url), it.copy(url =normalizeUrl(it.url))) }
+            }
+
+            val defaults = RepositoryInfo.defaults()
+            defaults.forEach { d ->
+                val key = normalizeUrl(d.url)
+                if (!savedByUrl.containsKey(key)) {
+                    savedByUrl[key] = d.copy(url = key)
+                }
+            }
+
+            savedByUrl.values.toList()
+        }
+        .distinctUntilChanged()
+
 
     /**
      * Generic update using property name and dynamic mapping
@@ -262,6 +279,13 @@ class SettingsRepository(private val context: Context) {
     suspend fun getRepoHeadersMap(): String {
         return context.ds.data.first()[REPO_HEADERS] ?: "{}"
     }
+
+    suspend fun resetRepositoriesToDefaults() {
+        setRepositories(RepositoryInfo.defaults())
+    }
+
+    private fun normalizeUrl(url: String): String =
+        url.trim().removeSuffix("/")
 
     /**
      * Convenience helpers (used by UI actions)

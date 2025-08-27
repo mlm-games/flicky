@@ -8,19 +8,24 @@ import android.os.Build
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import app.flicky.data.model.FDroidApp
+import app.flicky.data.repository.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import app.flicky.data.model.FDroidApp
 import java.io.File
 import java.io.FileInputStream
 import java.security.MessageDigest
 
-class Installer(private val context: Context) {
+class Installer(
+    private val context: Context,
+    private val settings: SettingsRepository
+) {
     companion object {
         private const val CACHE_DIR = "flicky_downloads"
         private const val CACHE_EXPIRY_HOURS = 1
@@ -100,39 +105,49 @@ class Installer(private val context: Context) {
             }
         }
 
-        val downloadUrl = constructDownloadUrl(app)
+        val (repoLabel, downloadUrl) = constructDownloadInfo(app)
         return try {
-            downloadAndInstall(app, downloadUrl, onProgress)
+            downloadAndInstall(app, repoLabel, downloadUrl, onProgress)
         } catch (_: Exception) {
             false
         }
     }
 
-    private fun constructDownloadUrl(app: FDroidApp): String {
-        return when {
-            app.apkUrl.startsWith("http://") || app.apkUrl.startsWith("https://") -> app.apkUrl
-            app.apkUrl.startsWith("/") -> {
-                val repoBase = getRepoBase(app.repository)
-                repoBase + app.apkUrl
-            }
-            else -> {
-                val repoBase = getRepoBase(app.repository)
-                "$repoBase/${app.apkUrl}"
-            }
+    private suspend fun constructDownloadInfo(app: FDroidApp): Pair<String, String> {
+        // Absolute URL?
+        if (app.apkUrl.startsWith("http://") || app.apkUrl.startsWith("https://")) {
+            return app.repository to app.apkUrl
         }
-    }
 
-    private fun getRepoBase(repository: String): String {
-        return when (repository) {
-            "F-Droid" -> "https://f-droid.org/repo"
-            "IzzyOnDroid" -> "https://apt.izzysoft.de/fdroid/repo"
-            "F-Droid Archive" -> "https://f-droid.org/archive"
-            else -> "https://f-droid.org/repo"
+        val repos = runCatching { settings.repositoriesFlow.first() }.getOrElse { emptyList() }
+
+        // Try matching by name (what FDroidApi stored in FDroidApp.repository)
+        val byName = repos.firstOrNull { it.name.equals(app.repository, ignoreCase = true) }
+
+        // Or if the DB happened to store a URL in repository field, match by URL
+        val byUrl = repos.firstOrNull { it.url.equals(app.repository, ignoreCase = true) }
+
+        val chosen = byName ?: byUrl
+        val base = when {
+            chosen != null -> chosen.url.trimEnd('/')
+            app.repository.startsWith("http://") || app.repository.startsWith("https://") ->
+                app.repository.trimEnd('/')
+            else -> "https://f-droid.org/repo" // final fallback
         }
+
+        val finalUrl = if (app.apkUrl.startsWith("/")) {
+            base + app.apkUrl
+        } else {
+            "$base/${app.apkUrl}"
+        }
+
+        val label = chosen?.name ?: app.repository
+        return label to finalUrl
     }
 
     private suspend fun downloadAndInstall(
         app: FDroidApp,
+        repoLabel: String,
         downloadUrl: String,
         onProgress: (Float) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
@@ -140,7 +155,7 @@ class Installer(private val context: Context) {
 
         val req = DownloadManager.Request(downloadUrl.toUri())
             .setTitle("${app.name} ${app.version}")
-            .setDescription("Downloading from ${app.repository}")
+            .setDescription("Downloading from $repoLabel")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setAllowedOverMetered(true)
             .setAllowedOverRoaming(false)
