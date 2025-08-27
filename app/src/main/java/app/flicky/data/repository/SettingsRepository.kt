@@ -17,35 +17,11 @@ sealed class SettingDefinition<T> {
     abstract val getValue: (AppSettings) -> T
     abstract val propertyName: String
 
-    data class BooleanSetting(
-        override val propertyName: String,
-        override val key: Preferences.Key<Boolean>,
-        override val getValue: (AppSettings) -> Boolean
-    ) : SettingDefinition<Boolean>()
-
-    data class IntSetting(
-        override val propertyName: String,
-        override val key: Preferences.Key<Int>,
-        override val getValue: (AppSettings) -> Int
-    ) : SettingDefinition<Int>()
-
-    data class FloatSetting(
-        override val propertyName: String,
-        override val key: Preferences.Key<Float>,
-        override val getValue: (AppSettings) -> Float
-    ) : SettingDefinition<Float>()
-
-    data class StringSetting(
-        override val propertyName: String,
-        override val key: Preferences.Key<String>,
-        override val getValue: (AppSettings) -> String
-    ) : SettingDefinition<String>()
-
-    data class LongSetting(
-        override val propertyName: String,
-        override val key: Preferences.Key<Long>,
-        override val getValue: (AppSettings) -> Long
-    ) : SettingDefinition<Long>()
+    data class BooleanSetting(override val propertyName: String, override val key: Preferences.Key<Boolean>, override val getValue: (AppSettings) -> Boolean) : SettingDefinition<Boolean>()
+    data class IntSetting(override val propertyName: String, override val key: Preferences.Key<Int>, override val getValue: (AppSettings) -> Int) : SettingDefinition<Int>()
+    data class FloatSetting(override val propertyName: String, override val key: Preferences.Key<Float>, override val getValue: (AppSettings) -> Float) : SettingDefinition<Float>()
+    data class StringSetting(override val propertyName: String, override val key: Preferences.Key<String>, override val getValue: (AppSettings) -> String) : SettingDefinition<String>()
+    data class LongSetting(override val propertyName: String, override val key: Preferences.Key<Long>, override val getValue: (AppSettings) -> Long) : SettingDefinition<Long>()
 }
 
 class SettingsRepository(private val context: Context) {
@@ -67,6 +43,7 @@ class SettingsRepository(private val context: Context) {
         val SYNC_INTERVAL = intPreferencesKey("sync_interval_idx")
         val NOTIFY_UPDATES = booleanPreferencesKey("notify_updates")
         val KEEP_CACHE = booleanPreferencesKey("keep_cache")
+        val INSTALLER_MODE = intPreferencesKey("installer_mode") // NEW
 
         val HIDE_ANTI = booleanPreferencesKey("hide_anti_features")
         val SHOW_INCOMPATIBLE = booleanPreferencesKey("show_incompatible")
@@ -84,9 +61,7 @@ class SettingsRepository(private val context: Context) {
         val REPO_HEADERS = stringPreferencesKey("repo_headers_json")
     }
 
-    /**
-     * Single source of truth mapping AppSettings <-> DataStore
-     */
+
     private val definitions: Map<String, SettingDefinition<*>> = mapOf(
         "themeMode" to SettingDefinition.IntSetting("themeMode", THEME_MODE) { it.themeMode },
         "dynamicTheme" to SettingDefinition.BooleanSetting("dynamicTheme", DYNAMIC_THEME) { it.dynamicTheme },
@@ -101,6 +76,7 @@ class SettingsRepository(private val context: Context) {
         "syncIntervalIndex" to SettingDefinition.IntSetting("syncIntervalIndex", SYNC_INTERVAL) { it.syncIntervalIndex },
         "notifyUpdates" to SettingDefinition.BooleanSetting("notifyUpdates", NOTIFY_UPDATES) { it.notifyUpdates },
         "keepCache" to SettingDefinition.BooleanSetting("keepCache", KEEP_CACHE) { it.keepCache },
+        "installerMode" to SettingDefinition.IntSetting("installerMode", INSTALLER_MODE) { it.installerMode }, // NEW
 
         "hideAntiFeatures" to SettingDefinition.BooleanSetting("hideAntiFeatures", HIDE_ANTI) { it.hideAntiFeatures },
         "showIncompatible" to SettingDefinition.BooleanSetting("showIncompatible", SHOW_INCOMPATIBLE) { it.showIncompatible },
@@ -133,6 +109,7 @@ class SettingsRepository(private val context: Context) {
             syncIntervalIndex = p[SYNC_INTERVAL] ?: 1,
             notifyUpdates = p[NOTIFY_UPDATES] ?: true,
             keepCache = p[KEEP_CACHE] ?: false,
+            installerMode = p[INSTALLER_MODE] ?: 0,
 
             hideAntiFeatures = p[HIDE_ANTI] ?: false,
             showIncompatible = p[SHOW_INCOMPATIBLE] ?: false,

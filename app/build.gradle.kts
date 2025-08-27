@@ -200,6 +200,10 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.client.logging)
 
+    // Shizuku
+    implementation(libs.api)
+    implementation(libs.provider)
+
     // Testing
 //    androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)

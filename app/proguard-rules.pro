@@ -47,5 +47,5 @@
 
 
  -keep class app.flicky.install.InstallResultReceiver { *; }
-
+ -keepclassmembers class rikka.shizuku.Shizuku { *; }
  # -keep class com.google.gson.stream.** { *; }

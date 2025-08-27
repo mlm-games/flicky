@@ -1,5 +1,6 @@
 [versions]
 activityCompose = "1.10.1"
+api = "13.1.5"
 appcompat = "1.7.1"
 coilCompose = "2.7.0"
 coreKtx = "1.17.0"
@@ -40,6 +41,7 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-runtime = { module = "androidx.compose.runtime:runtime", version.ref = "runtime" }
 androidx-tv-foundation = { module = "androidx.tv:tv-foundation", version.ref = "tvFoundation" }
 androidx-tv-material = { module = "androidx.tv:tv-material", version.ref = "tvMaterial" }
+api = { module = "dev.rikka.shizuku:api", version.ref = "api" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 coil-svg = { module = "io.coil-kt:coil-svg", version.ref = "coilCompose" }
@@ -59,6 +61,7 @@ material = { module = "com.google.android.material:material", version.ref = "mat
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationFragmentKtx" }
 navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+provider = { module = "dev.rikka.shizuku:provider", version.ref = "api" }
 recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }

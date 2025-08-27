@@ -116,6 +116,15 @@ data class AppSettings(
     val keepCache: Boolean = false,
 
     @Setting(
+        title = "Installer",
+        description = "Choose how apps are installed",
+        category = SettingCategory.DOWNLOADS,
+        type = SettingType.DROPDOWN,
+        options = ["System (default)", "Session (Package Installer)", "Root (pm)", "Shizuku (pm)"]
+    )
+    val installerMode: Int = 0, // 0=System, 1=Session, 2=Root, 3=Shizuku
+
+    @Setting(
         title = "Hide apps with anti-features",
         category = SettingCategory.FILTERS,
         type = SettingType.TOGGLE
