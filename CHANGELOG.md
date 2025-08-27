@@ -1,7 +1,7 @@
 ## v2.4.1
 
 - Bump maj ver
-- Try adding root install
+- add shizuku and root install options
 - Show version name on updates screen while updating
 - Add few common repos like neo-store and droidify
 - Update README.md for izzy link
