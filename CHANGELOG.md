@@ -1,3 +1,12 @@
+## v2.4.1
+
+- Bump maj ver
+- Try adding root install (root not tested, shizuku tested and works)
+- Show version name on updates screen while updating
+- Add few common repos like neo-store and droidify
+- Update README.md for izzy link
+
+
 ## v2.3.8
 
 - try reducing proguard-rules.pro
