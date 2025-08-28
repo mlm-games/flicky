@@ -133,10 +133,12 @@ class MainActivity : ComponentActivity() {
                                 onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
                                 onSyncClick = { browseViewModel.syncRepos() },
                                 onForceSyncClick = { browseViewModel.forceSyncRepos() },
+                                onClearAppsClick = { browseViewModel.forceSyncRepos()},
                                 isSyncing = browseUi.isSyncing,
                                 progress = browseUi.progress,
                                 errorMessage = browseUi.errorMessage,
-                                onDismissError = { browseViewModel.clearError() }
+                                onDismissError = { browseViewModel.clearError() },
+                                syncStatus = browseUi.status,
                             )
                         },
                         categoriesContent = {

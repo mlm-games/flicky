@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +28,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import androidx.compose.ui.input.key.*
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -38,11 +41,41 @@ fun FullscreenImageViewer(
     // Guard against empty list to prevent pager crashes
     if (images.isEmpty()) return
 
+    val scope = rememberCoroutineScope()
+
+
     val safeInitial = initialPage.coerceIn(0, images.lastIndex)
+
     val pagerState = rememberPagerState(
         initialPage = safeInitial,
         pageCount = { images.size }
     )
+
+    val handleKey: (KeyEvent) -> Boolean = { ev ->
+        if (ev.type != KeyEventType.KeyDown) false
+        when (ev.key) {
+            Key.DirectionLeft -> {
+                val prev = (pagerState.currentPage - 1).coerceAtLeast(0)
+                if (prev != pagerState.currentPage) {
+                    scope.launch { pagerState.animateScrollToPage(prev) }
+                    true
+                } else false
+            }
+            Key.DirectionRight -> {
+                val next = (pagerState.currentPage + 1).coerceAtMost(images.lastIndex)
+                if (next != pagerState.currentPage) {
+                    scope.launch { pagerState.animateScrollToPage(next) }
+                    true
+                } else false
+            }
+            Key.Escape, Key.Back -> {
+                onClose()
+                true
+            }
+            else -> false
+        }
+    }
+
 
     Scaffold(
         topBar = {
@@ -54,7 +87,7 @@ fun FullscreenImageViewer(
             )
         }
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        Box(Modifier.fillMaxSize().padding(padding).onPreviewKeyEvent(handleKey)) {
             val cfg = LocalConfiguration.current
             val density = LocalDensity.current
             // Convert screen dp to px for Coil's target size to avoid huge allocations or OOMs

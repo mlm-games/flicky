@@ -20,6 +20,7 @@ import androidx.compose.ui.window.DialogProperties
 import app.flicky.R
 import app.flicky.data.model.FDroidApp
 import app.flicky.helper.openUrl
+import app.flicky.helper.shareText
 import app.flicky.ui.components.SmartExpandableText
 import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
@@ -56,7 +57,21 @@ fun AppDetailScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
+                ),
+                actions = {
+                    val ctx = LocalContext.current
+                    IconButton(onClick = {
+                        val share = buildString {
+                            append(app.name).append("\n")
+                            append("Package: ").append(app.packageName).append("\n")
+                            if (app.website.isNotBlank()) append(app.website).append("\n")
+                            append("Found in: ").append(app.repository)
+                        }
+                        shareText(ctx, share)
+                    }) {
+                        Icon(painterResource(android.R.drawable.ic_menu_share), contentDescription = "Share")
+                    }
+                },
             )
         }
     ) { paddingValues ->

@@ -178,12 +178,12 @@ data class AppSettings(
 //    )
     val proxyType: Int = 0,
 
-    @Setting(
-        title = "Clear cache",
-        description = "Delete repo headers and reset last sync",
-        category = SettingCategory.SYSTEM,
-        type = SettingType.BUTTON
-    )
+//    @Setting(
+//        title = "Clear cache",
+//        description = "Delete repo headers and reset last sync",
+//        category = SettingCategory.SYSTEM,
+//        type = SettingType.BUTTON
+//    )
     val clearCache: Boolean = false,
 
 //    @Setting(

@@ -7,8 +7,8 @@ import app.flicky.data.model.FDroidApp
 import kotlinx.serialization.json.Json
 
 @Database(
-    entities = [FDroidApp::class],
-    version = 6,
+    entities = [FDroidApp::class, AppVariant::class],
+    version = 7,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -48,6 +48,28 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE apps ADD COLUMN repositoryUrl TEXT NOT NULL DEFAULT ''")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_apps_repositoryUrl` ON `apps` (`repositoryUrl`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_apps_isCompatible` ON `apps` (`isCompatible`)")
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS app_variants (
+                        packageName TEXT NOT NULL,
+                        repositoryUrl TEXT NOT NULL,
+                        repositoryName TEXT NOT NULL,
+                        versionName TEXT NOT NULL,
+                        versionCode INTEGER NOT NULL,
+                        apkUrl TEXT NOT NULL,
+                        sha256 TEXT NOT NULL,
+                        size INTEGER NOT NULL,
+                        isCompatible INTEGER NOT NULL,
+                        PRIMARY KEY(packageName, repositoryUrl, versionCode)
+                    )
+                """)
+
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_app_variants_packageName ON app_variants(packageName)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_app_variants_repositoryUrl ON app_variants(repositoryUrl)")
             }
         }
     }

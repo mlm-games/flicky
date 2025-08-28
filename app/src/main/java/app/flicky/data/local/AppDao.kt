@@ -2,11 +2,31 @@ package app.flicky.data.local
 
 import androidx.paging.PagingSource
 import androidx.room.Dao
+import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import app.flicky.data.model.FDroidApp
 import kotlinx.coroutines.flow.Flow
+
+
+@Entity(
+    tableName = "app_variants",
+    primaryKeys = ["packageName", "repositoryUrl", "versionCode"],
+    indices = [Index(value = ["packageName"]), Index(value = ["repositoryUrl"])]
+)
+data class AppVariant(
+    val packageName: String,
+    val repositoryUrl: String,
+    val repositoryName: String,
+    val versionName: String,
+    val versionCode: Int,
+    val apkUrl: String,
+    val sha256: String,
+    val size: Long,
+    val isCompatible: Boolean
+)
 
 @Dao
 interface AppDao {
@@ -24,6 +44,9 @@ interface AppDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(apps: List<FDroidApp>)
+
+    @Query("SELECT * FROM app_variants WHERE packageName = :pkg ORDER BY repositoryName, versionCode DESC")
+    suspend fun variantsFor(pkg: String): List<AppVariant>
 
     @Query("DELETE FROM apps")
     suspend fun clear()

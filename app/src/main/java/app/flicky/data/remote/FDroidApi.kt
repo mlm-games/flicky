@@ -33,6 +33,13 @@ class FDroidApi(context: Context) {
         .retryOnConnectionFailure(true)
         .build()
 
+    private val currentCall = java.util.concurrent.atomic.AtomicReference<okhttp3.Call?>(null)
+
+    fun cancelOngoing() {
+        currentCall.getAndSet(null)?.cancel()
+    }
+
+
     data class RepoHeaders(val etag: String?, val lastModified: String?)
     data class FetchResult(val headers: RepoHeaders?, val modified: Boolean)
 
@@ -50,7 +57,10 @@ class FDroidApi(context: Context) {
             val builder = Request.Builder()
                 .url("$baseUrl/index-v2.json")
                 .method(method, null)
-                .header("User-Agent", "Flicky/${BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})")
+                .header(
+                    "User-Agent",
+                    "Flicky/${BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})"
+                )
                 .header("Accept", "application/json")
             if (!force) {
                 previous.etag?.let { builder.header("If-None-Match", it) }
@@ -59,15 +69,19 @@ class FDroidApi(context: Context) {
             return builder.build()
         }
 
+
         if (!force && enableDifferential) {
             try {
-                client.newCall(buildRequest("HEAD")).execute().use { head ->
-                    if (head.code == 304) {
+                val call = client.newCall(buildRequest("HEAD"))
+                currentCall.set(call)
+                call.execute().use { head ->
+                if (head.code == 304) {
                         Log.d(TAG, "HEAD 304 Not Modified for ${repo.name}")
                         return@withContext FetchResult(previous, modified = false)
                     }
                     // If HEAD returns 200 (or server doesn’t support 304), proceed to GET below
                 }
+                currentCall.compareAndSet(call, null)
             } catch (e: Exception) {
                 Log.w(TAG, "HEAD failed for ${repo.name}: ${e.message} — proceeding with GET")
             }
@@ -77,8 +91,10 @@ class FDroidApi(context: Context) {
         var lastException: Exception? = null
         while (attempt <= MAX_RETRIES) {
             try {
-                client.newCall(buildRequest("GET")).execute().use { resp ->
-                    if (resp.code == 304) {
+                val call = client.newCall(buildRequest("GET"))
+                currentCall.set(call)
+                call.execute().use { resp ->
+                if (resp.code == 304) {
                         Log.d(TAG, "GET 304 Not Modified for ${repo.name}")
                         return@withContext FetchResult(previous, modified = false)
                     }
@@ -101,6 +117,7 @@ class FDroidApi(context: Context) {
                     val lastMod = resp.header("Last-Modified")
                     return@withContext FetchResult(RepoHeaders(etag, lastMod), modified = true)
                 }
+                currentCall.compareAndSet(call, null)
             } catch (e: Exception) {
                 lastException = e
                 Log.w(TAG, "Error fetching ${repo.name} (attempt $attempt): ${e.message}")

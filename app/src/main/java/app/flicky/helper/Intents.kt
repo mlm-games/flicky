@@ -15,3 +15,11 @@ fun openUrl(context: Context, url: String) {
         }
     }
 }
+
+fun shareText(context: Context, text: String, title: String = "Share") {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+    context.startActivity(Intent.createChooser(intent, title).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+}

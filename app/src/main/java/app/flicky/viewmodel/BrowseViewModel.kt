@@ -122,6 +122,7 @@ class BrowseViewModel(
                 .drop(1)
                 .debounce(350)
                 .collect {
+                    sync.cancelCurrentSync()
                     forceSyncRepos()
                 }
         }

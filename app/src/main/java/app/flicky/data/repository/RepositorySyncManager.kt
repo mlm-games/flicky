@@ -11,12 +11,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class RepositorySyncManager(
-    private val api: app.flicky.data.remote.FDroidApi,
+    private val api: FDroidApi,
     private val dao: AppDao,
     private val settings: SettingsRepository,
     private val headersStore: RepoHeadersStore
@@ -43,6 +44,12 @@ class RepositorySyncManager(
     }
 
     private val syncMutex = Mutex()
+    @Volatile private var cancelRequested = false
+
+    fun cancelCurrentSync() {
+        cancelRequested = true
+        api.cancelOngoing()
+    }
 
     suspend fun syncAll(
         force: Boolean = false,
@@ -57,7 +64,12 @@ class RepositorySyncManager(
                 updateState { it.copy(active = false, progress = 0f, message = "No repositories enabled") }
                 throw IllegalStateException("No enabled repositories")
             }
+            if (force) {
+                AppGraph.headersStore.clear()
+                dao.clear()
+            }
 
+            cancelRequested = false
             updateState { SyncState(active = true, total = repos.size, message = "Starting sync...") }
 
             var totalApps = 0
@@ -77,6 +89,7 @@ class RepositorySyncManager(
             repos.forEachIndexed { index, repo ->
                 val buffer = mutableListOf<FDroidApp>()
                 var repoCount = 0
+                if (cancelRequested || !kotlin.coroutines.coroutineContext.isActive) return@withLock totalApps
 
                 suspend fun flush() = insertChunk(buffer)
 

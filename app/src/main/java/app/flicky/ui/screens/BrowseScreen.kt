@@ -30,7 +30,9 @@ fun BrowseScreen(
     onAppClick: (FDroidApp) -> Unit,
     onSyncClick: () -> Unit,
     onForceSyncClick: () -> Unit,
+    onClearAppsClick: () -> Unit,
     isSyncing: Boolean,
+    syncStatus: String,
     progress: Float,
     errorMessage: String?,
     onDismissError: () -> Unit
@@ -186,10 +188,10 @@ fun BrowseScreen(
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Clear Cache") },
+                                    text = { Text("Clear All Apps") },
                                     onClick = {
                                         menuOpen = false
-                                        // Hook up to settings action if implemented
+                                        onClearAppsClick
                                     },
                                     leadingIcon = {
                                         Icon(Icons.Default.ClearAll, contentDescription = null)
@@ -207,6 +209,12 @@ fun BrowseScreen(
                         modifier = Modifier.fillMaxWidth(),
                         color = MaterialTheme.colorScheme.primary,
                         trackColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = syncStatus,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
