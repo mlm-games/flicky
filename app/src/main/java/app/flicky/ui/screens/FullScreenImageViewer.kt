@@ -45,6 +45,7 @@ fun FullscreenImageViewer(
 
 
     val safeInitial = initialPage.coerceIn(0, images.lastIndex)
+    val pagerState = rememberPagerState(initialPage = safeInitial, pageCount = { images.size })
 
     val pagerState = rememberPagerState(
         initialPage = safeInitial,
