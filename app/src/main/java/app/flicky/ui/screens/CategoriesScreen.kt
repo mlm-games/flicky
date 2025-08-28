@@ -18,8 +18,8 @@ import androidx.compose.ui.unit.dp
 import app.flicky.AppGraph
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
+import app.flicky.data.repository.AppSettings
 import app.flicky.ui.components.cards.AdaptiveAppCard
-import kotlin.Unit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,8 +30,13 @@ fun CategoriesScreen(
     progress: Float
 ) {
     val categories by AppGraph.appRepo.categories().collectAsState(initial = emptyList())
-    val apps by AppGraph.appRepo.appsFlow("", SortOption.Updated, hideAnti = false)
-        .collectAsState(initial = emptyList())
+    val settingsState by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
+    val apps by AppGraph.appRepo.appsFlow(
+        query = "",
+        sort = SortOption.Updated,
+        hideAnti = false,
+        showIncompatible = settingsState.showIncompatible
+    ).collectAsState(initial = emptyList())
 
     var selected by remember { mutableStateOf("All") }
     val filtered by remember(selected, apps) {
@@ -84,21 +89,6 @@ fun CategoriesScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-//                            FilledTonalButton(
-//                                onClick = onSyncClick,
-//                                enabled = !isSyncing
-//                            ) {
-//                                if (isSyncing) {
-//                                    CircularProgressIndicator(
-//                                        modifier = Modifier.size(16.dp),
-//                                        strokeWidth = 2.dp
-//                                    )
-//                                    Spacer(Modifier.width(8.dp))
-//                                    Text("Syncing…")
-//                                } else {
-//                                    Text("Sync Now")
-//                                }
-//                            }
                         }
                         if (isSyncing) {
                             Spacer(Modifier.height(8.dp))

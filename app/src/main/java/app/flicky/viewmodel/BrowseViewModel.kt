@@ -2,6 +2,8 @@ package app.flicky.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppRepository
@@ -47,13 +49,29 @@ class BrowseViewModel(
 
     private val hideAnti = settings.settingsFlow.map { it.hideAntiFeatures }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    private val showIncompat = settings.settingsFlow.map { it.showIncompatible }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val paged: StateFlow<PagingData<FDroidApp>> =
+        combine(_query, _sort, hideAnti, showIncompat) { q, s, h, si -> arrayOf(q, s, h, si) }
+            .flatMapLatest { (q, s, h, si) ->
+                @Suppress("UNCHECKED_CAST")
+                repo.pagedAppsFlow(q as String, s as SortOption, h as Boolean, si as Boolean)
+            }
+            .cachedIn(viewModelScope)
+            .stateIn(viewModelScope, SharingStarted.Lazily, PagingData.empty())
+
     private val categoriesFlow =
         repo.categories().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val appsFlow: StateFlow<List<FDroidApp>> =
-        combine(_query, _sort, hideAnti) { q, s, hide -> Triple(q, s, hide) }
-            .flatMapLatest { (q, s, hide) -> repo.appsFlow(q, s, hide) }
+        combine(_query, _sort, hideAnti, showIncompat) { q, s, hide, si -> arrayOf(q, s, hide, si) }
+            .flatMapLatest { (q, s, hide, si) ->
+                @Suppress("UNCHECKED_CAST")
+                repo.appsFlow(q as String, s as SortOption, hide as Boolean, si as Boolean)
+            }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val uiState: StateFlow<BrowseUiState> =
@@ -140,14 +158,12 @@ class BrowseViewModel(
     private fun doSync(force: Boolean) {
         viewModelScope.launch {
             _error.value = null
-            // We rely on global sync.state for isSyncing/progress/status.
             val perRepoErrors = mutableListOf<String>()
 
             runCatching {
                 val appCount = sync.syncAll(
                     force = force,
                     onProgress = { current, total, repoName ->
-                        // Optional: still nudge local status text for immediate feedback
                         _status.value = "Syncing $repoName ($current/$total)..."
                     },
                     onRepoError = { repoName, msg ->

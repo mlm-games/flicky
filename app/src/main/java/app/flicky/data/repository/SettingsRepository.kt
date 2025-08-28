@@ -43,12 +43,14 @@ class SettingsRepository(private val context: Context) {
         val SYNC_INTERVAL = intPreferencesKey("sync_interval_idx")
         val NOTIFY_UPDATES = booleanPreferencesKey("notify_updates")
         val KEEP_CACHE = booleanPreferencesKey("keep_cache")
-        val INSTALLER_MODE = intPreferencesKey("installer_mode") // NEW
+        val INSTALLER_MODE = intPreferencesKey("installer_mode")
 
         val HIDE_ANTI = booleanPreferencesKey("hide_anti_features")
         val SHOW_INCOMPATIBLE = booleanPreferencesKey("show_incompatible")
         val UNSTABLE_UPDATES = booleanPreferencesKey("unstable_updates")
         val IGNORE_SIGNATURE = booleanPreferencesKey("ignore_signature")
+
+        val DIFFERENTIAL_SYNC = booleanPreferencesKey("differential_sync")
 
         val USE_PROXY = booleanPreferencesKey("use_proxy")
         val PROXY_TYPE = intPreferencesKey("proxy_type")
@@ -76,12 +78,14 @@ class SettingsRepository(private val context: Context) {
         "syncIntervalIndex" to SettingDefinition.IntSetting("syncIntervalIndex", SYNC_INTERVAL) { it.syncIntervalIndex },
         "notifyUpdates" to SettingDefinition.BooleanSetting("notifyUpdates", NOTIFY_UPDATES) { it.notifyUpdates },
         "keepCache" to SettingDefinition.BooleanSetting("keepCache", KEEP_CACHE) { it.keepCache },
-        "installerMode" to SettingDefinition.IntSetting("installerMode", INSTALLER_MODE) { it.installerMode }, // NEW
+        "installerMode" to SettingDefinition.IntSetting("installerMode", INSTALLER_MODE) { it.installerMode },
 
         "hideAntiFeatures" to SettingDefinition.BooleanSetting("hideAntiFeatures", HIDE_ANTI) { it.hideAntiFeatures },
         "showIncompatible" to SettingDefinition.BooleanSetting("showIncompatible", SHOW_INCOMPATIBLE) { it.showIncompatible },
         "unstableUpdates" to SettingDefinition.BooleanSetting("unstableUpdates", UNSTABLE_UPDATES) { it.unstableUpdates },
         "ignoreSignature" to SettingDefinition.BooleanSetting("ignoreSignature", IGNORE_SIGNATURE) { it.ignoreSignature },
+
+        "differentialSync" to SettingDefinition.BooleanSetting("differentialSync", DIFFERENTIAL_SYNC) { it.differentialSync },
 
         "useProxy" to SettingDefinition.BooleanSetting("useProxy", USE_PROXY) { it.useProxy },
         "proxyType" to SettingDefinition.IntSetting("proxyType", PROXY_TYPE) { it.proxyType },
@@ -115,6 +119,8 @@ class SettingsRepository(private val context: Context) {
             showIncompatible = p[SHOW_INCOMPATIBLE] ?: false,
             unstableUpdates = p[UNSTABLE_UPDATES] ?: false,
             ignoreSignature = p[IGNORE_SIGNATURE] ?: false,
+
+            differentialSync = p[DIFFERENTIAL_SYNC] ?: true,
 
             useProxy = p[USE_PROXY] ?: false,
             proxyType = p[PROXY_TYPE] ?: 0,

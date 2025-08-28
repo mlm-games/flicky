@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.LazyPagingItems
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.ui.components.VoiceSearchButton
@@ -21,7 +22,7 @@ import app.flicky.ui.components.cards.AdaptiveAppCard
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowseScreen(
-    apps: List<FDroidApp>,
+    apps: LazyPagingItems<FDroidApp>,
     query: String,
     sort: SortOption,
     onSortChange: (SortOption) -> Unit,
@@ -216,7 +217,7 @@ fun BrowseScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            if (apps.isEmpty()) {
+            if (apps.itemCount == 0) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -252,18 +253,16 @@ fun BrowseScreen(
                     widthDp > 600 -> 3
                     else -> 2
                 }
+
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(columns),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(apps, key = { it.packageName }) { app ->
-                        AdaptiveAppCard(
-                            app = app,
-                            autofocus = false,
-                            onClick = { onAppClick(app) }
-                        )
+                    items(apps.itemCount, key = { idx -> apps[idx]?.packageName ?: "placeholder_$idx" }) { idx ->
+                        val app = apps[idx] ?: return@items
+                        AdaptiveAppCard(app = app, onClick = { onAppClick(app) })
                     }
                 }
             }

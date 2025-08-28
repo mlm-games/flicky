@@ -8,7 +8,7 @@ import kotlinx.serialization.json.Json
 
 @Database(
     entities = [FDroidApp::class],
-    version = 4,
+    version = 6,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -34,6 +34,20 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_apps_summary` ON `apps` (`summary`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_apps_packageName` ON `apps` (`packageName`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_apps_category` ON `apps` (`category`)")
+            }
+        }
+
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE apps ADD COLUMN isCompatible INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE apps ADD COLUMN repositoryUrl TEXT NOT NULL DEFAULT ''")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_apps_repositoryUrl` ON `apps` (`repositoryUrl`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_apps_isCompatible` ON `apps` (`isCompatible`)")
             }
         }
     }

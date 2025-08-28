@@ -1,5 +1,6 @@
 package app.flicky.data.remote
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.util.Log
@@ -28,25 +29,27 @@ class FDroidApi(context: Context) {
     private val client = OkHttpClient.Builder()
         .callTimeout(0, TimeUnit.MILLISECONDS)
         .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(180, TimeUnit.SECONDS)
+        .readTimeout(300, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
         .build()
 
     data class RepoHeaders(val etag: String?, val lastModified: String?)
+    data class FetchResult(val headers: RepoHeaders?, val modified: Boolean)
 
     suspend fun fetchWithCache(
         repo: RepositoryInfo,
         previous: RepoHeaders,
         force: Boolean = false,
-        includeIncompatible: Boolean = false,
+        enableDifferential: Boolean = true,
+        includeIncompatible: Boolean = true,
         onApp: suspend (FDroidApp) -> Unit
-    ): RepoHeaders? = withContext(Dispatchers.IO) {
+    ): FetchResult? = withContext(Dispatchers.IO) {
         val baseUrl = repo.url.trimEnd('/')
 
-        fun buildRequest(): Request {
+        fun buildRequest(method: String): Request {
             val builder = Request.Builder()
                 .url("$baseUrl/index-v2.json")
-                .get()
+                .method(method, null)
                 .header("User-Agent", "Flicky/${BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})")
                 .header("Accept", "application/json")
             if (!force) {
@@ -56,14 +59,28 @@ class FDroidApi(context: Context) {
             return builder.build()
         }
 
+        if (!force && enableDifferential) {
+            try {
+                client.newCall(buildRequest("HEAD")).execute().use { head ->
+                    if (head.code == 304) {
+                        Log.d(TAG, "HEAD 304 Not Modified for ${repo.name}")
+                        return@withContext FetchResult(previous, modified = false)
+                    }
+                    // If HEAD returns 200 (or server doesn’t support 304), proceed to GET below
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "HEAD failed for ${repo.name}: ${e.message} — proceeding with GET")
+            }
+        }
+
         var attempt = 0
         var lastException: Exception? = null
         while (attempt <= MAX_RETRIES) {
             try {
-                client.newCall(buildRequest()).execute().use { resp ->
+                client.newCall(buildRequest("GET")).execute().use { resp ->
                     if (resp.code == 304) {
-                        Log.d(TAG, "Repository ${repo.name} has not changed (304)")
-                        return@withContext previous
+                        Log.d(TAG, "GET 304 Not Modified for ${repo.name}")
+                        return@withContext FetchResult(previous, modified = false)
                     }
 
                     if (!resp.isSuccessful) {
@@ -82,7 +99,7 @@ class FDroidApi(context: Context) {
 
                     val etag = resp.header("ETag")
                     val lastMod = resp.header("Last-Modified")
-                    return@withContext RepoHeaders(etag, lastMod)
+                    return@withContext FetchResult(RepoHeaders(etag, lastMod), modified = true)
                 }
             } catch (e: Exception) {
                 lastException = e
@@ -104,7 +121,7 @@ class FDroidApi(context: Context) {
         baseUrl: String,
         repoName: String,
         onApp: suspend (FDroidApp) -> Unit,
-        includeIncompatible: Boolean = false
+        includeIncompatible: Boolean = true
     ) = withContext(Dispatchers.IO) {
         var totalApps = 0
         val batch = mutableListOf<FDroidApp>()
@@ -127,8 +144,6 @@ class FDroidApi(context: Context) {
                                         batch.forEach { onApp(it) }
                                         batch.clear()
                                     }
-                                } else {
-                                    // skipped
                                 }
                             }
                             reader.endObject()
@@ -151,6 +166,7 @@ class FDroidApi(context: Context) {
      * Best-version selection with size tie-breaker for equal versionCode.
      * Also extracts localized metadata and what's new.
      */
+    @SuppressLint("CheckResult")
     private fun parsePackageStreamingBest(
         reader: JsonReader,
         packageName: String,
@@ -170,14 +186,14 @@ class FDroidApi(context: Context) {
                     while (reader.hasNext()) {
                         reader.nextName() // version hash
                         val v = parseVersion(reader)
-                        if (!isCompatible(v) && !includeIncompatible) continue
+                        // Compute best
                         best = when {
                             best == null -> v
-                            v.versionCode > best!!.versionCode -> v
-                            v.versionCode == best!!.versionCode &&
+                            v.versionCode > best.versionCode -> v
+                            v.versionCode == best.versionCode &&
                                     v.size in 1..Long.MAX_VALUE &&
-                                    best!!.size in 1..Long.MAX_VALUE &&
-                                    v.size < best!!.size -> v
+                                    best.size in 1..Long.MAX_VALUE &&
+                                    v.size < best.size -> v
                             else -> best
                         }
                     }
@@ -214,6 +230,12 @@ class FDroidApi(context: Context) {
             }
         }
 
+        val compatible = isCompatible(bestVersion)
+        if (!compatible && !includeIncompatible) {
+            // Skip if caller really doesn’t want to ingest incompatible records
+            return null
+        }
+
         return FDroidApp(
             packageName = packageName,
             name = meta.name?.get("en-US") ?: meta.name?.values?.firstOrNull() ?: packageName,
@@ -234,8 +256,10 @@ class FDroidApi(context: Context) {
             screenshots = shotUrls,
             antiFeatures = meta.antiFeatures,
             repository = repoName,
+            repositoryUrl = baseUrl,
             sha256 = bestVersion.sha256,
-            whatsNew = bestVersion.whatsNew ?: ""
+            whatsNew = bestVersion.whatsNew ?: "",
+            isCompatible = compatible
         )
     }
 
@@ -565,3 +589,4 @@ class FDroidApi(context: Context) {
         return list
     }
 }
+

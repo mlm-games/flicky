@@ -1,5 +1,6 @@
 package app.flicky.data.local
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -26,4 +27,43 @@ interface AppDao {
 
     @Query("DELETE FROM apps")
     suspend fun clear()
+
+    @Query("DELETE FROM apps WHERE repositoryUrl = :repoUrl")
+    suspend fun deleteByRepositoryUrl(repoUrl: String)
+
+    @Query("""
+SELECT * FROM apps
+WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
+AND (:hideAnti = 0 OR antiFeatures = '[]')
+AND (:showIncompat = 1 OR isCompatible = 1)
+ORDER BY lastUpdated DESC
+""")
+    fun pagingByUpdated(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
+
+    @Query("""
+SELECT * FROM apps
+WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
+AND (:hideAnti = 0 OR antiFeatures = '[]')
+AND (:showIncompat = 1 OR isCompatible = 1)
+ORDER BY name COLLATE NOCASE ASC
+""")
+    fun pagingByName(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
+
+    @Query("""
+SELECT * FROM apps
+WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
+AND (:hideAnti = 0 OR antiFeatures = '[]')
+AND (:showIncompat = 1 OR isCompatible = 1)
+ORDER BY size ASC
+""")
+    fun pagingBySize(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
+
+    @Query("""
+SELECT * FROM apps
+WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
+AND (:hideAnti = 0 OR antiFeatures = '[]')
+AND (:showIncompat = 1 OR isCompatible = 1)
+ORDER BY added DESC
+""")
+    fun pagingByAdded(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
 }

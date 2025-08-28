@@ -153,6 +153,14 @@ data class AppSettings(
 //    )
     val ignoreSignature: Boolean = false,
 
+    @Setting(
+        title = "Differential sync",
+        description = "Use HTTP cache checks (ETag/Last-Modified) to skip unchanged repos",
+        category = SettingCategory.DOWNLOADS,
+        type = SettingType.TOGGLE
+    )
+    val differentialSync: Boolean = true,
+
     // Misc (advanced, not needed for ui)
 //    @Setting(
 //        title = "Use proxy",

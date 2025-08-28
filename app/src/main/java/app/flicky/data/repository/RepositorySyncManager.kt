@@ -5,6 +5,7 @@ import androidx.room.withTransaction
 import app.flicky.AppGraph
 import app.flicky.data.local.AppDao
 import app.flicky.data.model.FDroidApp
+import app.flicky.data.remote.FDroidApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -60,15 +61,11 @@ class RepositorySyncManager(
             updateState { SyncState(active = true, total = repos.size, message = "Starting sync...") }
 
             var totalApps = 0
-            var didAnySuccess = false
+            var anySuccess = false
 
-            // Clear once up-front on force, not inside insertChunk
-            if (force) {
-                AppGraph.db.withTransaction {
-                    dao.clear()
-                }
-                headersStore.clear() // forces every repo
-            }
+            val appSettings = settings.settingsFlow.first()
+            val includeIncompatible = true // ingest all; UI filters by isCompatible
+            val differential = appSettings.differentialSync
 
             suspend fun insertChunk(chunk: MutableList<FDroidApp>) {
                 if (chunk.isEmpty()) return
@@ -84,39 +81,81 @@ class RepositorySyncManager(
                 suspend fun flush() = insertChunk(buffer)
 
                 try {
-                    updateState { it.copy(repoName = repo.name, current = index, progress = index.toFloat()/repos.size, message = "Syncing ${repo.name} (${index+1}/${repos.size})") }
+                    updateState {
+                        it.copy(
+                            repoName = repo.name,
+                            current = index,
+                            total = repos.size,
+                            progress = index.toFloat() / repos.size,
+                            message = "Syncing ${repo.name} (${index + 1}/${repos.size})"
+                        )
+                    }
 
-                    val prevHeader = if (force) RepoHeader(null, null) else headersStore.get(repo.url)
-                    val includeIncompatible = settings.settingsFlow.first().showIncompatible
+                    val prevHeader = headersStore.get(repo.url)
 
-                    val headers = api.fetchWithCache(
+                    val result: FDroidApi.FetchResult? = api.fetchWithCache(
                         repo = repo,
-                        previous = app.flicky.data.remote.FDroidApi.RepoHeaders(prevHeader.etag, prevHeader.lastModified),
+                        previous = FDroidApi.RepoHeaders(prevHeader.etag, prevHeader.lastModified),
                         force = force,
+                        enableDifferential = differential,
                         includeIncompatible = includeIncompatible
                     ) { app ->
                         buffer.add(app)
                         repoCount++
                         if (buffer.size >= DB_CHUNK) {
-                            insertChunk(buffer); didAnySuccess = true
+                            dao.upsertAll(buffer)
+                            totalApps += buffer.size
+                            buffer.clear()
                         }
                     }
 
-                    flush(); didAnySuccess = didAnySuccess || repoCount > 0
-                    if (headers != null) headersStore.put(repo.url, RepoHeader(headers.etag, headers.lastModified))
+                    // If result is null => failure; if modified=false => no DB write
+                    when {
+                        result == null -> {
+                            // Commit remainder even on failure
+                            flush()
+                            onRepoError?.invoke(repo.name, "Network or parse error")
+                            updateState { it.copy(message = "Error: ${repo.name}: failed to fetch") }
+                        }
+                        !result.modified && !force -> {
+                            // Not modified — skip DB writes for this repo
+                            anySuccess = true
+                            updateState { it.copy(message = "Unchanged: ${repo.name}") }
+                        }
+                        else -> {
+                            // Modified or force refresh — replace this repo’s data atomically
+                            AppGraph.db.withTransaction {
+                                dao.deleteByRepositoryUrl(repo.url)
+                                flush()
+                            }
+                            anySuccess = true
+                            result.headers?.let { headersStore.put(repo.url, RepoHeader(it.etag, it.lastModified)) }
+                        }
+                    }
                 } catch (e: Exception) {
                     // commit remainder even on failure
                     flush()
                     updateState { it.copy(message = "Error: ${repo.name}: ${e.message ?: "Unknown error"}") }
                     onRepoError?.invoke(repo.name, e.message ?: "Unknown error")
                 } finally {
-                    updateState { it.copy(current = index + 1, progress = (index + 1).toFloat() / repos.size, message = "Finished ${repo.name} (${index + 1}/${repos.size})") }
+                    updateState {
+                        it.copy(
+                            current = index + 1,
+                            progress = (index + 1).toFloat() / repos.size,
+                            message = "Finished ${repo.name} (${index + 1}/${repos.size})"
+                        )
+                    }
                 }
             }
 
-            settings.setLastSync(System.currentTimeMillis())
-            updateState { it.copy(active = false, progress = 1f, message = "Sync complete: $totalApps apps") }
-            Log.d(TAG, "Sync complete: $totalApps apps from ${repos.size} repositories")
+            if (anySuccess) {
+                settings.setLastSync(System.currentTimeMillis())
+                updateState { it.copy(active = false, progress = 1f, message = "Sync complete: $totalApps apps") }
+                Log.d(TAG, "Sync complete: $totalApps apps from ${repos.size} repositories")
+            } else {
+                updateState { it.copy(active = false, message = "Sync failed") }
+                Log.w(TAG, "Sync finished with no successful repositories")
+            }
             totalApps
         }
     }

@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.paging.compose.collectAsLazyPagingItems
 import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.model.SortOption
 import app.flicky.helper.DeviceUtils
@@ -124,7 +125,7 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         browseContent = {
                             BrowseScreen(
-                                apps = browseUi.apps,
+                                apps = browseViewModel.paged.collectAsLazyPagingItems(),
                                 query = query,
                                 sort = sort,
                                 onSortChange = { s -> sort = s; browseViewModel.setSort(s) },
@@ -154,6 +155,7 @@ class MainActivity : ComponentActivity() {
                                 installProgress = updatesUi.installProgress,
                                 installedVersionsCode = updatesUi.installedVersionsCode,
                                 installedVersionsName = updatesUi.installedVersionsName,
+                                ignoredPrefs = updatesUi.ignoredPrefs,
                                 onUpdateAll = {
                                     lifecycleScope.launch {
                                         for (app in updatesUi.updates) {
@@ -173,6 +175,15 @@ class MainActivity : ComponentActivity() {
                                         }
                                         updatesViewModel.setInstalling(app.packageName, false)
                                     }
+                                },
+                                onIgnoreThisVersion = { app ->
+                                    updatesViewModel.ignoreThisVersion(app.packageName, app.versionCode.toLong())
+                                },
+                                onIgnoreAll = { app ->
+                                    updatesViewModel.ignoreAllUpdates(app.packageName)
+                                },
+                                onStopIgnoring = { app ->
+                                    updatesViewModel.stopIgnoring(app.packageName)
                                 },
                                 onAppClick = { app ->
                                     navController.navigate(Routes.detail(app.packageName))

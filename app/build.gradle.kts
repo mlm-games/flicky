@@ -157,6 +157,10 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.recyclerview)
 
+    implementation(libs.androidx.paging.runtime.ktx)
+    implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.room.paging)
+
     // Android lifecycle
     implementation(libs.lifecycle.extensions)
     implementation(libs.lifecycle.viewmodel.ktx)

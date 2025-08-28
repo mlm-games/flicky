@@ -1,17 +1,15 @@
 package app.flicky.ui.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.dp
-import app.flicky.data.model.FDroidApp
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import app.flicky.data.external.UpdatesPreference
+import app.flicky.data.model.FDroidApp
 import app.flicky.ui.components.MyScreenScaffold
 import coil.compose.AsyncImage
 
@@ -26,9 +24,13 @@ fun UpdatesScreen(
     installingPackages: Set<String> = emptySet(),
     installProgress: Map<String, Float> = emptyMap(),
     installedVersionsCode: Map<String, Long> = emptyMap(),
-    installedVersionsName: Map<String, String> = emptyMap()
+    installedVersionsName: Map<String, String> = emptyMap(),
+    ignoredPrefs: Map<String, UpdatesPreference> = emptyMap(),
+    onIgnoreThisVersion: (FDroidApp) -> Unit = {},
+    onIgnoreAll: (FDroidApp) -> Unit = {},
+    onStopIgnoring: (FDroidApp) -> Unit = {}
 ) {
-    val cfg = LocalConfiguration.current
+    val cfg = androidx.compose.ui.platform.LocalConfiguration.current
     val gridCells = remember(cfg.screenWidthDp) { GridCells.Adaptive(minSize = 320.dp) }
 
     MyScreenScaffold(
@@ -78,6 +80,7 @@ fun UpdatesScreen(
                 items(updates, key = { "update_${it.packageName}" }) { app ->
                     val installedVn = installedVersionsName[app.packageName]
                     val installedVc = installedVersionsCode[app.packageName]
+                    val pref = ignoredPrefs[app.packageName]
                     UpdateCard(
                         app = app,
                         installing = app.packageName in installingPackages,
@@ -85,7 +88,11 @@ fun UpdatesScreen(
                         installedVersionName = installedVn,
                         installedVersionCode = installedVc,
                         onUpdate = { onUpdateOne(app) },
-                        onClick = { onAppClick(app) }
+                        onClick = { onAppClick(app) },
+                        pref = pref,
+                        onIgnoreThisVersion = { onIgnoreThisVersion(app) },
+                        onIgnoreAll = { onIgnoreAll(app) },
+                        onStopIgnoring = { onStopIgnoring(app) }
                     )
                 }
             }
@@ -124,8 +131,14 @@ private fun UpdateCard(
     installedVersionName: String?,
     installedVersionCode: Long?,
     onUpdate: () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    pref: UpdatesPreference?,
+    onIgnoreThisVersion: () -> Unit,
+    onIgnoreAll: () -> Unit,
+    onStopIgnoring: () -> Unit
 ) {
+    var menuOpen by remember { mutableStateOf(false) }
+
     ElevatedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -174,6 +187,31 @@ private fun UpdateCard(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
+                }
+                Box {
+                    IconButton(onClick = { menuOpen = true }) {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.MoreVert,
+                            contentDescription = "More"
+                        )
+                    }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        if (pref?.ignoreUpdates == true) {
+                            DropdownMenuItem(
+                                text = { Text("Stop ignoring updates") },
+                                onClick = { menuOpen = false; onStopIgnoring() }
+                            )
+                        } else {
+                            DropdownMenuItem(
+                                text = { Text("Ignore this version") },
+                                onClick = { menuOpen = false; onIgnoreThisVersion() }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Ignore all updates") },
+                                onClick = { menuOpen = false; onIgnoreAll() }
+                            )
+                        }
+                    }
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -243,7 +281,6 @@ private fun InstalledCard(
                 val installedLabel = installedVersionName?.takeIf { it.isNotBlank() }
                     ?: installedVersionCode?.let { "v$it" }
                     ?: "Unknown"
-                // Show installed, and if repo version differs, show arrow to new
                 if (installedLabel == app.version) {
                     Text(
                         "Installed: $installedLabel",

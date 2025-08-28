@@ -12,7 +12,9 @@ import kotlinx.serialization.Serializable
         Index(value = ["name"]),
         Index(value = ["summary"]),
         Index(value = ["packageName"]),
-        Index(value = ["category"])
+        Index(value = ["category"]),
+        Index(value = ["repositoryUrl"]),
+        Index(value = ["isCompatible"])
     ]
 )
 data class FDroidApp(
@@ -37,6 +39,8 @@ data class FDroidApp(
     val downloads: Long = 0,
     val isInstalled: Boolean = false,
     val repository: String = "F-Droid",
+    val repositoryUrl: String = "",
     val sha256: String = "",
-    val whatsNew: String = ""
+    val whatsNew: String = "",
+    val isCompatible: Boolean = true
 )
