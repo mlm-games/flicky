@@ -38,6 +38,7 @@ class FDroidApi(context: Context) {
         repo: RepositoryInfo,
         previous: RepoHeaders,
         force: Boolean = false,
+        includeIncompatible: Boolean = false,
         onApp: suspend (FDroidApp) -> Unit
     ): RepoHeaders? = withContext(Dispatchers.IO) {
         val baseUrl = repo.url.trimEnd('/')
@@ -77,7 +78,7 @@ class FDroidApi(context: Context) {
                     }
 
                     Log.d(TAG, "Parsing index for ${repo.name}")
-                    parseIndexV2(resp, baseUrl, repo.name, onApp)
+                    parseIndexV2(resp, baseUrl, repo.name, onApp, includeIncompatible)
 
                     val etag = resp.header("ETag")
                     val lastMod = resp.header("Last-Modified")
@@ -102,7 +103,8 @@ class FDroidApi(context: Context) {
         resp: Response,
         baseUrl: String,
         repoName: String,
-        onApp: suspend (FDroidApp) -> Unit
+        onApp: suspend (FDroidApp) -> Unit,
+        includeIncompatible: Boolean = false
     ) = withContext(Dispatchers.IO) {
         var totalApps = 0
         val batch = mutableListOf<FDroidApp>()
@@ -117,7 +119,7 @@ class FDroidApi(context: Context) {
                             reader.beginObject()
                             while (reader.hasNext()) {
                                 val packageName = reader.nextName()
-                                val app = parsePackageStreamingBest(reader, packageName, baseUrl, repoName)
+                                val app = parsePackageStreamingBest(reader, packageName, baseUrl, repoName, includeIncompatible)
                                 if (app != null) {
                                     batch.add(app)
                                     totalApps++
@@ -153,7 +155,8 @@ class FDroidApi(context: Context) {
         reader: JsonReader,
         packageName: String,
         baseUrl: String,
-        repoName: String
+        repoName: String,
+        includeIncompatible: Boolean
     ): FDroidApp? {
         var metadata: Metadata? = null
         var best: Version? = null
@@ -167,7 +170,7 @@ class FDroidApi(context: Context) {
                     while (reader.hasNext()) {
                         reader.nextName() // version hash
                         val v = parseVersion(reader)
-                        if (!isCompatible(v)) continue
+                        if (!isCompatible(v) && !includeIncompatible) continue
                         best = when {
                             best == null -> v
                             v.versionCode > best!!.versionCode -> v

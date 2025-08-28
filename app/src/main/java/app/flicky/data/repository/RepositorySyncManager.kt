@@ -57,101 +57,66 @@ class RepositorySyncManager(
                 throw IllegalStateException("No enabled repositories")
             }
 
-            updateState { SyncState(active = true, repoName = "", current = 0, total = repos.size, progress = 0f, message = "Starting sync...") }
+            updateState { SyncState(active = true, total = repos.size, message = "Starting sync...") }
 
-            val totalRepos = repos.size
             var totalApps = 0
             var didAnySuccess = false
-            var didClear = false // clear DB once before first successful insert if force==true
+
+            // Clear once up-front on force, not inside insertChunk
+            if (force) {
+                AppGraph.db.withTransaction {
+                    dao.clear()
+                }
+                headersStore.clear() // forces every repo
+            }
 
             suspend fun insertChunk(chunk: MutableList<FDroidApp>) {
                 if (chunk.isEmpty()) return
-                if (force && !didClear) {
-                    AppGraph.db.withTransaction {
-                        dao.clear()
-                        dao.upsertAll(chunk)
-                    }
-                    didClear = true
-                } else {
-                    dao.upsertAll(chunk)
-                }
+                dao.upsertAll(chunk)
                 totalApps += chunk.size
                 chunk.clear()
             }
 
             repos.forEachIndexed { index, repo ->
-                Log.d(TAG, "Syncing repository ${index + 1}/$totalRepos: ${repo.name}")
-                val startProgress = index.toFloat() / totalRepos.toFloat()
-                updateState {
-                    it.copy(
-                        active = true,
-                        repoName = repo.name,
-                        current = index,
-                        total = totalRepos,
-                        progress = startProgress,
-                        message = "Syncing ${repo.name} (${index}/${totalRepos})..."
-                    )
-                }
-                onProgress?.invoke(index, totalRepos, repo.name)
+                val buffer = mutableListOf<FDroidApp>()
+                var repoCount = 0
+
+                suspend fun flush() = insertChunk(buffer)
 
                 try {
-                    val prevHeader = if (force) {
-                        RepoHeader(null, null)
-                    } else {
-                        headersStore.get(repo.url)
-                    }
+                    updateState { it.copy(repoName = repo.name, current = index, progress = index.toFloat()/repos.size, message = "Syncing ${repo.name} (${index+1}/${repos.size})") }
 
-                    val buffer = mutableListOf<FDroidApp>()
-                    var repoCount = 0
+                    val prevHeader = if (force) RepoHeader(null, null) else headersStore.get(repo.url)
+                    val includeIncompatible = settings.settingsFlow.first().showIncompatible
 
                     val headers = api.fetchWithCache(
                         repo = repo,
                         previous = app.flicky.data.remote.FDroidApi.RepoHeaders(prevHeader.etag, prevHeader.lastModified),
-                        force = force
+                        force = force,
+                        includeIncompatible = includeIncompatible
                     ) { app ->
                         buffer.add(app)
                         repoCount++
                         if (buffer.size >= DB_CHUNK) {
-                            insertChunk(buffer)
-                            didAnySuccess = true
+                            insertChunk(buffer); didAnySuccess = true
                         }
                     }
 
-                    if (buffer.isNotEmpty()) {
-                        insertChunk(buffer)
-                        didAnySuccess = true
-                    }
-
-                    Log.d(TAG, "Repository ${repo.name} processed $repoCount apps")
-
-                    if (headers != null) {
-                        headersStore.put(repo.url, RepoHeader(headers.etag, headers.lastModified))
-                        Log.d(TAG, "Updated cache headers for ${repo.name}")
-                    }
+                    flush(); didAnySuccess = didAnySuccess || repoCount > 0
+                    if (headers != null) headersStore.put(repo.url, RepoHeader(headers.etag, headers.lastModified))
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error syncing ${repo.name}", e)
+                    // commit remainder even on failure
+                    flush()
+                    updateState { it.copy(message = "Error: ${repo.name}: ${e.message ?: "Unknown error"}") }
                     onRepoError?.invoke(repo.name, e.message ?: "Unknown error")
-                    updateState {
-                        it.copy(
-                            message = "Error: ${repo.name}: ${e.message ?: "Unknown error"}"
-                        )
-                    }
+                } finally {
+                    updateState { it.copy(current = index + 1, progress = (index + 1).toFloat() / repos.size, message = "Finished ${repo.name} (${index + 1}/${repos.size})") }
                 }
-
-                val endProgress = (index + 1).toFloat() / totalRepos.toFloat()
-                updateState {
-                    it.copy(
-                        current = index + 1,
-                        progress = endProgress,
-                        message = "Finished ${repo.name} (${index + 1}/${totalRepos})"
-                    )
-                }
-                onProgress?.invoke(index + 1, totalRepos, repo.name)
             }
 
             settings.setLastSync(System.currentTimeMillis())
             updateState { it.copy(active = false, progress = 1f, message = "Sync complete: $totalApps apps") }
-            Log.d(TAG, "Sync complete: $totalApps apps from ${repos.size} repositories (cleared=$didClear)")
+            Log.d(TAG, "Sync complete: $totalApps apps from ${repos.size} repositories")
             totalApps
         }
     }

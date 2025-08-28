@@ -131,11 +131,11 @@ data class AppSettings(
     )
     val hideAntiFeatures: Boolean = false,
 
-//    @Setting(
-//        title = "Show incompatible versions",
-//        category = SettingCategory.FILTERS,
-//        type = SettingType.TOGGLE
-//    )
+    @Setting(
+        title = "Show incompatible versions",
+        category = SettingCategory.FILTERS,
+        type = SettingType.TOGGLE
+    )
     val showIncompatible: Boolean = false,
 
 //    @Setting(
