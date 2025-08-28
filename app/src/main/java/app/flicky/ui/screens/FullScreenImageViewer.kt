@@ -54,7 +54,6 @@ fun FullscreenImageViewer(
     val safeInitial = initialPage.coerceIn(0, images.lastIndex)
     val pagerState = rememberPagerState(initialPage = safeInitial, pageCount = { images.size })
 
-    // Back closes the viewer even if focus sits on the TopAppBar
     BackHandler { onClose() }
 
     val handleKey: (KeyEvent) -> Boolean = { ev ->

@@ -1,15 +1,21 @@
 package app.flicky.ui.screens
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.flicky.data.external.UpdatesPreference
 import app.flicky.data.model.FDroidApp
+import app.flicky.helper.DeviceUtils
 import app.flicky.ui.components.MyScreenScaffold
 import coil.compose.AsyncImage
 
@@ -137,11 +143,16 @@ private fun UpdateCard(
     onIgnoreAll: () -> Unit,
     onStopIgnoring: () -> Unit
 ) {
+    val ctx = LocalContext.current
+    val isTV = remember { DeviceUtils.isTV(ctx.packageManager) }
     var menuOpen by remember { mutableStateOf(false) }
 
     ElevatedCard(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        // Card is NOT clickable; children are the focus/interaction points
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusGroup() // predictable DPAD traversal among children
+            .focusProperties { canFocus = false },
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
@@ -152,51 +163,72 @@ private fun UpdateCard(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                AsyncImage(
-                    model = app.iconUrl,
-                    contentDescription = app.name,
-                    modifier = Modifier.size(56.dp)
-                )
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        app.name,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    // Show both installed and new versions
-                    val installedLabel = installedVersionName?.takeIf { it.isNotBlank() }
-                        ?: installedVersionCode?.let { "v$it" }
-                    installedLabel?.let {
-                        Text(
-                            "Installed: $it",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                Column(
+                    modifier = Modifier
+                        .width(0.dp)
+                        .weight(1f)
+                        .then(
+                            if (!isTV) Modifier.clickable(onClick = onClick)
+                            else Modifier
+                                .focusProperties { canFocus = false }
                         )
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        AsyncImage(
+                            model = app.iconUrl,
+                            contentDescription = app.name,
+                            modifier = Modifier.size(56.dp)
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                app.name,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            val installedLabel = installedVersionName?.takeIf { it.isNotBlank() }
+                                ?: installedVersionCode?.let { "v$it" }
+                            installedLabel?.let {
+                                Text(
+                                    "Installed: $it",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Text(
+                                "New: ${app.version}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                app.summary,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
-                    Text(
-                        "New: ${app.version}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        app.summary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
                 }
+
                 Box {
-                    IconButton(onClick = { menuOpen = true }) {
+                    IconButton(
+                        onClick = { menuOpen = true },
+                        modifier = Modifier.focusable() // explicit TV focus target
+                    ) {
                         Icon(
                             imageVector = androidx.compose.material.icons.Icons.Default.MoreVert,
                             contentDescription = "More"
                         )
                     }
+
+                    val isEffectivelyIgnored =
+                        pref?.ignoreUpdates == true ||
+                                ((pref?.ignoreVersionCode ?: 0) >= app.versionCode.toLong())
+
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                        if (pref?.ignoreUpdates == true) {
+                        if (isEffectivelyIgnored) {
                             DropdownMenuItem(
                                 text = { Text("Stop ignoring updates") },
                                 onClick = { menuOpen = false; onStopIgnoring() }
@@ -214,7 +246,9 @@ private fun UpdateCard(
                     }
                 }
             }
+
             Spacer(Modifier.height(8.dp))
+
             if (installing) {
                 LinearProgressIndicator(
                     progress = { progress },
@@ -231,7 +265,9 @@ private fun UpdateCard(
             } else {
                 Button(
                     onClick = onUpdate,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusable(), // DPAD lands here; Enter triggers button, not the card
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
