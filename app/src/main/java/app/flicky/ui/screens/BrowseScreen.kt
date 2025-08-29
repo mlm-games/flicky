@@ -1,6 +1,7 @@
 package app.flicky.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,12 +13,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
+import app.flicky.R
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.ui.components.VoiceSearchButton
 import app.flicky.ui.components.cards.AdaptiveAppCard
+import app.flicky.viewmodel.UiText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +38,7 @@ fun BrowseScreen(
     isSyncing: Boolean,
     syncStatus: String,
     progress: Float,
-    errorMessage: String?,
+    errorMessage: UiText?,
     onDismissError: () -> Unit
 ) {
     val widthDp = LocalConfiguration.current.screenWidthDp
@@ -43,8 +47,9 @@ fun BrowseScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showSortDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let {
+    val resolvedError = errorMessage?.asString()
+    LaunchedEffect(resolvedError) {
+        resolvedError?.let {
             snackbarHostState.showSnackbar(it)
             onDismissError()
         }
@@ -54,7 +59,6 @@ fun BrowseScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             Column {
-                // Search
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.surface,
@@ -67,20 +71,19 @@ fun BrowseScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Search Field
                         OutlinedTextField(
                             value = query,
                             onValueChange = onSearchChange,
                             placeholder = {
                                 Text(
-                                    "Search apps...",
+                                    stringResource(R.string.search_hint),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             },
                             leadingIcon = {
                                 Icon(
                                     Icons.Default.Search,
-                                    contentDescription = "Search",
+                                    contentDescription = stringResource(R.string.search_hint),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             },
@@ -89,7 +92,7 @@ fun BrowseScreen(
                                     IconButton(onClick = { onSearchChange("") }) {
                                         Icon(
                                             Icons.Default.Clear,
-                                            contentDescription = "Clear",
+                                            contentDescription = stringResource(R.string.action_clear),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
@@ -112,7 +115,6 @@ fun BrowseScreen(
                     }
                 }
 
-                // Action Bar Row
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
@@ -124,53 +126,36 @@ fun BrowseScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Sort Button
                         AssistChip(
                             onClick = { showSortDialog = true },
-                            label = { Text("Sort: ${sort.name}") },
+                            label = { Text(stringResource(R.string.sort_prefix, sort.name)) },
                             leadingIcon = {
                                 Icon(
                                     Icons.AutoMirrored.Filled.Sort,
-                                    contentDescription = "Sort",
+                                    contentDescription = stringResource(R.string.sort_by),
                                     modifier = Modifier.size(18.dp)
                                 )
-                            },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                leadingIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
+                            }
                         )
 
                         Spacer(Modifier.weight(1f))
 
-                        // Sync Button
                         FilledTonalButton(
                             onClick = onSyncClick,
-                            enabled = !isSyncing,
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
+                            enabled = !isSyncing
                         ) {
                             if (isSyncing) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                                 Spacer(Modifier.width(8.dp))
                             }
-                            Text(if (isSyncing) "Syncing..." else "Sync")
+                            Text(if (isSyncing) stringResource(R.string.syncing) else stringResource(R.string.action_sync))
                         }
 
-                        // More Menu
                         Box {
                             IconButton(onClick = { menuOpen = true }) {
                                 Icon(
                                     Icons.Default.MoreVert,
-                                    contentDescription = "More",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    contentDescription = stringResource(R.string.more_options)
                                 )
                             }
                             DropdownMenu(
@@ -178,7 +163,7 @@ fun BrowseScreen(
                                 onDismissRequest = { menuOpen = false }
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Force Sync") },
+                                    text = { Text(stringResource(R.string.force_sync)) },
                                     onClick = {
                                         menuOpen = false
                                         onForceSyncClick()
@@ -188,10 +173,10 @@ fun BrowseScreen(
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Clear All Apps") },
+                                    text = { Text(stringResource(R.string.clear_all_apps)) },
                                     onClick = {
                                         menuOpen = false
-                                        onClearAppsClick
+                                        onClearAppsClick()
                                     },
                                     leadingIcon = {
                                         Icon(Icons.Default.ClearAll, contentDescription = null)
@@ -202,34 +187,29 @@ fun BrowseScreen(
                     }
                 }
 
-                // Progress Bar
                 if (isSyncing) {
                     LinearProgressIndicator(
                         progress = { animatedProgress },
-                        modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = syncStatus,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (syncStatus.isNotBlank()) {
+                        Text(
+                            text = syncStatus,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+                    }
                 }
             }
         }
     ) { padding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+            modifier = Modifier.fillMaxSize().padding(padding)
         ) {
-            if (apps.itemCount == 0) {
+            if (apps.itemCount == 0 && !isSyncing) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
+                    modifier = Modifier.fillMaxSize().padding(32.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -241,13 +221,13 @@ fun BrowseScreen(
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        "No apps found",
+                        stringResource(R.string.no_apps_found),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (query.isNotEmpty()) {
                         Text(
-                            "Try a different search term",
+                            stringResource(R.string.try_different_search),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -261,7 +241,6 @@ fun BrowseScreen(
                     widthDp > 600 -> 3
                     else -> 2
                 }
-
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(columns),
                     contentPadding = PaddingValues(16.dp),
@@ -269,15 +248,15 @@ fun BrowseScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(apps.itemCount, key = { idx -> apps[idx]?.packageName ?: "placeholder_$idx" }) { idx ->
-                        val app = apps[idx] ?: return@items
-                        AdaptiveAppCard(app = app, onClick = { onAppClick(app) })
+                        apps[idx]?.let { app ->
+                            AdaptiveAppCard(app = app, onClick = { onAppClick(app) })
+                        }
                     }
                 }
             }
         }
     }
 
-    // Sort dialog
     if (showSortDialog) {
         SortDialog(
             currentSort = sort,
@@ -298,14 +277,18 @@ private fun SortDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Sort by") },
+        title = { Text(stringResource(R.string.sort_by)) },
         text = {
             Column {
                 SortOption.entries.forEach { option ->
+                    val optionText = when (option) {
+                        SortOption.Name -> stringResource(R.string.sort_name)
+                        SortOption.Updated -> stringResource(R.string.sort_updated)
+                        SortOption.Size -> stringResource(R.string.sort_size)
+                        SortOption.Added -> stringResource(R.string.sort_added)
+                    }
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth().clickable { onSortSelected(option) }.padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
@@ -313,15 +296,22 @@ private fun SortDialog(
                             onClick = { onSortSelected(option) }
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text(option.name)
+                        Text(optionText)
                     }
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )
+}
+
+@Composable
+fun UiText.asString(): String {
+    return when (this) {
+        is UiText.StringResource -> stringResource(this.resId, *this.args.toTypedArray())
+    }
 }

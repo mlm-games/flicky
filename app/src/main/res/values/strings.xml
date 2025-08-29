@@ -131,4 +131,9 @@
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Network or parse error</string>
     <string name="error_unknown">Unknown error</string>
+
+    <string name="progress_percentage" translatable="false">%1$d%%</string>
+    <string name="version_update_format" translatable="false">%1$s → %2$s</string>
+    <string name="share_subject_package" translatable="false">Package: %1$s</string>
+    <string name="share_subject_source" translatable="false">Found in: %1$s</string>
 </resources>

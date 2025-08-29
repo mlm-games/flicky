@@ -1,9 +1,11 @@
 package app.flicky.viewmodel
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import app.flicky.R
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppRepository
@@ -15,25 +17,18 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class BrowseUiState(
-    val query: String = "",
-    val sort: SortOption = SortOption.Updated,
-    val apps: List<FDroidApp> = emptyList(),
-    val categories: List<String> = emptyList(),
     val isSyncing: Boolean = false,
-    val status: String = "",
+    val statusText: String = "",
+    val statusTextRes: UiText? = null,
     val progress: Float = 0f,
-    val errorMessage: String? = null
+    val errorMessage: UiText? = null
 )
 
-data class Quintuple<A, B, C, D, E>(
-    val first: A,
-    val second: B,
-    val third: C,
-    val fourth: D,
-    val fifth: E
-)
+sealed class UiText {
+    data class StringResource(@param:StringRes val resId: Int, val args: List<Any> = emptyList()) : UiText()
+}
 
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class BrowseViewModel(
     private val repo: AppRepository,
     private val sync: RepositorySyncManager,
@@ -41,101 +36,52 @@ class BrowseViewModel(
 ) : ViewModel() {
 
     private val _query = MutableStateFlow("")
+    val query: StateFlow<String> = _query.asStateFlow()
+
     private val _sort = MutableStateFlow(SortOption.Updated)
-    private val _isSyncing = MutableStateFlow(false)
-    private val _status = MutableStateFlow("")
-    private val _progress = MutableStateFlow(0f)
-    private val _error = MutableStateFlow<String?>(null)
+    val sort: StateFlow<SortOption> = _sort.asStateFlow()
 
-    private val hideAnti = settings.settingsFlow.map { it.hideAntiFeatures }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
-    private val showIncompat = settings.settingsFlow.map { it.showIncompatible }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    private val _uiState = MutableStateFlow(BrowseUiState())
+    val uiState: StateFlow<BrowseUiState> = _uiState.asStateFlow()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val paged: StateFlow<PagingData<FDroidApp>> =
-        combine(_query, _sort, hideAnti, showIncompat) { q, s, h, si -> arrayOf(q, s, h, si) }
-            .flatMapLatest { (q, s, h, si) ->
-                @Suppress("UNCHECKED_CAST")
-                repo.pagedAppsFlow(q as String, s as SortOption, h as Boolean, si as Boolean)
-            }
+    val pagedApps: StateFlow<PagingData<FDroidApp>> =
+        combine(
+            _query.debounce(300),
+            _sort,
+            settings.settingsFlow.map { it.hideAntiFeatures }.distinctUntilChanged(),
+            settings.settingsFlow.map { it.showIncompatible }.distinctUntilChanged()
+        ) { query, sort, hideAnti, showIncompat ->
+            repo.pagedAppsFlow(query, sort, hideAnti, showIncompat)
+        }.flatMapLatest { it }
             .cachedIn(viewModelScope)
             .stateIn(viewModelScope, SharingStarted.Lazily, PagingData.empty())
 
-    private val categoriesFlow =
-        repo.categories().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val appsFlow: StateFlow<List<FDroidApp>> =
-        combine(_query, _sort, hideAnti, showIncompat) { q, s, hide, si -> arrayOf(q, s, hide, si) }
-            .flatMapLatest { (q, s, hide, si) ->
-                @Suppress("UNCHECKED_CAST")
-                repo.appsFlow(q as String, s as SortOption, hide as Boolean, si as Boolean)
-            }
-            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-    val uiState: StateFlow<BrowseUiState> =
-        combine(
-            combine(_query, _sort, appsFlow) { q, s, apps -> Triple(q, s, apps) },
-            combine(
-                categoriesFlow,
-                _isSyncing,
-                _status,
-                _progress,
-                _error
-            ) { cats, syncing, status, prog, err ->
-                Quintuple(cats, syncing, status, prog, err)
-            }
-        ) { first, second ->
-            BrowseUiState(
-                query = first.first,
-                sort = first.second,
-                apps = first.third,
-                categories = second.first,
-                isSyncing = second.second,
-                status = second.third,
-                progress = second.fourth,
-                errorMessage = second.fifth
-            )
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, BrowseUiState())
-
     init {
-        // Initialize sort from settings.defaultSort
         viewModelScope.launch {
-            settings.settingsFlow.collect { s ->
-                val sort = when (s.defaultSort) {
-                    0 -> SortOption.Name
-                    1 -> SortOption.Updated
-                    2 -> SortOption.Size
-                    3 -> SortOption.Added
-                    else -> SortOption.Updated
-                }
-                _sort.value = sort
-            }
-        }
-
-        // Trigger resync when repositories change
-        viewModelScope.launch {
-            settings.repositoriesFlow
-                .map { repos -> repos.filter { it.enabled }.map { it.url }.sorted() }
+            settings.settingsFlow
+                .map { it.defaultSort }
                 .distinctUntilChanged()
-                .drop(1)
-                .debounce(350)
-                .collect {
-                    sync.cancelCurrentSync()
-                    forceSyncRepos()
+                .collect { sortIndex ->
+                    _sort.value = when (sortIndex) {
+                        0 -> SortOption.Name
+                        1 -> SortOption.Updated
+                        2 -> SortOption.Size
+                        3 -> SortOption.Added
+                        else -> SortOption.Updated
+                    }
                 }
         }
 
-        // Collect global sync state so UI reflects WorkManager-driven syncs too
         viewModelScope.launch {
             sync.state.collect { st ->
-                _isSyncing.value = st.active
-                _progress.value = st.progress
-                _status.value = if (st.active) {
-                    "Syncing ${st.repoName} (${st.current}/${st.total})"
-                } else {
-                    st.message
+                _uiState.update {
+                    it.copy(
+                        isSyncing = st.active,
+                        progress = st.progress,
+                        statusTextRes = if (st.active && st.repoName.isNotBlank()) {
+                            UiText.StringResource(R.string.sync_status, listOf(st.repoName, st.current, st.total))
+                        } else null
+                    )
                 }
             }
         }
@@ -150,7 +96,7 @@ class BrowseViewModel(
     }
 
     fun clearError() {
-        _error.value = null
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     fun syncRepos() = doSync(force = false)
@@ -158,35 +104,23 @@ class BrowseViewModel(
 
     private fun doSync(force: Boolean) {
         viewModelScope.launch {
-            _error.value = null
-            val perRepoErrors = mutableListOf<String>()
-
+            _uiState.update { it.copy(errorMessage = null) }
             runCatching {
-                val appCount = sync.syncAll(
-                    force = force,
-                    onProgress = { current, total, repoName ->
-                        _status.value = "Syncing $repoName ($current/$total)..."
-                    },
-                    onRepoError = { repoName, msg ->
-                        perRepoErrors.add("$repoName: $msg")
+                sync.syncAll(force = force)
+            }.onSuccess { (_, repoErrors) ->
+                if (repoErrors.isNotEmpty()) {
+                    val errorString = repoErrors.joinToString("\n") { "${it.first}: ${it.second}" }
+                    _uiState.update {
+                        it.copy(errorMessage = UiText.StringResource(R.string.sync_completed_with_errors, listOf(errorString)))
                     }
-                )
-                appCount
-            }.onSuccess { totalApps ->
-                when {
-                    perRepoErrors.isNotEmpty() && totalApps == 0 ->
-                        _error.value = "Sync completed with errors:\n${perRepoErrors.joinToString("\n")}"
-                    perRepoErrors.isNotEmpty() ->
-                        _error.value = "Partial sync completed:\n${perRepoErrors.joinToString("\n")}"
                 }
             }.onFailure { e ->
-                _error.value = when {
-                    e.message?.contains("No enabled repositories") == true ->
-                        "No repositories enabled. Enable at least one in Settings."
-                    e.message?.contains("timeout", ignoreCase = true) == true ->
-                        "Connection timeout. Please check your internet connection."
-                    else -> e.message ?: "Sync failed"
+                val errorRes = when {
+                    e.message?.contains("No enabled repositories") == true -> R.string.no_repos_enabled
+                    e.message?.contains("timeout", ignoreCase = true) == true -> R.string.connection_timeout
+                    else -> R.string.sync_failed
                 }
+                _uiState.update { it.copy(errorMessage = UiText.StringResource(errorRes)) }
             }
         }
     }

@@ -36,7 +36,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.flicky.R
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.launch
@@ -82,7 +84,7 @@ fun FullscreenImageViewer(
         topBar = {
             TopAppBar(
                 title = { Text("${pagerState.currentPage + 1} / ${images.size}") },
-                actions = { TextButton(onClick = onClose) { Text("Close") } }
+                actions = { TextButton(onClick = onClose) { Text( stringResource(R.string.action_close)) } }
             )
         }
     ) { padding ->

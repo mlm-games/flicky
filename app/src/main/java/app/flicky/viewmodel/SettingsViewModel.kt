@@ -1,7 +1,10 @@
 package app.flicky.viewmodel
 
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.flicky.R
 import app.flicky.data.model.RepositoryInfo
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.SettingsRepository
@@ -31,7 +34,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
         when (propertyName) {
             "clearCache" -> {
                 repo.clearCache()
-                _events.emit(UiEvent.Toast("Cache cleared"))
+                _events.emit(UiEvent.Toast(R.string.cache_cleared))
             }
             "exportSettings" -> {
                 _events.emit(UiEvent.RequestExport)
@@ -39,13 +42,13 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
             "importSettings" -> {
                 _events.emit(UiEvent.RequestImport)
             }
-            else -> _events.emit(UiEvent.Toast("No action attached"))
+            else -> _events.emit(UiEvent.Toast(R.string.no_action_attached))
         }
     }
 
     sealed class UiEvent {
         data object RequestExport : UiEvent()
         data object RequestImport : UiEvent()
-        data class Toast(val message: String) : UiEvent()
+        data class Toast(@param:StringRes val messageResId: Int) : UiEvent()
     }
 }

@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -14,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -57,49 +57,35 @@ fun AppDetailScreen(
                 ),
                 actions = {
                     val ctx = LocalContext.current
+                    val packageNameLabel = stringResource(R.string.share_subject_package, app.packageName)
+                    val sourceLabel = stringResource(R.string.share_subject_source, app.repository)
+
                     IconButton(onClick = {
-                        val share = buildString {
+                        val shareTextContent = buildString {
                             append(app.name).append("\n")
-                            append("Package: ").append(app.packageName).append("\n")
+                            append(packageNameLabel).append("\n")
                             if (app.website.isNotBlank()) append(app.website).append("\n")
-                            append("Found in: ").append(app.repository)
+                            append(sourceLabel)
                         }
-                        shareText(ctx, share)
+                        shareText(ctx, shareTextContent)
                     }) {
-                        Icon(painterResource(android.R.drawable.ic_menu_share), contentDescription = "Share")
+                        Icon(
+                            painterResource(android.R.drawable.ic_menu_share),
+                            contentDescription = stringResource(R.string.action_share)
+                        )
                     }
                 },
             )
         }
     ) { paddingValues ->
         Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
             color = MaterialTheme.colorScheme.background
         ) {
             if (isWide) {
-                DesktopLayout(
-                    app = app,
-                    installedVersionCode = installedVersionCode,
-                    isInstalling = isInstalling,
-                    progress = progress,
-                    onInstall = onInstall,
-                    onOpen = onOpen,
-                    onUninstall = onUninstall,
-                    error = error
-                )
+                DesktopLayout(app, installedVersionCode, isInstalling, progress, onInstall, onOpen, onUninstall, error)
             } else {
-                MobileLayout(
-                    app = app,
-                    installedVersionCode = installedVersionCode,
-                    isInstalling = isInstalling,
-                    progress = progress,
-                    onInstall = onInstall,
-                    onOpen = onOpen,
-                    onUninstall = onUninstall,
-                    error = error
-                )
+                MobileLayout(app, installedVersionCode, isInstalling, progress, onInstall, onOpen, onUninstall, error)
             }
         }
     }
@@ -118,7 +104,6 @@ private fun DesktopLayout(
     error: String?
 ) {
     Row(Modifier.fillMaxSize()) {
-        // Left panel (header + chips + details/links)
         Surface(
             modifier = Modifier.width(380.dp).fillMaxHeight(),
             color = MaterialTheme.colorScheme.surface,
@@ -130,17 +115,7 @@ private fun DesktopLayout(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    AppHeader(
-                        app = app,
-                        installedVersionCode = installedVersionCode,
-                        isInstalling = isInstalling,
-                        progress = progress,
-                        onInstall = onInstall,
-                        onOpen = onOpen,
-                        onUninstall = onUninstall,
-                        error = error,
-                        iconSize = 96.dp
-                    )
+                    AppHeader(app, installedVersionCode, isInstalling, progress, onInstall, onOpen, onUninstall, error, 96.dp)
                 }
                 item { ChipsSection(app) }
                 item { DetailsSection(app) }
@@ -149,16 +124,10 @@ private fun DesktopLayout(
             }
         }
 
-        // Divider
         Box(Modifier.fillMaxHeight().width(1.dp)) {
-            HorizontalDivider(
-                Modifier,
-                DividerDefaults.Thickness,
-                color = MaterialTheme.colorScheme.outlineVariant
-            )
+            HorizontalDivider(Modifier, DividerDefaults.Thickness, color = MaterialTheme.colorScheme.outlineVariant)
         }
 
-        // Right content panel (overview, what's new, screenshots, about)
         LazyColumn(
             modifier = Modifier.weight(1f).fillMaxHeight(),
             contentPadding = PaddingValues(20.dp),
@@ -187,18 +156,7 @@ private fun MobileLayout(
     ) {
         item {
             ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                AppHeader(
-                    app = app,
-                    installedVersionCode = installedVersionCode,
-                    isInstalling = isInstalling,
-                    progress = progress,
-                    onInstall = onInstall,
-                    onOpen = onOpen,
-                    onUninstall = onUninstall,
-                    error = error,
-                    iconSize = 88.dp,
-                    modifier = Modifier.padding(16.dp)
-                )
+                AppHeader(app, installedVersionCode, isInstalling, progress, onInstall, onOpen, onUninstall, error, 88.dp, Modifier.padding(16.dp))
             }
         }
         item { ChipsSection(app) }
@@ -211,18 +169,18 @@ private fun MobileLayout(
 private fun RightPaneContent(app: FDroidApp) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (app.summary.isNotBlank()) {
-            SectionTitle("Overview")
+            SectionTitle(stringResource(R.string.overview))
             Text(app.summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)
         }
         if (app.whatsNew.isNotBlank()) {
-            SectionTitle("What's new")
+            SectionTitle(stringResource(R.string.whats_new))
             SmartExpandableText(text = app.whatsNew, rich = true, collapsedMaxLines = 8)
         }
         if (app.screenshots.isNotEmpty()) {
             ScreenshotsSection(app.screenshots)
         }
         if (app.description.isNotBlank()) {
-            SectionTitle("About")
+            SectionTitle(stringResource(R.string.about))
             SmartExpandableText(text = app.description, rich = true, collapsedMaxLines = 10)
         }
     }
@@ -252,30 +210,14 @@ private fun AppHeader(
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(
-                    app.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    app.packageName,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text(app.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(app.packageName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (app.author.isNotBlank()) {
-                    Text(
-                        app.author,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text(app.author, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
-
         Spacer(Modifier.height(12.dp))
-
         if (isInstalling) {
             LinearProgressIndicator(
                 progress = { progress },
@@ -285,22 +227,21 @@ private fun AppHeader(
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                "Installing… ${(progress * 100).toInt()}%",
+                stringResource(R.string.installing_progress, (progress * 100).toInt()),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
             if (installedVersionCode != null) {
                 Row {
-                    Button(onClick = onOpen, modifier = Modifier.weight(1f)) { Text("Open") }
+                    Button(onClick = onOpen, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.action_open)) }
                     Spacer(Modifier.width(8.dp))
-                    OutlinedButton(onClick = onUninstall, modifier = Modifier.weight(1f)) { Text("Uninstall") }
+                    OutlinedButton(onClick = onUninstall, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.action_uninstall)) }
                 }
             } else {
-                Button(onClick = onInstall, modifier = Modifier.fillMaxWidth()) { Text("Install") }
+                Button(onClick = onInstall, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_install)) }
             }
         }
-
         error?.takeIf { it.isNotBlank() }?.let {
             Spacer(Modifier.height(8.dp))
             Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -312,13 +253,13 @@ private fun AppHeader(
 @Composable
 private fun ChipsSection(app: FDroidApp) {
     Column {
-        SectionTitle("Info")
+        SectionTitle(stringResource(R.string.info))
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ElevatedAssistChip(onClick = {}, label = { Text("v${app.version}") })
+            ElevatedAssistChip(onClick = {}, label = { Text(stringResource(R.string.version_prefix, app.version)) })
             ElevatedAssistChip(onClick = {}, label = { Text(formatBytes(app.size)) })
             if (app.license.isNotBlank()) AssistChip(onClick = {}, label = { Text(app.license) })
             AssistChip(onClick = {}, label = { Text(app.repository) })
@@ -330,18 +271,18 @@ private fun ChipsSection(app: FDroidApp) {
 @Composable
 private fun DetailsSection(app: FDroidApp) {
     Column {
-        SectionTitle("Details")
-        InfoRow("Package", app.packageName)
-        InfoRow("Version code", app.versionCode.toString())
-        if (app.lastUpdated > 0) InfoRow("Updated", formatDate(app.lastUpdated))
-        if (app.added > 0) InfoRow("Added", formatDate(app.added))
+        SectionTitle(stringResource(R.string.details))
+        InfoRow(stringResource(R.string.package_name), app.packageName)
+        InfoRow(stringResource(R.string.version_code), app.versionCode.toString())
+        if (app.lastUpdated > 0) InfoRow(stringResource(R.string.updated), formatDate(app.lastUpdated))
+        if (app.added > 0) InfoRow(stringResource(R.string.added), formatDate(app.added))
     }
 }
 
 @Composable
 private fun AntiFeaturesSection(tags: List<String>) {
     Column {
-        SectionTitle("Anti-features")
+        SectionTitle(stringResource(R.string.anti_features))
         Spacer(Modifier.height(4.dp))
         AssistChipsFlow(tags)
     }
@@ -351,11 +292,11 @@ private fun AntiFeaturesSection(tags: List<String>) {
 private fun LinksSection(app: FDroidApp) {
     val ctx = LocalContext.current
     Column {
-        SectionTitle("Links")
+        SectionTitle(stringResource(R.string.links))
         Spacer(Modifier.height(4.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (app.website.isNotBlank()) AssistChip(onClick = { openUrl(ctx, app.website) }, label = { Text("Website") })
-            if (app.sourceCode.isNotBlank()) AssistChip(onClick = { openUrl(ctx, app.sourceCode) }, label = { Text("Source Code") })
+            if (app.website.isNotBlank()) AssistChip(onClick = { openUrl(ctx, app.website) }, label = { Text(stringResource(R.string.website)) })
+            if (app.sourceCode.isNotBlank()) AssistChip(onClick = { openUrl(ctx, app.sourceCode) }, label = { Text(stringResource(R.string.source_code)) })
         }
     }
 }
@@ -366,7 +307,7 @@ private fun ScreenshotsSection(urls: List<String>) {
     var startIndex by rememberSaveable { mutableIntStateOf(0) }
 
     Column {
-        SectionTitle("Screenshots")
+        SectionTitle(stringResource(R.string.screenshots))
         Spacer(Modifier.height(8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             itemsIndexed(urls, key = { idx, url -> "$idx-$url" }) { index, url ->
@@ -385,7 +326,6 @@ private fun ScreenshotsSection(urls: List<String>) {
             }
         }
     }
-
     if (showViewer) {
         Dialog(onDismissRequest = { showViewer = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
             Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {

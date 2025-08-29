@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         browseContent = {
                             BrowseScreen(
-                                apps = browseViewModel.paged.collectAsLazyPagingItems(),
+                                apps = browseViewModel.pagedApps.collectAsLazyPagingItems(),
                                 query = query,
                                 sort = sort,
                                 onSortChange = { s -> sort = s; browseViewModel.setSort(s) },
@@ -111,7 +111,7 @@ class MainActivity : ComponentActivity() {
                                 progress = browseUi.progress,
                                 errorMessage = browseUi.errorMessage,
                                 onDismissError = { browseViewModel.clearError() },
-                                syncStatus = browseUi.status,
+                                syncStatus = browseUi.statusText,
                             )
                         },
                         categoriesContent = {

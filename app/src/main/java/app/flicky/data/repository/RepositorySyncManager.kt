@@ -24,7 +24,7 @@ class RepositorySyncManager(
 ) {
     companion object {
         private const val TAG = "RepositorySyncManager"
-        private const val DB_CHUNK = 500 // size per insert chunk to keep memory low
+        private const val DB_CHUNK = 500
     }
 
     data class SyncState(
@@ -52,46 +52,40 @@ class RepositorySyncManager(
     }
 
     suspend fun syncAll(
-        force: Boolean = false,
-        onProgress: ((current: Int, total: Int, repoName: String) -> Unit)? = null,
-        onRepoError: ((repoName: String, message: String) -> Unit)? = null
-    ): Int = withContext(Dispatchers.IO) {
+        force: Boolean = false
+    ): Pair<Int, List<Pair<String, String>>> = withContext(Dispatchers.IO) {
         syncMutex.withLock {
             Log.d(TAG, "Starting sync (force=$force)")
             val repos = settings.repositoriesFlow.first().filter { it.enabled }
             if (repos.isEmpty()) {
                 Log.e(TAG, "No enabled repositories")
-                updateState { it.copy(active = false, progress = 0f, message = "No repositories enabled") }
-                throw IllegalStateException("No enabled repositories")
+                val errorMessage = "No enabled repositories"
+                updateState { it.copy(active = false, progress = 0f, message = errorMessage) }
+                throw IllegalStateException(errorMessage)
             }
             if (force) {
-                AppGraph.headersStore.clear()
+                headersStore.clear()
                 dao.clear()
             }
 
             cancelRequested = false
-            updateState { SyncState(active = true, total = repos.size, message = "Starting sync...") }
+            updateState { SyncState(active = true, total = repos.size) }
 
             var totalApps = 0
             var anySuccess = false
-
-            val appSettings = settings.settingsFlow.first()
-            val includeIncompatible = true // ingest all; UI filters by isCompatible
-            val differential = appSettings.differentialSync
-
-            suspend fun insertChunk(chunk: MutableList<FDroidApp>) {
-                if (chunk.isEmpty()) return
-                dao.upsertAll(chunk)
-                totalApps += chunk.size
-                chunk.clear()
-            }
+            val repoErrors = mutableListOf<Pair<String, String>>()
 
             repos.forEachIndexed { index, repo ->
-                val buffer = mutableListOf<FDroidApp>()
-                var repoCount = 0
-                if (cancelRequested || !kotlin.coroutines.coroutineContext.isActive) return@withLock totalApps
+                if (cancelRequested || !kotlin.coroutines.coroutineContext.isActive) return@withLock totalApps to repoErrors
 
-                suspend fun flush() = insertChunk(buffer)
+                val buffer = mutableListOf<FDroidApp>()
+                suspend fun flush() {
+                    if (buffer.isNotEmpty()) {
+                        dao.upsertAll(buffer)
+                        totalApps += buffer.size
+                        buffer.clear()
+                    }
+                }
 
                 try {
                     updateState {
@@ -99,44 +93,31 @@ class RepositorySyncManager(
                             repoName = repo.name,
                             current = index,
                             total = repos.size,
-                            progress = index.toFloat() / repos.size,
-                            message = "Syncing ${repo.name} (${index + 1}/${repos.size})"
+                            progress = index.toFloat() / repos.size
                         )
                     }
 
                     val prevHeader = headersStore.get(repo.url)
-
-                    val result: FDroidApi.FetchResult? = api.fetchWithCache(
+                    val result = api.fetchWithCache(
                         repo = repo,
                         previous = FDroidApi.RepoHeaders(prevHeader.etag, prevHeader.lastModified),
                         force = force,
-                        enableDifferential = differential,
-                        includeIncompatible = includeIncompatible
+                        enableDifferential = settings.settingsFlow.first().differentialSync,
+                        includeIncompatible = true
                     ) { app ->
                         buffer.add(app)
-                        repoCount++
                         if (buffer.size >= DB_CHUNK) {
-                            dao.upsertAll(buffer)
-                            totalApps += buffer.size
-                            buffer.clear()
+                            flush()
                         }
                     }
 
-                    // If result is null => failure; if modified=false => no DB write
                     when {
                         result == null -> {
-                            // Commit remainder even on failure
                             flush()
-                            onRepoError?.invoke(repo.name, "Network or parse error")
-                            updateState { it.copy(message = "Error: ${repo.name}: failed to fetch") }
+                            val errorMsg = "Network or parse error"
+                            repoErrors.add(repo.name to errorMsg)
                         }
-                        !result.modified && !force -> {
-                            // Not modified — skip DB writes for this repo
-                            anySuccess = true
-                            updateState { it.copy(message = "Unchanged: ${repo.name}") }
-                        }
-                        else -> {
-                            // Modified or force refresh — replace this repo’s data atomically
+                        result.modified || force -> {
                             AppGraph.db.withTransaction {
                                 dao.deleteByRepositoryUrl(repo.url)
                                 flush()
@@ -144,18 +125,19 @@ class RepositorySyncManager(
                             anySuccess = true
                             result.headers?.let { headersStore.put(repo.url, RepoHeader(it.etag, it.lastModified)) }
                         }
+                        else -> {
+                            anySuccess = true
+                        }
                     }
                 } catch (e: Exception) {
-                    // commit remainder even on failure
                     flush()
-                    updateState { it.copy(message = "Error: ${repo.name}: ${e.message ?: "Unknown error"}") }
-                    onRepoError?.invoke(repo.name, e.message ?: "Unknown error")
+                    val errorMsg = e.message ?: "Unknown error"
+                    repoErrors.add(repo.name to errorMsg)
                 } finally {
                     updateState {
                         it.copy(
                             current = index + 1,
-                            progress = (index + 1).toFloat() / repos.size,
-                            message = "Finished ${repo.name} (${index + 1}/${repos.size})"
+                            progress = (index + 1).toFloat() / repos.size
                         )
                     }
                 }
@@ -163,13 +145,10 @@ class RepositorySyncManager(
 
             if (anySuccess) {
                 settings.setLastSync(System.currentTimeMillis())
-                updateState { it.copy(active = false, progress = 1f, message = "Sync complete: $totalApps apps") }
-                Log.d(TAG, "Sync complete: $totalApps apps from ${repos.size} repositories")
-            } else {
-                updateState { it.copy(active = false, message = "Sync failed") }
-                Log.w(TAG, "Sync finished with no successful repositories")
             }
-            totalApps
+
+            updateState { it.copy(active = false, progress = 1f) }
+            totalApps to repoErrors
         }
     }
 }

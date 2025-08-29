@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.Setting
@@ -23,6 +24,8 @@ import app.flicky.ui.dialogs.DropdownSettingDialog
 import app.flicky.ui.dialogs.SliderSettingDialog
 import app.flicky.viewmodel.SettingsViewModel
 import kotlin.reflect.KProperty1
+import app.flicky.R
+import java.util.Locale
 
 @Composable
 fun SettingsScreen(vm: SettingsViewModel) {
@@ -98,7 +101,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                         SettingType.SLIDER -> {
                             val valueText = when (val v = prop.get(settings)) {
                                 is Int -> v.toString()
-                                is Float -> String.format("%.1f", v)
+                                is Float -> String.format(Locale.getDefault() , "%.1f", v)
                                 else -> ""
                             }
                             SettingsItem(
@@ -249,6 +252,6 @@ private fun AddRepoDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit
                 Text("Add")
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }
     )
 }

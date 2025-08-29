@@ -7,7 +7,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.flicky.R
+
 
 @Composable
 fun TvNavigationSidebar(selected: Int, onSelect: (Int)->Unit) {
@@ -31,12 +34,12 @@ fun TvNavigationSidebar(selected: Int, onSelect: (Int)->Unit) {
                 Spacer(Modifier.width(8.dp))
                 Column {
                     Text(
-                        "Flicky",
+                        stringResource(R.string.app_name),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        "F-Droid (Unofficial) Client for TV",
+                        stringResource(R.string.app_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -45,10 +48,10 @@ fun TvNavigationSidebar(selected: Int, onSelect: (Int)->Unit) {
 
             Spacer(Modifier.height(24.dp))
 
-            NavItem("Browse", Icons.Default.Explore, selected == 0) { onSelect(0) }
-            NavItem("Categories", Icons.Default.Category, selected == 1) { onSelect(1) }
-            NavItem("Updates", Icons.Default.Update, selected == 2) { onSelect(2) }
-            NavItem("Settings", Icons.Default.Settings, selected == 3) { onSelect(3) }
+            NavItem( stringResource(R.string.nav_browse), Icons.Default.Explore, selected == 0) { onSelect(0) }
+            NavItem( stringResource(R.string.nav_categories), Icons.Default.Category, selected == 1) { onSelect(1) }
+            NavItem( stringResource(R.string.nav_updates), Icons.Default.Update, selected == 2) { onSelect(2) }
+            NavItem( stringResource(R.string.nav_settings), Icons.Default.Settings, selected == 3) { onSelect(3) }
 
             Spacer(Modifier.weight(1f))
         }

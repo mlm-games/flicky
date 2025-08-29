@@ -10,6 +10,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import app.flicky.R
 import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.SettingsRepository
@@ -42,12 +43,14 @@ class Installer(
             it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(it)
         }
     }
+
     fun uninstall(packageName: String) {
         val i = Intent(Intent.ACTION_DELETE, "package:$packageName".toUri()).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(i)
     }
+
     fun cancelDownload(packageName: String) {
         activeDownloads.entries.filter { it.key.startsWith("$packageName-") }.forEach { (_, id) ->
             dm.remove(id)
@@ -62,6 +65,7 @@ class Installer(
         val req = resolve(app) ?: return false
         return installResolved(req, onProgress)
     }
+
     suspend fun install(variant: AppVariant, onProgress: (Float) -> Unit = {}): Boolean {
         val req = resolve(variant) ?: return false
         return installResolved(req, onProgress)
@@ -69,21 +73,19 @@ class Installer(
 
     private suspend fun installResolved(req: ResolvedApk, onProgress: (Float) -> Unit): Boolean {
         val mode = settings.settingsFlow.first().installerMode
-
         val file = download(req) { p -> onProgress(0.5f * p) } ?: return false
 
         if (req.sha256.isNotBlank() && !verifySha256File(file, req.sha256)) {
             file.delete(); return false
         }
 
-        // Install (progress 0.5..1.0)
         val installProgress: (Float) -> Unit = { p -> onProgress(0.5f + 0.5f * p) }
         val ok = when (mode) {
-            0 -> installSystem(file, req.packageName)
+            0 -> installSystem(file)
             1 -> SessionInstaller(context).installFromFile(file, req.packageName, req.sha256, installProgress)
-            2 -> installRootStream(file, req.packageName, installProgress)
+            2 -> installRootStream(file, installProgress)
             3 -> installShizukuStream(file, installProgress)
-            else -> installSystem(file, req.packageName)
+            else -> installSystem(file)
         }
 
         if (!settings.settingsFlow.first().keepCache) {
@@ -91,7 +93,6 @@ class Installer(
         }
         return ok
     }
-
 
     private data class ResolvedApk(
         val packageName: String,
@@ -103,8 +104,7 @@ class Installer(
 
     private suspend fun resolve(app: FDroidApp): ResolvedApk? {
         val base = resolveBase(app.repository)
-        val url = if (app.apkUrl.startsWith("http")) app.apkUrl
-        else base.trimEnd('/') + "/" + app.apkUrl.trimStart('/')
+        val url = if (app.apkUrl.startsWith("http")) app.apkUrl else "${base.trimEnd('/')}/${app.apkUrl.trimStart('/')}"
         return ResolvedApk(
             packageName = app.packageName,
             title = "${app.name} ${app.version}",
@@ -116,8 +116,7 @@ class Installer(
 
     private fun resolve(variant: AppVariant): ResolvedApk? {
         val base = if (variant.repositoryUrl.startsWith("http")) variant.repositoryUrl else "https://f-droid.org/repo"
-        val url = if (variant.apkUrl.startsWith("http")) variant.apkUrl
-        else base.trimEnd('/') + "/" + variant.apkUrl.trimStart('/')
+        val url = if (variant.apkUrl.startsWith("http")) variant.apkUrl else "${base.trimEnd('/')}/${variant.apkUrl.trimStart('/')}"
         return ResolvedApk(
             packageName = variant.packageName,
             title = "${variant.packageName} ${variant.versionName}",
@@ -131,7 +130,7 @@ class Installer(
         if (repo.startsWith("http")) return repo
         val repos = runCatching { settings.repositoriesFlow.first() }.getOrElse { emptyList() }
         val byName = repos.firstOrNull { it.name.equals(repo, true) }
-        val byUrl  = repos.firstOrNull { it.url.equals(repo, true) }
+        val byUrl = repos.firstOrNull { it.url.equals(repo, true) }
         return (byName?.url ?: byUrl?.url ?: "https://f-droid.org/repo").trimEnd('/')
     }
 
@@ -151,7 +150,7 @@ class Installer(
 
         val request = DownloadManager.Request(req.url.toUri())
             .setTitle(req.title)
-            .setDescription("Downloading")
+            .setDescription(context.getString(R.string.settings_downloads))
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setAllowedOverMetered(true)
             .setAllowedOverRoaming(false)
@@ -159,11 +158,12 @@ class Installer(
 
         val id = dm.enqueue(request)
         activeDownloads[out.name] = id
-
         val uri = monitorDownload(id, onProgress)
         activeDownloads.remove(out.name)
-
-        if (uri == null) { out.delete(); return@withContext null }
+        if (uri == null) {
+            out.delete()
+            return@withContext null
+        }
         out
     }
 
@@ -181,9 +181,11 @@ class Installer(
                         continue
                     }
                     when (c.getInt(statusIdx)) {
-                        DownloadManager.STATUS_SUCCESSFUL -> { onProgress(1f); return@withContext dm.getUriForDownloadedFile(id) }
+                        DownloadManager.STATUS_SUCCESSFUL -> {
+                            onProgress(1f)
+                            return@withContext dm.getUriForDownloadedFile(id)
+                        }
                         DownloadManager.STATUS_FAILED -> return@withContext null
-
                         DownloadManager.STATUS_RUNNING, DownloadManager.STATUS_PAUSED -> {
                             val soFarIdx = c.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
                             val totalIdx = c.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
@@ -191,29 +193,37 @@ class Installer(
                                 val total = c.getLong(totalIdx)
                                 if (total > 0) {
                                     val p = c.getLong(soFarIdx).toFloat() / total.toFloat()
-                                    if (p != last) { last = p; onProgress(p) }
+                                    if (p != last) {
+                                        last = p; onProgress(p)
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            } finally { c?.close() }
+            } finally {
+                c?.close()
+            }
             delay(100)
         }
         null
     }
 
     private fun verifySha256File(file: File, expectedHex: String): Boolean = try {
-        val md = MessageDigest.getInstance("SHA-256")
         FileInputStream(file).use { fis ->
+            val md = MessageDigest.getInstance("SHA-256")
             val buf = ByteArray(8192)
             var r = fis.read(buf)
-            while (r != -1) { md.update(buf, 0, r); r = fis.read(buf) }
+            while (r != -1) {
+                md.update(buf, 0, r); r = fis.read(buf)
+            }
+            md.digest().joinToString("") { "%02x".format(it) }.equals(expectedHex, true)
         }
-        md.digest().joinToString("") { "%02x".format(it) }.equals(expectedHex, true)
-    } catch (_: Exception) { false }
+    } catch (_: Exception) {
+        false
+    }
 
-    private fun installSystem(file: File, packageName: String): Boolean {
+    private fun installSystem(file: File): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !context.packageManager.canRequestPackageInstalls()
         ) {
@@ -234,37 +244,41 @@ class Installer(
         }.getOrDefault(false)
     }
 
-    private suspend fun installRootStream(file: File, packageName: String, onProgress: (Float) -> Unit): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                val size = file.length().coerceAtLeast(1L)
-                val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd package install -r -S $size"))
+    private suspend fun installRootStream(file: File, onProgress: (Float) -> Unit): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val size = file.length().coerceAtLeast(1L)
+            val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd package install -r -S $size"))
+            FileInputStream(file).use { fis ->
+                proc.outputStream.use { os -> pipeWithProgress(fis, os, size, onProgress) }
+            }
+            proc.waitFor() == 0
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private suspend fun installShizukuStream(file: File, onProgress: (Float) -> Unit): Boolean = withContext(Dispatchers.IO) {
+        if (!Shizuku.pingBinder()) return@withContext false
+        if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+            if (!requestShizukuPermission()) return@withContext false
+        }
+        try {
+            val size = file.length().coerceAtLeast(1L)
+            val proc = shizukuNewProcess(arrayOf("cmd", "package", "install", "-r", "-S", size.toString()))
+                ?: return@withContext false
+            val ok = try {
                 FileInputStream(file).use { fis ->
                     proc.outputStream.use { os -> pipeWithProgress(fis, os, size, onProgress) }
                 }
                 proc.waitFor() == 0
-            } catch (_: Exception) { false }
-        }
-
-    private suspend fun installShizukuStream(file: File, onProgress: (Float) -> Unit): Boolean =
-        withContext(Dispatchers.IO) {
-            if (!Shizuku.pingBinder()) return@withContext false
-            if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-                if (!requestShizukuPermission()) return@withContext false
+            } finally {
+                runCatching { proc.destroy() }
             }
-            try {
-                val size = file.length().coerceAtLeast(1L)
-                val proc = shizukuNewProcess(arrayOf("cmd", "package", "install", "-r", "-S", size.toString()))
-                    ?: return@withContext false
-                val ok = try {
-                    FileInputStream(file).use { fis ->
-                        proc.outputStream.use { os -> pipeWithProgress(fis, os, size, onProgress) }
-                    }
-                    proc.waitFor() == 0
-                } finally { runCatching { proc.destroy() } }
-                ok
-            } catch (_: Exception) { false }
+            ok
+        } catch (_: Exception) {
+            false
         }
+    }
 
     private suspend fun requestShizukuPermission(timeoutMs: Long = 15_000): Boolean {
         if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) return true
@@ -286,7 +300,9 @@ class Installer(
         )
         m.isAccessible = true
         m.invoke(null, cmd, env, dir) as Process
-    } catch (_: Exception) { null }
+    } catch (_: Exception) {
+        null
+    }
 
     private fun pipeWithProgress(src: FileInputStream, dst: OutputStream, total: Long, onProgress: (Float) -> Unit) {
         val buf = ByteArray(64 * 1024)
@@ -311,7 +327,9 @@ class Installer(
     private fun cleanOldCache() {
         scope.launch {
             val cutoff = System.currentTimeMillis() - CACHE_EXPIRY_HOURS * 60L * 60L * 1000L
-            getBaseCacheDir().listFiles()?.forEach { f -> if (f.lastModified() < cutoff) runCatching { f.delete() } }
+            getBaseCacheDir().listFiles()?.forEach { f ->
+                if (f.lastModified() < cutoff) runCatching { f.delete() }
+            }
         }
     }
 }

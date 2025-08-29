@@ -14,12 +14,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.flicky.AppGraph
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppSettings
 import app.flicky.ui.components.cards.AdaptiveAppCard
+import app.flicky.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +59,7 @@ fun CategoriesScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            "Categories",
+                            stringResource(R.string.nav_categories),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     },
