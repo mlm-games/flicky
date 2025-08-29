@@ -9,6 +9,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.flow.first
@@ -20,7 +21,6 @@ class SessionInstaller(private val context: Context) {
     private val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
 
     suspend fun install(app: FDroidApp, onProgress: (Float) -> Unit = {}): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return false
 
         // Unknown sources permission (Android 8.0+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -86,6 +86,134 @@ class SessionInstaller(private val context: Context) {
         session.close()
 
         // Await result from InstallResultReceiver -> SessionInstallBus
+        val (_, status) = SessionInstallBus.events.first { it.first == sessionId }
+        return status == PackageInstaller.STATUS_SUCCESS
+    }
+
+    suspend fun install(variant: AppVariant, onProgress: (Float) -> Unit = {}): Boolean {
+
+        // Unknown sources permission (Android 8.0+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!context.packageManager.canRequestPackageInstalls()) {
+                val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                    data = "package:${context.packageName}".toUri()
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+                return false
+            }
+        }
+
+        val apkUrl = if (variant.apkUrl.startsWith("http://") || variant.apkUrl.startsWith("https://")) {
+            variant.apkUrl
+        } else {
+            val base = if (variant.repositoryUrl.startsWith("http://") || variant.repositoryUrl.startsWith("https://"))
+                variant.repositoryUrl.trimEnd('/') else "https://f-droid.org/repo"
+            "$base/${variant.apkUrl.trimStart('/')}"
+        }
+
+        val req = DownloadManager.Request(apkUrl.toUri())
+            .setTitle("${variant.packageName} ${variant.versionName}")
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+            .setAllowedOverMetered(true)
+            .setAllowedOverRoaming(false)
+        val downloadId = dm.enqueue(req)
+        val apkUri = awaitDownload(downloadId) ?: return false
+
+        if (variant.sha256.isNotBlank() && !verifySha256(apkUri, variant.sha256)) {
+            return false
+        }
+
+        val pm = context.packageManager.packageInstaller
+        val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
+            setAppPackageName(variant.packageName)
+        }
+        val sessionId = pm.createSession(params)
+        val session = pm.openSession(sessionId)
+
+        context.contentResolver.openFileDescriptor(apkUri, "r")?.use { pfd ->
+            val totalLength = variant.size.coerceAtLeast(1L)
+            FileInputStream(pfd.fileDescriptor).use { inStream ->
+                session.openWrite("base.apk", 0, -1).use { out ->
+                    val buf = ByteArray(8192)
+                    var read = inStream.read(buf)
+                    var written = 0L
+                    while (read != -1) {
+                        out.write(buf, 0, read)
+                        written += read
+                        onProgress(0.5f + 0.5f * (written.toFloat() / totalLength.toFloat()))
+                        read = inStream.read(buf)
+                    }
+                    session.fsync(out)
+                }
+            }
+        }
+
+        val intent = Intent("app.flicky.INSTALL_RESULT")
+        val pending = PendingIntent.getBroadcast(
+            context, sessionId, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        session.commit(pending.intentSender)
+        session.close()
+
+        val (_, status) = SessionInstallBus.events.first { it.first == sessionId }
+        return status == PackageInstaller.STATUS_SUCCESS
+    }
+
+    suspend fun installFromFile(
+        file: java.io.File,
+        packageName: String,
+        expectedSha256: String = "",
+        onProgress: (Float) -> Unit = {}
+    ): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!context.packageManager.canRequestPackageInstalls()) {
+                val i = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                    data = "package:${context.packageName}".toUri()
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(i)
+                return false
+            }
+        }
+        if (expectedSha256.isNotBlank()) {
+            val ok = try { verifySha256(Uri.fromFile(file), expectedSha256) } catch (_: Exception) { false }
+            if (!ok) return false
+        }
+
+        val pm = context.packageManager.packageInstaller
+        val params = PackageInstaller.SessionParams(
+            PackageInstaller.SessionParams.MODE_FULL_INSTALL
+        ).apply { setAppPackageName(packageName) }
+
+        val sessionId = pm.createSession(params)
+        val session = pm.openSession(sessionId)
+
+        val total = file.length().coerceAtLeast(1L)
+        FileInputStream(file).use { fis ->
+            session.openWrite("base.apk", 0, -1).use { out ->
+                val buf = ByteArray(64 * 1024)
+                var written = 0L
+                var r = fis.read(buf)
+                while (r != -1) {
+                    out.write(buf, 0, r)
+                    written += r
+                    onProgress(0.5f + 0.5f * (written.toFloat() / total.toFloat()))
+                    r = fis.read(buf)
+                }
+                session.fsync(out)
+            }
+        }
+
+        val intent = Intent("app.flicky.INSTALL_RESULT")
+        val pending = PendingIntent.getBroadcast(
+            context, sessionId, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        session.commit(pending.intentSender)
+        session.close()
+
         val (_, status) = SessionInstallBus.events.first { it.first == sessionId }
         return status == PackageInstaller.STATUS_SUCCESS
     }

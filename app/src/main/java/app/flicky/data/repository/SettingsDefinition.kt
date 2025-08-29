@@ -202,6 +202,15 @@ data class AppSettings(
 //    )
     val importSettings: Boolean = false,
 
+    @Setting(
+        title = "Preferred repository",
+        description = "Default source when app exists in multiple repos",
+        category = SettingCategory.DOWNLOADS,
+        type = SettingType.DROPDOWN,
+        options = ["Auto", "Prefer F-Droid", "Prefer IzzyOnDroid"] // Remove prefer izzy since it always has the latest apk so auto would prefer it?
+    )
+    val preferredRepo: Int = 0,
+
     // Non-UI / repo related
     val lastSync: Long = 0L,
     val proxyHost: String = "",

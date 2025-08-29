@@ -61,6 +61,8 @@ class SettingsRepository(private val context: Context) {
 
         val REPOS_JSON = stringPreferencesKey("repos_json")
         val REPO_HEADERS = stringPreferencesKey("repo_headers_json")
+
+        val PREFERRED_REPO = intPreferencesKey("preferred_repo")
     }
 
 
@@ -92,7 +94,8 @@ class SettingsRepository(private val context: Context) {
         "proxyHost" to SettingDefinition.StringSetting("proxyHost", PROXY_HOST) { it.proxyHost },
         "proxyPort" to SettingDefinition.IntSetting("proxyPort", PROXY_PORT) { it.proxyPort },
 
-        "lastSync" to SettingDefinition.LongSetting("lastSync", LAST_SYNC) { it.lastSync }
+        "lastSync" to SettingDefinition.LongSetting("lastSync", LAST_SYNC) { it.lastSync },
+        "preferredRepo" to SettingDefinition.IntSetting("preferredRepo", PREFERRED_REPO) { it.preferredRepo},
     )
 
     /**

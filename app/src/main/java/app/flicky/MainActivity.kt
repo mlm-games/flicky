@@ -23,6 +23,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.paging.compose.collectAsLazyPagingItems
 import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.model.SortOption
+import app.flicky.data.repository.PreferredRepo
+import app.flicky.data.repository.VariantSelector
 import app.flicky.helper.DeviceUtils
 import app.flicky.navigation.FlickyNavHost
 import app.flicky.navigation.Routes
@@ -39,6 +41,7 @@ import app.flicky.viewmodel.BrowseViewModel
 import app.flicky.viewmodel.SettingsViewModel
 import app.flicky.viewmodel.UpdatesViewModel
 import app.flicky.work.SyncScheduler
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -160,10 +163,23 @@ class MainActivity : ComponentActivity() {
                                 ignoredPrefs = updatesUi.ignoredPrefs,
                                 onUpdateAll = {
                                     lifecycleScope.launch {
+                                        val settings = AppGraph.settings.settingsFlow.first()
+                                        val pref = PreferredRepo.fromIndex(settings.preferredRepo)
+                                        val dao = AppGraph.db.appDao()
+
                                         for (app in updatesUi.updates) {
                                             updatesViewModel.setInstalling(app.packageName, true)
-                                            AppGraph.installer.install(app) { progress ->
-                                                updatesViewModel.updateInstallProgress(app.packageName, progress)
+                                            val variants = dao.variantsFor(app.packageName)
+                                            val chosen = VariantSelector.pick(variants, pref)
+                                            if (chosen != null) {
+                                                AppGraph.installer.install(chosen) { progress ->
+                                                    updatesViewModel.updateInstallProgress(app.packageName, progress)
+                                                }
+                                            } else {
+                                                // Fallback: install via the generic path
+                                                AppGraph.installer.install(app) { progress ->
+                                                    updatesViewModel.updateInstallProgress(app.packageName, progress)
+                                                }
                                             }
                                             updatesViewModel.setInstalling(app.packageName, false)
                                         }
@@ -172,8 +188,18 @@ class MainActivity : ComponentActivity() {
                                 onUpdateOne = { app ->
                                     lifecycleScope.launch {
                                         updatesViewModel.setInstalling(app.packageName, true)
-                                        AppGraph.installer.install(app) { progress ->
-                                            updatesViewModel.updateInstallProgress(app.packageName, progress)
+                                        val settings = AppGraph.settings.settingsFlow.first()
+                                        val pref = PreferredRepo.fromIndex(settings.preferredRepo)
+                                        val variants = AppGraph.db.appDao().variantsFor(app.packageName)
+                                        val chosen = VariantSelector.pick(variants, pref)
+                                        if (chosen != null) {
+                                            AppGraph.installer.install(chosen) { progress ->
+                                                updatesViewModel.updateInstallProgress(app.packageName, progress)
+                                            }
+                                        } else {
+                                            AppGraph.installer.install(app) { progress ->
+                                                updatesViewModel.updateInstallProgress(app.packageName, progress)
+                                            }
                                         }
                                         updatesViewModel.setInstalling(app.packageName, false)
                                     }
@@ -199,7 +225,8 @@ class MainActivity : ComponentActivity() {
                                     dao = AppGraph.db.appDao(),
                                     installedRepo = AppGraph.installedRepo,
                                     installer = AppGraph.installer,
-                                    packageName = pkg
+                                    packageName = pkg,
+                                    settings = AppGraph.settings
                                 )
                             }
                             val ui by detailVM.ui.collectAsState()

@@ -6,7 +6,11 @@ import androidx.lifecycle.viewModelScope
 import app.flicky.data.local.AppDao
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.InstalledAppsRepository
+import app.flicky.data.repository.SettingsRepository
+import app.flicky.data.repository.PreferredRepo
+import app.flicky.data.repository.VariantSelector
 import app.flicky.install.Installer
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -22,6 +26,7 @@ class AppDetailViewModel(
     private val dao: AppDao,
     private val installedRepo: InstalledAppsRepository,
     private val installer: Installer,
+    private val settings: SettingsRepository,
     private val packageName: String
 ) : ViewModel() {
 
@@ -42,57 +47,47 @@ class AppDetailViewModel(
         val app = _ui.value.app ?: return
 
         viewModelScope.launch {
-            _ui.value = _ui.value.copy(
-                isInstalling = true,
-                progress = 0f,
-                error = null
-            )
+            _ui.value = _ui.value.copy(isInstalling = true, progress = 0f, error = null)
 
             try {
                 Log.d("AppDetailViewModel", "Starting install for ${app.packageName}")
-                Log.d("AppDetailViewModel", "APK URL: ${app.apkUrl}")
 
-                val success = installer.install(app) { progress ->
-                    Log.d("AppDetailViewModel", "Download progress: ${(progress * 100).toInt()}%")
-                    _ui.value = _ui.value.copy(progress = progress)
+                val prefIdx = settings.settingsFlow.first().preferredRepo
+                val pref = PreferredRepo.fromIndex(prefIdx)
+                val variants = dao.variantsFor(app.packageName)
+                val chosen = VariantSelector.pick(variants, pref)
+
+                val success = if (chosen != null) {
+                    Log.d("AppDetailViewModel", "Installing via variant from ${chosen.repositoryName} (${chosen.repositoryUrl}) v${chosen.versionCode}")
+                    installer.install(chosen) { p -> _ui.value = _ui.value.copy(progress = p) }
+                } else {
+                    Log.d("AppDetailViewModel", "No variant match; installing via app metadata URL")
+                    installer.install(app) { p -> _ui.value = _ui.value.copy(progress = p) }
                 }
 
                 if (success) {
-                    // Installation initiated, wait for system to complete
-                    _ui.value = _ui.value.copy(
-                        isInstalling = false,
-                        progress = 1f
-                    )
+                    _ui.value = _ui.value.copy(isInstalling = false, progress = 1f)
                 } else {
-                    _ui.value = _ui.value.copy(
-                        isInstalling = false,
-                        error = "Installation failed"
-                    )
+                    _ui.value = _ui.value.copy(isInstalling = false, error = "Installation failed")
                 }
 
-                // Check if installed after a delay
-                kotlinx.coroutines.delay(1000)
+                delay(1000)
                 val newInstalled = installedRepo.getVersionCode(packageName)
                 _ui.value = _ui.value.copy(installedVersionCode = newInstalled)
 
             } catch (e: Exception) {
                 Log.e("AppDetailViewModel", "Install error", e)
-                _ui.value = _ui.value.copy(
-                    isInstalling = false,
-                    error = "Install failed: ${e.message}"
-                )
+                _ui.value = _ui.value.copy(isInstalling = false, error = "Install failed: ${e.message}")
             }
         }
     }
 
-    fun openApp() {
-        installer.open(packageName)
-    }
+    fun openApp() = installer.open(packageName)
 
     fun uninstall() {
         installer.uninstall(packageName)
         viewModelScope.launch {
-            kotlinx.coroutines.delay(1000)
+            delay(1000)
             val newInstalled = installedRepo.getVersionCode(packageName)
             _ui.value = _ui.value.copy(installedVersionCode = newInstalled)
         }
