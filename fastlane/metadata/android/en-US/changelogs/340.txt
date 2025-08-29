@@ -1,0 +1,5 @@
+- Use localised strings and misc formatting changes (fix #7)
+- Add all the strings
+- Use routes for screens, remove more redundant code
+- remove unused files
+- remove unused class

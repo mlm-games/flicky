@@ -1,3 +1,12 @@
+## v2.5.2
+
+- Use localised strings and misc formatting changes (fix #7)
+- Add all the strings
+- Use routes for screens, remove more redundant code
+- remove unused files
+- remove unused class
+
+
 ## v2.5.1
 
 - Bump ver and test release (early enough)
