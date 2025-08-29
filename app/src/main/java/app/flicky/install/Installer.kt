@@ -77,17 +77,21 @@ class Installer(
         }
 
         // Install (progress 0.5..1.0)
+        val installProgress: (Float) -> Unit = { p -> onProgress(0.5f + 0.5f * p) }
         val ok = when (mode) {
             0 -> installSystem(file, req.packageName)
-            1 -> SessionInstaller(context).installFromFile(file, req.packageName, req.sha256) { p -> onProgress(0.5f + 0.5f * p) }
-            2 -> installRootStream(file, req.packageName) { p -> onProgress(0.5f + 0.5f * p) }
-            3 -> installShizukuStream(file) { p -> onProgress(0.5f + 0.5f * p) }
+            1 -> SessionInstaller(context).installFromFile(file, req.packageName, req.sha256, installProgress)
+            2 -> installRootStream(file, req.packageName, installProgress)
+            3 -> installShizukuStream(file, installProgress)
             else -> installSystem(file, req.packageName)
         }
 
-        scheduleCleanup(file)
+        if (!settings.settingsFlow.first().keepCache) {
+            scheduleCleanup(file)
+        }
         return ok
     }
+
 
     private data class ResolvedApk(
         val packageName: String,
