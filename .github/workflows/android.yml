@@ -18,7 +18,7 @@ on:
       play_track:
         description: 'Google Play track (internal, alpha, beta, production)'
         required: true
-        default: 'internal'
+        default: 'alpha'
         type: choice
         options: [internal, alpha, beta, production]
 
