@@ -12,48 +12,28 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.paging.compose.collectAsLazyPagingItems
 import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.model.SortOption
-import app.flicky.data.repository.PreferredRepo
-import app.flicky.data.repository.VariantSelector
 import app.flicky.helper.DeviceUtils
+import app.flicky.helper.viewModelFactory
 import app.flicky.navigation.FlickyNavHost
 import app.flicky.navigation.Routes
-import app.flicky.ui.screens.AppDetailScreen
+import app.flicky.ui.routes.AppDetailRoute
+import app.flicky.ui.routes.UpdatesRoute
 import app.flicky.ui.screens.BrowseScreen
 import app.flicky.ui.screens.CategoriesScreen
 import app.flicky.ui.screens.MobileMainScaffold
 import app.flicky.ui.screens.SettingsScreen
 import app.flicky.ui.screens.TvMainScreen
-import app.flicky.ui.screens.UpdatesScreen
 import app.flicky.ui.theme.FlickyTheme
-import app.flicky.viewmodel.AppDetailViewModel
 import app.flicky.viewmodel.BrowseViewModel
 import app.flicky.viewmodel.SettingsViewModel
-import app.flicky.viewmodel.UpdatesViewModel
 import app.flicky.work.SyncScheduler
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-
-    private inline fun <reified T : ViewModel> viewModelFactory(
-        crossinline creator: () -> T
-    ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-        override fun <VM : ViewModel> create(modelClass: Class<VM>): VM {
-            @Suppress("UNCHECKED_CAST")
-            return creator() as VM
-        }
-    }
 
     private val browseViewModel: BrowseViewModel by viewModels {
         viewModelFactory {
@@ -67,15 +47,6 @@ class MainActivity : ComponentActivity() {
 
     private val settingsViewModel: SettingsViewModel by viewModels {
         viewModelFactory { SettingsViewModel(AppGraph.settings) }
-    }
-
-    private val updatesViewModel: UpdatesViewModel by viewModels {
-        viewModelFactory {
-            UpdatesViewModel(
-                AppGraph.appRepo,
-                AppGraph.installedRepo
-            )
-        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,7 +66,6 @@ class MainActivity : ComponentActivity() {
             }
 
             val browseUi by browseViewModel.uiState.collectAsState()
-            val updatesUi by updatesViewModel.ui.collectAsState()
 
             val navController = rememberNavController()
             val backStack by navController.currentBackStackEntryAsState()
@@ -153,94 +123,13 @@ class MainActivity : ComponentActivity() {
                             )
                         },
                         updatesContent = {
-                            UpdatesScreen(
-                                installed = updatesUi.installed,
-                                updates = updatesUi.updates,
-                                installingPackages = updatesUi.installingPackages,
-                                installProgress = updatesUi.installProgress,
-                                installedVersionsCode = updatesUi.installedVersionsCode,
-                                installedVersionsName = updatesUi.installedVersionsName,
-                                ignoredPrefs = updatesUi.ignoredPrefs,
-                                onUpdateAll = {
-                                    lifecycleScope.launch {
-                                        val settings = AppGraph.settings.settingsFlow.first()
-                                        val pref = PreferredRepo.fromIndex(settings.preferredRepo)
-                                        val dao = AppGraph.db.appDao()
-
-                                        for (app in updatesUi.updates) {
-                                            updatesViewModel.setInstalling(app.packageName, true)
-                                            val variants = dao.variantsFor(app.packageName)
-                                            val chosen = VariantSelector.pick(variants, pref)
-                                            if (chosen != null) {
-                                                AppGraph.installer.install(chosen) { progress ->
-                                                    updatesViewModel.updateInstallProgress(app.packageName, progress)
-                                                }
-                                            } else {
-                                                // Fallback: install via the generic path
-                                                AppGraph.installer.install(app) { progress ->
-                                                    updatesViewModel.updateInstallProgress(app.packageName, progress)
-                                                }
-                                            }
-                                            updatesViewModel.setInstalling(app.packageName, false)
-                                        }
-                                    }
-                                },
-                                onUpdateOne = { app ->
-                                    lifecycleScope.launch {
-                                        updatesViewModel.setInstalling(app.packageName, true)
-                                        val settings = AppGraph.settings.settingsFlow.first()
-                                        val pref = PreferredRepo.fromIndex(settings.preferredRepo)
-                                        val variants = AppGraph.db.appDao().variantsFor(app.packageName)
-                                        val chosen = VariantSelector.pick(variants, pref)
-                                        if (chosen != null) {
-                                            AppGraph.installer.install(chosen) { progress ->
-                                                updatesViewModel.updateInstallProgress(app.packageName, progress)
-                                            }
-                                        } else {
-                                            AppGraph.installer.install(app) { progress ->
-                                                updatesViewModel.updateInstallProgress(app.packageName, progress)
-                                            }
-                                        }
-                                        updatesViewModel.setInstalling(app.packageName, false)
-                                    }
-                                },
-                                onIgnoreThisVersion = { app ->
-                                    updatesViewModel.ignoreThisVersion(app.packageName, app.versionCode.toLong())
-                                },
-                                onIgnoreAll = { app ->
-                                    updatesViewModel.ignoreAllUpdates(app.packageName)
-                                },
-                                onStopIgnoring = { app ->
-                                    updatesViewModel.stopIgnoring(app.packageName)
-                                },
-                                onAppClick = { app ->
-                                    navController.navigate(Routes.detail(app.packageName))
-                                }
+                            UpdatesRoute(
+                                onOpenDetails = { pkg -> navController.navigate(Routes.detail(pkg)) }
                             )
                         },
                         settingsContent = { SettingsScreen(vm = settingsViewModel) },
                         detailContent = { pkg ->
-                            val detailVM = viewModelFactoryOvr {
-                                AppDetailViewModel(
-                                    dao = AppGraph.db.appDao(),
-                                    installedRepo = AppGraph.installedRepo,
-                                    installer = AppGraph.installer,
-                                    packageName = pkg,
-                                    settings = AppGraph.settings
-                                )
-                            }
-                            val ui by detailVM.ui.collectAsState()
-                            val app = ui.app ?: return@FlickyNavHost
-                            AppDetailScreen(
-                                app = app,
-                                installedVersionCode = ui.installedVersionCode,
-                                isInstalling = ui.isInstalling,
-                                progress = ui.progress,
-                                onInstall = { detailVM.install() },
-                                onOpen = { detailVM.openApp() },
-                                onUninstall = { detailVM.uninstall() },
-                                error = ui.error
-                            )
+                            AppDetailRoute(pkg = pkg)
                         }
                     )
                 }
@@ -285,7 +174,3 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-inline fun <reified VM: ViewModel> viewModelFactoryOvr(crossinline create: () -> VM): VM {
-    return viewModel(factory = viewModelFactory { initializer { create() } })
-}

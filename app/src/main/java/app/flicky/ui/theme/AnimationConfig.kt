@@ -5,6 +5,16 @@ import androidx.compose.animation.core.*
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 
+object AnimationConstants {
+    const val STANDARD_DURATION_MS = 300
+    const val LONG_PRESS_DELAY_MS = 500L
+    const val DOUBLE_TAP_DELAY_MS = 300L
+    const val ONE_DAY_IN_MILLIS = 86400000L
+    const val ONE_HOUR_IN_MILLIS = 3600000L
+    const val ONE_MINUTE_IN_MILLIS = 60000L
+    const val MIN_ANIM_REFRESH_RATE = 10f
+}
+
 /**
  * Central configuration for all animations in the app (similar to github's kotlin animation repos)
  */

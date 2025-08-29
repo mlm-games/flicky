@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 data class UpdatesUiState(
     val installed: List<FDroidApp> = emptyList(),
     val updates: List<FDroidApp> = emptyList(),
+    val suppressed: List<FDroidApp> = emptyList(),
     val installingPackages: Set<String> = emptySet(),
     val installProgress: Map<String, Float> = emptyMap(),
     val installedVersionsCode: Map<String, Long> = emptyMap(),
@@ -32,40 +33,40 @@ class UpdatesViewModel(
     val ui: StateFlow<UpdatesUiState> = _ui.asStateFlow()
 
     init {
-        // Recompute when either app catalog changes OR installed packages change
         viewModelScope.launch {
             combine(
                 repo.appsFlow("", sort = SortOption.Updated, hideAnti = false, showIncompatible = false),
-                installedRepo.packageChangesFlow().onStart { emit(Unit) } // emit once initially
+                installedRepo.packageChangesFlow().onStart { emit(Unit) }
             ) { all, _ -> all }
                 .collect { all ->
                     val installedDetails = installedRepo.getInstalledDetailed()
                     val installedMap = installedDetails.associateBy { it.packageName }
-
                     val installed = all.filter { installedMap.containsKey(it.packageName) }
 
-                    // Read ignore prefs on background thread
                     val ignoreMap = withContext(Dispatchers.IO) {
                         installed.associate { app -> app.packageName to UpdatesPreferences[app.packageName] }
-                    }
-
-                    val updates = installed.filter { app ->
-                        val cur = installedMap[app.packageName]?.versionCode ?: 0L
-                        val pref = ignoreMap[app.packageName] ?: UpdatesPreference()
-                        val candidate = app.versionCode.toLong() > cur
-                        if (!candidate) {
-                            false
-                        } else {
-                            !pref.ignoreUpdates && (pref.ignoreVersionCode <= 0L || app.versionCode.toLong() > pref.ignoreVersionCode)
-                        }
                     }
 
                     val codeMap = installedDetails.associate { it.packageName to it.versionCode }
                     val nameMap = installedDetails.associate { it.packageName to (it.versionName ?: "") }
 
+                    val (updates, suppressed) = installed.partition { app ->
+                        val cur = installedMap[app.packageName]?.versionCode ?: 0L
+                        val pref = ignoreMap[app.packageName] ?: UpdatesPreference()
+                        val candidate = app.versionCode.toLong() > cur
+                        candidate && !(pref.ignoreUpdates || (pref.ignoreVersionCode > 0 && app.versionCode.toLong() <= pref.ignoreVersionCode))
+                    }.let { (u, notU) ->
+                        val suppressedList = notU.filter { app ->
+                            val cur = installedMap[app.packageName]?.versionCode ?: 0L
+                            app.versionCode.toLong() > cur
+                        }
+                        u to suppressedList
+                    }
+
                     _ui.value = _ui.value.copy(
                         installed = installed,
                         updates = updates,
+                        suppressed = suppressed,
                         installedVersionsCode = codeMap,
                         installedVersionsName = nameMap,
                         ignoredPrefs = ignoreMap

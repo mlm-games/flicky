@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -48,11 +49,7 @@ fun AppDetailScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        app.name,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Text(app.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -108,6 +105,7 @@ fun AppDetailScreen(
     }
 }
 
+
 @Composable
 private fun DesktopLayout(
     app: FDroidApp,
@@ -120,11 +118,9 @@ private fun DesktopLayout(
     error: String?
 ) {
     Row(Modifier.fillMaxSize()) {
-        // Left side panel
+        // Left panel (header + chips + details/links)
         Surface(
-            modifier = Modifier
-                .width(380.dp)
-                .fillMaxHeight(),
+            modifier = Modifier.width(380.dp).fillMaxHeight(),
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 1.dp
         ) {
@@ -148,69 +144,27 @@ private fun DesktopLayout(
                 }
                 item { ChipsSection(app) }
                 item { DetailsSection(app) }
-                if (app.antiFeatures.isNotEmpty()) {
-                    item { AntiFeaturesSection(app.antiFeatures) }
-                }
-                if (app.website.isNotBlank() || app.sourceCode.isNotBlank()) {
-                    item { LinksSection(app) }
-                }
+                if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
+                if (app.website.isNotBlank() || app.sourceCode.isNotBlank()) item { LinksSection(app) }
             }
         }
 
         // Divider
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(1.dp),
-        ) { Divider(color = MaterialTheme.colorScheme.outlineVariant) }
+        Box(Modifier.fillMaxHeight().width(1.dp)) {
+            HorizontalDivider(
+                Modifier,
+                DividerDefaults.Thickness,
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+        }
 
-        // Right content panel
+        // Right content panel (overview, what's new, screenshots, about)
         LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
+            modifier = Modifier.weight(1f).fillMaxHeight(),
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (app.summary.isNotBlank()) {
-                item {
-                    Column {
-                        SectionTitle("Overview")
-                        Text(
-                            app.summary,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                }
-            }
-            if (app.whatsNew.isNotBlank()) {
-                item {
-                    Column {
-                        SectionTitle("What's new")
-                        SmartExpandableText(
-                            text = app.whatsNew,
-                            rich = true,
-                            collapsedMaxLines = 8
-                        )
-                    }
-                }
-            }
-            if (app.screenshots.isNotEmpty()) {
-                item { ScreenshotsSection(app.screenshots) }
-            }
-            if (app.description.isNotBlank()) {
-                item {
-                    Column {
-                        SectionTitle("About")
-                        SmartExpandableText(
-                            text = app.description,
-                            rich = true,
-                            collapsedMaxLines = 10
-                        )
-                    }
-                }
-            }
+            item { RightPaneContent(app) }
         }
     }
 }
@@ -232,11 +186,7 @@ private fun MobileLayout(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            ) {
+            ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                 AppHeader(
                     app = app,
                     installedVersionCode = installedVersionCode,
@@ -252,53 +202,29 @@ private fun MobileLayout(
             }
         }
         item { ChipsSection(app) }
+        item { RightPaneContent(app) }
+    }
+}
+
+
+@Composable
+private fun RightPaneContent(app: FDroidApp) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (app.summary.isNotBlank()) {
-            item {
-                Column {
-                    SectionTitle("Overview")
-                    Text(
-                        app.summary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-            }
+            SectionTitle("Overview")
+            Text(app.summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)
         }
         if (app.whatsNew.isNotBlank()) {
-            item {
-                Column {
-                    SectionTitle("What's new")
-                    SmartExpandableText(
-                        text = app.whatsNew,
-                        rich = true,
-                        collapsedMaxLines = 8
-                    )
-                }
-            }
+            SectionTitle("What's new")
+            SmartExpandableText(text = app.whatsNew, rich = true, collapsedMaxLines = 8)
         }
         if (app.screenshots.isNotEmpty()) {
-            item { ScreenshotsSection(app.screenshots) }
+            ScreenshotsSection(app.screenshots)
         }
         if (app.description.isNotBlank()) {
-            item {
-                Column {
-                    SectionTitle("About")
-                    SmartExpandableText(
-                        text = app.description,
-                        rich = true,
-                        collapsedMaxLines = 10
-                    )
-                }
-            }
+            SectionTitle("About")
+            SmartExpandableText(text = app.description, rich = true, collapsedMaxLines = 10)
         }
-        item { DetailsSection(app) }
-        if (app.antiFeatures.isNotEmpty()) {
-            item { AntiFeaturesSection(app.antiFeatures) }
-        }
-        if (app.website.isNotBlank() || app.sourceCode.isNotBlank()) {
-            item { LinksSection(app) }
-        }
-        item { Spacer(Modifier.height(24.dp)) }
     }
 }
 
@@ -366,37 +292,18 @@ private fun AppHeader(
         } else {
             if (installedVersionCode != null) {
                 Row {
-                    Button(
-                        onClick = onOpen,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Open")
-                    }
+                    Button(onClick = onOpen, modifier = Modifier.weight(1f)) { Text("Open") }
                     Spacer(Modifier.width(8.dp))
-                    OutlinedButton(
-                        onClick = onUninstall,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Uninstall")
-                    }
+                    OutlinedButton(onClick = onUninstall, modifier = Modifier.weight(1f)) { Text("Uninstall") }
                 }
             } else {
-                Button(
-                    onClick = onInstall,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Install")
-                }
+                Button(onClick = onInstall, modifier = Modifier.fillMaxWidth()) { Text("Install") }
             }
         }
 
         error?.takeIf { it.isNotBlank() }?.let {
             Spacer(Modifier.height(8.dp))
-            Text(
-                it,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
-            )
+            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -413,13 +320,9 @@ private fun ChipsSection(app: FDroidApp) {
         ) {
             ElevatedAssistChip(onClick = {}, label = { Text("v${app.version}") })
             ElevatedAssistChip(onClick = {}, label = { Text(formatBytes(app.size)) })
-            if (app.license.isNotBlank()) {
-                AssistChip(onClick = {}, label = { Text(app.license) })
-            }
+            if (app.license.isNotBlank()) AssistChip(onClick = {}, label = { Text(app.license) })
             AssistChip(onClick = {}, label = { Text(app.repository) })
-            if (app.category.isNotBlank()) {
-                AssistChip(onClick = {}, label = { Text(app.category) })
-            }
+            if (app.category.isNotBlank()) AssistChip(onClick = {}, label = { Text(app.category) })
         }
     }
 }
@@ -451,12 +354,8 @@ private fun LinksSection(app: FDroidApp) {
         SectionTitle("Links")
         Spacer(Modifier.height(4.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (app.website.isNotBlank()) {
-                AssistChip(onClick = { openUrl(ctx, app.website) }, label = { Text("Website") })
-            }
-            if (app.sourceCode.isNotBlank()) {
-                AssistChip(onClick = { openUrl(ctx, app.sourceCode) }, label = { Text("Source Code") })
-            }
+            if (app.website.isNotBlank()) AssistChip(onClick = { openUrl(ctx, app.website) }, label = { Text("Website") })
+            if (app.sourceCode.isNotBlank()) AssistChip(onClick = { openUrl(ctx, app.sourceCode) }, label = { Text("Source Code") })
         }
     }
 }
@@ -488,14 +387,8 @@ private fun ScreenshotsSection(urls: List<String>) {
     }
 
     if (showViewer) {
-        Dialog(
-            onDismissRequest = { showViewer = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
+        Dialog(onDismissRequest = { showViewer = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                 FullscreenImageViewer(
                     images = urls,
                     initialPage = startIndex,
@@ -524,18 +417,14 @@ private fun AssistChipsFlow(items: List<String>) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items.forEach { tag ->
-            AssistChip(onClick = {}, label = { Text(tag) })
-        }
+        items.forEach { tag -> AssistChip(onClick = {}, label = { Text(tag) }) }
     }
 }
 
 @Composable
 private fun InfoRow(label: String, value: String) {
     Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
+        Modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -545,11 +434,7 @@ private fun InfoRow(label: String, value: String) {
             modifier = Modifier.widthIn(min = 96.dp).wrapContentWidth(Alignment.Start)
         )
         Spacer(Modifier.width(12.dp))
-        Text(
-            value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Text(value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
