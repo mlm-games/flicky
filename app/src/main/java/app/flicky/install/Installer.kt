@@ -85,6 +85,7 @@ class Installer(
 
     private suspend fun installResolved(req: ResolvedApk, onProgress: (Float) -> Unit): Boolean {
         val mode = settings.settingsFlow.first().installerMode
+        val existedBefore = cacheFileFor(req).exists()
         val file = download(req) { p -> onProgress(0.5f * p) } ?: return false
 
         if (req.sha256.isNotBlank() && !verifySha256File(file, req.sha256)) {
@@ -100,7 +101,7 @@ class Installer(
             else -> installSystem(file)
         }
 
-        if (!settings.settingsFlow.first().keepCache) {
+        if (!settings.settingsFlow.first().keepCache && !existedBefore) {
             scheduleCleanup(file)
         }
         return ok
@@ -114,9 +115,13 @@ class Installer(
         val size: Long
     )
 
+    private fun normalize(urlOrId: String) = urlOrId.trim().trimEnd('/')
+
     private suspend fun resolve(app: FDroidApp): ResolvedApk? {
         val title = "${app.name} ${app.version}"
-        val urls = resolveUrls(app.repository, app.apkUrl)
+        // Prefer repositoryUrl (canonical) for mirror rotation when resolving a path
+        val baseId = app.repositoryUrl.ifBlank { app.repository }
+        val urls = resolveUrls(baseId, app.apkUrl)
         return ResolvedApk(
             packageName = app.packageName,
             title = title,
@@ -152,15 +157,16 @@ class Installer(
         } else listOf(base)
 
         val path = apkPathOrUrl.trimStart('/')
-        return bases.map { b -> "${b.trimEnd('/')}/$path" }
+        return bases.map { b -> "${normalize(b)}/$path" }
     }
 
     private suspend fun resolveBase(repo: String): String {
-        if (repo.startsWith("http")) return repo.trimEnd('/')
+        if (repo.startsWith("http")) return normalize(repo)
         val repos = runCatching { settings.repositoriesFlow.first() }.getOrElse { emptyList() }
-        val byName = repos.firstOrNull { it.name.equals(repo, true) }
-        val byUrl = repos.firstOrNull { it.url.equals(repo, true) }
-        return (byName?.url ?: byUrl?.url ?: "https://f-droid.org/repo").trimEnd('/')
+        val norm = normalize(repo)
+        val byName = repos.firstOrNull { it.name.equals(norm, true) }
+        val byUrl = repos.firstOrNull { normalize(it.url).equals(norm, true) }
+        return normalize(byName?.url ?: byUrl?.url ?: "https://f-droid.org/repo")
     }
 
     private fun getBaseCacheDir(): File {
@@ -177,6 +183,9 @@ class Installer(
         val out = cacheFileFor(req)
         if (out.exists()) return@withContext out
 
+        val base = getBaseCacheDir()
+        val canDirectWrite = base == context.externalCacheDir
+
         for ((idx, url) in req.urls.withIndex()) {
             val desc = try {
                 context.getString(R.string.settings_downloads)
@@ -189,15 +198,26 @@ class Installer(
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setAllowedOverMetered(true)
                 .setAllowedOverRoaming(false)
-                .setDestinationUri(Uri.fromFile(out))
 
+            if (canDirectWrite) {
+                request.setDestinationUri(Uri.fromFile(out))
+            }
             val id = dm.enqueue(request)
             activeDownloads[out.name] = id
             val uri = monitorDownload(id, onProgress)
             activeDownloads.remove(out.name)
 
             if (uri != null) {
-                return@withContext out
+                // On Android 10+, DM may not honor custom paths; copy back if needed
+                if (!out.exists()) {
+                    runCatching {
+                        context.contentResolver.openInputStream(uri)?.use { src ->
+                            out.outputStream().use { dst -> src.copyTo(dst) }
+                        }
+                    }
+                }
+                if (out.exists()) return@withContext out
+                // else try next mirror
             } else {
                 // Clean and try next mirror
                 runCatching { out.delete() }
@@ -319,7 +339,8 @@ class Installer(
                 while (r != -1) {
                     out.write(buf, 0, r)
                     written += r
-                    onProgress(0.5f + 0.5f * (written.toFloat() / total.toFloat()))
+                    // Report raw [0..1] to be scaled by caller
+                    onProgress(written.toFloat() / total.toFloat())
                     r = fis.read(buf)
                 }
                 session.fsync(out)

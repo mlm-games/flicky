@@ -57,7 +57,7 @@ interface AppDao {
     @Query("""
 SELECT * FROM apps
 WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
-AND (:hideAnti = 0 OR antiFeatures = '[]')
+AND (:hideAnti = 0 OR LENGTH(antiFeatures) = 2)
 AND (:showIncompat = 1 OR isCompatible = 1)
 ORDER BY lastUpdated DESC
 """)
@@ -66,7 +66,7 @@ ORDER BY lastUpdated DESC
     @Query("""
 SELECT * FROM apps
 WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
-AND (:hideAnti = 0 OR antiFeatures = '[]')
+AND (:hideAnti = 0 OR LENGTH(antiFeatures) = 2)
 AND (:showIncompat = 1 OR isCompatible = 1)
 ORDER BY name COLLATE NOCASE ASC
 """)
@@ -75,7 +75,7 @@ ORDER BY name COLLATE NOCASE ASC
     @Query("""
 SELECT * FROM apps
 WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
-AND (:hideAnti = 0 OR antiFeatures = '[]')
+AND (:hideAnti = 0 OR LENGTH(antiFeatures) = 2)
 AND (:showIncompat = 1 OR isCompatible = 1)
 ORDER BY size ASC
 """)
@@ -84,7 +84,7 @@ ORDER BY size ASC
     @Query("""
 SELECT * FROM apps
 WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
-AND (:hideAnti = 0 OR antiFeatures = '[]')
+AND (:hideAnti = 0 OR LENGTH(antiFeatures) = 2)
 AND (:showIncompat = 1 OR isCompatible = 1)
 ORDER BY added DESC
 """)

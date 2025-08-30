@@ -138,7 +138,7 @@ data class AppSettings(
         type = SettingType.DROPDOWN,
         options = ["System (default)", "Session (Package Installer)", "Root (pm)", "Shizuku (pm)"]
     )
-    val installerMode: Int = 0, // 0=System, 1=Session, 2=Root, 3=Shizuku
+    val installerMode: Int = 0,
 
     @Setting(
         title = "Hide apps with anti-features",

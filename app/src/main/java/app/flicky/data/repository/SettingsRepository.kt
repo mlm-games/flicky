@@ -235,21 +235,24 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun toggleRepository(url: String) {
+        val target = normalizeUrl(url)
         val repos = repositoriesFlow.first()
-        val updated = repos.map { if (it.url == url) it.copy(enabled = !it.enabled) else it }
+        val updated = repos.map { if (normalizeUrl(it.url) == target) it.copy(enabled = !it.enabled) else it }
         setRepositories(updated)
     }
 
     suspend fun addRepository(name: String, url: String) {
+        val normalized = normalizeUrl(url)
         val repos = repositoriesFlow.first().toMutableList()
-        if (repos.none { it.url.equals(url, ignoreCase = true) }) {
-            repos.add(RepositoryInfo(name = name.ifBlank { url }, url = url, enabled = true))
+        if (repos.none { normalizeUrl(it.url).equals(normalized, ignoreCase = true) }) {
+            repos.add(RepositoryInfo(name = name.ifBlank { normalized }, url = normalized, enabled = true))
             setRepositories(repos)
         }
     }
 
     suspend fun deleteRepository(url: String) {
-        val repos = repositoriesFlow.first().filterNot { it.url == url }
+        val target = normalizeUrl(url)
+        val repos = repositoriesFlow.first().filterNot { normalizeUrl(it.url) == target }
         setRepositories(repos)
     }
 
@@ -275,7 +278,7 @@ class SettingsRepository(private val context: Context) {
         setRepositories(RepositoryInfo.defaults())
     }
 
-    private fun normalizeUrl(url: String): String =
+    fun normalizeUrl(url: String): String =
         url.trim().removeSuffix("/")
 
     /**
