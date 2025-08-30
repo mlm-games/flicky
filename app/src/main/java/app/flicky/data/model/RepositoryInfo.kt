@@ -27,12 +27,12 @@ data class RepositoryInfo(
             RepositoryInfo("Molly", "https://molly.im/fdroid/repo", false),
             RepositoryInfo("Molly FOSS", "https://molly.im/fdroid/foss/fdroid/repo", false),
             RepositoryInfo("Bitwarden", "https://mobileapp.bitwarden.com/fdroid/repo", false),
-            RepositoryInfo("Cromite", "https://www.cromite.org/fdroid/repo", false),
-            RepositoryInfo("IronFox", "https://fdroid.ironfoxoss.org/fdroid/repo", false),
+//            RepositoryInfo("Cromite", "https://www.cromite.org/fdroid/repo", false),
+//            RepositoryInfo("IronFox", "https://fdroid.ironfoxoss.org/fdroid/repo", false),
             RepositoryInfo("FUTO", "https://app.futo.org/fdroid/repo", false),
-            RepositoryInfo("Brave", "https://brave-browser-apk-release.s3.brave.com/fdroid/repo", false),
-            RepositoryInfo("Cryptomator", "https://static.cryptomator.org/android/fdroid/repo", false),
-            RepositoryInfo("LibRetro", "https://fdroid.libretro.com/repo", false),
+//            RepositoryInfo("Brave", "https://brave-browser-apk-release.s3.brave.com/fdroid/repo", false),
+//            RepositoryInfo("Cryptomator", "https://static.cryptomator.org/android/fdroid/repo", false),
+//            RepositoryInfo("LibRetro", "https://fdroid.libretro.com/repo", false),
             RepositoryInfo("CloudBurst", "https://c10udburst.github.io/fdroid/repo", false),
 
 
