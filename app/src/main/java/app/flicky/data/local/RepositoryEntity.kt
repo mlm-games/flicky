@@ -40,14 +40,16 @@ data class RepositoryEntity(
 )
 
 /**
- * Joined UI row: repository metadata + enabled flag from repo_config.
+ * Joined UI row: repository metadata + config flags.
  */
 data class RepoWithConfigRow(
     @ColumnInfo(name = "baseUrl") val baseUrl: String,
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "description") val description: String,
     @ColumnInfo(name = "webBaseUrl") val webBaseUrl: String,
-    @ColumnInfo(name = "enabled") val enabled: Boolean
+    @ColumnInfo(name = "enabled") val enabled: Boolean,
+    @ColumnInfo(name = "rotateMirrors") val rotateMirrors: Boolean,
+    @ColumnInfo(name = "fingerprint") val fingerprint: String
 )
 
 @Dao
@@ -66,14 +68,15 @@ interface RepositoryDao {
 
     /**
      * Observe the union of repositories and repo_config.
-     * This ensures rows appear even if only one side has been created.
      */
     @Query("""
         SELECT b.baseUrl AS baseUrl,
                COALESCE(r.name, '') AS name,
                COALESCE(r.description, '') AS description,
                COALESCE(r.webBaseUrl, '') AS webBaseUrl,
-               COALESCE(rc.enabled, 1) AS enabled
+               COALESCE(rc.enabled, 1) AS enabled,
+               COALESCE(rc.rotateMirrors, 0) AS rotateMirrors,
+               COALESCE(r.fingerprint, '') AS fingerprint
         FROM (
             SELECT baseUrl FROM repositories
             UNION

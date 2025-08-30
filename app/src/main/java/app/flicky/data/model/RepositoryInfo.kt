@@ -6,11 +6,13 @@ import kotlinx.serialization.Serializable
 data class RepositoryInfo(
     val name: String,
     val url: String,
-    val enabled: Boolean = true
+    val enabled: Boolean = true,
+    val signingKey: String = "",
+    val rotateMirrors: Boolean = false
 ) {
     companion object {
         fun defaults() = listOf(
-            RepositoryInfo("F-Droid", "https://f-droid.org/repo", true),
+            RepositoryInfo("F-Droid", "https://f-droid.org/repo", true, "",true),
             RepositoryInfo("IzzyOnDroid", "https://apt.izzysoft.de/fdroid/repo", true),
             RepositoryInfo("F-Droid Archive", "https://f-droid.org/archive", false),
             RepositoryInfo("microG", "https://microg.org/fdroid/repo", false),
@@ -27,16 +29,13 @@ data class RepositoryInfo(
             RepositoryInfo("Molly", "https://molly.im/fdroid/repo", false),
             RepositoryInfo("Molly FOSS", "https://molly.im/fdroid/foss/fdroid/repo", false),
             RepositoryInfo("Bitwarden", "https://mobileapp.bitwarden.com/fdroid/repo", false),
-//            RepositoryInfo("Cromite", "https://www.cromite.org/fdroid/repo", false),
-//            RepositoryInfo("IronFox", "https://fdroid.ironfoxoss.org/fdroid/repo", false),
+            RepositoryInfo("Cromite", "https://www.cromite.org/fdroid/repo", false),
+            RepositoryInfo("IronFox", "https://fdroid.ironfoxoss.org/fdroid/repo", false, ""),
             RepositoryInfo("FUTO", "https://app.futo.org/fdroid/repo", false),
-//            RepositoryInfo("Brave", "https://brave-browser-apk-release.s3.brave.com/fdroid/repo", false),
-//            RepositoryInfo("Cryptomator", "https://static.cryptomator.org/android/fdroid/repo", false),
-//            RepositoryInfo("LibRetro", "https://fdroid.libretro.com/repo", false),
+            RepositoryInfo("Brave", "https://brave-browser-apk-release.s3.brave.com/fdroid/repo", false, "3C60DE135AA19EC949E998469C908F7171885C1E2805F39EB403DDB0F37B4BD2"),
+            RepositoryInfo("Cryptomator", "https://static.cryptomator.org/android/fdroid/repo", false, "F7C3EC3B0D588D3CB52983E9EB1A7421C93D4339A286398E71D7B651E8D8ECDD"),
+            RepositoryInfo("LibRetro", "https://fdroid.libretro.com/repo", false),
             RepositoryInfo("CloudBurst", "https://c10udburst.github.io/fdroid/repo", false),
-
-
-
         )
     }
 }

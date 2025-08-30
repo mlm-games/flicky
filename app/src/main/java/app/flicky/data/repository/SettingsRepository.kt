@@ -173,9 +173,11 @@ class SettingsRepository(
             .map { rows ->
                 rows.map { r ->
                     RepositoryInfo(
-                        name = if (r.name.isNotBlank()) r.name else r.baseUrl,
+                        name = r.name.ifBlank { r.baseUrl },
                         url = normalizeUrl(r.baseUrl),
-                        enabled = r.enabled
+                        enabled = r.enabled,
+                        signingKey = r.fingerprint,
+                        rotateMirrors = r.rotateMirrors
                     )
                 }
             }

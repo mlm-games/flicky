@@ -11,6 +11,8 @@ import app.flicky.data.remote.DbMirrorPolicyProvider
 import app.flicky.data.remote.FDroidApi
 import app.flicky.data.remote.HttpClientProvider
 import app.flicky.data.remote.MirrorPolicyProvider
+import app.flicky.data.remote.MirrorRegistry
+import app.flicky.data.remote.MirrorStateStore
 import app.flicky.data.repository.AppRepository
 import app.flicky.data.repository.InstalledAppsRepository
 import app.flicky.data.repository.RepoHeadersStore
@@ -109,6 +111,7 @@ object AppGraph {
     fun init(context: Context) {
         if (!::appContext.isInitialized) {
             appContext = context.applicationContext
+            MirrorRegistry.setStateStore(MirrorStateStore(appContext))
         }
     }
 }

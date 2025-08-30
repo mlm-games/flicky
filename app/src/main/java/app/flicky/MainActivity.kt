@@ -21,6 +21,7 @@ import app.flicky.helper.DeviceUtils
 import app.flicky.helper.viewModelFactory
 import app.flicky.navigation.FlickyNavHost
 import app.flicky.navigation.Routes
+import app.flicky.network.CoilCallFactory
 import app.flicky.ui.routes.AppDetailRoute
 import app.flicky.ui.routes.UpdatesRoute
 import app.flicky.ui.screens.BrowseScreen
@@ -32,6 +33,8 @@ import app.flicky.ui.theme.FlickyTheme
 import app.flicky.viewmodel.BrowseViewModel
 import app.flicky.viewmodel.SettingsViewModel
 import app.flicky.work.SyncScheduler
+import coil.Coil
+import coil.ImageLoader
 
 class MainActivity : ComponentActivity() {
 
@@ -53,6 +56,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         AppGraph.init(applicationContext)
         UpdatesPreferences.init(applicationContext)
+
+        runCatching {
+            val callFactory = CoilCallFactory(AppGraph.httpClients)
+            val loader = ImageLoader.Builder(applicationContext)
+                .callFactory(callFactory)
+                .crossfade(true)
+                .build()
+            Coil.setImageLoader(loader)
+        }
 
         setContent {
             val settingsState by AppGraph.settings.settingsFlow.collectAsState(initial = null)
