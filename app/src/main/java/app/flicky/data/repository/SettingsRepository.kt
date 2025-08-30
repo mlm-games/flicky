@@ -50,6 +50,7 @@ class SettingsRepository(private val context: Context) {
         val IGNORE_SIGNATURE = booleanPreferencesKey("ignore_signature")
 
         val DIFFERENTIAL_SYNC = booleanPreferencesKey("differential_sync")
+        val USE_ENTRY_JSON = booleanPreferencesKey("use_entry_json")
 
         val USE_PROXY = booleanPreferencesKey("use_proxy")
         val PROXY_TYPE = intPreferencesKey("proxy_type")
@@ -91,6 +92,7 @@ class SettingsRepository(private val context: Context) {
         "ignoreSignature" to SettingDefinition.BooleanSetting("ignoreSignature", IGNORE_SIGNATURE) { it.ignoreSignature },
 
         "differentialSync" to SettingDefinition.BooleanSetting("differentialSync", DIFFERENTIAL_SYNC) { it.differentialSync },
+        "useEntryJson" to SettingDefinition.BooleanSetting("useEntryJson", USE_ENTRY_JSON) { it.useEntryJson },
 
         "useProxy" to SettingDefinition.BooleanSetting("useProxy", USE_PROXY) { it.useProxy },
         "proxyType" to SettingDefinition.IntSetting("proxyType", PROXY_TYPE) { it.proxyType },
@@ -128,6 +130,7 @@ class SettingsRepository(private val context: Context) {
             ignoreSignature = p[IGNORE_SIGNATURE] ?: false,
 
             differentialSync = p[DIFFERENTIAL_SYNC] ?: true,
+            useEntryJson = p[USE_ENTRY_JSON] ?: true,
 
             useProxy = p[USE_PROXY] ?: false,
             proxyType = p[PROXY_TYPE] ?: 0,

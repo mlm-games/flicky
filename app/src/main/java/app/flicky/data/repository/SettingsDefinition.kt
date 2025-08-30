@@ -129,12 +129,20 @@ data class AppSettings(
     val ignoreSignature: Boolean = false,
 
     @Setting(
-        title = "Differential sync",
-        description = "Use HTTP cache checks (ETag/Last-Modified) to skip unchanged repos",
+        title = "Differential sync (HTTP)",
+        description = "Use ETag/Last-Modified to skip unchanged repos",
         category = SettingCategory.DOWNLOADS,
         type = SettingType.TOGGLE
     )
     val differentialSync: Boolean = true,
+
+    @Setting(
+        title = "Use entry.json (experimental)",
+        description = "Try entry.json to locate the best index (and future diffs).",
+        category = SettingCategory.SYSTEM,
+        type = SettingType.TOGGLE
+    )
+    val useEntryJson: Boolean = false,
 
     val useProxy: Boolean = false,
 

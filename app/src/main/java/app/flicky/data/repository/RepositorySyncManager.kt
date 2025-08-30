@@ -74,7 +74,7 @@ class RepositorySyncManager(
             }
 
             val (preferredList, others) = enabledRepos.partition { matchesPreferred(it.name, it.url) }
-            val repos = others + preferredList
+            val repos = others + preferredList // preferred last => deterministic overwrite
 
             if (force) {
                 headersStore.clear()
@@ -87,8 +87,11 @@ class RepositorySyncManager(
             var totalApps = 0
             var anySuccess = false
             val repoErrors = mutableListOf<Pair<String, String>>()
-            val showDebug = settings.settingsFlow.first().let { it is AppSettings && it.showDebugInfo } ||
-                    runCatching { settings.settingsFlow.first().let { (it as AppSettings).showDebugInfo } }.getOrDefault(false)
+
+            val s = settings.settingsFlow.first()
+            val differential = s.differentialSync
+            val useEntry = s.useEntryJson
+            val showDebug = s.showDebugInfo
 
             repos.forEachIndexed { index, repo ->
                 if (cancelRequested || !kotlin.coroutines.coroutineContext.isActive) return@withLock totalApps to repoErrors
@@ -106,15 +109,15 @@ class RepositorySyncManager(
                         )
                     }
 
-                    if (showDebug) DebugLog.log(TAG, "Fetching ${repo.name} (${repo.url})")
+                    if (showDebug) DebugLog.log(TAG, "Fetching ${repo.name} (${repo.url}) (entry.json=${useEntry}, diff=${differential})")
 
                     val prevHeader = headersStore.get(repo.url)
-                    val differential = settings.settingsFlow.first().differentialSync
                     val result = api.fetchWithCache(
                         repo = repo,
                         previous = FDroidApi.RepoHeaders(prevHeader.etag, prevHeader.lastModified),
                         force = force,
                         enableDifferential = differential,
+                        enableEntryJson = useEntry,
                         includeIncompatible = true,
                         onApp = { apps.add(it) },
                         onVariant = { variants.add(it) }
