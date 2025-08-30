@@ -32,14 +32,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import org.slf4j.MDC.put
 import rikka.shizuku.Shizuku
 import java.io.File
 import java.io.FileInputStream
 import java.io.OutputStream
 import java.lang.reflect.Method
 import java.security.MessageDigest
-import kotlin.collections.toMutableMap
 
 class Installer(
     private val context: Context,
@@ -157,52 +155,53 @@ class Installer(
         val title: String,
         val urls: List<String>,
         val sha256: String,
-        val size: Long
+        val size: Long,
+        val repoBase: String // for mirror bookkeeping
     )
 
     private fun normalize(urlOrId: String) = urlOrId.trim().trimEnd('/')
 
     private suspend fun resolve(app: FDroidApp): ResolvedApk? {
         val title = "${app.name} ${app.version}"
-        val baseId = if (app.repositoryUrl.isNotBlank()) app.repositoryUrl else app.repository
-        val urls = resolveUrls(baseId, app.apkUrl)
+        val base = resolveBase(app.repositoryUrl.ifBlank { app.repository })
+        val urls = resolveUrls(base, app.apkUrl)
         return ResolvedApk(
             packageName = app.packageName,
             title = title,
             urls = urls,
             sha256 = app.sha256,
-            size = app.size
+            size = app.size,
+            repoBase = base
         )
     }
 
     private suspend fun resolve(variant: AppVariant): ResolvedApk? {
         val title = "${variant.packageName} ${variant.versionName}"
-        val urls = resolveUrls(variant.repositoryUrl, variant.apkUrl)
+        val base = resolveBase(variant.repositoryUrl)
+        val urls = resolveUrls(base, variant.apkUrl)
         return ResolvedApk(
             packageName = variant.packageName,
             title = title,
             urls = urls,
             sha256 = variant.sha256,
-            size = variant.size
+            size = variant.size,
+            repoBase = base
         )
     }
 
-    private suspend fun resolveUrls(repoIdOrUrl: String, apkPathOrUrl: String): List<String> {
+    private suspend fun resolveUrls(repoBase: String, apkPathOrUrl: String): List<String> {
         if (apkPathOrUrl.startsWith("http://") || apkPathOrUrl.startsWith("https://")) {
-            return listOf(apkPathOrUrl)
+            return listOf(apkPathOrUrl.trim())
         }
-
-        val base = resolveBase(repoIdOrUrl) // canonical base
-        val rotate = settings.settingsFlow.first().mirrorRotation
         val includeOnion = settings.settingsFlow.first().useOnionMirrors
+        val rotate = settings.settingsFlow.first().mirrorRotation
+        val strategy = if (rotate) MirrorRegistry.Strategy.RoundRobin else MirrorRegistry.Strategy.StickyLastGood
 
-        val bases = if (rotate && MirrorRegistry.hasMirrors(base)) {
-            MirrorRegistry.candidates(base, includeOnion)
-        } else listOf(base)
-
+        val bases = MirrorRegistry.candidates(repoBase, includeOnion, strategy)
         val path = apkPathOrUrl.trimStart('/')
         return bases.map { b -> "${normalize(b)}/$path" }
     }
+
 
     private suspend fun resolveBase(repo: String): String {
         if (repo.startsWith("http")) return normalize(repo)
@@ -259,7 +258,10 @@ class Installer(
                         }
                     }
                 }
-                if (out.exists()) return@withContext out
+                if (out.exists()) {
+                    MirrorRegistry.markHealthy(req.repoBase, url)
+                    return@withContext out
+                }
             } else {
                 runCatching { out.delete() }
             }
@@ -406,7 +408,7 @@ class Installer(
         session.close()
 
         val status = try {
-            withTimeout(60_000) { result.await() }
+            withTimeout(180_000) { result.await() }
         } finally {
             waitJob.cancel()
         }

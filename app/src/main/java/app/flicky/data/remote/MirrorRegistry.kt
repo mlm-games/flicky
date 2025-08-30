@@ -3,49 +3,118 @@ package app.flicky.data.remote
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Policy-based mirror selector with optional sticky last-good behavior.
+ * Persisting lastGood is pluggable via MirrorStateStore (in-memory by default).
+ */
 object MirrorRegistry {
+
+    enum class Strategy {
+        StickyLastGood, // prefer last-good for this repo, then canonical, then others
+        RoundRobin,     // rotate over https mirrors, then onion (if allowed)
+        CanonicalFirst  // always canonical first, then others
+    }
+
+    interface MirrorStateStore {
+        fun getLastGood(base: String): String?
+        fun putLastGood(base: String, url: String)
+        fun clear(base: String)
+    }
+
+    private class InMemoryStore : MirrorStateStore {
+        private val map = ConcurrentHashMap<String, String>()
+        override fun getLastGood(base: String) = map[base]
+        override fun putLastGood(base: String, url: String) { map[base] = url }
+        override fun clear(base: String) { map.remove(base) }
+    }
+
+    private var stateStore: MirrorStateStore = InMemoryStore()
+    fun setStateStore(store: MirrorStateStore) { stateStore = store }
 
     private data class Mirrors(
         val canonicalBase: String,
         val https: List<String>,
         val onion: List<String>,
-        val index: AtomicInteger = AtomicInteger(0)
+        val primary: String? = null,
+        val rrIndex: AtomicInteger = AtomicInteger(0)
     )
 
-    private val map = ConcurrentHashMap<String, Mirrors>()
+    private val repos = ConcurrentHashMap<String, Mirrors>()
 
     private fun norm(url: String) = url.trim().trimEnd('/')
 
-    fun register(canonicalBase: String, urls: List<String>) {
+    /**
+     * Register mirrors for a repository.
+     * @param canonicalBase base from "repo.address" (treated as primary if [primaryUrl] is null)
+     * @param urls all mirror URLs (http/https/onion)
+     * @param primaryUrl optional explicit primary mirror URL from index metadata
+     */
+    fun register(canonicalBase: String, urls: List<String>, primaryUrl: String? = null) {
         val base = norm(canonicalBase)
         if (base.isBlank()) return
-        // Normalize and split into https and onion/http
-        val normalized = urls.mapNotNull { it?.trim() }.map { norm(it) }.distinct()
+
+        // Normalize and uniquify
+        val normalized = urls.mapNotNull { it?.trim() }
+            .map(::norm)
+            .distinct()
+
         val https = normalized.filter { it.startsWith("https://", ignoreCase = true) }
         val onion = normalized.filter { it.contains(".onion") || it.startsWith("http://", ignoreCase = true) }
-        map[base] = Mirrors(base, https = if (https.isNotEmpty()) https else listOf(base), onion = onion)
+
+        repos[base] = Mirrors(
+            canonicalBase = base,
+            https = if (https.isNotEmpty()) https else listOf(base),
+            onion = onion,
+            primary = primaryUrl?.let(::norm)
+        )
     }
 
-    fun hasMirrors(base: String): Boolean {
-        val m = map[norm(base)] ?: return false
-        return m.https.isNotEmpty() || m.onion.isNotEmpty()
+    fun hasMirrors(base: String): Boolean = repos.containsKey(norm(base))
+
+    /**
+     * Compute ordered candidates based on strategy and onion preference.
+     */
+    fun candidates(base: String, includeOnion: Boolean, strategy: Strategy): List<String> {
+        val m = repos[norm(base)] ?: return listOf(norm(base))
+        // Deduplicate while preserving preference order
+        fun dedup(list: List<String>) = list.asSequence().distinct().toList()
+
+        val https = m.https
+        val onion = if (includeOnion) m.onion else emptyList()
+        val canonical = m.canonicalBase
+        val primary = m.primary ?: canonical
+        val lastGood = stateStore.getLastGood(m.canonicalBase)
+
+        return when (strategy) {
+            Strategy.StickyLastGood -> dedup(
+                listOfNotNull(lastGood, primary, canonical) +
+                        https + onion
+            )
+            Strategy.RoundRobin -> {
+                val allHttps = dedup(listOf(primary, canonical) + https)
+                val size = allHttps.size
+                val start = if (size == 0) 0 else (m.rrIndex.getAndIncrement() % size + size) % size
+                val rr = if (size == 0) emptyList() else allHttps.drop(start) + allHttps.take(start)
+                dedup(rr + onion)
+            }
+            Strategy.CanonicalFirst -> dedup(listOf(primary, canonical) + https + onion)
+        }
     }
 
-    fun pick(base: String, includeOnion: Boolean): String {
-        val m = map[norm(base)] ?: return norm(base)
-        val list = if (includeOnion && m.onion.isNotEmpty()) m.https + m.onion else m.https
-        val size = list.size
-        if (size == 0) return m.canonicalBase
-        val i = (m.index.getAndIncrement() % size + size) % size
-        return list[i]
+    /**
+     * Mark a mirror as healthy (successful use). Used by fetchers/downloader.
+     */
+    fun markHealthy(base: String, url: String) {
+        val b = norm(base)
+        val u = norm(url)
+        val m = repos[b] ?: return
+        if (u == b || m.https.contains(u) || m.onion.contains(u)) {
+            stateStore.putLastGood(b, u)
+        }
     }
 
-    fun candidates(base: String, includeOnion: Boolean): List<String> {
-        val m = map[norm(base)] ?: return listOf(norm(base))
-        val list = if (includeOnion && m.onion.isNotEmpty()) m.https + m.onion else m.https
-        if (list.isEmpty()) return listOf(m.canonicalBase)
-        // rotate starting point
-        val i = (m.index.getAndIncrement() % list.size + list.size) % list.size
-        return (list.subList(i, list.size) + list.subList(0, i))
+    fun clear(base: String) {
+        val b = norm(base)
+        stateStore.clear(b)
     }
 }

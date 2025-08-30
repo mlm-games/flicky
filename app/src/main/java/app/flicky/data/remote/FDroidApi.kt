@@ -746,42 +746,48 @@ class FDroidApi(context: Context) {
 
     private fun parseRepoBlock(reader: JsonReader) {
         var address: String? = null
-        val mirrors = mutableListOf<String>()
+        val urls = mutableListOf<String>()
+        var primaryUrl: String? = null
+
         reader.beginObject()
         while (reader.hasNext()) {
             when (reader.nextName()) {
-                "address" -> address = when (reader.peek()) {
-                    JsonToken.STRING -> reader.nextString()
-                    else -> { reader.skipValue(); null }
-                }
+                "address" -> address = reader.nextString()
                 "mirrors" -> {
-                    when (reader.peek()) {
-                        JsonToken.BEGIN_ARRAY -> {
-                            reader.beginArray()
-                            while (reader.hasNext()) {
-                                var url: String? = null
-                                reader.beginObject()
-                                while (reader.hasNext()) {
-                                    when (reader.nextName()) {
-                                        "url" -> url = reader.nextString()
-                                        else -> reader.skipValue()
-                                    }
+                    reader.beginArray()
+                    while (reader.hasNext()) {
+                        var url: String? = null
+                        var isPrimary = false
+                        reader.beginObject()
+                        while (reader.hasNext()) {
+                            when (reader.nextName()) {
+                                "url" -> url = reader.nextString()
+                                "isPrimary" -> {
+                                    // Some repos set this; harmless if absent
+                                    if (reader.peek() == JsonToken.BOOLEAN) isPrimary = reader.nextBoolean()
+                                    else reader.skipValue()
                                 }
-                                reader.endObject()
-                                url?.let { mirrors.add(it) }
+                                else -> reader.skipValue()
                             }
-                            reader.endArray()
                         }
-                        else -> reader.skipValue()
+                        reader.endObject()
+                        url?.let {
+                            urls.add(it)
+                            if (isPrimary) primaryUrl = it
+                        }
                     }
+                    reader.endArray()
                 }
                 else -> reader.skipValue()
             }
         }
         reader.endObject()
+
         if (!address.isNullOrBlank()) {
-            val all = listOf(address) + mirrors
-            MirrorRegistry.register(address, all)
+            val base = address.trim().trimEnd('/')
+            // Treat repo.address as primary if index didn’t mark any mirror explicitly
+            val declaredPrimary = primaryUrl ?: base
+            MirrorRegistry.register(base, listOf(base) + urls, declaredPrimary)
         }
     }
 
