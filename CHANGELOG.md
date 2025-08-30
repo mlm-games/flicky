@@ -1,3 +1,18 @@
+## v3.0.1
+
+- Cromite works, massive breaking changes, will be fixed in the next update or 2 (mainly regarding cache and repo settings)
+- LibRetro works (readd indexv1)
+- Commit Missed files
+- Experimental mirrors (repo wise) settings ui and other misc changes
+- Use stick last good mirror logic
+- Index v1 changes (libretro trials) and add entry.json verif setting
+- Comment out Cromite, IronFox, Brave Cryptomater and LibRetro (do not seem to work)
+- Properly populate apkvariants and persist ui for background downloads
+- Minor fixes
+- Try adding mirrors rotation (experimental), unify installers
+- Add few other commonly used repos (futo, brave, cryptomator, libretro)
+
+
 ## v2.5.2
 
 - Use localised strings and misc formatting changes (fix #7)
