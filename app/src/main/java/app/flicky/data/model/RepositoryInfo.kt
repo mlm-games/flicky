@@ -33,6 +33,8 @@ data class RepositoryInfo(
             RepositoryInfo("Brave", "https://brave-browser-apk-release.s3.brave.com/fdroid/repo", false),
             RepositoryInfo("Cryptomator", "https://static.cryptomator.org/android/fdroid/repo", false),
             RepositoryInfo("LibRetro", "https://fdroid.libretro.com/repo", false),
+            RepositoryInfo("CloudBurst", "https://c10udburst.github.io/fdroid/repo", false),
+
 
 
         )

@@ -116,6 +116,22 @@ data class AppSettings(
     val keepCache: Boolean = false,
 
     @Setting(
+        title = "Mirror rotation",
+        description = "Rotate across available repo mirrors when downloading",
+        category = SettingCategory.DOWNLOADS,
+        type = SettingType.TOGGLE
+    )
+    val mirrorRotation: Boolean = true,
+
+    @Setting(
+        title = "Use .onion mirrors",
+        description = "Include Tor (.onion) mirrors when rotating (requires Tor/I2P routing)",
+        category = SettingCategory.DOWNLOADS,
+        type = SettingType.TOGGLE
+    )
+    val useOnionMirrors: Boolean = false,
+
+    @Setting(
         title = "Installer",
         description = "Choose how apps are installed",
         category = SettingCategory.DOWNLOADS,

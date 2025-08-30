@@ -149,6 +149,7 @@ class FDroidApi(context: Context) {
                 reader.beginObject()
                 while (reader.hasNext()) {
                     when (reader.nextName()) {
+                        "repo" -> parseRepoBlock(reader)
                         "packages" -> {
                             reader.beginObject()
                             while (reader.hasNext()) {
@@ -178,6 +179,40 @@ class FDroidApi(context: Context) {
         }
         Log.d(TAG, "Parsed $totalApps apps from $repoName")
     }
+
+    private fun parseRepoBlock(reader: JsonReader) {
+        var address: String? = null
+        val mirrors = mutableListOf<String>()
+        reader.beginObject()
+        while (reader.hasNext()) {
+            when (reader.nextName()) {
+                "address" -> address = reader.nextString()
+                "mirrors" -> {
+                    reader.beginArray()
+                    while (reader.hasNext()) {
+                        var url: String? = null
+                        reader.beginObject()
+                        while (reader.hasNext()) {
+                            when (reader.nextName()) {
+                                "url" -> url = reader.nextString()
+                                else -> reader.skipValue()
+                            }
+                        }
+                        reader.endObject()
+                        url?.let { mirrors.add(it) }
+                    }
+                    reader.endArray()
+                }
+                else -> reader.skipValue()
+            }
+        }
+        reader.endObject()
+        if (!address.isNullOrBlank()) {
+            val all = listOf(address) + mirrors
+            MirrorRegistry.register(address, all)
+        }
+    }
+
 
     /**
      * Best-version selection with size tie-breaker for equal versionCode.

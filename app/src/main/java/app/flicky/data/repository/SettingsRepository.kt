@@ -44,6 +44,8 @@ class SettingsRepository(private val context: Context) {
         val NOTIFY_UPDATES = booleanPreferencesKey("notify_updates")
         val KEEP_CACHE = booleanPreferencesKey("keep_cache")
         val INSTALLER_MODE = intPreferencesKey("installer_mode")
+        val MIRROR_ROTATION = booleanPreferencesKey("mirror_rotation")
+        val USE_ONION_MIRRORS = booleanPreferencesKey("use_onion_mirrors")
 
         val HIDE_ANTI = booleanPreferencesKey("hide_anti_features")
         val SHOW_INCOMPATIBLE = booleanPreferencesKey("show_incompatible")
@@ -63,6 +65,7 @@ class SettingsRepository(private val context: Context) {
         val REPO_HEADERS = stringPreferencesKey("repo_headers_json")
 
         val PREFERRED_REPO = intPreferencesKey("preferred_repo")
+
     }
 
 
@@ -80,6 +83,8 @@ class SettingsRepository(private val context: Context) {
         "syncIntervalIndex" to SettingDefinition.IntSetting("syncIntervalIndex", SYNC_INTERVAL) { it.syncIntervalIndex },
         "notifyUpdates" to SettingDefinition.BooleanSetting("notifyUpdates", NOTIFY_UPDATES) { it.notifyUpdates },
         "keepCache" to SettingDefinition.BooleanSetting("keepCache", KEEP_CACHE) { it.keepCache },
+        "mirrorRotation" to SettingDefinition.BooleanSetting("mirrorRotation", MIRROR_ROTATION) { it.mirrorRotation },
+        "useOnionMirrors" to SettingDefinition.BooleanSetting("useOnionMirrors", USE_ONION_MIRRORS) { it.useOnionMirrors },
         "installerMode" to SettingDefinition.IntSetting("installerMode", INSTALLER_MODE) { it.installerMode },
 
         "hideAntiFeatures" to SettingDefinition.BooleanSetting("hideAntiFeatures", HIDE_ANTI) { it.hideAntiFeatures },

@@ -297,6 +297,8 @@ private fun LinksSection(app: FDroidApp) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (app.website.isNotBlank()) AssistChip(onClick = { openUrl(ctx, app.website) }, label = { Text(stringResource(R.string.website)) })
             if (app.sourceCode.isNotBlank()) AssistChip(onClick = { openUrl(ctx, app.sourceCode) }, label = { Text(stringResource(R.string.source_code)) })
+            if (app.repositoryUrl.isNotBlank()) AssistChip(onClick = { openUrl(ctx, app.repositoryUrl) }, label = { Text(stringResource(R.string.repository_url)) })
+
         }
     }
 }

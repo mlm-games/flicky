@@ -4,10 +4,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
 object SessionInstallBus {
-    private val _events = MutableSharedFlow<Pair<Int, Int>>(replay = 0)
+    private val _events = MutableSharedFlow<Pair<Int, Int>>(replay = 1, extraBufferCapacity = 16)
     val events = _events.asSharedFlow()
-
-    suspend fun publish(sessionId: Int, resultCode: Int) {
-        _events.emit(sessionId to resultCode)
-    }
+    suspend fun publish(sessionId: Int, resultCode: Int) = _events.emit(sessionId to resultCode)
 }
