@@ -3,8 +3,14 @@ package app.flicky.data.repository
 import android.content.Context
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import app.flicky.data.local.RepoConfig
+import app.flicky.data.local.RepoConfigDao
+import app.flicky.data.local.RepositoryDao
+import app.flicky.data.local.RepositoryEntity
 import app.flicky.data.model.RepositoryInfo
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 private val Context.ds by preferencesDataStore("flicky.settings")
@@ -21,7 +27,11 @@ sealed class SettingDefinition<T> {
     data class LongSetting(override val propertyName: String, override val key: Preferences.Key<Long>, override val getValue: (AppSettings) -> Long) : SettingDefinition<Long>()
 }
 
-class SettingsRepository(private val context: Context) {
+class SettingsRepository(
+    private val context: Context,
+    private val repositoryDao: RepositoryDao,
+    private val repoConfigDao: RepoConfigDao
+) {
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = false }
 
     companion object {
@@ -35,72 +45,81 @@ class SettingsRepository(private val context: Context) {
         val DEFAULT_SORT = intPreferencesKey("default_sort")
         val APPS_PER_ROW = intPreferencesKey("apps_per_row")
 
+        // Downloads and updates
         val AUTO_UPDATE = booleanPreferencesKey("auto_update")
         val WIFI_ONLY = booleanPreferencesKey("wifi_only")
         val SYNC_INTERVAL = intPreferencesKey("sync_interval_idx")
         val NOTIFY_UPDATES = booleanPreferencesKey("notify_updates")
         val KEEP_CACHE = booleanPreferencesKey("keep_cache")
         val INSTALLER_MODE = intPreferencesKey("installer_mode")
-        val MIRROR_ROTATION = booleanPreferencesKey("mirror_rotation")
-        val USE_ONION_MIRRORS = booleanPreferencesKey("use_onion_mirrors")
 
+        // Filters
         val HIDE_ANTI = booleanPreferencesKey("hide_anti_features")
         val SHOW_INCOMPATIBLE = booleanPreferencesKey("show_incompatible")
         val UNSTABLE_UPDATES = booleanPreferencesKey("unstable_updates")
         val IGNORE_SIGNATURE = booleanPreferencesKey("ignore_signature")
 
+        // Sync behavior
         val DIFFERENTIAL_SYNC = booleanPreferencesKey("differential_sync")
         val USE_ENTRY_JSON = booleanPreferencesKey("use_entry_json")
 
+        // Proxy
         val USE_PROXY = booleanPreferencesKey("use_proxy")
         val PROXY_TYPE = intPreferencesKey("proxy_type")
         val PROXY_HOST = stringPreferencesKey("proxy_host")
         val PROXY_PORT = intPreferencesKey("proxy_port")
 
+        // Metadata
         val LAST_SYNC = longPreferencesKey("last_sync")
 
-        val REPOS_JSON = stringPreferencesKey("repos_json")
+        // Repo headers cache for differential sync
         val REPO_HEADERS = stringPreferencesKey("repo_headers_json")
 
+        // Preference for variant source
         val PREFERRED_REPO = intPreferencesKey("preferred_repo")
 
+        // Debug
         val SHOW_DEBUG_INFO = booleanPreferencesKey("show_debug_info")
     }
 
-
     private val definitions: Map<String, SettingDefinition<*>> = mapOf(
+        // Appearance
         "themeMode" to SettingDefinition.IntSetting("themeMode", THEME_MODE) { it.themeMode },
         "dynamicTheme" to SettingDefinition.BooleanSetting("dynamicTheme", DYNAMIC_THEME) { it.dynamicTheme },
         "compactMode" to SettingDefinition.BooleanSetting("compactMode", COMPACT_MODE) { it.compactMode },
         "showAppIcons" to SettingDefinition.BooleanSetting("showAppIcons", SHOW_APP_ICONS) { it.showAppIcons },
 
+        // General
         "defaultSort" to SettingDefinition.IntSetting("defaultSort", DEFAULT_SORT) { it.defaultSort },
         "appsPerRow" to SettingDefinition.IntSetting("appsPerRow", APPS_PER_ROW) { it.appsPerRow },
 
+        // Downloads and updates
         "autoUpdate" to SettingDefinition.BooleanSetting("autoUpdate", AUTO_UPDATE) { it.autoUpdate },
         "wifiOnly" to SettingDefinition.BooleanSetting("wifiOnly", WIFI_ONLY) { it.wifiOnly },
         "syncIntervalIndex" to SettingDefinition.IntSetting("syncIntervalIndex", SYNC_INTERVAL) { it.syncIntervalIndex },
         "notifyUpdates" to SettingDefinition.BooleanSetting("notifyUpdates", NOTIFY_UPDATES) { it.notifyUpdates },
         "keepCache" to SettingDefinition.BooleanSetting("keepCache", KEEP_CACHE) { it.keepCache },
-        "mirrorRotation" to SettingDefinition.BooleanSetting("mirrorRotation", MIRROR_ROTATION) { it.mirrorRotation },
-        "useOnionMirrors" to SettingDefinition.BooleanSetting("useOnionMirrors", USE_ONION_MIRRORS) { it.useOnionMirrors },
         "installerMode" to SettingDefinition.IntSetting("installerMode", INSTALLER_MODE) { it.installerMode },
 
+        // Filters
         "hideAntiFeatures" to SettingDefinition.BooleanSetting("hideAntiFeatures", HIDE_ANTI) { it.hideAntiFeatures },
         "showIncompatible" to SettingDefinition.BooleanSetting("showIncompatible", SHOW_INCOMPATIBLE) { it.showIncompatible },
         "unstableUpdates" to SettingDefinition.BooleanSetting("unstableUpdates", UNSTABLE_UPDATES) { it.unstableUpdates },
         "ignoreSignature" to SettingDefinition.BooleanSetting("ignoreSignature", IGNORE_SIGNATURE) { it.ignoreSignature },
 
+        // Sync behavior
         "differentialSync" to SettingDefinition.BooleanSetting("differentialSync", DIFFERENTIAL_SYNC) { it.differentialSync },
         "useEntryJson" to SettingDefinition.BooleanSetting("useEntryJson", USE_ENTRY_JSON) { it.useEntryJson },
 
+        // Proxy
         "useProxy" to SettingDefinition.BooleanSetting("useProxy", USE_PROXY) { it.useProxy },
         "proxyType" to SettingDefinition.IntSetting("proxyType", PROXY_TYPE) { it.proxyType },
         "proxyHost" to SettingDefinition.StringSetting("proxyHost", PROXY_HOST) { it.proxyHost },
         "proxyPort" to SettingDefinition.IntSetting("proxyPort", PROXY_PORT) { it.proxyPort },
 
+        // Metadata / misc
         "lastSync" to SettingDefinition.LongSetting("lastSync", LAST_SYNC) { it.lastSync },
-        "preferredRepo" to SettingDefinition.IntSetting("preferredRepo", PREFERRED_REPO) { it.preferredRepo},
+        "preferredRepo" to SettingDefinition.IntSetting("preferredRepo", PREFERRED_REPO) { it.preferredRepo },
 
         "showDebugInfo" to SettingDefinition.BooleanSetting("showDebugInfo", SHOW_DEBUG_INFO) { it.showDebugInfo },
     )
@@ -120,8 +139,6 @@ class SettingsRepository(private val context: Context) {
             syncIntervalIndex = p[SYNC_INTERVAL] ?: 1,
             notifyUpdates = p[NOTIFY_UPDATES] ?: true,
             keepCache = p[KEEP_CACHE] ?: false,
-            mirrorRotation = p[MIRROR_ROTATION] ?: false,
-            useOnionMirrors = p[USE_ONION_MIRRORS] ?: false,
             installerMode = p[INSTALLER_MODE] ?: 0,
 
             hideAntiFeatures = p[HIDE_ANTI] ?: false,
@@ -130,7 +147,7 @@ class SettingsRepository(private val context: Context) {
             ignoreSignature = p[IGNORE_SIGNATURE] ?: false,
 
             differentialSync = p[DIFFERENTIAL_SYNC] ?: true,
-            useEntryJson = p[USE_ENTRY_JSON] ?: true,
+            useEntryJson = p[USE_ENTRY_JSON] ?: false,
 
             useProxy = p[USE_PROXY] ?: false,
             proxyType = p[PROXY_TYPE] ?: 0,
@@ -148,27 +165,21 @@ class SettingsRepository(private val context: Context) {
         )
     }.distinctUntilChanged()
 
-    val repositoriesFlow: Flow<List<RepositoryInfo>> = context.ds.data
-        .map { p ->
-            val saved = p[REPOS_JSON]?.let {
-                runCatching { json.decodeFromString<List<RepositoryInfo>>(it) }.getOrNull()
-            }.orEmpty()
-
-            val savedByUrl = LinkedHashMap<String, RepositoryInfo>().apply {
-                saved.forEach { put(normalizeUrl(it.url), it.copy(url = normalizeUrl(it.url))) }
-            }
-
-            val defaults = RepositoryInfo.defaults()
-            defaults.forEach { d ->
-                val key = normalizeUrl(d.url)
-                if (!savedByUrl.containsKey(key)) {
-                    savedByUrl[key] = d.copy(url = key)
+    /**
+     * Repositories from Room join of repositories + repo_config.
+     */
+    val repositoriesFlow: Flow<List<RepositoryInfo>> =
+        repositoryDao.observeWithConfig()
+            .map { rows ->
+                rows.map { r ->
+                    RepositoryInfo(
+                        name = if (r.name.isNotBlank()) r.name else r.baseUrl,
+                        url = normalizeUrl(r.baseUrl),
+                        enabled = r.enabled
+                    )
                 }
             }
-
-            savedByUrl.values.toList()
-        }
-        .distinctUntilChanged()
+            .distinctUntilChanged()
 
     suspend fun updateSetting(propertyName: String, value: Any) {
         val def = definitions[propertyName] ?: return
@@ -219,30 +230,58 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
-    suspend fun setRepositories(list: List<RepositoryInfo>) {
-        context.ds.edit { it[REPOS_JSON] = json.encodeToString(list) }
-    }
+    // Room-backed repo operations
 
     suspend fun toggleRepository(url: String) {
-        val target = normalizeUrl(url)
-        val repos = repositoriesFlow.first()
-        val updated = repos.map { if (normalizeUrl(it.url) == target) it.copy(enabled = !it.enabled) else it }
-        setRepositories(updated)
-    }
-
-    suspend fun addRepository(name: String, url: String) {
-        val normalized = normalizeUrl(url)
-        val repos = repositoriesFlow.first().toMutableList()
-        if (repos.none { normalizeUrl(it.url).equals(normalized, ignoreCase = true) }) {
-            repos.add(RepositoryInfo(name = name.ifBlank { normalized }, url = normalized, enabled = true))
-            setRepositories(repos)
+        val base = normalizeUrl(url)
+        val existing = repoConfigDao.get(base)
+        if (existing == null) {
+            repoConfigDao.upsert(RepoConfig(baseUrl = base, enabled = false))
+        } else {
+            repoConfigDao.upsert(existing.copy(enabled = !existing.enabled))
         }
     }
 
+    suspend fun addRepository(name: String, url: String) {
+        val base = normalizeUrl(url)
+        repositoryDao.upsert(
+            RepositoryEntity(
+                baseUrl = base,
+                name = name.ifBlank { base }
+            )
+        )
+        repoConfigDao.insertIgnore(RepoConfig(baseUrl = base, enabled = true))
+    }
+
     suspend fun deleteRepository(url: String) {
-        val target = normalizeUrl(url)
-        val repos = repositoriesFlow.first().filterNot { normalizeUrl(it.url) == target }
-        setRepositories(repos)
+        val base = normalizeUrl(url)
+        val cfg = repoConfigDao.get(base)
+        if (cfg == null) {
+            repoConfigDao.upsert(RepoConfig(baseUrl = base, enabled = false))
+        } else {
+            repoConfigDao.upsert(cfg.copy(enabled = false))
+        }
+    }
+
+    suspend fun resetRepositoriesToDefaults() = withContext(Dispatchers.IO) {
+        // Wipe both tables and seed RepositoryInfo.defaults
+        repositoryDao.clearAll()
+        repoConfigDao.clearAll()
+        RepositoryInfo.defaults().forEach { def ->
+            val base = normalizeUrl(def.url)
+            repositoryDao.upsert(
+                RepositoryEntity(
+                    baseUrl = base,
+                    name = def.name
+                )
+            )
+            repoConfigDao.insertIgnore(
+                RepoConfig(
+                    baseUrl = base,
+                    enabled = def.enabled
+                )
+            )
+        }
     }
 
     suspend fun setLastSync(millis: Long) {
@@ -255,10 +294,6 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun getRepoHeadersMap(): String {
         return context.ds.data.first()[REPO_HEADERS] ?: "{}"
-    }
-
-    suspend fun resetRepositoriesToDefaults() {
-        setRepositories(RepositoryInfo.defaults())
     }
 
     fun normalizeUrl(url: String): String =

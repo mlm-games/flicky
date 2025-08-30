@@ -16,8 +16,10 @@ import androidx.core.net.toUri
 import app.flicky.R
 import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
+import app.flicky.data.remote.HttpClientProvider
+import app.flicky.data.remote.MirrorPolicyProvider
 import app.flicky.data.remote.MirrorRegistry
-import app.flicky.data.repository.SettingsRepository
+import app.flicky.data.remote.MirrorRegistry.Strategy
 import app.flicky.helper.DebugLog
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -28,30 +30,38 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
+import okhttp3.Request
 import rikka.shizuku.Shizuku
 import java.io.File
 import java.io.FileInputStream
 import java.io.OutputStream
 import java.lang.reflect.Method
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
+import javax.net.ssl.SSLHandshakeException
+
 
 class Installer(
     private val context: Context,
-    private val settings: SettingsRepository
+    private val settings: app.flicky.data.repository.SettingsRepository,
+    private val mirrorPolicies: MirrorPolicyProvider,
+    private val httpClients: HttpClientProvider
 ) {
     private val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val activeDownloads = mutableMapOf<String, Long>()
+    private val activeDownloads = ConcurrentHashMap<String, Long>()
 
     private val _tasks = MutableStateFlow<Map<String, TaskStage>>(emptyMap())
     val tasks: StateFlow<Map<String, TaskStage>> = _tasks.asStateFlow()
 
     private fun emitStage(pkg: String, stage: TaskStage) {
-        _tasks.value = _tasks.value.toMutableMap().apply { put(pkg, stage) }
+        _tasks.update { it + (pkg to stage) }
     }
 
     companion object {
@@ -75,7 +85,7 @@ class Installer(
     }
 
     fun cancelDownload(packageName: String) {
-        activeDownloads.entries.filter { it.key.startsWith("$packageName-") }.forEach { (_, id) ->
+        activeDownloads.entries.filter { it.key.startsWith("$packageName-") }.toList().forEach { (_, id) ->
             dm.remove(id)
         }
         activeDownloads.keys.removeAll { it.startsWith("$packageName-") }
@@ -97,10 +107,7 @@ class Installer(
 
     private suspend fun installResolved(req: ResolvedApk, onProgress: (Float) -> Unit): Boolean {
         val mode = settings.settingsFlow.first().installerMode
-        val showDebug = runCatching { settings.settingsFlow.first() }.getOrNull()?.let {
-            // reflection-free (exception)
-            it::class.members.any { m -> m.name == "showDebugInfo" }
-        } ?: false
+        val showDebug = runCatching { settings.settingsFlow.first().showDebugInfo }.getOrDefault(false)
 
         val existedBefore = cacheFileFor(req).exists()
         if (showDebug) DebugLog.log("Installer", "Starting ${req.packageName} via mode=$mode")
@@ -156,7 +163,7 @@ class Installer(
         val urls: List<String>,
         val sha256: String,
         val size: Long,
-        val repoBase: String // for mirror bookkeeping
+        val repoBase: String
     )
 
     private fun normalize(urlOrId: String) = urlOrId.trim().trimEnd('/')
@@ -193,15 +200,15 @@ class Installer(
         if (apkPathOrUrl.startsWith("http://") || apkPathOrUrl.startsWith("https://")) {
             return listOf(apkPathOrUrl.trim())
         }
-        val includeOnion = settings.settingsFlow.first().useOnionMirrors
-        val rotate = settings.settingsFlow.first().mirrorRotation
-        val strategy = if (rotate) MirrorRegistry.Strategy.RoundRobin else MirrorRegistry.Strategy.StickyLastGood
-
-        val bases = MirrorRegistry.candidates(repoBase, includeOnion, strategy)
+        val policy = mirrorPolicies.policyFor(repoBase)
+        val bases = MirrorRegistry.candidates(
+            base = repoBase,
+            includeOnion = policy.includeOnion,
+            strategy = if (policy.rotateMirrors) policy.strategy else Strategy.StickyLastGood
+        )
         val path = apkPathOrUrl.trimStart('/')
         return bases.map { b -> "${normalize(b)}/$path" }
     }
-
 
     private suspend fun resolveBase(repo: String): String {
         if (repo.startsWith("http")) return normalize(repo)
@@ -222,6 +229,28 @@ class Installer(
         return File(getBaseCacheDir(), "${req.packageName}-$key.apk")
     }
 
+    // trust-aware client for preflight
+    private fun preflightPickUrl(repoBase: String, urls: List<String>): String? {
+        val client = runCatching { httpClients.clientFor(repoBase) }.getOrNull() ?: return urls.firstOrNull()
+        for (u in urls) {
+            runCatching {
+                val req = Request.Builder()
+                    .url(u)
+                    .header("Range", "bytes=0-0")
+                    .get()
+                    .build()
+                client.newCall(req).execute().use { resp ->
+                    if (resp.isSuccessful || resp.code in 200..399) return u
+                }
+            }.onFailure {
+                if (it is SSLHandshakeException) {
+                    DebugLog.log("Downloader", "TLS handshake failed for $u (${it.message})")
+                }
+            }
+        }
+        return null
+    }
+
     private suspend fun download(req: ResolvedApk, onProgress: (Float) -> Unit): File? = withContext(Dispatchers.IO) {
         val out = cacheFileFor(req)
         if (out.exists()) return@withContext out
@@ -229,25 +258,28 @@ class Installer(
         val base = getBaseCacheDir()
         val canDirectWrite = base == context.externalCacheDir
 
-        for ((idx, url) in req.urls.withIndex()) {
+        val preferred = preflightPickUrl(req.repoBase, req.urls)
+        val tryUrls = if (preferred != null) listOf(preferred) + req.urls.filterNot { it == preferred } else req.urls
+
+        for ((idx, url) in tryUrls.withIndex()) {
             val desc = try {
                 context.getString(R.string.settings_downloads)
-            } catch (_: Exception) {
-                "Downloading"
-            }
+            } catch (_: Exception) { "Downloading" }
+
             val request = DownloadManager.Request(url.toUri())
                 .setTitle(req.title)
-                .setDescription("$desc (${idx + 1}/${req.urls.size})")
+                .setDescription("$desc (${idx + 1}/${tryUrls.size})")
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setAllowedOverMetered(true)
-                .setAllowedOverRoaming(false)
+                .setAllowedOverRoaming(true)
+                .setVisibleInDownloadsUi(true)
 
-            if (canDirectWrite) {
-                request.setDestinationUri(Uri.fromFile(out))
-            }
+            if (canDirectWrite) request.setDestinationUri(Uri.fromFile(out))
+
+            DebugLog.log("Downloader", "Enqueue $url")
             val id = dm.enqueue(request)
             activeDownloads[out.name] = id
-            val uri = monitorDownload(id, onProgress)
+            val uri = monitorDownload(id, onProgress, url)
             activeDownloads.remove(out.name)
 
             if (uri != null) {
@@ -270,39 +302,76 @@ class Installer(
     }
 
     @SuppressLint("Range")
-    private suspend fun monitorDownload(id: Long, onProgress: (Float) -> Unit): Uri? = withContext(Dispatchers.IO) {
+    private suspend fun monitorDownload(id: Long, onProgress: (Float) -> Unit, url: String): Uri? = withContext(Dispatchers.IO) {
         val q = DownloadManager.Query().setFilterById(id)
-        var last = -1f
+        var lastProgress = -1f
+        var lastStatusChange = System.currentTimeMillis()
+        var lastStatus = -1
+
+        fun reasonText(code: Int): String = when (code) {
+            DownloadManager.ERROR_CANNOT_RESUME -> "Cannot resume"
+            DownloadManager.ERROR_DEVICE_NOT_FOUND -> "Device not found"
+            DownloadManager.ERROR_FILE_ALREADY_EXISTS -> "File exists"
+            DownloadManager.ERROR_FILE_ERROR -> "File error"
+            DownloadManager.ERROR_HTTP_DATA_ERROR -> "HTTP data error"
+            DownloadManager.ERROR_INSUFFICIENT_SPACE -> "No space"
+            DownloadManager.ERROR_TOO_MANY_REDIRECTS -> "Too many redirects"
+            DownloadManager.ERROR_UNHANDLED_HTTP_CODE -> "HTTP code"
+            DownloadManager.ERROR_UNKNOWN -> "Unknown"
+            DownloadManager.PAUSED_QUEUED_FOR_WIFI -> "Waiting for Wi‑Fi"
+            DownloadManager.PAUSED_WAITING_FOR_NETWORK -> "Waiting for network"
+            DownloadManager.PAUSED_WAITING_TO_RETRY -> "Retrying"
+            else -> "Pending"
+        }
+
         while (isActive) {
             val c = dm.query(q)
             try {
                 if (c != null && c.moveToFirst()) {
-                    val statusIdx = c.getColumnIndex(DownloadManager.COLUMN_STATUS)
-                    if (statusIdx == -1) {
-                        delay(100)
-                        continue
+                    val status = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS))
+                    val reasonIdx = c.getColumnIndex(DownloadManager.COLUMN_REASON)
+                    val reason = if (reasonIdx != -1) c.getInt(reasonIdx) else 0
+
+                    if (status != lastStatus) {
+                        lastStatus = status
+                        lastStatusChange = System.currentTimeMillis()
+                        DebugLog.log("Downloader", "Status=$status (${reasonText(reason)}) for $url")
                     }
-                    when (c.getInt(statusIdx)) {
+
+                    when (status) {
                         DownloadManager.STATUS_SUCCESSFUL -> {
                             onProgress(1f)
                             return@withContext dm.getUriForDownloadedFile(id)
                         }
-                        DownloadManager.STATUS_FAILED -> return@withContext null
-                        DownloadManager.STATUS_RUNNING, DownloadManager.STATUS_PAUSED -> {
+                        DownloadManager.STATUS_FAILED -> {
+                            DebugLog.log("Downloader", "Failed (${reasonText(reason)}) for $url")
+                            return@withContext null
+                        }
+                        DownloadManager.STATUS_RUNNING, DownloadManager.STATUS_PAUSED, DownloadManager.STATUS_PENDING -> {
                             val soFarIdx = c.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
                             val totalIdx = c.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
                             if (soFarIdx != -1 && totalIdx != -1) {
                                 val total = c.getLong(totalIdx)
                                 if (total > 0) {
                                     val p = c.getLong(soFarIdx).toFloat() / total.toFloat()
-                                    if (p != last) { last = p; onProgress(p) }
+                                    if (p != lastProgress) { lastProgress = p; onProgress(p.coerceIn(0f, 0.999f)) }
+                                }
+                            }
+                            val waitingOnNetwork = reason == DownloadManager.PAUSED_WAITING_FOR_NETWORK ||
+                                    reason == DownloadManager.PAUSED_QUEUED_FOR_WIFI
+                            val elapsed = System.currentTimeMillis() - lastStatusChange
+                            if (!waitingOnNetwork && (status == DownloadManager.STATUS_PENDING || status == DownloadManager.STATUS_PAUSED)) {
+                                if (elapsed > 30_000) {
+                                    DebugLog.log("Downloader", "Stalled ($elapsed ms) on $url, switching mirror")
+                                    dm.remove(id)
+                                    return@withContext null
                                 }
                             }
                         }
                     }
                 }
             } finally { c?.close() }
-            delay(100)
+            delay(300)
         }
         null
     }
@@ -423,7 +492,7 @@ class Installer(
             FileInputStream(file).use { fis ->
                 proc.outputStream.use { os -> pipeWithProgress(fis, os, size, onProgress) }
             }
-            proc.waitFor() == 0
+            withTimeoutOrNull(300_000) { proc.waitFor() } == 0
         } catch (_: Exception) {
             false
         }
@@ -442,7 +511,7 @@ class Installer(
                 FileInputStream(file).use { fis ->
                     proc.outputStream.use { os -> pipeWithProgress(fis, os, size, onProgress) }
                 }
-                proc.waitFor() == 0
+                withTimeoutOrNull(300_000) { proc.waitFor() } == 0
             } finally {
                 runCatching { proc.destroy() }
             }

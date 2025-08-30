@@ -136,4 +136,5 @@
     <string name="version_update_format" translatable="false">%1$s → %2$s</string>
     <string name="share_subject_package" translatable="false">Package: %1$s</string>
     <string name="share_subject_source" translatable="false">Found in: %1$s</string>
+    <string name="repositories_reset">Reset Repositories</string>
 </resources>

@@ -5,12 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import app.flicky.AppGraph
 import app.flicky.R
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppRepository
 import app.flicky.data.repository.RepositorySyncManager
 import app.flicky.data.repository.SettingsRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
@@ -27,6 +29,7 @@ data class BrowseUiState(
 sealed class UiText {
     data class StringResource(@param:StringRes val resId: Int, val args: List<Any> = emptyList()) : UiText()
 }
+
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class BrowseViewModel(
@@ -101,6 +104,14 @@ class BrowseViewModel(
 
     fun syncRepos() = doSync(force = false)
     fun forceSyncRepos() = doSync(force = true)
+
+    fun clearAllApps() {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                AppGraph.db.appDao().clear()
+            }
+        }
+    }
 
     private fun doSync(force: Boolean) {
         viewModelScope.launch {

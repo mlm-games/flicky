@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material.icons.Icons
@@ -23,6 +24,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.flicky.ui.dialogs.FlickyDialog
 
 /**
  * TV-friendly setting section wrapper.
@@ -300,6 +302,80 @@ private fun SettingRowContainer(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 content = content
             )
+        }
+    }
+}
+
+
+/**
+ * Selection dialog for choosing from a list
+ */
+@Composable
+fun <T> SelectionDialog(
+    title: String,
+    items: List<T>,
+    selectedItem: T? = null,
+    onItemSelected: (T) -> Unit,
+    onDismiss: () -> Unit,
+    itemContent: (T) -> String
+) {
+    var selected by remember { mutableStateOf(selectedItem) }
+
+    FlickyDialog(
+        onDismissRequest = onDismiss,
+        title = title,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    selected?.let { onItemSelected(it) }
+                },
+                enabled = selected != null,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text("Select")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            ) {
+                Text("Cancel")
+            }
+        }
+    ) {
+        Column {
+            items.forEach { item ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .selectable(
+                            selected = (selected == item),
+                            onClick = { selected = item }
+                        )
+                        .padding(vertical = 12.dp, horizontal = 16.dp)
+                ) {
+                    RadioButton(
+                        selected = (selected == item),
+                        onClick = { selected = item },
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = MaterialTheme.colorScheme.primary,
+                            unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = itemContent(item),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
         }
     }
 }

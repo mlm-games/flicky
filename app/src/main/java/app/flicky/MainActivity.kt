@@ -106,7 +106,7 @@ class MainActivity : ComponentActivity() {
                                 onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
                                 onSyncClick = { browseViewModel.syncRepos() },
                                 onForceSyncClick = { browseViewModel.forceSyncRepos() },
-                                onClearAppsClick = { browseViewModel.forceSyncRepos()},
+                                onClearAppsClick = { browseViewModel.clearAllApps() },
                                 isSyncing = browseUi.isSyncing,
                                 progress = browseUi.progress,
                                 errorMessage = browseUi.errorMessage,
@@ -173,4 +173,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-

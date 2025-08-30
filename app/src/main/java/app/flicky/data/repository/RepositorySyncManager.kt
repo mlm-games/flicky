@@ -117,7 +117,6 @@ class RepositorySyncManager(
                         previous = FDroidApi.RepoHeaders(prevHeader.etag, prevHeader.lastModified),
                         force = force,
                         enableDifferential = differential,
-                        enableEntryJson = useEntry,
                         includeIncompatible = true,
                         onApp = { apps.add(it) },
                         onVariant = { variants.add(it) }

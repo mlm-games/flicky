@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.flicky.AppGraph
+import app.flicky.data.local.RepoConfig
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.Setting
 import app.flicky.data.repository.SettingCategory
@@ -20,31 +22,34 @@ import app.flicky.ui.components.MyScreenScaffold
 import app.flicky.ui.components.SettingsAction
 import app.flicky.ui.components.SettingsItem
 import app.flicky.ui.components.SettingsToggle
+import app.flicky.ui.dialogs.ConfirmationDialog
 import app.flicky.ui.dialogs.DropdownSettingDialog
 import app.flicky.ui.dialogs.SliderSettingDialog
 import app.flicky.viewmodel.SettingsViewModel
 import kotlin.reflect.KProperty1
 import app.flicky.R
 import java.util.Locale
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(vm: SettingsViewModel) {
     val settings by vm.settings.collectAsState()
     val repos by vm.repositories.collectAsState()
     val manager = remember { SettingsManager() }
+    val scope = rememberCoroutineScope()
 
     var showDropdown by remember { mutableStateOf(false) }
     var showSlider by remember { mutableStateOf(false) }
     var currentProp by remember { mutableStateOf<KProperty1<AppSettings, *>?>(null) }
     var currentAnn by remember { mutableStateOf<Setting?>(null) }
+    var showResetConfirm by remember { mutableStateOf(false) }
 
     val grouped = remember { manager.getByCategory() }
     val cfg = LocalConfiguration.current
-    // roughly 420dp per cell feels good on TV/phone acc. to ... u know
     val gridCells = remember(cfg.screenWidthDp) { GridCells.Adaptive(minSize = 420.dp) }
 
-    MyScreenScaffold(title = "Settings")
-    {
+    MyScreenScaffold(title = "Settings") {
         LazyVerticalGrid(
             columns = gridCells,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -52,12 +57,11 @@ fun SettingsScreen(vm: SettingsViewModel) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize()
         ) {
-            // Generate sections by category
+            // Settings by category
             for (category in SettingCategory.entries) {
                 val itemsForCat = grouped[category] ?: emptyList()
                 if (itemsForCat.isEmpty()) continue
 
-                // Category header
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
                         text = category.name.lowercase().replaceFirstChar { it.uppercase() },
@@ -67,7 +71,6 @@ fun SettingsScreen(vm: SettingsViewModel) {
                     )
                 }
 
-                // category wise
                 items(itemsForCat, key = { it.first.name }) { (prop, ann) ->
                     val enabled = manager.isEnabled(settings, prop, ann)
 
@@ -122,9 +125,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                 description = ann.description.takeIf { it.isNotBlank() },
                                 buttonText = "Run",
                                 enabled = enabled,
-                                onClick = {
-                                    vm.performAction(prop.name)
-                                }
+                                onClick = { vm.performAction(prop.name) }
                             )
                         }
                     }
@@ -141,50 +142,201 @@ fun SettingsScreen(vm: SettingsViewModel) {
                 )
             }
 
-            // Repository items
+            // Repositories list with per-repo mirror/trust controls (unchanged from earlier step)
             items(repos, key = { it.url }) { r ->
+                val base = r.url.trimEnd('/')
+
+                // Ensure a default config exists
+                LaunchedEffect(base) { AppGraph.mirrorPolicyProvider.ensureDefault(base) }
+
+                var cfgState by remember {
+                    mutableStateOf(
+                        RepoConfig(
+                            baseUrl = base,
+                            enabled = r.enabled
+                        )
+                    )
+                }
+                LaunchedEffect(base) {
+                    val dao = AppGraph.db.repoConfigDao()
+                    cfgState = dao.get(base) ?: RepoConfig(baseUrl = base, enabled = r.enabled)
+                }
+
+                fun persist(newCfg: RepoConfig) {
+                    cfgState = newCfg
+                    scope.launch { AppGraph.db.repoConfigDao().upsert(newCfg) }
+                }
+
                 Surface(
                     tonalElevation = 1.dp,
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(r.name, style = MaterialTheme.typography.bodyLarge)
-                            Text(
-                                r.url,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Column(Modifier.fillMaxWidth().padding(14.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column(Modifier.weight(1f)) {
+                                Text(r.name, style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    r.url,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = r.enabled,
+                                onCheckedChange = { checked ->
+                                    scope.launch {
+                                        vm.toggleRepository(r.url)
+                                        AppGraph.db.repoConfigDao().setEnabled(base, checked)
+                                        cfgState = cfgState.copy(enabled = checked)
+                                    }
+                                }
                             )
                         }
-                        Switch(
-                            checked = r.enabled,
-                            onCheckedChange = { vm.toggleRepository(r.url) })
+
+                        Spacer(Modifier.height(8.dp))
+
+                        // Mirror policy
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            FilterChip(
+                                selected = cfgState.rotateMirrors,
+                                onClick = { persist(cfgState.copy(rotateMirrors = !cfgState.rotateMirrors)) },
+                                label = { Text("Rotate mirrors") }
+                            )
+                            FilterChip(
+                                selected = cfgState.includeOnion,
+                                onClick = { persist(cfgState.copy(includeOnion = !cfgState.includeOnion)) },
+                                label = { Text("Use onion") }
+                            )
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        // Mirror strategy
+                        var openStrategy by remember { mutableStateOf(false) }
+                        val strategies = listOf("StickyLastGood", "RoundRobin", "CanonicalFirst")
+                        val strategyIdx = strategies.indexOf(cfgState.strategy).coerceAtLeast(0)
+                        ExposedDropdownMenuBox(
+                            expanded = openStrategy,
+                            onExpandedChange = { openStrategy = !openStrategy }
+                        ) {
+                            OutlinedTextField(
+                                value = strategies[strategyIdx],
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Mirror strategy") },
+                                modifier = Modifier.menuAnchor().fillMaxWidth()
+                            )
+                            ExposedDropdownMenu(expanded = openStrategy, onDismissRequest = { openStrategy = false }) {
+                                strategies.forEach { s ->
+                                    DropdownMenuItem(
+                                        text = { Text(s) },
+                                        onClick = {
+                                            openStrategy = false
+                                            persist(cfgState.copy(strategy = s))
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(12.dp))
+
+                        // Trust options
+                        Text("Trust", style = MaterialTheme.typography.labelLarge)
+                        Spacer(Modifier.height(6.dp))
+
+                        var openTrust by remember { mutableStateOf(false) }
+                        val trustModes = listOf("HttpsOnly", "Pinned", "CustomCA")
+                        val trustIdx = trustModes.indexOf(cfgState.trustMode).coerceAtLeast(0)
+                        ExposedDropdownMenuBox(
+                            expanded = openTrust,
+                            onExpandedChange = { openTrust = !openTrust }
+                        ) {
+                            OutlinedTextField(
+                                value = trustModes[trustIdx],
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Trust mode") },
+                                modifier = Modifier.menuAnchor().fillMaxWidth()
+                            )
+                            ExposedDropdownMenu(expanded = openTrust, onDismissRequest = { openTrust = false }) {
+                                trustModes.forEach { s ->
+                                    DropdownMenuItem(
+                                        text = { Text(s) },
+                                        onClick = {
+                                            openTrust = false
+                                            persist(cfgState.copy(trustMode = s))
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        if (cfgState.trustMode == "Pinned") {
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = cfgState.pins,
+                                onValueChange = { persist(cfgState.copy(pins = it)) },
+                                label = { Text("Pins (sha256/BASE64, comma separated)") },
+                                singleLine = false,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
+                        if (cfgState.trustMode == "CustomCA") {
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = cfgState.caPem,
+                                onValueChange = { persist(cfgState.copy(caPem = it)) },
+                                label = { Text("Custom CA PEM") },
+                                singleLine = false,
+                                minLines = 4,
+                                maxLines = 12,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
 
+            // Actions under the list
             item(span = { GridItemSpan(maxLineSpan) }) {
-                var showAdd by remember { mutableStateOf(false) }
-                Button(
-                    onClick = { showAdd = true },
-                    modifier = Modifier.fillMaxWidth()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Add Repository")
-                }
-                if (showAdd) {
-                    AddRepoDialog(
-                        onDismiss = { showAdd = false },
-                        onAdd = { name, url ->
-                            vm.addRepository(name, url)
-                            showAdd = false
-                        }
-                    )
+                    var showAdd by remember { mutableStateOf(false) }
+                    Button(
+                        onClick = { showAdd = true },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Add Repository")
+                    }
+                    OutlinedButton(
+                        onClick = { showResetConfirm = true },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Reset to defaults")
+                    }
+                    if (showAdd) {
+                        AddRepoDialog(
+                            onDismiss = { showAdd = false },
+                            onAdd = { name, url ->
+                                scope.launch {
+                                    vm.addRepository(name, url)
+                                    AppGraph.mirrorPolicyProvider.ensureDefault(url.trimEnd('/'))
+                                }
+                                showAdd = false
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -230,7 +382,23 @@ fun SettingsScreen(vm: SettingsViewModel) {
             }
         )
     }
+
+    if (showResetConfirm) {
+        ConfirmationDialog(
+            title = "Reset repositories",
+            message = "This will remove all custom repositories and restore the default list. Continue?",
+            confirmText = "Reset",
+            dismissText = stringResource(R.string.action_cancel),
+            isDangerous = true,
+            onConfirm = {
+                showResetConfirm = false
+                vm.resetRepositoriesToDefaults()
+            },
+            onDismiss = { showResetConfirm = false }
+        )
+    }
 }
+
 
 @Composable
 private fun AddRepoDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {

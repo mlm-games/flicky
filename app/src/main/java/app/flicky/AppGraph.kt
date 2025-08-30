@@ -3,9 +3,24 @@ package app.flicky
 import android.content.Context
 import androidx.room.Room
 import app.flicky.data.local.AppDatabase
+import app.flicky.data.local.RepoConfig
+import app.flicky.data.local.RepositoryEntity
+import app.flicky.data.model.RepositoryInfo
+import app.flicky.data.remote.DbHttpClientProvider
+import app.flicky.data.remote.DbMirrorPolicyProvider
 import app.flicky.data.remote.FDroidApi
-import app.flicky.data.repository.*
+import app.flicky.data.remote.HttpClientProvider
+import app.flicky.data.remote.MirrorPolicyProvider
+import app.flicky.data.repository.AppRepository
+import app.flicky.data.repository.InstalledAppsRepository
+import app.flicky.data.repository.RepoHeadersStore
+import app.flicky.data.repository.RepositorySyncManager
+import app.flicky.data.repository.SettingsRepository
 import app.flicky.install.Installer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 object AppGraph {
     @Volatile
@@ -13,28 +28,62 @@ object AppGraph {
     private val LOCK = Any()
 
     private class AppGraphInstance(context: Context) {
+        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
         val db: AppDatabase = Room.databaseBuilder(
             context.applicationContext,
             AppDatabase::class.java,
             "flicky.db"
         )
-            .addMigrations(
-                AppDatabase.MIGRATION_1_2,
-                AppDatabase.MIGRATION_2_3,
-                AppDatabase.MIGRATION_3_4,
-                AppDatabase.MIGRATION_4_5,
-                AppDatabase.MIGRATION_5_6,
-                AppDatabase.MIGRATION_6_7
-            )
-            .fallbackToDestructiveMigration(false)
+            // No custom migrations. If schema changes, wipe and rebuild.
+            .fallbackToDestructiveMigration(true)
+            // Seed defaults when the DB is first created
+            .addCallback(object : androidx.room.RoomDatabase.Callback() {
+                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                    super.onCreate(db)
+                    scope.launch { seedDefaultRepositories() }
+                }
+            })
             .build()
 
-        val settings = SettingsRepository(context.applicationContext)
-        val api = FDroidApi(context.applicationContext)
+        // Seed default repositories into Room if empty (also useful after destructive migration
+        // during cold start, in case onCreate callback races with app usage)
+        init {
+            scope.launch { seedDefaultRepositories() }
+        }
+
+        private suspend fun seedDefaultRepositories() {
+            val repoDao = db.repositoryDao()
+            val cfgDao = db.repoConfigDao()
+            if (repoDao.getAll().isEmpty()) {
+                RepositoryInfo.defaults().forEach { def ->
+                    val base = def.url.trim().removeSuffix("/")
+                    repoDao.upsert(
+                        RepositoryEntity(
+                            baseUrl = base,
+                            name = def.name
+                        )
+                    )
+                    cfgDao.insertIgnore(
+                        RepoConfig(
+                            baseUrl = base,
+                            enabled = def.enabled
+                        )
+                    )
+                }
+            }
+        }
+
+        val settings =
+            SettingsRepository(context.applicationContext, db.repositoryDao(), db.repoConfigDao())
+        val mirrorPolicyProvider: MirrorPolicyProvider = DbMirrorPolicyProvider(db.repoConfigDao())
+        val httpClients: HttpClientProvider = DbHttpClientProvider(db.repoConfigDao())
+        val api = FDroidApi(context.applicationContext, httpClients)
         val headersStore = RepoHeadersStore(settings)
         val syncManager = RepositorySyncManager(api, db.appDao(), settings, headersStore)
         val appRepo = AppRepository(db.appDao())
-        val installer = Installer(context.applicationContext, settings)
+        val installer =
+            Installer(context.applicationContext, settings, mirrorPolicyProvider, httpClients)
         val installedRepo = InstalledAppsRepository(context.applicationContext)
     }
 
@@ -50,6 +99,8 @@ object AppGraph {
     val headersStore: RepoHeadersStore get() = getInstance(appContext).headersStore
     val syncManager: RepositorySyncManager get() = getInstance(appContext).syncManager
     val appRepo: AppRepository get() = getInstance(appContext).appRepo
+    val mirrorPolicyProvider: MirrorPolicyProvider get() = getInstance(appContext).mirrorPolicyProvider
+    val httpClients: HttpClientProvider get() = getInstance(appContext).httpClients
     val installer: Installer get() = getInstance(appContext).installer
     val installedRepo: InstalledAppsRepository get() = getInstance(appContext).installedRepo
 

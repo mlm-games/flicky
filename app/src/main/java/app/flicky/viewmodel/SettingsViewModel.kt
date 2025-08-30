@@ -1,7 +1,6 @@
 package app.flicky.viewmodel
 
 import androidx.annotation.StringRes
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.flicky.R
@@ -17,7 +16,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
         repo.settingsFlow.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
 
     val repositories: StateFlow<List<RepositoryInfo>> =
-        repo.repositoriesFlow.stateIn(viewModelScope, SharingStarted.Eagerly, RepositoryInfo.defaults())
+        repo.repositoriesFlow.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val _events = MutableSharedFlow<UiEvent>()
     val events: SharedFlow<UiEvent> = _events.asSharedFlow()
@@ -36,19 +35,18 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
                 repo.clearCache()
                 _events.emit(UiEvent.Toast(R.string.cache_cleared))
             }
-            "exportSettings" -> {
-                _events.emit(UiEvent.RequestExport)
-            }
-            "importSettings" -> {
-                _events.emit(UiEvent.RequestImport)
-            }
+            "exportSettings" -> _events.emit(UiEvent.RequestExport)
             else -> _events.emit(UiEvent.Toast(R.string.no_action_attached))
         }
     }
 
+    fun resetRepositoriesToDefaults() = viewModelScope.launch {
+        repo.resetRepositoriesToDefaults()
+        _events.emit(UiEvent.Toast(R.string.repositories_reset))
+    }
+
     sealed class UiEvent {
         data object RequestExport : UiEvent()
-        data object RequestImport : UiEvent()
         data class Toast(@param:StringRes val messageResId: Int) : UiEvent()
     }
 }

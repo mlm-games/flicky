@@ -130,4 +130,5 @@
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">네트워크 또는 구문 분석 오류</string>
     <string name="error_unknown">알 수 없는 오류</string>
+    <string name="repositories_reset">Reset Repositories</string>
 </resources>
