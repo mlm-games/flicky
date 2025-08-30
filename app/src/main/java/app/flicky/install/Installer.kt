@@ -18,22 +18,28 @@ import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.repository.SettingsRepository
+import app.flicky.helper.DebugLog
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import org.slf4j.MDC.put
 import rikka.shizuku.Shizuku
 import java.io.File
 import java.io.FileInputStream
 import java.io.OutputStream
 import java.lang.reflect.Method
 import java.security.MessageDigest
+import kotlin.collections.toMutableMap
 
 class Installer(
     private val context: Context,
@@ -42,6 +48,13 @@ class Installer(
     private val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val activeDownloads = mutableMapOf<String, Long>()
+
+    private val _tasks = MutableStateFlow<Map<String, TaskStage>>(emptyMap())
+    val tasks: StateFlow<Map<String, TaskStage>> = _tasks.asStateFlow()
+
+    private fun emitStage(pkg: String, stage: TaskStage) {
+        _tasks.value = _tasks.value.toMutableMap().apply { put(pkg, stage) }
+    }
 
     companion object {
         private const val CACHE_DIR = "flicky_downloads"
@@ -71,6 +84,7 @@ class Installer(
         getBaseCacheDir().listFiles()?.forEach { f ->
             if (f.name.startsWith("$packageName-")) runCatching { f.delete() }
         }
+        emitStage(packageName, TaskStage.Finished(success = false))
     }
 
     suspend fun install(app: FDroidApp, onProgress: (Float) -> Unit = {}): Boolean {
@@ -85,21 +99,52 @@ class Installer(
 
     private suspend fun installResolved(req: ResolvedApk, onProgress: (Float) -> Unit): Boolean {
         val mode = settings.settingsFlow.first().installerMode
-        val existedBefore = cacheFileFor(req).exists()
-        val file = download(req) { p -> onProgress(0.5f * p) } ?: return false
+        val showDebug = runCatching { settings.settingsFlow.first() }.getOrNull()?.let {
+            // reflection-free (exception)
+            it::class.members.any { m -> m.name == "showDebugInfo" }
+        } ?: false
 
-        if (req.sha256.isNotBlank() && !verifySha256File(file, req.sha256)) {
-            file.delete(); return false
+        val existedBefore = cacheFileFor(req).exists()
+        if (showDebug) DebugLog.log("Installer", "Starting ${req.packageName} via mode=$mode")
+
+        emitStage(req.packageName, TaskStage.Downloading(0f))
+        val file = download(req) { p ->
+            emitStage(req.packageName, TaskStage.Downloading(p))
+            onProgress(0.5f * p)
+        } ?: run {
+            emitStage(req.packageName, TaskStage.Finished(false))
+            if (showDebug) DebugLog.log("Installer", "Download failed for ${req.packageName}")
+            return false
         }
 
-        val installProgress: (Float) -> Unit = { p -> onProgress(0.5f + 0.5f * p) }
+        emitStage(req.packageName, TaskStage.Verifying)
+        if (req.sha256.isNotBlank() && !verifySha256File(file, req.sha256)) {
+            if (showDebug) DebugLog.log("Installer", "SHA256 mismatch for ${req.packageName}")
+            file.delete()
+            emitStage(req.packageName, TaskStage.Finished(false))
+            return false
+        }
+
+        val installProgress: (Float) -> Unit = { p ->
+            emitStage(req.packageName, TaskStage.Installing(p))
+            onProgress(0.5f + 0.5f * p)
+        }
         val ok = when (mode) {
-            0 -> installSystem(file)
+            0 -> {
+                emitStage(req.packageName, TaskStage.Installing(0f))
+                installSystem(file)
+            }
             1 -> installSessionFromFile(file, req.packageName, req.sha256, installProgress)
             2 -> installRootStream(file, installProgress)
             3 -> installShizukuStream(file, installProgress)
-            else -> installSystem(file)
+            else -> {
+                emitStage(req.packageName, TaskStage.Installing(0f))
+                installSystem(file)
+            }
         }
+
+        emitStage(req.packageName, TaskStage.Finished(ok))
+        if (showDebug) DebugLog.log("Installer", "Install ${if (ok) "succeeded" else "failed"} for ${req.packageName}")
 
         if (!settings.settingsFlow.first().keepCache && !existedBefore) {
             scheduleCleanup(file)
@@ -119,8 +164,7 @@ class Installer(
 
     private suspend fun resolve(app: FDroidApp): ResolvedApk? {
         val title = "${app.name} ${app.version}"
-        // Prefer repositoryUrl (canonical) for mirror rotation when resolving a path
-        val baseId = app.repositoryUrl.ifBlank { app.repository }
+        val baseId = if (app.repositoryUrl.isNotBlank()) app.repositoryUrl else app.repository
         val urls = resolveUrls(baseId, app.apkUrl)
         return ResolvedApk(
             packageName = app.packageName,
@@ -208,7 +252,6 @@ class Installer(
             activeDownloads.remove(out.name)
 
             if (uri != null) {
-                // On Android 10+, DM may not honor custom paths; copy back if needed
                 if (!out.exists()) {
                     runCatching {
                         context.contentResolver.openInputStream(uri)?.use { src ->
@@ -217,9 +260,7 @@ class Installer(
                     }
                 }
                 if (out.exists()) return@withContext out
-                // else try next mirror
             } else {
-                // Clean and try next mirror
                 runCatching { out.delete() }
             }
         }
@@ -339,7 +380,6 @@ class Installer(
                 while (r != -1) {
                     out.write(buf, 0, r)
                     written += r
-                    // Report raw [0..1] to be scaled by caller
                     onProgress(written.toFloat() / total.toFloat())
                     r = fis.read(buf)
                 }

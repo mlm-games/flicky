@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import app.flicky.BuildConfig
+import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.RepositoryInfo
 import com.google.gson.stream.JsonReader
@@ -49,7 +50,8 @@ class FDroidApi(context: Context) {
         force: Boolean = false,
         enableDifferential: Boolean = true,
         includeIncompatible: Boolean = true,
-        onApp: suspend (FDroidApp) -> Unit
+        onApp: suspend (FDroidApp) -> Unit,
+        onVariant: (AppVariant) -> Unit = {}
     ): FetchResult? = withContext(Dispatchers.IO) {
         val baseUrl = repo.url.trimEnd('/')
 
@@ -69,7 +71,6 @@ class FDroidApi(context: Context) {
             return builder.build()
         }
 
-
         if (!force && enableDifferential) {
             var headCall: okhttp3.Call? = null
             try {
@@ -82,15 +83,14 @@ class FDroidApi(context: Context) {
                             return@withContext FetchResult(previous, modified = false)
                         }
                         405, 501 -> {
-                            // Expected on some servers/CDNs. Quietly proceed to GET.
+                            // Some servers/CDNs do not support HEAD or conditional headers on HEAD
                         }
                         else -> {
-                            // If HEAD returns 200 (or server doesn’t support 304), proceed to GET below
+                            // Proceed to GET
                         }
                     }
                 }
             } catch (e: Exception) {
-                // Network hiccup on HEAD; proceed to GET without noisy logs
                 Log.d(TAG, "HEAD skipped for ${repo.name}: ${e.message}")
             } finally {
                 currentCall.compareAndSet(headCall, null)
@@ -122,7 +122,7 @@ class FDroidApi(context: Context) {
                     }
 
                     Log.d(TAG, "Parsing index for ${repo.name}")
-                    parseIndexV2(resp, baseUrl, repo.name, onApp, includeIncompatible)
+                    parseIndexV2(resp, baseUrl, repo.name, onApp, includeIncompatible, onVariant)
 
                     val etag = resp.header("ETag")
                     val lastMod = resp.header("Last-Modified")
@@ -150,7 +150,8 @@ class FDroidApi(context: Context) {
         baseUrl: String,
         repoName: String,
         onApp: suspend (FDroidApp) -> Unit,
-        includeIncompatible: Boolean = true
+        includeIncompatible: Boolean = true,
+        onVariant: (AppVariant) -> Unit = {}
     ) = withContext(Dispatchers.IO) {
         var totalApps = 0
         val batch = mutableListOf<FDroidApp>()
@@ -166,7 +167,7 @@ class FDroidApi(context: Context) {
                             reader.beginObject()
                             while (reader.hasNext()) {
                                 val packageName = reader.nextName()
-                                val app = parsePackageStreamingBest(reader, packageName, baseUrl, repoName, includeIncompatible)
+                                val app = parsePackageStreamingBest(reader, packageName, baseUrl, repoName, includeIncompatible, onVariant)
                                 if (app != null) {
                                     batch.add(app)
                                     totalApps++
@@ -227,8 +228,7 @@ class FDroidApi(context: Context) {
 
 
     /**
-     * Best-version selection with size tie-breaker for equal versionCode.
-     * Also extracts localized metadata and what's new.
+     * Emits all version variants via onVariant and returns the "best" FDroidApp for lists.
      */
     @SuppressLint("CheckResult")
     private fun parsePackageStreamingBest(
@@ -236,10 +236,12 @@ class FDroidApi(context: Context) {
         packageName: String,
         baseUrl: String,
         repoName: String,
-        includeIncompatible: Boolean
+        includeIncompatible: Boolean,
+        onVariant: (AppVariant) -> Unit
     ): FDroidApp? {
         var metadata: Metadata? = null
         var best: Version? = null
+        val variants = mutableListOf<Version>()
 
         reader.beginObject()
         while (reader.hasNext()) {
@@ -250,6 +252,7 @@ class FDroidApi(context: Context) {
                     while (reader.hasNext()) {
                         reader.nextName() // version hash
                         val v = parseVersion(reader)
+                        variants.add(v)
                         // Compute best
                         best = when {
                             best == null -> v
@@ -267,6 +270,22 @@ class FDroidApi(context: Context) {
             }
         }
         reader.endObject()
+
+        // Emit all variants
+        variants.forEach { v ->
+            val variant = AppVariant(
+                packageName = packageName,
+                repositoryUrl = baseUrl,
+                repositoryName = repoName,
+                versionName = v.versionName,
+                versionCode = v.versionCode,
+                apkUrl = "$baseUrl/${v.file}",
+                sha256 = v.sha256,
+                size = v.size,
+                isCompatible = isCompatible(v)
+            )
+            runCatching { onVariant(variant) }
+        }
 
         val meta = metadata ?: return null
         val bestVersion = best ?: return null
@@ -356,12 +375,6 @@ class FDroidApi(context: Context) {
         val whatsNew: String? = null
     )
 
-    /**
-     * Parse metadata, handling:
-     * - metadata.name/summary/description/icon/screenshots
-     * - metadata.localized.{locale}.{name,summary,description,icon,screenshots}
-     * - metadata.screenshots being either an array or an object
-     */
     private fun parseMetadata(reader: JsonReader): Metadata {
         var name: MutableMap<String, String>? = null
         var summary: MutableMap<String, String>? = null
@@ -597,7 +610,6 @@ class FDroidApi(context: Context) {
         return list
     }
 
-    // Screenshots parser that accepts array/object/string and nests.
     private fun parseScreenshotsFlexible(reader: JsonReader): List<String> {
         return when (reader.peek()) {
             JsonToken.BEGIN_ARRAY -> parseScreenshotsArray(reader)

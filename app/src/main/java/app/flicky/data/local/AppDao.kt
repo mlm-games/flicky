@@ -45,6 +45,9 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(apps: List<FDroidApp>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertVariants(variants: List<AppVariant>)
+
     @Query("SELECT * FROM app_variants WHERE packageName = :pkg ORDER BY repositoryName, versionCode DESC")
     suspend fun variantsFor(pkg: String): List<AppVariant>
 
@@ -53,6 +56,9 @@ interface AppDao {
 
     @Query("DELETE FROM apps WHERE repositoryUrl = :repoUrl")
     suspend fun deleteByRepositoryUrl(repoUrl: String)
+
+    @Query("DELETE FROM app_variants WHERE repositoryUrl = :repoUrl")
+    suspend fun deleteVariantsByRepositoryUrl(repoUrl: String)
 
     @Query("""
 SELECT * FROM apps

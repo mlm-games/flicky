@@ -10,6 +10,7 @@ import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.VariantSelector
 import app.flicky.install.Installer
+import app.flicky.install.TaskStage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -39,6 +40,21 @@ class AppDetailViewModel(
                 val app = list.find { it.packageName == packageName }
                 val installed = installedRepo.getVersionCode(packageName)
                 _ui.value = _ui.value.copy(app = app, installedVersionCode = installed)
+            }
+        }
+        viewModelScope.launch {
+            installer.tasks.collect { map ->
+                when (val stage = map[packageName]) {
+                    is TaskStage.Downloading -> _ui.update { it.copy(isInstalling = true, progress = 0.5f * stage.progress, error = null) }
+                    is TaskStage.Verifying -> _ui.update { it.copy(isInstalling = true, progress = 0.9f, error = null) }
+                    is TaskStage.Installing -> _ui.update { it.copy(isInstalling = true, progress = 0.5f + 0.5f * stage.progress, error = null) }
+                    is TaskStage.Finished -> {
+                        _ui.update { it.copy(isInstalling = false, progress = if (stage.success) 1f else 0f, error = if (stage.success) null else "Installation failed") }
+                        val newInstalled = installedRepo.getVersionCode(packageName)
+                        _ui.update { it.copy(installedVersionCode = newInstalled) }
+                    }
+                    else -> { /* no-op */ }
+                }
             }
         }
     }

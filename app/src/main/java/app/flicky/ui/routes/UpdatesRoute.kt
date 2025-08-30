@@ -24,7 +24,8 @@ fun UpdatesRoute(
     vm: UpdatesViewModel = viewModel(factory = viewModelFactory {
         UpdatesViewModel(
             AppGraph.appRepo,
-            AppGraph.installedRepo
+            AppGraph.installedRepo,
+            AppGraph.installer
         )
     }),
     installer: Installer = AppGraph.installer,

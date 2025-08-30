@@ -8,6 +8,8 @@ import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppRepository
 import app.flicky.data.repository.InstalledAppsRepository
+import app.flicky.install.Installer
+import app.flicky.install.TaskStage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -26,7 +28,8 @@ data class UpdatesUiState(
 
 class UpdatesViewModel(
     private val repo: AppRepository,
-    private val installedRepo: InstalledAppsRepository
+    private val installedRepo: InstalledAppsRepository,
+    private val installer: Installer
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(UpdatesUiState())
@@ -72,6 +75,42 @@ class UpdatesViewModel(
                         ignoredPrefs = ignoreMap
                     )
                 }
+        }
+
+        viewModelScope.launch {
+            installer.tasks.collect { map ->
+                val installing = mutableSetOf<String>()
+                val progress = mutableMapOf<String, Float>()
+                map.forEach { (pkg, stage) ->
+                    when (stage) {
+                        is TaskStage.Downloading -> {
+                            installing.add(pkg)
+                            progress[pkg] = 0.5f * stage.progress
+                        }
+                        is TaskStage.Verifying -> {
+                            installing.add(pkg)
+                            progress[pkg] = 0.9f
+                        }
+                        is TaskStage.Installing -> {
+                            installing.add(pkg)
+                            progress[pkg] = 0.5f + 0.5f * stage.progress
+                        }
+                        is TaskStage.Finished -> {
+                            if (!stage.success) {
+                                // keep it out of installing set
+                                progress.remove(pkg)
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+                _ui.update {
+                    it.copy(
+                        installingPackages = installing,
+                        installProgress = progress
+                    )
+                }
+            }
         }
     }
 
@@ -120,7 +159,6 @@ class UpdatesViewModel(
     }
 
     private suspend fun refreshIgnoredFor(packageName: String) {
-        // Trigger UI recomputation by updating ignoredPrefs map entry
         val pref = UpdatesPreferences[packageName]
         withContext(Dispatchers.Main) {
             _ui.value = _ui.value.copy(

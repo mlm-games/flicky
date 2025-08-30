@@ -25,7 +25,6 @@ enum class SettingType { TOGGLE, DROPDOWN, SLIDER, BUTTON }
 
 data class AppSettings(
 
-    // To Add Later when UI suits mobile (adapted from CCL and Droidify)
     @Setting(
         title = "Default Sort",
         description = "Default sorting for app lists",
@@ -35,13 +34,6 @@ data class AppSettings(
     )
     val defaultSort: Int = 1,
 
-//    @Setting(
-//        title = "Apps per row",
-//        description = "Number of app cards per row",
-//        category = SettingCategory.GENERAL,
-//        type = SettingType.SLIDER,
-//        min = 2f, max = 8f, step = 1f
-//    )
     val appsPerRow: Int = 4,
 
     @Setting(
@@ -60,27 +52,10 @@ data class AppSettings(
     )
     val dynamicTheme: Boolean = false,
 
-//    @Setting(
-//        title = "Compact mode",
-//        description = "Show more items on screen",
-//        category = SettingCategory.APPEARANCE,
-//        type = SettingType.TOGGLE
-//    )
     val compactMode: Boolean = false,
 
-//    @Setting(
-//        title = "Show app icons",
-//        category = SettingCategory.APPEARANCE,
-//        type = SettingType.TOGGLE
-//    )
     val showAppIcons: Boolean = true,
 
-    // Specific
-//    @Setting(
-//        title = "Auto-update apps",
-//        category = SettingCategory.DOWNLOADS,
-//        type = SettingType.TOGGLE
-//    )
     val autoUpdate: Boolean = false,
 
     @Setting(
@@ -100,11 +75,6 @@ data class AppSettings(
     )
     val syncIntervalIndex: Int = 1,
 
-//    @Setting(
-//        title = "Update notifications",
-//        category = SettingCategory.DOWNLOADS,
-//        type = SettingType.TOGGLE
-//    )
     val notifyUpdates: Boolean = true,
 
     @Setting(
@@ -154,19 +124,8 @@ data class AppSettings(
     )
     val showIncompatible: Boolean = false,
 
-//    @Setting(
-//        title = "Show unstable updates",
-//        category = SettingCategory.FILTERS,
-//        type = SettingType.TOGGLE
-//    )
     val unstableUpdates: Boolean = false,
 
-//    @Setting(
-//        title = "Ignore signature",
-//        description = "Allow updates with different signatures (unsafe)",
-//        category = SettingCategory.FILTERS,
-//        type = SettingType.TOGGLE
-//    )
     val ignoreSignature: Boolean = false,
 
     @Setting(
@@ -177,45 +136,14 @@ data class AppSettings(
     )
     val differentialSync: Boolean = true,
 
-    // Misc (advanced, not needed for ui)
-//    @Setting(
-//        title = "Use proxy",
-//        category = SettingCategory.SYSTEM,
-//        type = SettingType.TOGGLE
-//    )
     val useProxy: Boolean = false,
 
-//    @Setting(
-//        title = "Proxy type",
-//        category = SettingCategory.SYSTEM,
-//        type = SettingType.DROPDOWN,
-//        options = ["HTTP", "SOCKS5"],
-//        dependsOn = "useProxy"
-//    )
     val proxyType: Int = 0,
 
-//    @Setting(
-//        title = "Clear cache",
-//        description = "Delete repo headers and reset last sync",
-//        category = SettingCategory.SYSTEM,
-//        type = SettingType.BUTTON
-//    )
     val clearCache: Boolean = false,
 
-//    @Setting(
-//        title = "Export settings",
-//        description = "Backup settings and repositories",
-//        category = SettingCategory.SYSTEM,
-//        type = SettingType.BUTTON
-//    )
     val exportSettings: Boolean = false,
 
-//    @Setting(
-//        title = "Import settings",
-//        description = "Restore settings from backup",
-//        category = SettingCategory.SYSTEM,
-//        type = SettingType.BUTTON
-//    )
     val importSettings: Boolean = false,
 
     @Setting(
@@ -223,9 +151,17 @@ data class AppSettings(
         description = "Default source when app exists in multiple repos",
         category = SettingCategory.DOWNLOADS,
         type = SettingType.DROPDOWN,
-        options = ["Auto", "Prefer F-Droid", "Prefer IzzyOnDroid"] // Remove prefer izzy since it always has the latest apk so auto would prefer it?
+        options = ["Auto", "Prefer F-Droid", "Prefer IzzyOnDroid"]
     )
     val preferredRepo: Int = 0,
+
+    @Setting(
+        title = "Show debug info",
+        description = "Show repo and install events (for troubleshooting)",
+        category = SettingCategory.SYSTEM,
+        type = SettingType.TOGGLE
+    )
+    val showDebugInfo: Boolean = false,
 
     // Non-UI / repo related
     val lastSync: Long = 0L,

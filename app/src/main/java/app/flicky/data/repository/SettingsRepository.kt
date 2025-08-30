@@ -9,9 +9,6 @@ import kotlinx.serialization.json.Json
 
 private val Context.ds by preferencesDataStore("flicky.settings")
 
-/**
- * Definition for a setting that maps between AppSettings property and DataStore key
- */
 sealed class SettingDefinition<T> {
     abstract val key: Preferences.Key<T>
     abstract val getValue: (AppSettings) -> T
@@ -66,6 +63,7 @@ class SettingsRepository(private val context: Context) {
 
         val PREFERRED_REPO = intPreferencesKey("preferred_repo")
 
+        val SHOW_DEBUG_INFO = booleanPreferencesKey("show_debug_info")
     }
 
 
@@ -101,11 +99,10 @@ class SettingsRepository(private val context: Context) {
 
         "lastSync" to SettingDefinition.LongSetting("lastSync", LAST_SYNC) { it.lastSync },
         "preferredRepo" to SettingDefinition.IntSetting("preferredRepo", PREFERRED_REPO) { it.preferredRepo},
+
+        "showDebugInfo" to SettingDefinition.BooleanSetting("showDebugInfo", SHOW_DEBUG_INFO) { it.showDebugInfo },
     )
 
-    /**
-     * Flow for typing
-     */
     val settingsFlow: Flow<AppSettings> = context.ds.data.map { p ->
         AppSettings(
             defaultSort = p[DEFAULT_SORT] ?: 1,
@@ -121,6 +118,8 @@ class SettingsRepository(private val context: Context) {
             syncIntervalIndex = p[SYNC_INTERVAL] ?: 1,
             notifyUpdates = p[NOTIFY_UPDATES] ?: true,
             keepCache = p[KEEP_CACHE] ?: false,
+            mirrorRotation = p[MIRROR_ROTATION] ?: false,
+            useOnionMirrors = p[USE_ONION_MIRRORS] ?: false,
             installerMode = p[INSTALLER_MODE] ?: 0,
 
             hideAntiFeatures = p[HIDE_ANTI] ?: false,
@@ -136,15 +135,16 @@ class SettingsRepository(private val context: Context) {
             exportSettings = false,
             importSettings = false,
 
+            preferredRepo = p[PREFERRED_REPO] ?: 0,
+
+            showDebugInfo = p[SHOW_DEBUG_INFO] ?: false,
+
             lastSync = p[LAST_SYNC] ?: 0L,
             proxyHost = p[PROXY_HOST] ?: "",
             proxyPort = p[PROXY_PORT] ?: 9050
         )
     }.distinctUntilChanged()
 
-    /**
-     * Flow of repositories persisted as JSON
-     */
     val repositoriesFlow: Flow<List<RepositoryInfo>> = context.ds.data
         .map { p ->
             val saved = p[REPOS_JSON]?.let {
@@ -152,7 +152,7 @@ class SettingsRepository(private val context: Context) {
             }.orEmpty()
 
             val savedByUrl = LinkedHashMap<String, RepositoryInfo>().apply {
-                saved.forEach { put(normalizeUrl(it.url), it.copy(url =normalizeUrl(it.url))) }
+                saved.forEach { put(normalizeUrl(it.url), it.copy(url = normalizeUrl(it.url))) }
             }
 
             val defaults = RepositoryInfo.defaults()
@@ -167,16 +167,8 @@ class SettingsRepository(private val context: Context) {
         }
         .distinctUntilChanged()
 
-
-    /**
-     * Generic update using property name and dynamic mapping
-     */
     suspend fun updateSetting(propertyName: String, value: Any) {
-        val def = definitions[propertyName]
-        if (def == null) {
-            // Unknown mapped setting name; ignore silently to avoid crashes
-            return
-        }
+        val def = definitions[propertyName] ?: return
         context.ds.edit { prefs ->
             when (def) {
                 is SettingDefinition.BooleanSetting -> prefs[def.key] = (value as? Boolean) ?: return@edit
@@ -188,9 +180,6 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
-    /**
-     * Batch update that computes diffs and writes only changed keys
-     */
     suspend fun updateSettings(update: (AppSettings) -> AppSettings) {
         val current = settingsFlow.first()
         val updated = update(current)
@@ -227,9 +216,6 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
-    /**
-     * Repository helpers
-     */
     suspend fun setRepositories(list: List<RepositoryInfo>) {
         context.ds.edit { it[REPOS_JSON] = json.encodeToString(list) }
     }
@@ -256,16 +242,10 @@ class SettingsRepository(private val context: Context) {
         setRepositories(repos)
     }
 
-    /**
-     * Meta
-     */
     suspend fun setLastSync(millis: Long) {
         context.ds.edit { it[LAST_SYNC] = millis }
     }
 
-    /**
-     * Repo headers persistence for conditional requests
-     */
     suspend fun setRepoHeadersMap(mapJson: String) {
         context.ds.edit { it[REPO_HEADERS] = mapJson }
     }
@@ -281,11 +261,7 @@ class SettingsRepository(private val context: Context) {
     fun normalizeUrl(url: String): String =
         url.trim().removeSuffix("/")
 
-    /**
-     * Convenience helpers (used by UI actions)
-     */
     suspend fun clearCache() {
-        // Clears cached repo headers + resets lastSync (download cache is cleared elsewhere if required)
         context.ds.edit {
             it[REPO_HEADERS] = "{}"
             it[LAST_SYNC] = 0L

@@ -4,8 +4,10 @@ import android.util.Log
 import androidx.room.withTransaction
 import app.flicky.AppGraph
 import app.flicky.data.local.AppDao
+import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.remote.FDroidApi
+import app.flicky.helper.DebugLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,14 +67,12 @@ class RepositorySyncManager(
 
             val preferredRepoIdx = settings.settingsFlow.first().preferredRepo
             val preferred = PreferredRepo.fromIndex(preferredRepoIdx)
-
             fun matchesPreferred(name: String, url: String): Boolean = when (preferred) {
                 PreferredRepo.FDroid      -> name.equals("F-Droid", true) || url.contains("f-droid", true)
                 PreferredRepo.IzzyOnDroid -> name.contains("izzy", true) || url.contains("izzy", true)
                 else -> false
             }
 
-            // Process preferred repos last so they deterministically win on duplicate packages
             val (preferredList, others) = enabledRepos.partition { matchesPreferred(it.name, it.url) }
             val repos = others + preferredList
 
@@ -87,11 +87,14 @@ class RepositorySyncManager(
             var totalApps = 0
             var anySuccess = false
             val repoErrors = mutableListOf<Pair<String, String>>()
+            val showDebug = settings.settingsFlow.first().let { it is AppSettings && it.showDebugInfo } ||
+                    runCatching { settings.settingsFlow.first().let { (it as AppSettings).showDebugInfo } }.getOrDefault(false)
 
             repos.forEachIndexed { index, repo ->
                 if (cancelRequested || !kotlin.coroutines.coroutineContext.isActive) return@withLock totalApps to repoErrors
 
-                val buffer = mutableListOf<FDroidApp>() // accumulate in memory; write once per repo
+                val apps = mutableListOf<FDroidApp>()
+                val variants = mutableListOf<AppVariant>()
 
                 try {
                     updateState {
@@ -103,6 +106,8 @@ class RepositorySyncManager(
                         )
                     }
 
+                    if (showDebug) DebugLog.log(TAG, "Fetching ${repo.name} (${repo.url})")
+
                     val prevHeader = headersStore.get(repo.url)
                     val differential = settings.settingsFlow.first().differentialSync
                     val result = api.fetchWithCache(
@@ -110,35 +115,42 @@ class RepositorySyncManager(
                         previous = FDroidApi.RepoHeaders(prevHeader.etag, prevHeader.lastModified),
                         force = force,
                         enableDifferential = differential,
-                        includeIncompatible = true
-                    ) { app ->
-                        buffer.add(app)
-                    }
+                        includeIncompatible = true,
+                        onApp = { apps.add(it) },
+                        onVariant = { variants.add(it) }
+                    )
 
                     when {
                         result == null -> {
                             val errorMsg = "Network or parse error"
                             repoErrors.add(repo.name to errorMsg)
+                            if (showDebug) DebugLog.log(TAG, "${repo.name} -> $errorMsg")
                         }
                         result.modified || force -> {
-                            // Replace this repo's rows atomically
                             AppGraph.db.withTransaction {
                                 dao.deleteByRepositoryUrl(repo.url)
-                                if (buffer.isNotEmpty()) {
-                                    dao.upsertAll(buffer)
-                                    totalApps += buffer.size
+                                dao.deleteVariantsByRepositoryUrl(repo.url)
+                                if (apps.isNotEmpty()) {
+                                    dao.upsertAll(apps)
+                                    totalApps += apps.size
+                                }
+                                if (variants.isNotEmpty()) {
+                                    dao.upsertVariants(variants)
                                 }
                             }
                             anySuccess = true
                             result.headers?.let { headersStore.put(repo.url, RepoHeader(it.etag, it.lastModified)) }
+                            if (showDebug) DebugLog.log(TAG, "${repo.name} updated: ${apps.size} apps, ${variants.size} variants")
                         }
                         else -> {
                             anySuccess = true
+                            if (showDebug) DebugLog.log(TAG, "${repo.name} not modified")
                         }
                     }
                 } catch (e: Exception) {
                     val errorMsg = e.message ?: "Unknown error"
                     repoErrors.add(repo.name to errorMsg)
+                    if (showDebug) DebugLog.log(TAG, "${repo.name} -> error: $errorMsg")
                 } finally {
                     updateState {
                         val done = index + 1
