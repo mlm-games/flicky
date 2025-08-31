@@ -1,3 +1,8 @@
+## v3.1.2
+
+- Clear cache properly on force sync
+
+
 ## v3.1.1
 
 - Enable browser repos by default
