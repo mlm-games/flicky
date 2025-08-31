@@ -75,4 +75,27 @@ class InstalledAppsRepository(private val context: Context) {
 
         awaitClose { context.unregisterReceiver(receiver) }
     }
+    // Duplicate to not break UpdatesScreen
+    fun packageNameChangesFlow(): Flow<String> = callbackFlow {
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_CHANGED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addDataScheme("package")
+        }
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context?, intent: Intent?) {
+                val pkg = intent?.data?.schemeSpecificPart
+                if (!pkg.isNullOrBlank()) trySend(pkg).isSuccess
+            }
+        }
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        awaitClose { context.unregisterReceiver(receiver) }
+    }
 }

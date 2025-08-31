@@ -62,6 +62,21 @@ class AppDetailViewModel(
                 }
             }
         }
+        viewModelScope.launch {
+            installedRepo.packageNameChangesFlow().collect { changed ->
+                if (changed == packageName) {
+                    val newInstalled = installedRepo.getVersionCode(packageName)
+                    _ui.update {
+                        it.copy(
+                            installedVersionCode = newInstalled,
+                            isInstalling = false,
+                            progress = if (newInstalled != null) 1f else it.progress,
+                            error = null
+                        )
+                    }
+                }
+            }
+        }
     }
 
     fun install() {
