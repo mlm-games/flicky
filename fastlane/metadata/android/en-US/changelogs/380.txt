@@ -1,0 +1,3 @@
+- Add Ui for clear cache (which reflects now), auto update (heavily OS dependent) and "show app icons" settings
+- Icon hiding logic
+- Update from the compatible latest version

@@ -1,3 +1,10 @@
+## v3.1.3
+
+- Add Ui for clear cache (which reflects now), auto update (heavily OS dependent) and "show app icons" settings
+- Icon hiding logic
+- Update from the compatible latest version
+
+
 ## v3.1.2
 
 - Clear cache properly on force sync
