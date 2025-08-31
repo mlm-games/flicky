@@ -36,7 +36,6 @@ import app.flicky.viewmodel.SettingsViewModel
 import app.flicky.work.SyncScheduler
 import coil.Coil
 import coil.ImageLoader
-import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
 
@@ -71,11 +70,11 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val settingsState by AppGraph.settings.settingsFlow.collectAsState(initial = null)
+            val settingsState by AppGraph.settings.settingsFlow.collectAsState(AppSettings())
 
-            LaunchedEffect(settingsState?.wifiOnly, settingsState?.syncIntervalIndex) {
-                val wifiOnly = settingsState?.wifiOnly ?: true
-                val hours = when (settingsState?.syncIntervalIndex ?: 1) {
+            LaunchedEffect(settingsState.wifiOnly, settingsState.syncIntervalIndex) {
+                val wifiOnly = settingsState.wifiOnly
+                val hours = when (settingsState.syncIntervalIndex) {
                     0 -> 3; 1 -> 6; 2 -> 12; 3 -> 24; 4 -> 24 * 7; else -> -1
                 }
                 SyncScheduler.schedule(applicationContext, wifiOnly, hours)
