@@ -80,8 +80,7 @@ object AppGraph {
             }
         }
 
-        val settings =
-            SettingsRepository(context.applicationContext, db.repositoryDao(), db.repoConfigDao(), db.appDao())
+        val settings = SettingsRepository(context.applicationContext, db.repositoryDao(), db.repoConfigDao(), db.appDao())
         val mirrorPolicyProvider: MirrorPolicyProvider = DbMirrorPolicyProvider(db.repoConfigDao())
         val httpClients: HttpClientProvider = DbHttpClientProvider(db.repoConfigDao())
         val api = FDroidApi(context.applicationContext, httpClients)

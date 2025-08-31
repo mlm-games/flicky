@@ -6,11 +6,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.unit.Dp
+import app.flicky.AppGraph
+import app.flicky.data.repository.AppSettings
 import coil.compose.AsyncImage
 
 @Composable
-fun AppIcon(name: String, url: String?, size: androidx.compose.ui.unit.Dp = 56.dp) {
-    AsyncImage(model = url, contentDescription = name, modifier = Modifier.size(size))
+fun AppIcon(name: String, url: String?, size: Dp = 56.dp) {
+    val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
+    if (settings.showAppIcons) {
+        AsyncImage(model = url, contentDescription = name, modifier = Modifier.size(size))
+    } else {
+        Box(Modifier.size(size))
+    }
 }
 
 @Composable

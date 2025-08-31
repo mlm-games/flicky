@@ -15,10 +15,12 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import app.flicky.AppGraph
 import app.flicky.data.model.FDroidApp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import app.flicky.R
+import app.flicky.data.repository.AppSettings
 
 
 @Composable
@@ -47,6 +49,8 @@ fun TVAppCard(
         )
     ) {
         Column(Modifier.padding(16.dp)) {
+            val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
+            if (settings.showAppIcons) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(app.iconUrl)
@@ -59,6 +63,9 @@ fun TVAppCard(
                     .fillMaxWidth()
                     .height(140.dp)
             )
+            } else {
+                Box(Modifier.fillMaxWidth().height(140.dp))
+            }
             Spacer(Modifier.height(8.dp))
             Text(
                 app.name,

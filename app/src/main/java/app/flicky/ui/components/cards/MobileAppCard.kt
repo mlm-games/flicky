@@ -5,14 +5,18 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.flicky.AppGraph
 import app.flicky.data.model.FDroidApp
 import coil.compose.AsyncImage
 import app.flicky.R
+import app.flicky.data.repository.AppSettings
 import coil.request.ImageRequest
 
 @Composable
@@ -25,18 +29,22 @@ fun MobileAppCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(12.dp)) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(app.iconUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = app.name,
-                placeholder = painterResource(R.drawable.ic_app_placeholder),
-                error = painterResource(R.drawable.ic_app_placeholder),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp)
-            )
+                val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
+                if (settings.showAppIcons) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(app.iconUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = app.name,
+                        placeholder = painterResource(R.drawable.ic_app_placeholder),
+                        error = painterResource(R.drawable.ic_app_placeholder),
+                        modifier = Modifier.fillMaxWidth().height(140.dp)
+                    )
+                }
+                else {
+                    Box(Modifier.fillMaxWidth().height(140.dp))
+                }
             Spacer(Modifier.height(8.dp))
             Text(
                 app.name,
