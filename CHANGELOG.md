@@ -1,3 +1,11 @@
+## v3.2.1
+
+- Update build.gradle.kts [skip ci]
+- Add Ui for clear cache (which reflects now), auto update (heavily OS dependent) and "show app icons" settings
+- Icon hiding logic
+- Update from the compatible latest version
+
+
 ## v3.1.3
 
 - Add Ui for clear cache (which reflects now), auto update (heavily OS dependent) and "show app icons" settings
