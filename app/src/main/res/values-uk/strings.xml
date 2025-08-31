@@ -131,4 +131,7 @@
     <string name="error_network">Помилка мережі або аналізу</string>
     <string name="error_unknown">Невідома помилка</string>
     <string name="repositories_reset">Reset Repositories</string>
+    <string name="mirror_strategy">Mirror Strategy</string>
+    <string name="trust">Trust</string>
+    <string name="trust_mode">Trust Mode</string>
 </resources>

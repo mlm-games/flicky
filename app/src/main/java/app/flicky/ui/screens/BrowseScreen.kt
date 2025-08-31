@@ -21,6 +21,7 @@ import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.ui.components.VoiceSearchButton
 import app.flicky.ui.components.cards.AdaptiveAppCard
+import app.flicky.ui.dialogs.FlickyDialog
 import app.flicky.viewmodel.UiText
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -281,38 +282,48 @@ private fun SortDialog(
     onSortSelected: (SortOption) -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    FlickyDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.sort_by)) },
-        text = {
-            Column {
-                SortOption.entries.forEach { option ->
-                    val optionText = when (option) {
-                        SortOption.Name -> stringResource(R.string.sort_name)
-                        SortOption.Updated -> stringResource(R.string.sort_updated)
-                        SortOption.Size -> stringResource(R.string.sort_size)
-                        SortOption.Added -> stringResource(R.string.sort_added)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth().clickable { onSortSelected(option) }.padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = currentSort == option,
-                            onClick = { onSortSelected(option) }
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(optionText)
-                    }
-                }
-            }
-        },
+        title = stringResource(R.string.sort_by),
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
+                Text(stringResource(R.string.action_close))
             }
         }
-    )
+    ) {
+        Column {
+            SortOption.entries.forEach { option ->
+                val optionText = when (option) {
+                    SortOption.Name -> stringResource(R.string.sort_name)
+                    SortOption.Updated -> stringResource(R.string.sort_updated)
+                    SortOption.Size -> stringResource(R.string.sort_size)
+                    SortOption.Added -> stringResource(R.string.sort_added)
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSortSelected(option) }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = currentSort == option,
+                        onClick = { onSortSelected(option) },
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = MaterialTheme.colorScheme.primary,
+                            unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        optionText,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable

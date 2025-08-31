@@ -1,5 +1,8 @@
 package app.flicky.ui.screens
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -8,8 +11,16 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.flicky.AppGraph
 import app.flicky.data.local.RepoConfig
@@ -28,6 +39,7 @@ import app.flicky.ui.dialogs.SliderSettingDialog
 import app.flicky.viewmodel.SettingsViewModel
 import kotlin.reflect.KProperty1
 import app.flicky.R
+import app.flicky.ui.dialogs.FlickyDialog
 import java.util.Locale
 import kotlinx.coroutines.launch
 
@@ -215,20 +227,36 @@ fun SettingsScreen(vm: SettingsViewModel) {
 
                         Spacer(Modifier.height(8.dp))
 
-                        // Mirror strategy
                         var openStrategy by remember { mutableStateOf(false) }
                         val strategies = listOf("StickyLastGood", "RoundRobin", "CanonicalFirst")
                         val strategyIdx = strategies.indexOf(cfgState.strategy).coerceAtLeast(0)
+
                         ExposedDropdownMenuBox(
                             expanded = openStrategy,
                             onExpandedChange = { openStrategy = !openStrategy }
                         ) {
+                            val anchorModifier = Modifier
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                                .fillMaxWidth()
+                                .focusable()
+                                .semantics { this.role = Role.Button }
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { openStrategy = !openStrategy }
+                                .onPreviewKeyEvent { ev ->
+                                    if (ev.type == KeyEventType.KeyDown &&
+                                        (ev.key == Key.Enter || ev.key == Key.NumPadEnter || ev.key == Key.DirectionDown)
+                                    ) { openStrategy = !openStrategy; true } else false
+                                }
+
                             OutlinedTextField(
                                 value = strategies[strategyIdx],
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Mirror strategy") },
-                                modifier = Modifier.menuAnchor().fillMaxWidth()
+                                label = { Text(stringResource(id = R.string.mirror_strategy)) }, // move label to strings.xml
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = openStrategy) },
+                                modifier = anchorModifier
                             )
                             ExposedDropdownMenu(expanded = openStrategy, onDismissRequest = { openStrategy = false }) {
                                 strategies.forEach { s ->
@@ -246,22 +274,39 @@ fun SettingsScreen(vm: SettingsViewModel) {
                         Spacer(Modifier.height(12.dp))
 
                         // Trust options
-                        Text("Trust", style = MaterialTheme.typography.labelLarge)
+                        Text(stringResource(id = R.string.trust), style = MaterialTheme.typography.labelLarge)
                         Spacer(Modifier.height(6.dp))
 
                         var openTrust by remember { mutableStateOf(false) }
                         val trustModes = listOf("HttpsOnly", "Pinned", "CustomCA")
                         val trustIdx = trustModes.indexOf(cfgState.trustMode).coerceAtLeast(0)
+
                         ExposedDropdownMenuBox(
                             expanded = openTrust,
                             onExpandedChange = { openTrust = !openTrust }
                         ) {
+                            val anchorModifier = Modifier
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                                .fillMaxWidth()
+                                .focusable()
+                                .semantics { this.role = Role.Button }
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { openTrust = !openTrust }
+                                .onPreviewKeyEvent { ev ->
+                                    if (ev.type == KeyEventType.KeyDown &&
+                                        (ev.key == Key.Enter || ev.key == Key.NumPadEnter || ev.key == Key.DirectionDown)
+                                    ) { openTrust = !openTrust; true } else false
+                                }
+
                             OutlinedTextField(
                                 value = trustModes[trustIdx],
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Trust mode") },
-                                modifier = Modifier.menuAnchor().fillMaxWidth()
+                                label = { Text(stringResource(id = R.string.trust_mode)) }, // move label to strings.xml
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = openTrust) },
+                                modifier = anchorModifier
                             )
                             ExposedDropdownMenu(expanded = openTrust, onDismissRequest = { openTrust = false }) {
                                 trustModes.forEach { s ->
@@ -404,22 +449,48 @@ fun SettingsScreen(vm: SettingsViewModel) {
 private fun AddRepoDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
     var name by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
+    val canAdd = url.isNotBlank()
 
-    AlertDialog(
+    FlickyDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Repository") },
-        text = {
-            Column {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") })
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") })
-            }
-        },
+        title = stringResource(id = R.string.add_repository), // add to strings.xml
         confirmButton = {
-            TextButton(onClick = { if (url.isNotBlank()) onAdd(name.ifBlank { url }, url) }) {
-                Text("Add")
+            TextButton(
+                onClick = { if (canAdd) onAdd(name.ifBlank { url }, url) },
+                enabled = canAdd,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                )
+            ) {
+                Text(stringResource(id = R.string.action_add))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }
-    )
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            ) { Text(stringResource(R.string.action_cancel)) }
+        }
+    ) {
+        Column {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text(stringResource(id = R.string.name)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = url,
+                onValueChange = { url = it },
+                label = { Text(stringResource(id = R.string.url)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
 }

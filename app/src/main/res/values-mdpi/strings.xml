@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="repositories_reset">Reset Repositories</string>
+    <string name="mirror_strategy">Mirror Strategy</string>
+    <string name="trust">Trust</string>
+    <string name="trust_mode">Trust Mode</string>
 </resources>
