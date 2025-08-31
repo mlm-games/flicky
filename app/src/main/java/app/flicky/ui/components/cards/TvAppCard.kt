@@ -9,6 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -28,21 +30,21 @@ fun TVAppCard(
     var focused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(targetValue = if (focused) 1.05f else 1f, label = "tv_card_scale")
     val colors = MaterialTheme.colorScheme
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(autofocus) { if (autofocus) focusRequester.requestFocus() }
 
     ElevatedCard(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .scale(scale)
+            .focusRequester(focusRequester)
             .onFocusChanged { focused = it.isFocused }
             .focusable(),
         colors = CardDefaults.elevatedCardColors(
             containerColor = if (focused) colors.primaryContainer else colors.surface,
             contentColor = if (focused) colors.onPrimaryContainer else colors.onSurface
-        ),
-//        border = if (focused) {
-//            BorderStroke(2.dp, colors.primary)
-//        } else null
+        )
     ) {
         Column(Modifier.padding(16.dp)) {
             AsyncImage(

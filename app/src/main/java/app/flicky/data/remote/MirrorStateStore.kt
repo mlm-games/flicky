@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import java.security.MessageDigest
 
 private val Context.mirrorStore by preferencesDataStore("mirror_state")
 
@@ -15,8 +16,12 @@ private val Context.mirrorStore by preferencesDataStore("mirror_state")
  */
 class MirrorStateStore(private val context: Context) : MirrorRegistry.MirrorStateStore {
 
-    private fun keyFor(base: String): Preferences.Key<String> =
-        stringPreferencesKey("mirror_last_${base.hashCode()}")
+    private fun keyFor(base: String): Preferences.Key<String> {
+        val norm = base.trim().lowercase()
+        val digest = MessageDigest.getInstance("SHA-256").digest(norm.toByteArray())
+        val hex = digest.joinToString("") { "%02x".format(it) }.take(16)
+        return stringPreferencesKey("mirror_last_$hex")
+    }
 
     override fun getLastGood(base: String): String? = runBlocking {
         val prefs = context.mirrorStore.data.first()

@@ -54,7 +54,7 @@ object MirrorRegistry {
         if (base.isBlank()) return
 
         // Normalize and uniquify
-        val normalized = urls.mapNotNull { it?.trim() }
+        val normalized = urls.map { it.trim() }
             .map(::norm)
             .distinct()
 
@@ -63,7 +63,7 @@ object MirrorRegistry {
 
         repos[base] = Mirrors(
             canonicalBase = base,
-            https = if (https.isNotEmpty()) https else listOf(base),
+            https = https.ifEmpty { listOf(base) },
             onion = onion,
             primary = primaryUrl?.let(::norm)
         )

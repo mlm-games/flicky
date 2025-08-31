@@ -42,9 +42,8 @@ fun CategoriesScreen(
 
     var selected by remember { mutableStateOf("All") }
     val filtered by remember(selected, apps) {
-        mutableStateOf(if (selected == "All") apps else apps.filter { it.category == selected })
+        derivedStateOf { if (selected == "All") apps else apps.filter { it.category == selected } }
     }
-
     val cfg = LocalConfiguration.current
     val gridCells = remember(cfg.screenWidthDp) { GridCells.Adaptive(minSize = 220.dp) }
     val animatedProgress by animateFloatAsState(progress, label = "categories_sync_progress")

@@ -36,8 +36,7 @@ class AppDetailViewModel(
 
     init {
         viewModelScope.launch {
-            dao.observeAll().collect { list ->
-                val app = list.find { it.packageName == packageName }
+            dao.observeOne(packageName).collect { app ->
                 val installed = installedRepo.getVersionCode(packageName)
                 _ui.value = _ui.value.copy(app = app, installedVersionCode = installed)
             }

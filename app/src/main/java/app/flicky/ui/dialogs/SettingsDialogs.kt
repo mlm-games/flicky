@@ -1,12 +1,28 @@
 package app.flicky.ui.dialogs
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -17,7 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import app.flicky.ui.components.SelectionDialog
 import java.util.Locale
+import kotlin.math.max
+import kotlin.math.round
+import kotlin.math.roundToInt
 
 /**
  * Dialog for slider-based settings
@@ -82,14 +102,16 @@ fun SliderSettingDialog(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            val stepsCount = max(0, ((max - min) / step).roundToInt() - 1)
+
             Slider(
                 value = sliderValue,
-                onValueChange = {
-                    val steps = ((it - min) / step).toInt()
-                    sliderValue = min + (steps * step)
+                onValueChange = { v ->
+                    val snapped = (round((v - min) / step) * step + min).coerceIn(min, max)
+                    sliderValue = snapped
                 },
                 valueRange = min..max,
-                steps = ((max - min) / step).toInt() - 1,
+                steps = stepsCount,
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
                     activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -117,7 +139,6 @@ fun SliderSettingDialog(
     }
 }
 
-// Updated DropdownSettingDialog using SelectionDialog
 @Composable
 fun DropdownSettingDialog(
     title: String,
@@ -293,82 +314,5 @@ fun InputDialog(
             ),
             modifier = Modifier.fillMaxWidth()
         )
-    }
-}
-
-/**
- * Selection dialog for choosing from a list
- */
-@Composable
-fun <T> SelectionDialog(
-    title: String,
-    items: List<T>,
-    selectedItem: T? = null,
-    onItemSelected: (T) -> Unit,
-    onDismiss: () -> Unit,
-    itemContent: @Composable (T) -> String
-) {
-    var selected by remember { mutableStateOf(selectedItem) }
-
-    FlickyDialog(
-        onDismissRequest = onDismiss,
-        title = title,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    selected?.let { onItemSelected(it) }
-                },
-                enabled = selected != null,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text("Select")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            ) {
-                Text("Cancel")
-            }
-        }
-    ) {
-        Column {
-            items.forEach { item ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .selectable(
-                            selected = (selected == item),
-                            onClick = { selected = item }
-                        )
-                        .padding(vertical = 12.dp, horizontal = 16.dp)
-//                        .background(
-//                            shape = RoundedCornerShape(12.dp),
-//                            color = MaterialTheme.colorScheme.surface
-//                        ) The focus overlay looks odd with it
-                ) {
-                    RadioButton(
-                        selected = (selected == item),
-                        onClick = { selected = item },
-                        colors = RadioButtonDefaults.colors(
-                            selectedColor = MaterialTheme.colorScheme.primary,
-                            unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = itemContent(item),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-        }
     }
 }

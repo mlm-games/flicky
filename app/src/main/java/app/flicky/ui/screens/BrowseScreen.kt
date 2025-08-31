@@ -126,9 +126,15 @@ fun BrowseScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        val sortLabel = when (sort) {
+                            SortOption.Name -> stringResource(R.string.sort_name)
+                            SortOption.Updated -> stringResource(R.string.sort_updated)
+                            SortOption.Size -> stringResource(R.string.sort_size)
+                            SortOption.Added -> stringResource(R.string.sort_added)
+                        }
                         AssistChip(
                             onClick = { showSortDialog = true },
-                            label = { Text(stringResource(R.string.sort_prefix, sort.name)) },
+                            label = { Text(stringResource(R.string.sort_prefix, sortLabel)) },
                             leadingIcon = {
                                 Icon(
                                     Icons.AutoMirrored.Filled.Sort,

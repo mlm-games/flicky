@@ -95,4 +95,7 @@ AND (:showIncompat = 1 OR isCompatible = 1)
 ORDER BY added DESC
 """)
     fun pagingByAdded(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
+
+    @Query("SELECT * FROM apps WHERE packageName = :pkg LIMIT 1")
+    fun observeOne(pkg: String): Flow<FDroidApp?>
 }
