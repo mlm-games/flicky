@@ -7,6 +7,7 @@ import app.flicky.data.local.AppDao
 import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.remote.FDroidApi
+import app.flicky.data.remote.MirrorRegistry
 import app.flicky.helper.DebugLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +23,7 @@ class RepositorySyncManager(
     private val api: FDroidApi,
     private val dao: AppDao,
     private val settings: SettingsRepository,
-    private val headersStore: RepoHeadersStore
+    private val headersStore: RepoHeadersStore,
 ) {
     companion object {
         private const val TAG = "RepositorySyncManager"
@@ -79,6 +80,23 @@ class RepositorySyncManager(
             if (force) {
                 headersStore.clear()
                 dao.clear()
+                dao.clearVariants()
+                AppGraph.db.repositoryDao().clearAll()
+                runCatching {
+                    val bases = settings.repositoriesFlow.first().map { it.url }
+                    bases.forEach { MirrorRegistry.clear(it) }
+                }
+            }
+
+            // rm disabled repos
+            val allNow = settings.repositoriesFlow.first()
+            val disabled = allNow.filter { !it.enabled }
+            AppGraph.db.withTransaction {
+                disabled.forEach { r ->
+                    dao.deleteByRepositoryUrl(r.url)
+                    dao.deleteVariantsByRepositoryUrl(r.url)
+                    MirrorRegistry.clear(r.url)
+                }
             }
 
             cancelRequested = false

@@ -69,14 +69,13 @@ class FDroidApi(
         onVariant: (AppVariant) -> Unit = {}
     ): FetchResult? = withContext(Dispatchers.IO) {
         val baseUrl = repo.url.trimEnd('/')
-
+        val strict = runCatching { AppGraph.settings.settingsFlow.first().failOnTrustErrors }
+            .getOrDefault(false)
         fun client(): OkHttpClient {
             return try {
                 clientProvider.clientFor(baseUrl)
             } catch (e: Exception) {
-//                val failOnTrust = false
-//                if (failOnTrust) throw e
-                defaultClient
+                if (strict) throw e else defaultClient
             }
         }
 
@@ -228,7 +227,7 @@ class FDroidApi(
         var nameLocalized: MutableMap<String, String>? = null
         var descLocalized: MutableMap<String, String>? = null
         var webBaseUrl: String? = null
-        var timestamp: Long = 0L
+        var timestamp = 0L
 
         reader.beginObject()
         while (reader.hasNext()) {
@@ -507,12 +506,13 @@ class FDroidApi(
                         val m = metaByPkg[pkg] ?: Meta()
                         val b = best ?: continue
 
-                        val compatible = isCompatible(b.minSdkVersion, b.nativecode)
-                        if (!compatible && !includeIncompatible) continue
+                        val hasCompatible = variants.any { isCompatible(it.minSdkVersion, it.nativecode) }
+
+                        if (!hasCompatible && !includeIncompatible) continue
 
                         val iconUrl = when {
-                            !m.icon.isNullOrBlank() && m.icon!!.startsWith("http") -> m.icon!!
-                            !m.icon.isNullOrBlank() && m.icon!!.startsWith("/") -> "$baseUrl${m.icon}"
+                            !m.icon.isNullOrBlank() && m.icon.startsWith("http") -> m.icon
+                            !m.icon.isNullOrBlank() && m.icon.startsWith("/") -> "$baseUrl${m.icon}"
                             !m.icon.isNullOrBlank() -> "$baseUrl/${m.icon}"
                             else -> "$baseUrl/icons/$pkg.png"
                         }
@@ -540,7 +540,7 @@ class FDroidApi(
                             repositoryUrl = baseUrl,
                             sha256 = b.hash,
                             whatsNew = "",
-                            isCompatible = compatible
+                            isCompatible = hasCompatible
                         )
                         batch.add(app)
                         if (batch.size >= BATCH_SIZE) {
@@ -767,7 +767,7 @@ class FDroidApi(
                 name?.let { out["name"] = it }
                 summary?.let { out["summary"] = it }
                 description?.let { out["description"] = it }
-                icon?.let { out["icon"] = icon!! }
+                icon?.let { out["icon"] = icon }
             } else {
                 reader.skipValue()
             }
@@ -897,6 +897,9 @@ class FDroidApi(
         val meta = metadata ?: Metadata()
         val bestVersion = best ?: return null
 
+        val hasCompatible = variants.any { v -> isCompatible(v) }
+
+
         val resolvedIconUrl = when {
             meta.icon != null -> {
                 val iconName = meta.icon["en-US"]?.name
@@ -919,9 +922,6 @@ class FDroidApi(
                 else -> "$baseUrl/$s"
             }
         }
-
-        val compatible = isCompatible(bestVersion)
-        if (!compatible && !includeIncompatible) return null
 
         return FDroidApp(
             packageName = packageName,
@@ -946,7 +946,7 @@ class FDroidApi(
             repositoryUrl = baseUrl,
             sha256 = bestVersion.sha256,
             whatsNew = bestVersion.whatsNew ?: "",
-            isCompatible = compatible
+            isCompatible = hasCompatible
         )
     }
 
@@ -1082,7 +1082,7 @@ class FDroidApi(
                         reader.beginObject()
                         while (reader.hasNext()) {
                             when (reader.nextName()) {
-                                "name" -> icon!![locale] = IconInfo(safeString(reader) ?: "")
+                                "name" -> icon[locale] = IconInfo(safeString(reader) ?: "")
                                 else -> reader.skipValue()
                             }
                         }

@@ -72,6 +72,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settingsState by AppGraph.settings.settingsFlow.collectAsState(AppSettings())
 
+            LaunchedEffect(settingsState.failOnTrustErrors) {
+                val callFactory = CoilCallFactory(AppGraph.httpClients, settingsState.failOnTrustErrors)
+                val loader = ImageLoader.Builder(applicationContext)
+                    .callFactory(callFactory)
+                    .crossfade(true)
+                    .build()
+                Coil.setImageLoader(loader)
+            }
+
             LaunchedEffect(settingsState.wifiOnly, settingsState.syncIntervalIndex) {
                 val wifiOnly = settingsState.wifiOnly
                 val hours = when (settingsState.syncIntervalIndex) {

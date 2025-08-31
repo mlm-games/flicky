@@ -2,6 +2,7 @@ package app.flicky
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.withTransaction
 import app.flicky.data.local.AppDatabase
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.local.RepositoryEntity
@@ -19,9 +20,12 @@ import app.flicky.data.repository.RepoHeadersStore
 import app.flicky.data.repository.RepositorySyncManager
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.install.Installer
+import coil.Coil
+import coil.annotation.ExperimentalCoilApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 object AppGraph {
@@ -77,7 +81,7 @@ object AppGraph {
         }
 
         val settings =
-            SettingsRepository(context.applicationContext, db.repositoryDao(), db.repoConfigDao())
+            SettingsRepository(context.applicationContext, db.repositoryDao(), db.repoConfigDao(), db.appDao())
         val mirrorPolicyProvider: MirrorPolicyProvider = DbMirrorPolicyProvider(db.repoConfigDao())
         val httpClients: HttpClientProvider = DbHttpClientProvider(db.repoConfigDao())
         val api = FDroidApi(context.applicationContext, httpClients)
@@ -114,4 +118,30 @@ object AppGraph {
             MirrorRegistry.setStateStore(MirrorStateStore(appContext))
         }
     }
+
+    @OptIn(ExperimentalCoilApi::class)
+    suspend fun clearAllCaches(context: Context = appContext) {
+        syncManager.cancelCurrentSync()
+
+        db.withTransaction {
+            db.appDao().clear()
+            db.appDao().clearVariants()
+            db.repositoryDao().clearAll()
+        }
+        headersStore.clear()
+
+        runCatching {
+            settings.repositoriesFlow.first().forEach { MirrorRegistry.clear(it.url) }
+        }
+
+        runCatching {
+            val loader = Coil.imageLoader(context)
+            loader.memoryCache?.clear()
+            loader.diskCache?.clear()
+        }
+
+        // APK download cache
+        runCatching { installer.clearDownloadCache() }
+    }
 }
+

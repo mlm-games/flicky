@@ -3,6 +3,7 @@ package app.flicky.viewmodel
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.flicky.AppGraph
 import app.flicky.R
 import app.flicky.data.model.RepositoryInfo
 import app.flicky.data.repository.AppSettings
@@ -32,8 +33,10 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     fun performAction(propertyName: String) = viewModelScope.launch {
         when (propertyName) {
             "clearCache" -> {
-                repo.clearCache()
+                AppGraph.clearAllCaches()
                 _events.emit(UiEvent.Toast(R.string.cache_cleared))
+                // immediately resync fresh
+                runCatching { AppGraph.syncManager.syncAll(force = true) }
             }
             "exportSettings" -> _events.emit(UiEvent.RequestExport)
             else -> _events.emit(UiEvent.Toast(R.string.no_action_attached))

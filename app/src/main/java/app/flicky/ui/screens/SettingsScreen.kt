@@ -196,12 +196,8 @@ fun SettingsScreen(vm: SettingsViewModel) {
                             }
                             Switch(
                                 checked = r.enabled,
-                                onCheckedChange = { checked ->
-                                    scope.launch {
-                                        vm.toggleRepository(r.url)
-                                        AppGraph.db.repoConfigDao().setEnabled(base, checked)
-                                        cfgState = cfgState.copy(enabled = checked)
-                                    }
+                                onCheckedChange = {
+                                    scope.launch { vm.toggleRepository(r.url) }
                                 }
                             )
                         }

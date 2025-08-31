@@ -54,6 +54,9 @@ interface AppDao {
     @Query("DELETE FROM apps")
     suspend fun clear()
 
+    @Query("DELETE FROM app_variants")
+    suspend fun clearVariants()
+
     @Query("DELETE FROM apps WHERE repositoryUrl = :repoUrl")
     suspend fun deleteByRepositoryUrl(repoUrl: String)
 
@@ -64,7 +67,10 @@ interface AppDao {
 SELECT * FROM apps
 WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
 AND (:hideAnti = 0 OR LENGTH(antiFeatures) = 2)
-AND (:showIncompat = 1 OR isCompatible = 1)
+AND (:showIncompat = 1 OR EXISTS (
+    SELECT 1 FROM app_variants v
+    WHERE v.packageName = apps.packageName AND v.isCompatible = 1
+))
 ORDER BY lastUpdated DESC
 """)
     fun pagingByUpdated(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
@@ -73,7 +79,10 @@ ORDER BY lastUpdated DESC
 SELECT * FROM apps
 WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
 AND (:hideAnti = 0 OR LENGTH(antiFeatures) = 2)
-AND (:showIncompat = 1 OR isCompatible = 1)
+AND (:showIncompat = 1 OR EXISTS (
+    SELECT 1 FROM app_variants v
+    WHERE v.packageName = apps.packageName AND v.isCompatible = 1
+))
 ORDER BY name COLLATE NOCASE ASC
 """)
     fun pagingByName(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
@@ -82,7 +91,10 @@ ORDER BY name COLLATE NOCASE ASC
 SELECT * FROM apps
 WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
 AND (:hideAnti = 0 OR LENGTH(antiFeatures) = 2)
-AND (:showIncompat = 1 OR isCompatible = 1)
+AND (:showIncompat = 1 OR EXISTS (
+    SELECT 1 FROM app_variants v
+    WHERE v.packageName = apps.packageName AND v.isCompatible = 1
+))
 ORDER BY size ASC
 """)
     fun pagingBySize(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
@@ -91,7 +103,10 @@ ORDER BY size ASC
 SELECT * FROM apps
 WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
 AND (:hideAnti = 0 OR LENGTH(antiFeatures) = 2)
-AND (:showIncompat = 1 OR isCompatible = 1)
+AND (:showIncompat = 1 OR EXISTS (
+    SELECT 1 FROM app_variants v
+    WHERE v.packageName = apps.packageName AND v.isCompatible = 1
+))
 ORDER BY added DESC
 """)
     fun pagingByAdded(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>

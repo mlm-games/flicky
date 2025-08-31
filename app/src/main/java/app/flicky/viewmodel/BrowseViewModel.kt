@@ -108,7 +108,9 @@ class BrowseViewModel(
     fun clearAllApps() {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
-                AppGraph.db.appDao().clear()
+                val dao = AppGraph.db.appDao()
+                dao.clear()
+                dao.clearVariants()
             }
         }
     }

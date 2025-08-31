@@ -98,6 +98,10 @@ class Installer(
         emitStage(packageName, TaskStage.Finished(success = false))
     }
 
+    fun clearDownloadCache() {
+        getBaseCacheDir().listFiles()?.forEach { f -> runCatching { f.delete() } }
+    }
+
     suspend fun install(app: FDroidApp, onProgress: (Float) -> Unit = {}): Boolean {
         val req = resolve(app) ?: return false
         return installResolved(req, onProgress)

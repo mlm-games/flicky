@@ -3,11 +3,14 @@ package app.flicky.data.repository
 import android.content.Context
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import app.flicky.AppGraph
+import app.flicky.data.local.AppDao
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.local.RepoConfigDao
 import app.flicky.data.local.RepositoryDao
 import app.flicky.data.local.RepositoryEntity
 import app.flicky.data.model.RepositoryInfo
+import app.flicky.data.remote.MirrorRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
@@ -30,8 +33,9 @@ sealed class SettingDefinition<T> {
 class SettingsRepository(
     private val context: Context,
     private val repositoryDao: RepositoryDao,
-    private val repoConfigDao: RepoConfigDao
-) {
+    private val repoConfigDao: RepoConfigDao,
+    private val appDao: AppDao,
+    ) {
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = false }
 
     companion object {
@@ -232,16 +236,21 @@ class SettingsRepository(
     // Room-backed repo operations
 
     suspend fun toggleRepository(url: String) {
+        AppGraph.syncManager.cancelCurrentSync()
+
         val base = normalizeUrl(url)
         val existing = repoConfigDao.get(base)
-        if (existing == null) {
-            repoConfigDao.upsert(RepoConfig(baseUrl = base, enabled = false))
-        } else {
-            repoConfigDao.upsert(existing.copy(enabled = !existing.enabled))
+        val newEnabled = !(existing?.enabled ?: true)
+        repoConfigDao.upsert((existing ?: RepoConfig(baseUrl = base)).copy(enabled = newEnabled))
+        if (!newEnabled) {
+            appDao.deleteByRepositoryUrl(base)
+            appDao.deleteVariantsByRepositoryUrl(base)
+            MirrorRegistry.clear(base)
         }
     }
 
     suspend fun addRepository(name: String, url: String) {
+
         val base = normalizeUrl(url)
         repositoryDao.upsert(
             RepositoryEntity(
@@ -254,12 +263,10 @@ class SettingsRepository(
 
     suspend fun deleteRepository(url: String) {
         val base = normalizeUrl(url)
-        val cfg = repoConfigDao.get(base)
-        if (cfg == null) {
-            repoConfigDao.upsert(RepoConfig(baseUrl = base, enabled = false))
-        } else {
-            repoConfigDao.upsert(cfg.copy(enabled = false))
-        }
+        repoConfigDao.upsert((repoConfigDao.get(base) ?: RepoConfig(baseUrl = base)).copy(enabled = false))
+        appDao.deleteByRepositoryUrl(base)
+        appDao.deleteVariantsByRepositoryUrl(base)
+        MirrorRegistry.clear(base)
     }
 
     suspend fun resetRepositoriesToDefaults() = withContext(Dispatchers.IO) {
