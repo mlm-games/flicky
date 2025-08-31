@@ -9,6 +9,9 @@
    id="svg1"
    inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
    sodipodi:docname="icon.svg"
+   inkscape:export-filename="../../fastlane/metadata/android/en-US/images/icon.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -26,9 +29,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="px"
-     inkscape:zoom="0.42382813"
-     inkscape:cx="502.56221"
-     inkscape:cy="447.1152"
+     inkscape:zoom="0.29969174"
+     inkscape:cx="765.78687"
+     inkscape:cy="427.10553"
      inkscape:window-width="1536"
      inkscape:window-height="902"
      inkscape:window-x="0"
@@ -64,7 +67,8 @@
      inkscape:groupmode="layer"
      id="layer1">
     <g
-       id="g1">
+       id="g1"
+       transform="matrix(1.4370861,0,0,1.4370861,-223.7881,-223.7881)">
       <rect
          style="fill:url(#linearGradient2);stroke:none;stroke-width:2.58787;stroke-linecap:round;stroke-linejoin:round;paint-order:fill markers stroke"
          id="rect1"
@@ -72,7 +76,7 @@
          height="712.55298"
          x="155.72351"
          y="155.72351"
-         ry="165.16129" />
+         ry="148.60121" />
       <g
          id="g3"
          style="fill:#e6e6e6">
