@@ -1,3 +1,15 @@
+## v3.1.1
+
+- Enable browser repos by default
+- Show Open/Uninstall after install (for system installer, others work alr)
+- Fix #4 (support relative paths)
+- Use 1024x1024 icon in fastlane
+- Installer reflects download progress till 99% and verification for the rest
+- Fix Mirror strategy and trust mode nto being selectable in TV
+- Misc perf. improvements
+- Add "Fail on trust errors" setting
+
+
 ## v3.0.1
 
 - Cromite works, massive breaking changes, will be fixed in the next update or 2 (mainly regarding cache and repo settings)
