@@ -21,6 +21,9 @@ import app.flicky.data.remote.HttpClientProvider
 import app.flicky.data.remote.MirrorPolicyProvider
 import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.remote.MirrorRegistry.Strategy
+import app.flicky.data.repository.PreferredRepo
+import app.flicky.data.repository.SettingsRepository
+import app.flicky.data.repository.VariantSelector
 import app.flicky.helper.DebugLog
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -51,7 +54,7 @@ import javax.net.ssl.SSLHandshakeException
 
 class Installer(
     private val context: Context,
-    private val settings: app.flicky.data.repository.SettingsRepository,
+    private val settings: SettingsRepository,
     private val mirrorPolicies: MirrorPolicyProvider,
     private val httpClients: HttpClientProvider
 ) {
@@ -103,7 +106,15 @@ class Installer(
     }
 
     suspend fun install(app: FDroidApp, onProgress: (Float) -> Unit = {}): Boolean {
-        val req = resolve(app) ?: return false
+        val pref = PreferredRepo.fromIndex(settings.settingsFlow.first().preferredRepo)
+        val variants = runCatching { AppGraph.db.appDao().variantsFor(app.packageName) }
+            .getOrElse { emptyList() }
+        val chosen = VariantSelector.pick(variants, pref)
+        val req = when {
+            chosen != null -> resolve(chosen)
+            else -> resolve(app)
+        } ?: return false
+
         return installResolved(req, onProgress)
     }
 

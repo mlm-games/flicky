@@ -5,13 +5,12 @@ import android.os.Build
 import android.util.JsonReader
 import android.util.JsonToken
 import android.util.Log
+import app.flicky.AppGraph
 import app.flicky.BuildConfig
 import app.flicky.data.local.AppVariant
 import app.flicky.data.local.RepositoryEntity
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.RepositoryInfo
-import app.flicky.data.repository.RepoHeadersStore
-import app.flicky.AppGraph
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first

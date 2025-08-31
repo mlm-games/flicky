@@ -26,9 +26,10 @@ class AutoUpdateWorker(
 
             val candidates = apps.filter { app ->
                 val cur = installedVc[app.packageName] ?: return@filter false
-                if (app.versionCode.toLong() <= cur) return@filter false
+                val latestCompat = AppGraph.db.appDao().maxCompatibleVersionCode(app.packageName)?.toLong() ?: 0L
+                if (latestCompat <= cur) return@filter false
                 val pref = UpdatesPreferences[app.packageName]
-                !pref.ignoreUpdates && !(pref.ignoreVersionCode > 0 && app.versionCode.toLong() <= pref.ignoreVersionCode)
+                !pref.ignoreUpdates && !(pref.ignoreVersionCode > 0 && latestCompat <= pref.ignoreVersionCode)
             }
 
             for (app in candidates) {

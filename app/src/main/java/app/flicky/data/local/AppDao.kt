@@ -63,6 +63,9 @@ interface AppDao {
     @Query("DELETE FROM app_variants WHERE repositoryUrl = :repoUrl")
     suspend fun deleteVariantsByRepositoryUrl(repoUrl: String)
 
+    @Query("SELECT MAX(versionCode) FROM app_variants WHERE packageName = :pkg AND isCompatible = 1")
+    suspend fun maxCompatibleVersionCode(pkg: String): Int?
+
     @Query("""
 SELECT * FROM apps
 WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')

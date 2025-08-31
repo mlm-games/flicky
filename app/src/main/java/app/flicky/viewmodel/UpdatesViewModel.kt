@@ -2,6 +2,7 @@ package app.flicky.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.flicky.AppGraph
 import app.flicky.data.external.UpdatesPreference
 import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.model.FDroidApp
@@ -53,15 +54,23 @@ class UpdatesViewModel(
                     val codeMap = installedDetails.associate { it.packageName to it.versionCode }
                     val nameMap = installedDetails.associate { it.packageName to (it.versionName ?: "") }
 
+                    val latestCompatByPkg = withContext(Dispatchers.IO) {
+                        installed.associate { a ->
+                            a.packageName to (AppGraph.db.appDao().maxCompatibleVersionCode(a.packageName)?.toLong() ?: a.versionCode.toLong())
+                        }
+                    }
+
                     val (updates, suppressed) = installed.partition { app ->
                         val cur = installedMap[app.packageName]?.versionCode ?: 0L
+                        val latestCompat = latestCompatByPkg[app.packageName] ?: app.versionCode.toLong()
+                        val candidate = latestCompat > cur
                         val pref = ignoreMap[app.packageName] ?: UpdatesPreference()
-                        val candidate = app.versionCode.toLong() > cur
-                        candidate && !(pref.ignoreUpdates || (pref.ignoreVersionCode > 0 && app.versionCode.toLong() <= pref.ignoreVersionCode))
+                        candidate && !(pref.ignoreUpdates || (pref.ignoreVersionCode > 0 && latestCompat <= pref.ignoreVersionCode))
                     }.let { (u, notU) ->
                         val suppressedList = notU.filter { app ->
                             val cur = installedMap[app.packageName]?.versionCode ?: 0L
-                            app.versionCode.toLong() > cur
+                            val latestCompat = latestCompatByPkg[app.packageName] ?: app.versionCode.toLong()
+                            latestCompat > cur
                         }
                         u to suppressedList
                     }

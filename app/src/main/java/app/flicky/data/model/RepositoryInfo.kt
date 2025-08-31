@@ -12,7 +12,7 @@ data class RepositoryInfo(
 ) {
     companion object {
         fun defaults() = listOf(
-            RepositoryInfo("F-Droid", "https://f-droid.org/repo", true, "",true),
+            RepositoryInfo("F-Droid", "https://f-droid.org/repo", true),
             RepositoryInfo("IzzyOnDroid", "https://apt.izzysoft.de/fdroid/repo", true),
             RepositoryInfo("F-Droid Archive", "https://f-droid.org/archive", false),
             RepositoryInfo("microG", "https://microg.org/fdroid/repo", false),
