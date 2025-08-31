@@ -192,24 +192,60 @@ class Installer(
     }
 
     private suspend fun resolveUrls(repoBase: String, apkPathOrUrl: String): List<String> {
+        // Absolute URLs: try repo base or any known mirror,
         if (apkPathOrUrl.startsWith("http://") || apkPathOrUrl.startsWith("https://")) {
-            return listOf(apkPathOrUrl.trim())
+            val abs = normalize(apkPathOrUrl)
+            val policy = mirrorPolicies.policyFor(repoBase)
+            val basesRaw = MirrorRegistry.candidates(
+                base = repoBase,
+                includeOnion = policy.includeOnion,
+                strategy = if (policy.rotateMirrors) policy.strategy else Strategy.StickyLastGood
+            )
+
+            // downloadBase & mirror candidates
+            val (dlBase, trustMode) = resolveDownloadBaseAndTrust(repoBase)
+            val allBasesToMatch = (listOf(normalize(dlBase)) + basesRaw).distinct()
+
+            val matchedBase = allBasesToMatch.firstOrNull { base ->
+                val prefix = if (abs.startsWith("$base/")) "$base/" else base
+                abs.startsWith(prefix)
+            }
+
+            if (matchedBase != null) {
+                val prefix = if (abs.startsWith("$matchedBase/")) "$matchedBase/" else matchedBase
+                val relPath = abs.removePrefix(prefix).trimStart('/')
+                val filteredBases = when {
+                    trustMode.equals("HttpsOnly", true) ||
+                            trustMode.equals("Pinned", true) ||
+                            trustMode.equals("CustomCA", true) -> (listOf(normalize(dlBase)) + basesRaw)
+                        .distinct()
+                        .filter { it.startsWith("https://") || it.contains(".onion") }
+                    else -> (listOf(normalize(dlBase)) + basesRaw).distinct()
+                }
+                return filteredBases.map { b -> "${normalize(b)}/$relPath" }
+            }
+
+            return listOf(abs)
         }
+
+        // relative path
         val policy = mirrorPolicies.policyFor(repoBase)
         val basesRaw = MirrorRegistry.candidates(
             base = repoBase,
             includeOnion = policy.includeOnion,
             strategy = if (policy.rotateMirrors) policy.strategy else Strategy.StickyLastGood
         )
-        val (_, trustMode) = resolveDownloadBaseAndTrust(repoBase)
-        val bases = when {
+        val (dlBase, trustMode) = resolveDownloadBaseAndTrust(repoBase)
+        val filteredBases = when {
             trustMode.equals("HttpsOnly", true) ||
                     trustMode.equals("Pinned", true) ||
-                    trustMode.equals("CustomCA", true) -> basesRaw.filter { it.startsWith("https://") || it.contains(".onion") }
-            else -> basesRaw
+                    trustMode.equals("CustomCA", true) -> (listOf(normalize(dlBase)) + basesRaw)
+                .distinct()
+                .filter { it.startsWith("https://") || it.contains(".onion") }
+            else -> (listOf(normalize(dlBase)) + basesRaw).distinct()
         }
         val path = apkPathOrUrl.trimStart('/')
-        return bases.map { b -> "${normalize(b)}/$path" }
+        return filteredBases.map { b -> "${normalize(b)}/$path" }
     }
 
     private suspend fun resolveBase(repo: String): String {
@@ -379,7 +415,11 @@ class Installer(
                     // Server ignored Range. Restart from scratch.
                     if (dest.exists()) dest.delete()
                 }
-                val body = resp.body //?: return false
+                if (!(resp.isSuccessful || isPartial)) {
+                    DebugLog.log("Downloader", "HTTP ${resp.code} for $url")
+                    return false
+                }
+                val body = resp.body
                 val totalFromServer = body.contentLength().takeIf { it > 0 } ?: -1L
                 val totalTarget = if (totalFromServer > 0 && isPartial) already + totalFromServer else (if (totalFromServer > 0) totalFromServer else expectedSize)
 
