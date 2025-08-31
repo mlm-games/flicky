@@ -44,11 +44,17 @@ class AppDetailViewModel(
         viewModelScope.launch {
             installer.tasks.collect { map ->
                 when (val stage = map[packageName]) {
-                    is TaskStage.Downloading -> _ui.update { it.copy(isInstalling = true, progress = 0.5f * stage.progress, error = null) }
-                    is TaskStage.Verifying -> _ui.update { it.copy(isInstalling = true, progress = 0.9f, error = null) }
-                    is TaskStage.Installing -> _ui.update { it.copy(isInstalling = true, progress = 0.5f + 0.5f * stage.progress, error = null) }
+                    is TaskStage.Downloading -> _ui.update {
+                        it.copy(isInstalling = true, progress = (0.99f * stage.progress).coerceIn(0f, 0.99f), error = null)
+                    }
+                    is TaskStage.Verifying -> _ui.update {
+                        it.copy(isInstalling = true, progress = 0.995f, error = null)
+                    }
+                    is TaskStage.Installing -> _ui.update {
+                        it.copy(isInstalling = true, progress = (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f), error = null)
+                    }
                     is TaskStage.Finished -> {
-                        _ui.update { it.copy(isInstalling = false, progress = if (stage.success) 1f else 0f, error = if (stage.success) null else "Installation failed") }
+                        _ui.update { it.copy(isInstalling = false, progress = if (stage.success) 1f else it.progress, error = if (stage.success) null else "Installation failed") }
                         val newInstalled = installedRepo.getVersionCode(packageName)
                         _ui.update { it.copy(installedVersionCode = newInstalled) }
                     }

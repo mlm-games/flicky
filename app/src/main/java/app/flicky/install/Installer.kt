@@ -118,7 +118,7 @@ class Installer(
         emitStage(req.packageName, TaskStage.Downloading(0f))
         val file = download(req) { p ->
             emitStage(req.packageName, TaskStage.Downloading(p))
-            onProgress(0.5f * p)
+            onProgress((0.99f * p).coerceIn(0f, 0.99f))
         } ?: run {
             emitStage(req.packageName, TaskStage.Finished(false))
             if (showDebug) DebugLog.log("Installer", "Download failed for ${req.packageName}")
@@ -126,6 +126,7 @@ class Installer(
         }
 
         emitStage(req.packageName, TaskStage.Verifying)
+        onProgress(0.995f)
         if (req.sha256.isNotBlank() && !verifySha256File(file, req.sha256)) {
             if (showDebug) DebugLog.log("Installer", "SHA256 mismatch for ${req.packageName}")
             file.delete()
@@ -135,7 +136,7 @@ class Installer(
 
         val installProgress: (Float) -> Unit = { p ->
             emitStage(req.packageName, TaskStage.Installing(p))
-            onProgress(0.5f + 0.5f * p)
+            onProgress((0.99f + 0.01f * p).coerceIn(0.99f, 1f))
         }
         val ok = when (mode) {
             0 -> { emitStage(req.packageName, TaskStage.Installing(0f)); installSystem(file) }
@@ -147,6 +148,7 @@ class Installer(
 
         emitStage(req.packageName, TaskStage.Finished(ok))
         if (showDebug) DebugLog.log("Installer", "Install ${if (ok) "succeeded" else "failed"} for ${req.packageName}")
+        if (ok) onProgress(1f)
 
         if (!settings.settingsFlow.first().keepCache && !existedBefore) {
             scheduleCleanup(file)
@@ -174,7 +176,7 @@ class Installer(
         return ResolvedApk(app.packageName, title, urls, app.sha256, app.size, dlBase, trustMode)
     }
 
-    private suspend fun resolve(variant: app.flicky.data.local.AppVariant): ResolvedApk? {
+    private suspend fun resolve(variant: AppVariant): ResolvedApk? {
         val title = "${variant.packageName} ${variant.versionName}"
         val base = resolveBase(variant.repositoryUrl)
         val (dlBase, trustMode) = resolveDownloadBaseAndTrust(base)
@@ -377,7 +379,7 @@ class Installer(
                     // Server ignored Range. Restart from scratch.
                     if (dest.exists()) dest.delete()
                 }
-                val body = resp.body ?: return false
+                val body = resp.body //?: return false
                 val totalFromServer = body.contentLength().takeIf { it > 0 } ?: -1L
                 val totalTarget = if (totalFromServer > 0 && isPartial) already + totalFromServer else (if (totalFromServer > 0) totalFromServer else expectedSize)
 

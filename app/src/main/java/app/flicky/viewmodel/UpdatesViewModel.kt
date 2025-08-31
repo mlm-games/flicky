@@ -85,22 +85,27 @@ class UpdatesViewModel(
                     when (stage) {
                         is TaskStage.Downloading -> {
                             installing.add(pkg)
-                            progress[pkg] = 0.5f * stage.progress
+                            progress[pkg] = (0.99f * stage.progress).coerceIn(0f, 0.99f)
                         }
+
                         is TaskStage.Verifying -> {
                             installing.add(pkg)
-                            progress[pkg] = 0.9f
+                            progress[pkg] = 0.995f
                         }
+
                         is TaskStage.Installing -> {
                             installing.add(pkg)
-                            progress[pkg] = 0.5f + 0.5f * stage.progress
+                            progress[pkg] = (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f)
                         }
+
                         is TaskStage.Finished -> {
                             if (!stage.success) {
-                                // keep it out of installing set
                                 progress.remove(pkg)
+                            } else {
+                                progress[pkg] = 1f
                             }
                         }
+
                         else -> {}
                     }
                 }
