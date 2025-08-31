@@ -42,26 +42,23 @@ class SettingsRepository(
         // Appearance
         val THEME_MODE = intPreferencesKey("theme_mode")
         val DYNAMIC_THEME = booleanPreferencesKey("dynamic_theme")
-        val COMPACT_MODE = booleanPreferencesKey("compact_mode")
         val SHOW_APP_ICONS = booleanPreferencesKey("show_app_icons")
 
         // General
         val DEFAULT_SORT = intPreferencesKey("default_sort")
-        val APPS_PER_ROW = intPreferencesKey("apps_per_row")
 
         // Downloads and updates
         val AUTO_UPDATE = booleanPreferencesKey("auto_update")
         val WIFI_ONLY = booleanPreferencesKey("wifi_only")
         val SYNC_INTERVAL = intPreferencesKey("sync_interval_idx")
-        val NOTIFY_UPDATES = booleanPreferencesKey("notify_updates")
+//        val NOTIFY_UPDATES = booleanPreferencesKey("notify_updates")
         val KEEP_CACHE = booleanPreferencesKey("keep_cache")
         val INSTALLER_MODE = intPreferencesKey("installer_mode")
 
         // Filters
         val HIDE_ANTI = booleanPreferencesKey("hide_anti_features")
         val SHOW_INCOMPATIBLE = booleanPreferencesKey("show_incompatible")
-        val UNSTABLE_UPDATES = booleanPreferencesKey("unstable_updates")
-        val IGNORE_SIGNATURE = booleanPreferencesKey("ignore_signature")
+//        val UNSTABLE_UPDATES = booleanPreferencesKey("unstable_updates")
 
         // Sync behavior
         val DIFFERENTIAL_SYNC = booleanPreferencesKey("differential_sync")
@@ -86,26 +83,22 @@ class SettingsRepository(
         // Appearance
         "themeMode" to SettingDefinition.IntSetting("themeMode", THEME_MODE) { it.themeMode },
         "dynamicTheme" to SettingDefinition.BooleanSetting("dynamicTheme", DYNAMIC_THEME) { it.dynamicTheme },
-        "compactMode" to SettingDefinition.BooleanSetting("compactMode", COMPACT_MODE) { it.compactMode },
         "showAppIcons" to SettingDefinition.BooleanSetting("showAppIcons", SHOW_APP_ICONS) { it.showAppIcons },
 
         // General
         "defaultSort" to SettingDefinition.IntSetting("defaultSort", DEFAULT_SORT) { it.defaultSort },
-        "appsPerRow" to SettingDefinition.IntSetting("appsPerRow", APPS_PER_ROW) { it.appsPerRow },
 
         // Downloads and updates
         "autoUpdate" to SettingDefinition.BooleanSetting("autoUpdate", AUTO_UPDATE) { it.autoUpdate },
         "wifiOnly" to SettingDefinition.BooleanSetting("wifiOnly", WIFI_ONLY) { it.wifiOnly },
         "syncIntervalIndex" to SettingDefinition.IntSetting("syncIntervalIndex", SYNC_INTERVAL) { it.syncIntervalIndex },
-        "notifyUpdates" to SettingDefinition.BooleanSetting("notifyUpdates", NOTIFY_UPDATES) { it.notifyUpdates },
         "keepCache" to SettingDefinition.BooleanSetting("keepCache", KEEP_CACHE) { it.keepCache },
         "installerMode" to SettingDefinition.IntSetting("installerMode", INSTALLER_MODE) { it.installerMode },
 
         // Filters
         "hideAntiFeatures" to SettingDefinition.BooleanSetting("hideAntiFeatures", HIDE_ANTI) { it.hideAntiFeatures },
         "showIncompatible" to SettingDefinition.BooleanSetting("showIncompatible", SHOW_INCOMPATIBLE) { it.showIncompatible },
-        "unstableUpdates" to SettingDefinition.BooleanSetting("unstableUpdates", UNSTABLE_UPDATES) { it.unstableUpdates },
-        "ignoreSignature" to SettingDefinition.BooleanSetting("ignoreSignature", IGNORE_SIGNATURE) { it.ignoreSignature },
+//        "unstableUpdates" to SettingDefinition.BooleanSetting("unstableUpdates", UNSTABLE_UPDATES) { it.unstableUpdates },
 
         // Sync behavior
         "differentialSync" to SettingDefinition.BooleanSetting("differentialSync", DIFFERENTIAL_SYNC) { it.differentialSync },
@@ -127,24 +120,21 @@ class SettingsRepository(
     val settingsFlow: Flow<AppSettings> = context.ds.data.map { p ->
         AppSettings(
             defaultSort = p[DEFAULT_SORT] ?: 1,
-            appsPerRow = p[APPS_PER_ROW] ?: 4,
 
             themeMode = p[THEME_MODE] ?: 2,
             dynamicTheme = p[DYNAMIC_THEME] ?: false,
-            compactMode = p[COMPACT_MODE] ?: false,
             showAppIcons = p[SHOW_APP_ICONS] ?: true,
 
             autoUpdate = p[AUTO_UPDATE] ?: false,
             wifiOnly = p[WIFI_ONLY] ?: true,
             syncIntervalIndex = p[SYNC_INTERVAL] ?: 1,
-            notifyUpdates = p[NOTIFY_UPDATES] ?: true,
+//            notifyUpdates = p[NOTIFY_UPDATES] ?: true,
             keepCache = p[KEEP_CACHE] ?: false,
             installerMode = p[INSTALLER_MODE] ?: 0,
 
             hideAntiFeatures = p[HIDE_ANTI] ?: false,
             showIncompatible = p[SHOW_INCOMPATIBLE] ?: false,
-            unstableUpdates = p[UNSTABLE_UPDATES] ?: false,
-            ignoreSignature = p[IGNORE_SIGNATURE] ?: false,
+//            unstableUpdates = p[UNSTABLE_UPDATES] ?: false,
 
             differentialSync = p[DIFFERENTIAL_SYNC] ?: true,
             useEntryJson = p[USE_ENTRY_JSON] ?: false,

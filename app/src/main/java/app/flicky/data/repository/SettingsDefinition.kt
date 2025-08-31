@@ -34,7 +34,7 @@ data class AppSettings(
     )
     val defaultSort: Int = 1,
 
-    val appsPerRow: Int = 4,
+//    val appsPerRow: Int = 4,
 
     @Setting(
         title = "Theme",
@@ -52,10 +52,20 @@ data class AppSettings(
     )
     val dynamicTheme: Boolean = false,
 
-    val compactMode: Boolean = false,
+//    val compactMode: Boolean = false,
 
+    @Setting(
+        title = "Show app icons",
+        category = SettingCategory.APPEARANCE,
+        type = SettingType.TOGGLE
+    )
     val showAppIcons: Boolean = true,
 
+    @Setting(
+        title = "Auto-update apps (not trustworthy)",
+        category = SettingCategory.DOWNLOADS,
+        type = SettingType.TOGGLE
+    )
     val autoUpdate: Boolean = false,
 
     @Setting(
@@ -75,7 +85,7 @@ data class AppSettings(
     )
     val syncIntervalIndex: Int = 1,
 
-    val notifyUpdates: Boolean = true,
+//    val notifyUpdates: Boolean = true,
 
     @Setting(
         title = "Keep download cache",
@@ -108,9 +118,9 @@ data class AppSettings(
     )
     val showIncompatible: Boolean = false,
 
-    val unstableUpdates: Boolean = false,
+//    val unstableUpdates: Boolean = false,
 
-    val ignoreSignature: Boolean = false,
+//    val ignoreSignature: Boolean = false,
 
     @Setting(
         title = "Differential sync (HTTP)",
@@ -132,6 +142,12 @@ data class AppSettings(
 
     val proxyType: Int = 0,
 
+    @Setting(
+        title = "Clear cache",
+        description = "Delete repo headers and reset last sync",
+        category = SettingCategory.SYSTEM,
+        type = SettingType.BUTTON
+    )
     val clearCache: Boolean = false,
 
     val exportSettings: Boolean = false,
