@@ -194,11 +194,18 @@ class Installer(
             return listOf(apkPathOrUrl.trim())
         }
         val policy = mirrorPolicies.policyFor(repoBase)
-        val bases = MirrorRegistry.candidates(
+        val basesRaw = MirrorRegistry.candidates(
             base = repoBase,
             includeOnion = policy.includeOnion,
             strategy = if (policy.rotateMirrors) policy.strategy else Strategy.StickyLastGood
         )
+        val (_, trustMode) = resolveDownloadBaseAndTrust(repoBase)
+        val bases = when {
+            trustMode.equals("HttpsOnly", true) ||
+                    trustMode.equals("Pinned", true) ||
+                    trustMode.equals("CustomCA", true) -> basesRaw.filter { it.startsWith("https://") || it.contains(".onion") }
+            else -> basesRaw
+        }
         val path = apkPathOrUrl.trimStart('/')
         return bases.map { b -> "${normalize(b)}/$path" }
     }
@@ -248,6 +255,7 @@ class Installer(
         val out = cacheFileFor(req)
         if (out.exists()) return@withContext out
 
+        val failOnTrustErrors = runCatching { settings.settingsFlow.first().failOnTrustErrors }.getOrDefault(false)
         val preferred = preflightPickUrl(req.repoBase, req.urls)
         val tryUrls = if (preferred != null) listOf(preferred) + req.urls.filterNot { it == preferred } else req.urls
         val userAgent = "Flicky/${app.flicky.BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})"
@@ -255,11 +263,16 @@ class Installer(
         val trustRequiresCustomClient = req.trustMode.equals("Pinned", true) || req.trustMode.equals("CustomCA", true)
 
         for (url in tryUrls) {
-            // If strict trust (Pinned/CustomCA), go straight to streaming with the right client
             if (trustRequiresCustomClient) {
-                DebugLog.log("Downloader", "Pinned/CustomCA: streaming directly for $url")
+                val client = try { httpClients.clientFor(req.repoBase) } catch (e: Exception) {
+                    DebugLog.log("Downloader", "TLS client failed: ${e.message}")
+                    if (failOnTrustErrors) return@withContext null
+                    // permissive fallback only if setting is OFF
+                    defaultStreamingClient()
+                }
+                DebugLog.log("Downloader", "Pinned/CustomCA: streaming for $url (strict=${failOnTrustErrors})")
                 val ok = streamWithOkHttp(
-                    client = runCatching { httpClients.clientFor(req.repoBase) }.getOrElse { defaultStreamingClient() },
+                    client = client,
                     url = url, dest = out, userAgent = userAgent, referer = req.repoBase,
                     expectedSize = req.size, onProgress = onProgress
                 )
@@ -271,6 +284,7 @@ class Installer(
                     continue
                 }
             }
+
 
             // Otherwise: try DownloadManager first
             val request = DownloadManager.Request(url.toUri())
@@ -312,20 +326,29 @@ class Installer(
 
             // Fallback: direct streaming
             DebugLog.log("Downloader", "Fallback to streaming for $url")
-            val ok = streamWithOkHttp(
-                client = runCatching { httpClients.clientFor(req.repoBase) }.getOrElse { defaultStreamingClient() },
-                url = url, dest = out, userAgent = userAgent, referer = req.repoBase,
-                expectedSize = req.size, onProgress = onProgress
-            )
-            if (ok && out.exists()) {
-                MirrorRegistry.markHealthy(req.repoBase, url)
-                return@withContext out
-            } else {
-                runCatching { if (out.exists()) out.delete() }
+            val client = try { httpClients.clientFor(req.repoBase) } catch (e: Exception) {
+                if (failOnTrustErrors) {
+                    DebugLog.log("Downloader", "TLS client failed (strict): ${e.message}")
+                    null
+                } else defaultStreamingClient()
+            }
+            if (client != null) {
+                val ok = streamWithOkHttp(
+                    client = client,
+                    url = url, dest = out, userAgent = userAgent, referer = req.repoBase,
+                    expectedSize = req.size, onProgress = onProgress
+                )
+                if (ok && out.exists()) {
+                    MirrorRegistry.markHealthy(req.repoBase, url)
+                    return@withContext out
+                } else {
+                    runCatching { if (out.exists()) out.delete() }
+                }
             }
         }
         null
     }
+
 
     // Direct streaming with resume + progress updates
     private fun streamWithOkHttp(
@@ -346,21 +369,24 @@ class Installer(
                 .header("Accept-Encoding", "gzip, deflate")
                 .header("Referer", referer)
             if (already > 0) reqBuilder.header("Range", "bytes=$already-")
+
             client.newCall(reqBuilder.build()).execute().use { resp ->
-                if (!(resp.isSuccessful || resp.code == 206)) {
-                    DebugLog.log("Downloader", "Direct stream HTTP ${resp.code} for $url")
-                    return false
+                val isResume = already > 0
+                val isPartial = resp.code == 206
+                if (isResume && !isPartial) {
+                    // Server ignored Range. Restart from scratch.
+                    if (dest.exists()) dest.delete()
                 }
                 val body = resp.body ?: return false
                 val totalFromServer = body.contentLength().takeIf { it > 0 } ?: -1L
-                val totalTarget = if (totalFromServer > 0 && already > 0) already + totalFromServer else (if (totalFromServer > 0) totalFromServer else expectedSize)
+                val totalTarget = if (totalFromServer > 0 && isPartial) already + totalFromServer else (if (totalFromServer > 0) totalFromServer else expectedSize)
 
                 dest.parentFile?.mkdirs()
-                val fos = FileOutputStream(dest, already > 0)
-                body.byteStream().use { ins ->
-                    fos.use { os ->
+                val append = isResume && isPartial
+                FileOutputStream(dest, append).use { os ->
+                    body.byteStream().use { ins ->
                         val buf = ByteArray(STREAM_BUF)
-                        var written = already
+                        var written = if (append) already else 0L
                         var r = ins.read(buf)
                         var last = System.nanoTime()
                         while (r != -1) {

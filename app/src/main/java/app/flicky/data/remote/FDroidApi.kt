@@ -14,6 +14,7 @@ import app.flicky.data.repository.RepoHeadersStore
 import app.flicky.AppGraph
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -69,7 +70,15 @@ class FDroidApi(
     ): FetchResult? = withContext(Dispatchers.IO) {
         val baseUrl = repo.url.trimEnd('/')
 
-        fun client(): OkHttpClient = runCatching { clientProvider.clientFor(baseUrl) }.getOrElse { defaultClient }
+        fun client(): OkHttpClient {
+            return try {
+                clientProvider.clientFor(baseUrl)
+            } catch (e: Exception) {
+//                val failOnTrust = false
+//                if (failOnTrust) throw e
+                defaultClient
+            }
+        }
 
         fun baseRequest(url: String, method: String): Request.Builder {
             val b = Request.Builder()

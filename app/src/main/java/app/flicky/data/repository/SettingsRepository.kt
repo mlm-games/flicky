@@ -69,17 +69,13 @@ class SettingsRepository(
         val PROXY_HOST = stringPreferencesKey("proxy_host")
         val PROXY_PORT = intPreferencesKey("proxy_port")
 
-        // Metadata
+        // Others
         val LAST_SYNC = longPreferencesKey("last_sync")
-
-        // Repo headers cache for differential sync
         val REPO_HEADERS = stringPreferencesKey("repo_headers_json")
-
-        // Preference for variant source
         val PREFERRED_REPO = intPreferencesKey("preferred_repo")
-
-        // Debug
         val SHOW_DEBUG_INFO = booleanPreferencesKey("show_debug_info")
+        val FAIL_ON_TRUST_ERRORS = booleanPreferencesKey("fail_on_trust_errors")
+
     }
 
     private val definitions: Map<String, SettingDefinition<*>> = mapOf(
@@ -117,10 +113,10 @@ class SettingsRepository(
         "proxyHost" to SettingDefinition.StringSetting("proxyHost", PROXY_HOST) { it.proxyHost },
         "proxyPort" to SettingDefinition.IntSetting("proxyPort", PROXY_PORT) { it.proxyPort },
 
-        // Metadata / misc
+        // Misc
         "lastSync" to SettingDefinition.LongSetting("lastSync", LAST_SYNC) { it.lastSync },
         "preferredRepo" to SettingDefinition.IntSetting("preferredRepo", PREFERRED_REPO) { it.preferredRepo },
-
+        "failOnTrustErrors" to SettingDefinition.BooleanSetting("failOnTrustErrors", FAIL_ON_TRUST_ERRORS) { it.failOnTrustErrors },
         "showDebugInfo" to SettingDefinition.BooleanSetting("showDebugInfo", SHOW_DEBUG_INFO) { it.showDebugInfo },
     )
 
@@ -158,10 +154,11 @@ class SettingsRepository(
             preferredRepo = p[PREFERRED_REPO] ?: 0,
 
             showDebugInfo = p[SHOW_DEBUG_INFO] ?: false,
+            failOnTrustErrors = p[FAIL_ON_TRUST_ERRORS] ?: false,
 
             lastSync = p[LAST_SYNC] ?: 0L,
             proxyHost = p[PROXY_HOST] ?: "",
-            proxyPort = p[PROXY_PORT] ?: 9050
+            proxyPort = p[PROXY_PORT] ?: 9050,
         )
     }.distinctUntilChanged()
 

@@ -148,12 +148,20 @@ data class AppSettings(
     val preferredRepo: Int = 0,
 
     @Setting(
-        title = "Show debug info",
+        title = "Show debug info", // TODO: in UI like repo sync fail bars
         description = "Show repo and install events (for troubleshooting)",
         category = SettingCategory.SYSTEM,
         type = SettingType.TOGGLE
     )
     val showDebugInfo: Boolean = false,
+
+    @Setting(
+        title = "Fail on trust errors",
+        description = "If enabled, Pinned/CustomCA/HttpsOnly trust errors fail without fallback.",
+        category = SettingCategory.SYSTEM,
+        type = SettingType.TOGGLE
+    )
+    val failOnTrustErrors: Boolean = false,
 
     // Non-UI / repo related
     val lastSync: Long = 0L,

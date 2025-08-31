@@ -17,6 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.paging.compose.collectAsLazyPagingItems
 import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.model.SortOption
+import app.flicky.data.repository.AppSettings
 import app.flicky.helper.DeviceUtils
 import app.flicky.helper.viewModelFactory
 import app.flicky.navigation.FlickyNavHost
@@ -35,6 +36,7 @@ import app.flicky.viewmodel.SettingsViewModel
 import app.flicky.work.SyncScheduler
 import coil.Coil
 import coil.ImageLoader
+import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
 
@@ -52,10 +54,12 @@ class MainActivity : ComponentActivity() {
         viewModelFactory { SettingsViewModel(AppGraph.settings) }
     }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppGraph.init(applicationContext)
         UpdatesPreferences.init(applicationContext)
+
 
         runCatching {
             val callFactory = CoilCallFactory(AppGraph.httpClients)

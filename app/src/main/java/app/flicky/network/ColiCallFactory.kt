@@ -11,7 +11,8 @@ import java.util.concurrent.ConcurrentHashMap
  * so Coil image requests (icons/screenshots) reuse repo trust/proxy settings.
  */
 class CoilCallFactory(
-    private val clients: HttpClientProvider
+    private val clients: HttpClientProvider,
+    private val failOnTrustErrors: Boolean = false
 ) : Call.Factory {
 
     private val cache = ConcurrentHashMap<String, OkHttpClient>()
@@ -20,8 +21,11 @@ class CoilCallFactory(
         val url = request.url
         val hostBase = "${url.scheme}://${url.host}"
         val client = cache.getOrPut(hostBase) {
-            runCatching { clients.clientFor(hostBase) }.getOrElse {
-                // fallback, build a vanilla OkHttpClient
+            try {
+                clients.clientFor(hostBase)
+            } catch (e: Exception) {
+                if (failOnTrustErrors) throw e
+                // permissive fallback
                 OkHttpClient.Builder()
                     .retryOnConnectionFailure(true)
                     .build()
