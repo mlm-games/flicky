@@ -142,4 +142,7 @@
     <string name="mirror_strategy">Mirror Strategy</string>
     <string name="trust">Trust</string>
     <string name="trust_mode">Trust Mode</string>
+    <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="permissions">App Info</string>
+    <string name="app_not_installed">App not installed</string>
 </resources>

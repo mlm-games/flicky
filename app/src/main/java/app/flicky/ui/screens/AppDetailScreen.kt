@@ -1,13 +1,54 @@
 package app.flicky.ui.screens
 
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.ElevatedAssistChip
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -18,12 +59,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.net.toUri
 import app.flicky.R
 import app.flicky.data.model.FDroidApp
 import app.flicky.helper.openUrl
 import app.flicky.helper.shareText
 import app.flicky.install.TaskStage
 import app.flicky.ui.components.SmartExpandableText
+import app.flicky.viewmodel.SettingsViewModel
+import app.flicky.viewmodel.SettingsViewModel.UiEvent
 import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -119,7 +163,7 @@ private fun DesktopLayout(
                 item {
                     AppHeader(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onUninstall, error, 96.dp)
                 }
-                item { ChipsSection(app) }
+                item { ChipsSection(app, installedVersionCode) }
                 item { DetailsSection(app) }
                 if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
                 if (app.website.isNotBlank() || app.sourceCode.isNotBlank()) item { LinksSection(app) }
@@ -174,7 +218,7 @@ private fun MobileLayout(
                 )
             }
         }
-        item { ChipsSection(app) }
+        item { ChipsSection(app, installedVersionCode) }
         item { RightPaneContent(app) }
     }
 }
@@ -275,9 +319,13 @@ private fun AppHeader(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ChipsSection(app: FDroidApp) {
-    val context = LocalContext.current
+private fun ChipsSection(
+    app: FDroidApp,
+    installedVersionCode: Long?
+) {
+    val ctx = LocalContext.current
     Column {
         SectionTitle(stringResource(R.string.info))
         FlowRow(
@@ -287,14 +335,35 @@ private fun ChipsSection(app: FDroidApp) {
         ) {
             ElevatedAssistChip(onClick = {}, label = { Text(stringResource(R.string.version_prefix, app.version)) })
             ElevatedAssistChip(onClick = {}, label = { Text(formatBytes(app.size)) })
+
             if (app.license.isNotBlank()) {
                 AssistChip(
-                    onClick = { openUrl(context, resolveLicenseLink(app.license)) },
+                    onClick = { openUrl(ctx, resolveLicenseLink(app.license)) },
                     label = { Text(app.license) }
                 )
             }
-            AssistChip(onClick = {}, label = { Text(app.repository) })
-            if (app.category.isNotBlank()) AssistChip(onClick = {}, label = { Text(app.category) })
+
+            AssistChip(onClick = { /* navigate/filter by repo later */ }, label = { Text(app.repository) })
+            if (app.category.isNotBlank()) {
+                AssistChip(onClick = { /* navigate/filter by category later */ }, label = { Text(app.category) })
+            }
+
+            AssistChip(
+                onClick = { openUrl(ctx, exodusReportUrl(app.packageName)) },
+                label = { Text(stringResource(R.string.exodus_privacy)) }
+            )
+
+            AssistChip(
+                onClick = {
+                    if (installedVersionCode != null) {
+                        openAppSettings(ctx, app.packageName)
+                    } else {
+//                        openUrl(ctx, exodusReportUrl(app.packageName))
+                        Toast.makeText(ctx, R.string.app_not_installed, Toast.LENGTH_SHORT).show()
+                    }
+                },
+                label = { Text(stringResource(R.string.permissions)) }
+            )
         }
     }
 }
@@ -445,4 +514,15 @@ private fun resolveLicenseLink(raw: String): String {
     return if (looksSpdx) spdxUrl
     else "https://www.duckduckgo.com/search?q=" +
             java.net.URLEncoder.encode("$id license", "UTF-8")
+}
+
+private fun exodusReportUrl(packageName: String) =
+    "https://reports.exodus-privacy.eu.org/en/reports/$packageName/latest/"
+
+private fun openAppSettings(context: Context, packageName: String) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = "package:$packageName".toUri()
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    context.startActivity(intent)
 }
