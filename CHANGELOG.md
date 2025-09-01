@@ -1,3 +1,8 @@
+## v3.2.3
+
+- Fix install progress not being reflected
+
+
 ## v3.2.2
 
 
