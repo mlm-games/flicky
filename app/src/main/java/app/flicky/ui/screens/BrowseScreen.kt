@@ -373,14 +373,13 @@ private fun TvAwareDockedSearchBar(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
     )
-    // suggestions/history later?
     DockedSearchBar(
         inputField = {
             SearchBarDefaults.InputField(
                 query = localQuery,
                 onQueryChange = { new ->
                     localQuery = new
-                    if (!isTv) onImmediateChange(new)
+                    onImmediateChange(new)
                 },
                 onSearch = {
                     onCommit(localQuery)
@@ -394,14 +393,14 @@ private fun TvAwareDockedSearchBar(
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
                     if (localQuery.isNotEmpty()) {
-                        IconButton(onClick = { localQuery = ""; onCommit("") }) {
+                        IconButton(onClick = { localQuery = ""; onImmediateChange("") }) {
                             Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.action_clear))
                         }
                     }
                     else {
                         VoiceSearchButton {
                             localQuery = it
-                            onCommit(it)
+                            onImmediateChange(it)
                         }
                     }
                 },
