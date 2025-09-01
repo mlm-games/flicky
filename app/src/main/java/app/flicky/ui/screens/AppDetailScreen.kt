@@ -275,9 +275,9 @@ private fun AppHeader(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ChipsSection(app: FDroidApp) {
+    val context = LocalContext.current
     Column {
         SectionTitle(stringResource(R.string.info))
         FlowRow(
@@ -287,7 +287,12 @@ private fun ChipsSection(app: FDroidApp) {
         ) {
             ElevatedAssistChip(onClick = {}, label = { Text(stringResource(R.string.version_prefix, app.version)) })
             ElevatedAssistChip(onClick = {}, label = { Text(formatBytes(app.size)) })
-            if (app.license.isNotBlank()) AssistChip(onClick = {}, label = { Text(app.license) })
+            if (app.license.isNotBlank()) {
+                AssistChip(
+                    onClick = { openUrl(context, resolveLicenseLink(app.license)) },
+                    label = { Text(app.license) }
+                )
+            }
             AssistChip(onClick = {}, label = { Text(app.repository) })
             if (app.category.isNotBlank()) AssistChip(onClick = {}, label = { Text(app.category) })
         }
@@ -421,4 +426,23 @@ private fun formatDate(epochMillis: Long): String {
     } catch (_: Exception) {
         epochMillis.toString()
     }
+}
+
+private fun resolveLicenseLink(raw: String): String {
+    val id = raw.trim()
+
+    //  already a URL? (from fdroid index?) maybe in future
+    if (id.startsWith("http://") || id.startsWith("https://")) return id
+
+    val firstToken = id.split(" ", "OR", "AND", "/", "|", ",")
+        .map { it.trim() }
+        .firstOrNull { it.matches(Regex("^[A-Za-z0-9.+-]+$")) }
+        ?: id
+
+    val spdxUrl = "https://spdx.org/licenses/$firstToken.html"
+
+    val looksSpdx = firstToken.matches(Regex("^[A-Za-z0-9.+-]+$"))
+    return if (looksSpdx) spdxUrl
+    else "https://www.duckduckgo.com/search?q=" +
+            java.net.URLEncoder.encode("$id license", "UTF-8")
 }
