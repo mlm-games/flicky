@@ -20,7 +20,8 @@ data class DetailUiState(
     val installedVersionCode: Long? = null,
     val isInstalling: Boolean = false,
     val progress: Float = 0f,
-    val error: String? = null
+    val error: String? = null,
+    val stage: TaskStage? = null
 )
 
 class AppDetailViewModel(
@@ -45,16 +46,38 @@ class AppDetailViewModel(
             installer.tasks.collect { map ->
                 when (val stage = map[packageName]) {
                     is TaskStage.Downloading -> _ui.update {
-                        it.copy(isInstalling = true, progress = (0.99f * stage.progress).coerceIn(0f, 0.99f), error = null)
+                        it.copy(
+                            isInstalling = true,
+                            stage = stage,
+                            progress = (0.99f * stage.progress).coerceIn(0f, 0.99f),
+                            error = null
+                        )
                     }
                     is TaskStage.Verifying -> _ui.update {
-                        it.copy(isInstalling = true, progress = 0.995f, error = null)
+                        it.copy(
+                            isInstalling = true,
+                            stage = stage,
+                            progress = 0.995f,
+                            error = null
+                        )
                     }
                     is TaskStage.Installing -> _ui.update {
-                        it.copy(isInstalling = true, progress = (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f), error = null)
+                        it.copy(
+                            isInstalling = true,
+                            stage = stage,
+                            progress = (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f),
+                            error = null
+                        )
                     }
                     is TaskStage.Finished -> {
-                        _ui.update { it.copy(isInstalling = false, progress = if (stage.success) 1f else it.progress, error = if (stage.success) null else "Installation failed") }
+                        _ui.update {
+                            it.copy(
+                                isInstalling = false,
+                                stage = stage,
+                                progress = if (stage.success) 1f else it.progress,
+                                error = if (stage.success) null else "Installation failed"
+                            )
+                        }
                         val newInstalled = installedRepo.getVersionCode(packageName)
                         _ui.update { it.copy(installedVersionCode = newInstalled) }
                     }
@@ -83,7 +106,7 @@ class AppDetailViewModel(
         val app = _ui.value.app ?: return
 
         viewModelScope.launch {
-            _ui.value = _ui.value.copy(isInstalling = true, progress = 0f, error = null)
+            _ui.value = _ui.value.copy(isInstalling = true, progress = 0f, error = null, stage = TaskStage.Downloading(0f))
 
             try {
                 Log.d("AppDetailViewModel", "Starting install for ${app.packageName}")
@@ -102,9 +125,9 @@ class AppDetailViewModel(
                 }
 
                 if (success) {
-                    _ui.value = _ui.value.copy(isInstalling = false, progress = 1f)
+                    _ui.value = _ui.value.copy(isInstalling = false, progress = 1f, stage = TaskStage.Finished(true))
                 } else {
-                    _ui.value = _ui.value.copy(isInstalling = false, error = "Installation failed")
+                    _ui.value = _ui.value.copy(isInstalling = false, error = "Installation failed", stage = TaskStage.Finished(false))
                 }
 
                 delay(1000)
@@ -112,8 +135,7 @@ class AppDetailViewModel(
                 _ui.value = _ui.value.copy(installedVersionCode = newInstalled)
 
             } catch (e: Exception) {
-                Log.e("AppDetailViewModel", "Install error", e)
-                _ui.value = _ui.value.copy(isInstalling = false, error = "Install failed: ${e.message}")
+                _ui.value = _ui.value.copy(isInstalling = false, error = "Install failed: ${e.message}", stage = TaskStage.Finished(false))
             }
         }
     }

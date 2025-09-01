@@ -22,6 +22,7 @@ import app.flicky.R
 import app.flicky.data.model.FDroidApp
 import app.flicky.helper.openUrl
 import app.flicky.helper.shareText
+import app.flicky.install.TaskStage
 import app.flicky.ui.components.SmartExpandableText
 import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
@@ -36,6 +37,7 @@ fun AppDetailScreen(
     app: FDroidApp,
     installedVersionCode: Long?,
     isInstalling: Boolean,
+    stage: TaskStage?,
     progress: Float,
     onInstall: () -> Unit,
     onOpen: () -> Unit,
@@ -83,20 +85,20 @@ fun AppDetailScreen(
             color = MaterialTheme.colorScheme.background
         ) {
             if (isWide) {
-                DesktopLayout(app, installedVersionCode, isInstalling, progress, onInstall, onOpen, onUninstall, error)
+                DesktopLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onUninstall, error)
             } else {
-                MobileLayout(app, installedVersionCode, isInstalling, progress, onInstall, onOpen, onUninstall, error)
+                MobileLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onUninstall, error)
             }
         }
     }
 }
-
 
 @Composable
 private fun DesktopLayout(
     app: FDroidApp,
     installedVersionCode: Long?,
     isInstalling: Boolean,
+    stage: TaskStage?,
     progress: Float,
     onInstall: () -> Unit,
     onOpen: () -> Unit,
@@ -115,7 +117,7 @@ private fun DesktopLayout(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    AppHeader(app, installedVersionCode, isInstalling, progress, onInstall, onOpen, onUninstall, error, 96.dp)
+                    AppHeader(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onUninstall, error, 96.dp)
                 }
                 item { ChipsSection(app) }
                 item { DetailsSection(app) }
@@ -143,6 +145,7 @@ private fun MobileLayout(
     app: FDroidApp,
     installedVersionCode: Long?,
     isInstalling: Boolean,
+    stage: TaskStage?,
     progress: Float,
     onInstall: () -> Unit,
     onOpen: () -> Unit,
@@ -156,7 +159,19 @@ private fun MobileLayout(
     ) {
         item {
             ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                AppHeader(app, installedVersionCode, isInstalling, progress, onInstall, onOpen, onUninstall, error, 88.dp, Modifier.padding(16.dp))
+                AppHeader(
+                    app = app,
+                    installedVersionCode = installedVersionCode,
+                    isInstalling = isInstalling,
+                    stage = stage,
+                    progress = progress,
+                    onInstall = onInstall,
+                    onOpen = onOpen,
+                    onUninstall = onUninstall,
+                    error = error,
+                    iconSize = 88.dp,
+                    modifier = Modifier.padding(16.dp)
+                )
             }
         }
         item { ChipsSection(app) }
@@ -191,6 +206,7 @@ private fun AppHeader(
     app: FDroidApp,
     installedVersionCode: Long?,
     isInstalling: Boolean,
+    stage: TaskStage?,
     progress: Float,
     onInstall: () -> Unit,
     onOpen: () -> Unit,
@@ -226,8 +242,18 @@ private fun AppHeader(
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
             Spacer(Modifier.height(6.dp))
+
+            val label = when (stage) {
+                is TaskStage.Downloading -> "Downloading"
+                is TaskStage.Verifying -> "Verifying"
+                is TaskStage.Installing -> "Installing"
+                is TaskStage.Finished -> if (stage.success) "Completed" else "Failed"
+                else -> "Working"
+            }
+            val showPercent = stage is TaskStage.Downloading || stage is TaskStage.Installing
+            val percent = (progress * 100).toInt()
             Text(
-                stringResource(R.string.installing_progress, (progress * 100).toInt()),
+                if (showPercent) "$label $percent%" else label,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

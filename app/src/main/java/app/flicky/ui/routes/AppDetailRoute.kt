@@ -26,6 +26,7 @@ fun AppDetailRoute(
         app = app,
         installedVersionCode = ui.installedVersionCode,
         isInstalling = ui.isInstalling,
+        stage = ui.stage,
         progress = ui.progress,
         onInstall = { vm.install() },
         onOpen = { vm.openApp() },
