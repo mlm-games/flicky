@@ -41,8 +41,7 @@ fun TVAppCard(
         modifier = Modifier
             .scale(scale)
             .focusRequester(focusRequester)
-            .onFocusChanged { focused = it.isFocused }
-            .focusable(),
+            .onFocusChanged { focused = it.isFocused },
         colors = CardDefaults.elevatedCardColors(
             containerColor = if (focused) colors.primaryContainer else colors.surface,
             contentColor = if (focused) colors.onPrimaryContainer else colors.onSurface
