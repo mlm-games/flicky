@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -89,8 +90,6 @@ class MainActivity : ComponentActivity() {
                 SyncScheduler.schedule(applicationContext, wifiOnly, hours)
             }
 
-            val browseUi by browseViewModel.uiState.collectAsState()
-
             val navController = rememberNavController()
             val backStack by navController.currentBackStackEntryAsState()
             val currentRoute = backStack?.destination?.route ?: Routes.Browse
@@ -104,8 +103,9 @@ class MainActivity : ComponentActivity() {
                 else -> 0
             }
 
-            var sort by remember { mutableStateOf(SortOption.Updated) }
-            var query by remember { mutableStateOf("") }
+            val query by browseViewModel.query.collectAsStateWithLifecycle()
+            val sort by browseViewModel.sort.collectAsStateWithLifecycle()
+            val browseUi by browseViewModel.uiState.collectAsStateWithLifecycle()
 
             val isTV = DeviceUtils.isTV(packageManager)
 
@@ -125,17 +125,18 @@ class MainActivity : ComponentActivity() {
                                 apps = browseViewModel.pagedApps.collectAsLazyPagingItems(),
                                 query = query,
                                 sort = sort,
-                                onSortChange = { s -> sort = s; browseViewModel.setSort(s) },
-                                onSearchChange = { q -> query = q; browseViewModel.setQuery(q) },
+                                onSortChange = browseViewModel::setSort,
+                                onSearchChange = browseViewModel::setQuery,
                                 onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
-                                onSyncClick = { browseViewModel.syncRepos() },
-                                onForceSyncClick = { browseViewModel.forceSyncRepos() },
-                                onClearAppsClick = { browseViewModel.clearAllApps() },
+                                onSyncClick = browseViewModel::syncRepos,
+                                onForceSyncClick = browseViewModel::forceSyncRepos,
+                                onClearAppsClick = browseViewModel::clearAllApps,
                                 isSyncing = browseUi.isSyncing,
                                 progress = browseUi.progress,
                                 errorMessage = browseUi.errorMessage,
-                                onDismissError = { browseViewModel.clearError() },
-                                syncStatus = browseUi.statusText,
+                                onDismissError = browseViewModel::clearError,
+                                syncStatusRes = browseUi.statusTextRes,
+                                isTv = isTV
                             )
                         },
                         categoriesContent = {
