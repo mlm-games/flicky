@@ -1,3 +1,8 @@
+## v3.2.4
+
+- Search bar TV related fixes (use SearchBar composable instead)
+
+
 ## v3.2.3
 
 - Fix install progress not being reflected
