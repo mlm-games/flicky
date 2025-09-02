@@ -1,3 +1,13 @@
+## v3.2.5
+
+- Fix #17, fix #6 (App Details Category button redirects to categories, add a update button if present)
+- linear progress fill max width
+- Add exodus privacy and app info clickables (fix #12, fix #10)
+- Add licenses link resolver (for clicking licenses)
+- Search immediately for TV too (wasn't the cause of #16)
+- Fix dual clicking for TV apps
+
+
 ## v3.2.4
 
 - Search bar TV related fixes (use SearchBar composable instead)
