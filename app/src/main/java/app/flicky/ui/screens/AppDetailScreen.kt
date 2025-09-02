@@ -25,6 +25,15 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.InstallDesktop
+import androidx.compose.material.icons.outlined.InstallMobile
+import androidx.compose.material.icons.outlined.KeyboardDoubleArrowUp
+import androidx.compose.material.icons.outlined.SystemUpdate
+import androidx.compose.material.icons.outlined.Update
+import androidx.compose.material.icons.outlined.Upgrade
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -32,6 +41,7 @@ import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ElevatedAssistChip
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -66,8 +76,6 @@ import app.flicky.helper.openUrl
 import app.flicky.helper.shareText
 import app.flicky.install.TaskStage
 import app.flicky.ui.components.SmartExpandableText
-import app.flicky.viewmodel.SettingsViewModel
-import app.flicky.viewmodel.SettingsViewModel.UiEvent
 import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -86,7 +94,8 @@ fun AppDetailScreen(
     onInstall: () -> Unit,
     onOpen: () -> Unit,
     onUninstall: () -> Unit,
-    error: String?
+    error: String?,
+    onOpenCategory: (String) -> Unit
 ) {
     val cfg = LocalConfiguration.current
     val isWide = cfg.screenWidthDp >= 900
@@ -129,9 +138,9 @@ fun AppDetailScreen(
             color = MaterialTheme.colorScheme.background
         ) {
             if (isWide) {
-                DesktopLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onUninstall, error)
+                DesktopLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onUninstall, error, onOpenCategory)
             } else {
-                MobileLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onUninstall, error)
+                MobileLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onUninstall, error, onOpenCategory)
             }
         }
     }
@@ -147,7 +156,8 @@ private fun DesktopLayout(
     onInstall: () -> Unit,
     onOpen: () -> Unit,
     onUninstall: () -> Unit,
-    error: String?
+    error: String?,
+    onOpenCategory: (String) -> Unit
 ) {
     Row(Modifier.fillMaxSize()) {
         Surface(
@@ -163,7 +173,7 @@ private fun DesktopLayout(
                 item {
                     AppHeader(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onUninstall, error, 96.dp)
                 }
-                item { ChipsSection(app, installedVersionCode) }
+                item { ChipsSection(app, installedVersionCode, onOpenCategory) }
                 item { DetailsSection(app) }
                 if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
                 if (app.website.isNotBlank() || app.sourceCode.isNotBlank()) item { LinksSection(app) }
@@ -194,7 +204,8 @@ private fun MobileLayout(
     onInstall: () -> Unit,
     onOpen: () -> Unit,
     onUninstall: () -> Unit,
-    error: String?
+    error: String?,
+    onOpenCategory: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -218,7 +229,7 @@ private fun MobileLayout(
                 )
             }
         }
-        item { ChipsSection(app, installedVersionCode) }
+        item { ChipsSection(app, installedVersionCode, onOpenCategory) }
         item { RightPaneContent(app) }
     }
 }
@@ -303,13 +314,54 @@ private fun AppHeader(
             )
         } else {
             if (installedVersionCode != null) {
+                val hasUpdate = app.versionCode > installedVersionCode // for readability
+//                val compact = LocalConfiguration.current.screenWidthDp < 360
                 Row {
-                    Button(onClick = onOpen, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.action_open)) }
+                    if (hasUpdate) {
+                        FilledTonalButton(onClick = onInstall) {
+                            Icon( // Size issues
+                                imageVector = Icons.Outlined.KeyboardDoubleArrowUp,
+                                contentDescription = stringResource(R.string.action_update) //else null
+                            )
+//                            if (!compact) {
+//                                Spacer(Modifier.width(8.dp))
+//                                Text(stringResource(R.string.action_update))
+//                            }
+                        }
+                        Spacer(Modifier.width(8.dp))
+                    }
+
+                    Button(onClick = onOpen, modifier = Modifier.weight(1f)) {
+//                        Icon(
+//                            imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
+//                            contentDescription = if (compact) stringResource(R.string.action_open) else null
+//                        )
+//                        if (!compact) {
+//                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.action_open))
+//                        }
+                    }
                     Spacer(Modifier.width(8.dp))
-                    OutlinedButton(onClick = onUninstall, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.action_uninstall)) }
+                    OutlinedButton(onClick = onUninstall, modifier = Modifier.weight(1f)) {
+//                        Icon(
+//                            imageVector = Icons.Outlined.DeleteOutline,
+//                            contentDescription = if (compact) stringResource(R.string.action_uninstall) else null
+//                        )
+//                        if (!compact) {
+//                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.action_uninstall))
+//                        }
+                    }
                 }
             } else {
-                Button(onClick = onInstall, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_install)) }
+                Button(onClick = onInstall, modifier = Modifier.fillMaxWidth()) {
+                    Icon(
+                        imageVector = Icons.Outlined.InstallDesktop, //else Icons.Outlined.InstallMobile
+                        contentDescription = stringResource(R.string.action_uninstall)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.action_install))
+                }
             }
         }
         error?.takeIf { it.isNotBlank() }?.let {
@@ -323,7 +375,8 @@ private fun AppHeader(
 @Composable
 private fun ChipsSection(
     app: FDroidApp,
-    installedVersionCode: Long?
+    installedVersionCode: Long?,
+    onOpenCategory: (String) -> Unit
 ) {
     val ctx = LocalContext.current
     Column {
@@ -343,9 +396,9 @@ private fun ChipsSection(
                 )
             }
 
-            AssistChip(onClick = { /* navigate/filter by repo later */ }, label = { Text(app.repository) })
+            AssistChip(onClick = { /* maybe later */ }, label = { Text(app.repository) })
             if (app.category.isNotBlank()) {
-                AssistChip(onClick = { /* navigate/filter by category later */ }, label = { Text(app.category) })
+                AssistChip(onClick = { onOpenCategory(app.category) }, label = { Text(app.category) })
             }
 
             AssistChip(

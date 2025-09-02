@@ -10,6 +10,7 @@ import app.flicky.ui.screens.AppDetailScreen
 @Composable
 fun AppDetailRoute(
     pkg: String,
+    onOpenCategory: (String) -> Unit,
     vm: AppDetailViewModel = viewModel(factory = viewModelFactory {
         AppDetailViewModel(
             dao = AppGraph.db.appDao(),
@@ -31,6 +32,7 @@ fun AppDetailRoute(
         onInstall = { vm.install() },
         onOpen = { vm.openApp() },
         onUninstall = { vm.uninstall() },
-        error = ui.error
+        error = ui.error,
+        onOpenCategory = onOpenCategory
     )
 }

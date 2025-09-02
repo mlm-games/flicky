@@ -9,15 +9,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.paging.compose.collectAsLazyPagingItems
 import app.flicky.data.external.UpdatesPreferences
-import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppSettings
 import app.flicky.helper.DeviceUtils
 import app.flicky.helper.viewModelFactory
@@ -139,11 +135,11 @@ class MainActivity : ComponentActivity() {
                                 isTv = isTV
                             )
                         },
-                        categoriesContent = {
-                            CategoriesScreen(
-                                onSyncClick = { browseViewModel.syncRepos() },
+                        categoriesContent = { selected ->
+                        CategoriesScreen(
                                 isSyncing = browseUi.isSyncing,
                                 progress = browseUi.progress,
+                                initialCategory = selected ?: "All",
                                 onAppClick = { app -> navController.navigate(Routes.detail(app.packageName)) },
                             )
                         },
@@ -154,7 +150,7 @@ class MainActivity : ComponentActivity() {
                         },
                         settingsContent = { SettingsScreen(vm = settingsViewModel) },
                         detailContent = { pkg ->
-                            AppDetailRoute(pkg = pkg)
+                            AppDetailRoute(pkg = pkg, onOpenCategory = { cat -> navController.navigate(Routes.categories(cat)) },)
                         }
                     )
                 }

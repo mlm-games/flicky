@@ -118,10 +118,10 @@ class AppDetailViewModel(
 
                 val success = if (chosen != null) {
                     Log.d("AppDetailViewModel", "Installing via variant from ${chosen.repositoryName} (${chosen.repositoryUrl}) with vercode: ${chosen.versionCode}")
-                    installer.install(chosen) { p -> _ui.value = _ui.value.copy(progress = p) }
+                    installer.install(chosen)
                 } else {
                     Log.d("AppDetailViewModel", "No variant match; installing via app metadata URL")
-                    installer.install(app) { p -> _ui.value = _ui.value.copy(progress = p) }
+                    installer.install(app)
                 }
 
                 if (success) {

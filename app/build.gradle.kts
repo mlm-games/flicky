@@ -195,6 +195,7 @@ dependencies {
     implementation(libs.kotlin.reflect)
     implementation(libs.androidbrowserhelper)
     implementation(libs.androidx.datastore.preferences.core)
+    implementation(libs.material.icons.extended)
 
     implementation(libs.androidx.tv.material)
     implementation(libs.androidx.tv.foundation)

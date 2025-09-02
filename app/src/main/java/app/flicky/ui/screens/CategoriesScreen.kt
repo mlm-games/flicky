@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -26,10 +27,10 @@ import app.flicky.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
-    onSyncClick: () -> Unit,
     isSyncing: Boolean,
     onAppClick: (FDroidApp) -> Unit,
-    progress: Float
+    progress: Float,
+    initialCategory: String = "All"
 ) {
     val categories by AppGraph.appRepo.categories().collectAsState(initial = emptyList())
     val settingsState by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
@@ -40,7 +41,7 @@ fun CategoriesScreen(
         showIncompatible = settingsState.showIncompatible
     ).collectAsState(initial = emptyList())
 
-    var selected by remember { mutableStateOf("All") }
+    var selected by rememberSaveable(initialCategory) { mutableStateOf(initialCategory) }
     val filtered by remember(selected, apps) {
         derivedStateOf { if (selected == "All") apps else apps.filter { it.category == selected } }
     }
