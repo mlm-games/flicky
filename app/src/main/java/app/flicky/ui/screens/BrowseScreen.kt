@@ -211,7 +211,7 @@ fun BrowseScreen(
 
                 val status = syncStatusRes?.asString()
                 if (isSyncing) {
-                    LinearProgressIndicator(progress = { animatedProgress })
+                    LinearProgressIndicator(progress = { animatedProgress }, modifier = Modifier.fillMaxWidth().height(4.dp))
                     if (!status.isNullOrBlank()) {
                         Text(
                             text = status,
