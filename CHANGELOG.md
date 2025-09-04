@@ -1,3 +1,8 @@
+## v3.2.6
+
+- Show feedback (with ref to #11)
+
+
 ## v3.2.5
 
 - Fix #17, fix #6 (App Details Category button redirects to categories, add a update button if present)
