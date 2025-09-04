@@ -1,5 +1,6 @@
 package app.flicky.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -17,6 +18,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -60,6 +62,24 @@ fun SettingsScreen(vm: SettingsViewModel) {
     val grouped = remember { manager.getByCategory() }
     val cfg = LocalConfiguration.current
     val gridCells = remember(cfg.screenWidthDp) { GridCells.Adaptive(minSize = 420.dp) }
+
+    val context = LocalContext.current
+    LaunchedEffect(vm) {
+        vm.events.collect { event ->
+            when (event) {
+                is SettingsViewModel.UiEvent.Toast -> {
+                    Toast.makeText(
+                        context,
+                        context.getString(event.messageResId),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                is SettingsViewModel.UiEvent.RequestExport -> {
+                    // TODO
+                }
+            }
+        }
+    }
 
     MyScreenScaffold(title = "Settings") {
         LazyVerticalGrid(
