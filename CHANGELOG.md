@@ -1,3 +1,10 @@
+## v3.2.7
+
+- Make install progress persist across screens
+- Use install progress from tasks for app detail screen
+- Show ignored button displays while hiding updates screen title (for mobile spacing)
+
+
 ## v3.2.6
 
 - Show feedback (with ref to #11)
