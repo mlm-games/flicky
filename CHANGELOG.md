@@ -1,3 +1,12 @@
+## v3.3.2
+
+- Nvm, Do not show cancelled
+- show cancelled for a sec before resetting
+- remove progress when cancelled (from ui)
+- bump major ver [skip ci]
+- Add cancellation (fix #22)
+
+
 ## v3.3.1
 
 - Nvm, Do not show cancelled
