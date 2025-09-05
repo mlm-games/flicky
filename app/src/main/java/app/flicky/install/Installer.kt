@@ -2,9 +2,11 @@ package app.flicky.install
 
 import android.app.DownloadManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -37,6 +39,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
@@ -51,6 +54,7 @@ import java.lang.reflect.Method
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import javax.net.ssl.SSLHandshakeException
+import kotlin.coroutines.resume
 
 class Installer(
     private val context: Context,
@@ -105,7 +109,7 @@ class Installer(
         getBaseCacheDir().listFiles()?.forEach { f -> runCatching { f.delete() } }
     }
 
-    suspend fun install(app: FDroidApp, onProgress: (Float) -> Unit = {}): Boolean {
+    suspend fun install(app: FDroidApp): Boolean {
         val pref = PreferredRepo.fromIndex(settings.settingsFlow.first().preferredRepo)
         val variants = runCatching { AppGraph.db.appDao().variantsFor(app.packageName) }
             .getOrElse { emptyList() }
@@ -115,15 +119,15 @@ class Installer(
             else -> resolve(app)
         } ?: return false
 
-        return installResolved(req, onProgress)
+        return installResolved(req)
     }
 
-    suspend fun install(variant: AppVariant, onProgress: (Float) -> Unit = {}): Boolean {
+    suspend fun install(variant: AppVariant): Boolean {
         val req = resolve(variant) ?: return false
-        return installResolved(req, onProgress)
+        return installResolved(req)
     }
 
-    private suspend fun installResolved(req: ResolvedApk, onProgress: (Float) -> Unit): Boolean {
+    private suspend fun installResolved(req: ResolvedApk): Boolean {
         val mode = settings.settingsFlow.first().installerMode
         val showDebug = runCatching { settings.settingsFlow.first().showDebugInfo }.getOrDefault(false)
 
@@ -131,17 +135,13 @@ class Installer(
         if (showDebug) DebugLog.log("Installer", "Starting ${req.packageName} via mode=$mode")
 
         emitStage(req.packageName, TaskStage.Downloading(0f))
-        val file = download(req) { p ->
-            emitStage(req.packageName, TaskStage.Downloading(p))
-            onProgress((0.99f * p).coerceIn(0f, 0.99f))
-        } ?: run {
+        val file = download(req) ?: run {
             emitStage(req.packageName, TaskStage.Finished(false))
             if (showDebug) DebugLog.log("Installer", "Download failed for ${req.packageName}")
             return false
         }
 
         emitStage(req.packageName, TaskStage.Verifying)
-        onProgress(0.995f)
         if (req.sha256.isNotBlank() && !verifySha256File(file, req.sha256)) {
             if (showDebug) DebugLog.log("Installer", "SHA256 mismatch for ${req.packageName}")
             file.delete()
@@ -149,21 +149,17 @@ class Installer(
             return false
         }
 
-        val installProgress: (Float) -> Unit = { p ->
-            emitStage(req.packageName, TaskStage.Installing(p))
-            onProgress((0.99f + 0.01f * p).coerceIn(0.99f, 1f))
-        }
+
         val ok = when (mode) {
-            0 -> { emitStage(req.packageName, TaskStage.Installing(0f)); installSystem(file) }
-            1 -> installSessionFromFile(file, req.packageName, req.sha256, installProgress)
-            2 -> installRootStream(file, installProgress)
-            3 -> installShizukuStream(file, installProgress)
-            else -> { emitStage(req.packageName, TaskStage.Installing(0f)); installSystem(file) }
+            0 -> { emitStage(req.packageName, TaskStage.Installing(0f)); installSystem(file, req.packageName) }
+            1 -> installSessionFromFile(file, req.packageName, req.sha256)
+            2 -> installRootStream(file, req.packageName)
+            3 -> installShizukuStream(file, req.packageName)
+            else -> { emitStage(req.packageName, TaskStage.Installing(0f)); installSystem(file, req.packageName) }
         }
 
         emitStage(req.packageName, TaskStage.Finished(ok))
         if (showDebug) DebugLog.log("Installer", "Install ${if (ok) "succeeded" else "failed"} for ${req.packageName}")
-        if (ok) onProgress(1f)
 
         if (!settings.settingsFlow.first().keepCache && !existedBefore) {
             scheduleCleanup(file)
@@ -304,7 +300,7 @@ class Installer(
         .build()
 
     // Main download: policy = if trust requires pin/CA, skip DM and stream directly; else DM first, stream fallback
-    private suspend fun download(req: ResolvedApk, onProgress: (Float) -> Unit): File? = withContext(Dispatchers.IO) {
+    private suspend fun download(req: ResolvedApk): File? = withContext(Dispatchers.IO) {
         val out = cacheFileFor(req)
         if (out.exists()) return@withContext out
 
@@ -327,7 +323,7 @@ class Installer(
                 val ok = streamWithOkHttp(
                     client = client,
                     url = url, dest = out, userAgent = userAgent, referer = req.repoBase,
-                    expectedSize = req.size, onProgress = onProgress
+                    expectedSize = req.size, packageName = req.packageName,
                 )
                 if (ok && out.exists()) {
                     MirrorRegistry.markHealthy(req.repoBase, url)
@@ -346,7 +342,6 @@ class Installer(
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setAllowedOverMetered(true)
                 .setAllowedOverRoaming(true)
-                .setVisibleInDownloadsUi(true)
                 .apply {
                     addRequestHeader("User-Agent", userAgent)
                     addRequestHeader("Accept-Encoding", "gzip, deflate")
@@ -358,7 +353,7 @@ class Installer(
             DebugLog.log("Downloader", "Enqueue (DM) $url")
             val id = dm.enqueue(request)
             activeDownloads[out.name] = id
-            val uri = monitorDownload(id, onProgress, url)
+            val uri = monitorDownload(id, req.packageName, url)
             activeDownloads.remove(out.name)
 
             if (uri != null) {
@@ -389,7 +384,7 @@ class Installer(
                 val ok = streamWithOkHttp(
                     client = client,
                     url = url, dest = out, userAgent = userAgent, referer = req.repoBase,
-                    expectedSize = req.size, onProgress = onProgress
+                    expectedSize = req.size, packageName = req.packageName,
                 )
                 if (ok && out.exists()) {
                     MirrorRegistry.markHealthy(req.repoBase, url)
@@ -411,7 +406,7 @@ class Installer(
         userAgent: String,
         referer: String,
         expectedSize: Long,
-        onProgress: (Float) -> Unit
+        packageName: String,
     ): Boolean {
         return try {
             val already = if (dest.exists()) dest.length().coerceAtLeast(0L) else 0L
@@ -450,7 +445,8 @@ class Installer(
                             os.write(buf, 0, r); written += r
                             val now = System.nanoTime()
                             if (totalTarget > 0 && now - last > 30_000_000L) {
-                                onProgress((written.toDouble() / totalTarget.toDouble()).toFloat().coerceIn(0f, 0.999f))
+                                val p = (written.toDouble() / totalTarget.toDouble()).toFloat().coerceIn(0f, 0.999f)
+                                emitStage(packageName, TaskStage.Downloading(p))
                                 last = now
                             }
                             r = ins.read(buf)
@@ -458,7 +454,7 @@ class Installer(
                         os.flush()
                     }
                 }
-                onProgress(1f)
+                emitStage(packageName, TaskStage.Downloading(1f))
                 true
             }
         } catch (t: Throwable) {
@@ -467,7 +463,7 @@ class Installer(
         }
     }
 
-    private suspend fun monitorDownload(id: Long, onProgress: (Float) -> Unit, url: String): Uri? = withContext(Dispatchers.IO) {
+    private suspend fun monitorDownload(id: Long, packageName: String, url: String): Uri? = withContext(Dispatchers.IO) {
         val q = DownloadManager.Query().setFilterById(id)
         var lastProgress = -1f
         var lastStatusChange = System.currentTimeMillis()
@@ -504,7 +500,7 @@ class Installer(
 
                     when (status) {
                         DownloadManager.STATUS_SUCCESSFUL -> {
-                            onProgress(1f)
+                            emitStage(packageName, TaskStage.Downloading(1f))
                             return@withContext dm.getUriForDownloadedFile(id)
                         }
                         DownloadManager.STATUS_FAILED -> {
@@ -518,7 +514,8 @@ class Installer(
                                 val total = c.getLong(totalIdx)
                                 if (total > 0) {
                                     val p = c.getLong(soFarIdx).toFloat() / total.toFloat()
-                                    if (p != lastProgress) { lastProgress = p; onProgress(p.coerceIn(0f, 0.999f)) }
+                                    if (p != lastProgress) { lastProgress = p
+                                    emitStage(packageName, TaskStage.Downloading(p.coerceIn(0f, 0.999f))) }
                                 }
                             }
                             val waitingOnNetwork = reason == DownloadManager.PAUSED_WAITING_FOR_NETWORK ||
@@ -550,7 +547,7 @@ class Installer(
         }
     } catch (_: Exception) { false }
 
-    private fun installSystem(file: File): Boolean {
+    private suspend fun installSystem(file: File, packageName: String): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !context.packageManager.canRequestPackageInstalls()
         ) {
@@ -561,19 +558,50 @@ class Installer(
             context.startActivity(i); return false
         }
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-        return runCatching {
+        val launched = runCatching {
             context.startActivity(Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(uri, "application/vnd.android.package-archive")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
             }); true
         }.getOrDefault(false)
+        if (!launched) return false
+
+        return awaitPackageInstall(packageName)
+    }
+
+    private suspend fun awaitPackageInstall(
+        packageName: String,
+        timeoutMs: Long = 300_000L // 5 minutes max
+    ): Boolean {
+        val result = withTimeoutOrNull(timeoutMs) {
+            suspendCancellableCoroutine { cont ->
+                val filter = IntentFilter().apply {
+                    addAction(Intent.ACTION_PACKAGE_ADDED)
+                    addAction(Intent.ACTION_PACKAGE_REPLACED)
+                    addDataScheme("package")
+                }
+                val receiver = object : BroadcastReceiver() {
+                    override fun onReceive(ctx: Context?, intent: Intent?) {
+                        val pkg = intent?.data?.schemeSpecificPart
+                        if (pkg == packageName) {
+                            try { context.unregisterReceiver(this) } catch (_: Exception) {}
+                            cont.resume(true)
+                        }
+                    }
+                }
+                context.registerReceiver(receiver, filter)
+                cont.invokeOnCancellation {
+                    try { context.unregisterReceiver(receiver) } catch (_: Exception) {}
+                }
+            }
+        }
+        return result == true
     }
 
     private suspend fun installSessionFromFile(
         file: File,
         packageName: String,
         expectedSha256: String = "",
-        onProgress: (Float) -> Unit = {}
     ): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !context.packageManager.canRequestPackageInstalls()
@@ -601,7 +629,7 @@ class Installer(
                 while (r != -1) {
                     out.write(buf, 0, r)
                     written += r
-                    onProgress(written.toFloat() / total.toFloat())
+                    emitStage(packageName, TaskStage.Installing((written.toFloat() / total.toFloat()).coerceIn(0f, 1f)))
                     r = fis.read(buf)
                 }
                 session.fsync(out)
@@ -624,16 +652,16 @@ class Installer(
         return status == PackageInstaller.STATUS_SUCCESS
     }
 
-    private suspend fun installRootStream(file: File, onProgress: (Float) -> Unit): Boolean = withContext(Dispatchers.IO) {
+    private suspend fun installRootStream(file: File, packageName: String): Boolean = withContext(Dispatchers.IO) {
         try {
             val size = file.length().coerceAtLeast(1L)
             val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd package install -r -S $size"))
-            FileInputStream(file).use { fis -> proc.outputStream.use { os -> pipeWithProgress(fis, os, size, onProgress) } }
+            FileInputStream(file).use { fis -> proc.outputStream.use { os -> pipeWithProgress(fis, os, size, packageName) } }
             withTimeoutOrNull(300_000) { proc.waitFor() } == 0
         } catch (_: Exception) { false }
     }
 
-    private suspend fun installShizukuStream(file: File, onProgress: (Float) -> Unit): Boolean = withContext(Dispatchers.IO) {
+    private suspend fun installShizukuStream(file: File, packageName: String): Boolean = withContext(Dispatchers.IO) {
         if (!Shizuku.pingBinder()) return@withContext false
         if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
             if (!requestShizukuPermission()) return@withContext false
@@ -643,7 +671,7 @@ class Installer(
             val proc = shizukuNewProcess(arrayOf("cmd", "package", "install", "-r", "-S", size.toString()))
                 ?: return@withContext false
             val ok = try {
-                FileInputStream(file).use { fis -> proc.outputStream.use { os -> pipeWithProgress(fis, os, size, onProgress) } }
+                FileInputStream(file).use { fis -> proc.outputStream.use { os -> pipeWithProgress(fis, os, size, packageName) } }
                 withTimeoutOrNull(300_000) { proc.waitFor() } == 0
             } finally { runCatching { proc.destroy() } }
             ok
@@ -670,14 +698,15 @@ class Installer(
         m.invoke(null, cmd, env, dir) as Process
     } catch (_: Exception) { null }
 
-    private fun pipeWithProgress(src: FileInputStream, dst: OutputStream, total: Long, onProgress: (Float) -> Unit) {
+    private fun pipeWithProgress(src: FileInputStream, dst: OutputStream, total: Long, packageName: String) {
         val buf = ByteArray(STREAM_BUF)
         var written = 0L
         var r = src.read(buf)
         while (r != -1) {
             dst.write(buf, 0, r)
             written += r
-            onProgress((written.toFloat() / total.toFloat()).coerceIn(0f, 1f))
+            val p = (written.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+            emitStage(packageName, TaskStage.Installing(p))
             r = src.read(buf)
         }
         dst.flush()

@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
 
 @Suppress("DEPRECATION")
 class InstalledAppsRepository(private val context: Context) {
@@ -53,29 +54,8 @@ class InstalledAppsRepository(private val context: Context) {
     /**
      * Emits when a package is added/changed/replaced/removed.
      */
-    fun packageChangesFlow(): Flow<Unit> = callbackFlow {
-        val filter = IntentFilter().apply {
-            addAction(Intent.ACTION_PACKAGE_ADDED)
-            addAction(Intent.ACTION_PACKAGE_CHANGED)
-            addAction(Intent.ACTION_PACKAGE_REPLACED)
-            addAction(Intent.ACTION_PACKAGE_REMOVED)
-            addDataScheme("package")
-        }
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context?, intent: Intent?) {
-                trySend(Unit).isSuccess
-            }
-        }
-        ContextCompat.registerReceiver(
-            context,
-            receiver,
-            filter,
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
+    fun packageChangesFlow(): Flow<Unit> = packageNameChangesFlow().map { Unit }
 
-        awaitClose { context.unregisterReceiver(receiver) }
-    }
-    // Duplicate to not break UpdatesScreen
     fun packageNameChangesFlow(): Flow<String> = callbackFlow {
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_PACKAGE_ADDED)

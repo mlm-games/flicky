@@ -69,7 +69,7 @@
         </provider>
         <receiver
             android:name=".install.InstallResultReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="app.flicky.INSTALL_RESULT"/>
             </intent-filter>

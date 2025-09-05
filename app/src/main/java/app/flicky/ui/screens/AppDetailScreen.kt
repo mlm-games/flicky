@@ -288,7 +288,8 @@ private fun AppHeader(
             }
         }
         Spacer(Modifier.height(12.dp))
-        if (isInstalling) {
+        val installingNow = stage != null && stage !is TaskStage.Finished
+        if (installingNow) {
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier.fillMaxWidth(),

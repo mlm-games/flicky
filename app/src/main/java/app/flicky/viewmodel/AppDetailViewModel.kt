@@ -43,8 +43,11 @@ class AppDetailViewModel(
             }
         }
         viewModelScope.launch {
-            installer.tasks.collect { map ->
-                when (val stage = map[packageName]) {
+            installer.tasks
+            .map { it[packageName] }
+            .distinctUntilChanged()
+            .onStart { emit(installer.tasks.value[packageName]) }
+            .collect { stage -> when (stage) {
                     is TaskStage.Downloading -> _ui.update {
                         it.copy(
                             isInstalling = true,

@@ -33,7 +33,7 @@ class AutoUpdateWorker(
             }
 
             for (app in candidates) {
-                AppGraph.installer.install(app) { /* TODO: progress */ }
+                AppGraph.installer.install(app)
             }
             Result.success()
         } catch (_: Exception) {

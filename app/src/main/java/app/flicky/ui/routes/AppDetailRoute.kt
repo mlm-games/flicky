@@ -1,6 +1,7 @@
 package app.flicky.ui.routes
 
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.flicky.AppGraph
 import app.flicky.helper.viewModelFactory
@@ -21,7 +22,7 @@ fun AppDetailRoute(
         )
     })
 ) {
-    val ui by vm.ui.collectAsState()
+    val ui by vm.ui.collectAsStateWithLifecycle()
     val app = ui.app ?: return
     AppDetailScreen(
         app = app,
