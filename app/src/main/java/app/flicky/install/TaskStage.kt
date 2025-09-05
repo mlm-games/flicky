@@ -6,4 +6,5 @@ sealed class TaskStage {
     data object Verifying : TaskStage()
     data class Installing(val progress: Float) : TaskStage()
     data class Finished(val success: Boolean) : TaskStage()
+    data object Cancelled : TaskStage()
 }

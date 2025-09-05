@@ -144,6 +144,7 @@ class AppDetailViewModel(
     }
 
     fun openApp() = installer.open(packageName)
+    fun cancel() = installer.cancel(packageName)
 
     fun uninstall() {
         installer.uninstall(packageName)

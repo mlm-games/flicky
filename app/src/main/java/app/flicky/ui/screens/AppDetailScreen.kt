@@ -26,13 +26,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.InstallDesktop
-import androidx.compose.material.icons.outlined.InstallMobile
 import androidx.compose.material.icons.outlined.KeyboardDoubleArrowUp
-import androidx.compose.material.icons.outlined.SystemUpdate
-import androidx.compose.material.icons.outlined.Update
-import androidx.compose.material.icons.outlined.Upgrade
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -50,6 +45,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -92,9 +88,10 @@ fun AppDetailScreen(
     progress: Float,
     onInstall: () -> Unit,
     onOpen: () -> Unit,
+    onCancel: () -> Unit,
     onUninstall: () -> Unit,
     error: String?,
-    onOpenCategory: (String) -> Unit
+    onOpenCategory: (String) -> Unit,
 ) {
     val cfg = LocalConfiguration.current
     val isWide = cfg.screenWidthDp >= 900
@@ -137,9 +134,9 @@ fun AppDetailScreen(
             color = MaterialTheme.colorScheme.background
         ) {
             if (isWide) {
-                DesktopLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onUninstall, error, onOpenCategory)
+                DesktopLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onCancel, onUninstall, error, onOpenCategory)
             } else {
-                MobileLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onUninstall, error, onOpenCategory)
+                MobileLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onCancel,  onUninstall, error, onOpenCategory)
             }
         }
     }
@@ -154,6 +151,7 @@ private fun DesktopLayout(
     progress: Float,
     onInstall: () -> Unit,
     onOpen: () -> Unit,
+    onCancel: () -> Unit,
     onUninstall: () -> Unit,
     error: String?,
     onOpenCategory: (String) -> Unit
@@ -170,7 +168,7 @@ private fun DesktopLayout(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    AppHeader(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onUninstall, error, 96.dp)
+                    AppHeader(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onCancel, onUninstall, error, 96.dp)
                 }
                 item { ChipsSection(app, installedVersionCode, onOpenCategory) }
                 item { DetailsSection(app) }
@@ -202,6 +200,7 @@ private fun MobileLayout(
     progress: Float,
     onInstall: () -> Unit,
     onOpen: () -> Unit,
+    onCancel: () -> Unit,
     onUninstall: () -> Unit,
     error: String?,
     onOpenCategory: (String) -> Unit
@@ -221,6 +220,7 @@ private fun MobileLayout(
                     progress = progress,
                     onInstall = onInstall,
                     onOpen = onOpen,
+                    onCancel =  onCancel,
                     onUninstall = onUninstall,
                     error = error,
                     iconSize = 88.dp,
@@ -264,6 +264,7 @@ private fun AppHeader(
     progress: Float,
     onInstall: () -> Unit,
     onOpen: () -> Unit,
+    onCancel: () -> Unit,
     onUninstall: () -> Unit,
     error: String?,
     iconSize: androidx.compose.ui.unit.Dp,
@@ -303,6 +304,7 @@ private fun AppHeader(
                 is TaskStage.Verifying -> "Verifying"
                 is TaskStage.Installing -> "Installing"
                 is TaskStage.Finished -> if (stage.success) "Completed" else "Failed"
+                is TaskStage.Cancelled -> "Cancelled"
                 else -> "Working"
             }
             val showPercent = stage is TaskStage.Downloading || stage is TaskStage.Installing
@@ -312,6 +314,18 @@ private fun AppHeader(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onCancel, Modifier.fillMaxWidth()) {
+                    Icon(
+                        painterResource(id = R.drawable.ic_close),
+                        contentDescription = stringResource(R.string.action_cancel)
+                    )
+                    Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.action_cancel))
+                }
+            }
         } else {
             if (installedVersionCode != null) {
                 val hasUpdate = app.versionCode > installedVersionCode // for readability

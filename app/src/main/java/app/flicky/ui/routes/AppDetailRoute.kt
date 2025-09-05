@@ -32,6 +32,7 @@ fun AppDetailRoute(
         progress = ui.progress,
         onInstall = { vm.install() },
         onOpen = { vm.openApp() },
+        onCancel = { vm.cancel() },
         onUninstall = { vm.uninstall() },
         error = ui.error,
         onOpenCategory = onOpenCategory

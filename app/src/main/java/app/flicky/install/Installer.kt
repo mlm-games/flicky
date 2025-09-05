@@ -44,6 +44,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
+import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import rikka.shizuku.Shizuku
@@ -66,9 +67,14 @@ class Installer(
     private val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val activeDownloads = ConcurrentHashMap<String, Long>()
+    private val cancelFlags = ConcurrentHashMap<String, Boolean>()
+    private val activeCalls = ConcurrentHashMap<String, Call>()
+    private val activeProcs = ConcurrentHashMap<String, Process>()
 
     private val _tasks = MutableStateFlow<Map<String, TaskStage>>(emptyMap())
     val tasks: StateFlow<Map<String, TaskStage>> = _tasks.asStateFlow()
+
+    private fun isCancelled(pkg: String) = cancelFlags[pkg] == true
 
     private fun emitStage(pkg: String, stage: TaskStage) {
         _tasks.update { it + (pkg to stage) }
@@ -95,16 +101,26 @@ class Installer(
         context.startActivity(i)
     }
 
-    fun cancelDownload(packageName: String) {
-        activeDownloads.entries.filter { it.key.startsWith("$packageName-") }.toList().forEach { (_, id) ->
-            dm.remove(id)
-        }
+    fun cancel(packageName: String) {
+        cancelFlags[packageName] = true
+        activeDownloads.entries
+            .filter { it.key.startsWith("$packageName-") }
+            .toList()
+            .forEach { (_, id) -> dm.remove(id) }
         activeDownloads.keys.removeAll { it.startsWith("$packageName-") }
+        // Cancel any active OkHttp call
+        activeCalls.remove(packageName)?.cancel()
+        // Kill any active root/shizuku process
+        runCatching { activeProcs.remove(packageName)?.destroy() }
+        // Best effort: remove partials
         getBaseCacheDir().listFiles()?.forEach { f ->
             if (f.name.startsWith("$packageName-")) runCatching { f.delete() }
         }
-        emitStage(packageName, TaskStage.Finished(success = false))
+        // Notify UI; if an operation later completes, it will emit again, which is fine.
+        emitStage(packageName, TaskStage.Cancelled)
     }
+
+    private fun clearCancel(packageName: String) { cancelFlags.remove(packageName) }
 
     fun clearDownloadCache() {
         getBaseCacheDir().listFiles()?.forEach { f -> runCatching { f.delete() } }
@@ -139,14 +155,17 @@ class Installer(
         val file = download(req) ?: run {
             emitStage(req.packageName, TaskStage.Finished(false))
             if (showDebug) DebugLog.log("Installer", "Download failed for ${req.packageName}")
+            clearCancel(req.packageName)
             return@withContext false
         }
 
         emitStage(req.packageName, TaskStage.Verifying)
+        if (isCancelled(req.packageName)) { emitStage(req.packageName, TaskStage.Cancelled); clearCancel(req.packageName); return@withContext false }
         if (req.sha256.isNotBlank() && !verifySha256File(file, req.sha256)) {
             if (showDebug) DebugLog.log("Installer", "SHA256 mismatch for ${req.packageName}")
             file.delete()
             emitStage(req.packageName, TaskStage.Finished(false))
+            clearCancel(req.packageName)
             return@withContext false
         }
 
@@ -165,6 +184,7 @@ class Installer(
         if (!settings.settingsFlow.first().keepCache && !existedBefore) {
             scheduleCleanup(file)
         }
+        clearCancel(req.packageName)
         return@withContext ok
     }
 
@@ -304,6 +324,7 @@ class Installer(
     private suspend fun download(req: ResolvedApk): File? = withContext(Dispatchers.IO) {
         val out = cacheFileFor(req)
         if (out.exists()) return@withContext out
+        if (isCancelled(req.packageName)) return@withContext null
 
         val failOnTrustErrors = runCatching { settings.settingsFlow.first().failOnTrustErrors }.getOrDefault(false)
         val preferred = preflightPickUrl(req.repoBase, req.urls)
@@ -419,7 +440,10 @@ class Installer(
                 .header("Referer", referer)
             if (already > 0) reqBuilder.header("Range", "bytes=$already-")
 
-            client.newCall(reqBuilder.build()).execute().use { resp ->
+            val call = client.newCall(reqBuilder.build())
+            activeCalls[packageName] = call
+            call.execute().use { resp ->
+                activeCalls.remove(packageName)
                 val isResume = already > 0
                 val isPartial = resp.code == 206
                 if (isResume && !isPartial) {
@@ -443,6 +467,7 @@ class Installer(
                         var r = ins.read(buf)
                         var last = System.nanoTime()
                         while (r != -1) {
+                            if (isCancelled(packageName)) { return false }
                             os.write(buf, 0, r); written += r
                             val now = System.nanoTime()
                             if (totalTarget > 0 && now - last > 30_000_000L) {
@@ -485,6 +510,7 @@ class Installer(
             else -> "Pending"
         }
         while (isActive) {
+            if (isCancelled(packageName)) { dm.remove(id); return@withContext null }
             val c = dm.query(q)
             try {
                 if (c != null && c.moveToFirst()) {
@@ -515,7 +541,9 @@ class Installer(
                                 val total = c.getLong(totalIdx)
                                 if (total > 0) {
                                     val p = c.getLong(soFarIdx).toFloat() / total.toFloat()
-                                    if (p != lastProgress) { lastProgress = p
+                                    if (p != lastProgress) {
+                                        if (isCancelled(packageName)) { dm.remove(id); return@withContext null }
+                                        lastProgress = p
                                     emitStage(packageName, TaskStage.Downloading(p.coerceIn(0f, 0.999f))) }
                                 }
                             }
@@ -628,6 +656,11 @@ class Installer(
                 var written = 0L
                 var r = fis.read(buf)
                 while (r != -1) {
+                    if (isCancelled(packageName)) {
+                        runCatching { out.flush() }
+                        session.abandon()
+                        return false
+                    }
                     out.write(buf, 0, r)
                     written += r
                     emitStage(packageName, TaskStage.Installing((written.toFloat() / total.toFloat()).coerceIn(0f, 1f)))
@@ -657,9 +690,12 @@ class Installer(
         try {
             val size = file.length().coerceAtLeast(1L)
             val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd package install -r -S $size"))
+            activeProcs[packageName] = proc
             FileInputStream(file).use { fis -> proc.outputStream.use { os -> pipeWithProgress(fis, os, size, packageName) } }
             withTimeoutOrNull(300_000) { proc.waitFor() } == 0
-        } catch (_: Exception) { false }
+        } catch (_: Exception) { false } finally {
+            activeProcs.remove(packageName)
+        }
     }
 
     private suspend fun installShizukuStream(file: File, packageName: String): Boolean = withContext(Dispatchers.IO) {
@@ -671,10 +707,11 @@ class Installer(
             val size = file.length().coerceAtLeast(1L)
             val proc = shizukuNewProcess(arrayOf("cmd", "package", "install", "-r", "-S", size.toString()))
                 ?: return@withContext false
+            activeProcs[packageName] = proc
             val ok = try {
                 FileInputStream(file).use { fis -> proc.outputStream.use { os -> pipeWithProgress(fis, os, size, packageName) } }
                 withTimeoutOrNull(300_000) { proc.waitFor() } == 0
-            } finally { runCatching { proc.destroy() } }
+            } finally { runCatching { proc.destroy() }; activeProcs.remove(packageName) }
             ok
         } catch (_: Exception) { false }
     }
@@ -704,6 +741,7 @@ class Installer(
         var written = 0L
         var r = src.read(buf)
         while (r != -1) {
+            if (isCancelled(packageName)) return
             dst.write(buf, 0, r)
             written += r
             val p = (written.toFloat() / total.toFloat()).coerceIn(0f, 1f)
