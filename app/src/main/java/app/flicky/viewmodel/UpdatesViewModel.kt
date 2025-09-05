@@ -26,7 +26,6 @@ data class UpdatesUiState(
     val installedVersionsName: Map<String, String> = emptyMap(),
     val ignoredPrefs: Map<String, UpdatesPreference> = emptyMap()
 )
-
 class UpdatesViewModel(
     private val repo: AppRepository,
     private val installedRepo: InstalledAppsRepository,
@@ -36,56 +35,19 @@ class UpdatesViewModel(
     private val _ui = MutableStateFlow(UpdatesUiState())
     val ui: StateFlow<UpdatesUiState> = _ui.asStateFlow()
 
+    private val prefsTick = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
     init {
         viewModelScope.launch {
             combine(
                 repo.appsFlow("", sort = SortOption.Updated, hideAnti = false, showIncompatible = false),
-                installedRepo.packageChangesFlow().onStart { emit(Unit) }
-            ) { all, _ -> all }
-                .collect { all ->
-                    val installedDetails = installedRepo.getInstalledDetailed()
-                    val installedMap = installedDetails.associateBy { it.packageName }
-                    val installed = all.filter { installedMap.containsKey(it.packageName) }
-
-                    val ignoreMap = withContext(Dispatchers.IO) {
-                        installed.associate { app -> app.packageName to UpdatesPreferences[app.packageName] }
-                    }
-
-                    val codeMap = installedDetails.associate { it.packageName to it.versionCode }
-                    val nameMap = installedDetails.associate { it.packageName to (it.versionName ?: "") }
-
-                    val latestCompatByPkg = withContext(Dispatchers.IO) {
-                        installed.associate { a ->
-                            a.packageName to (AppGraph.db.appDao().maxCompatibleVersionCode(a.packageName)?.toLong() ?: a.versionCode.toLong())
-                        }
-                    }
-
-                    val (updates, suppressed) = installed.partition { app ->
-                        val cur = installedMap[app.packageName]?.versionCode ?: 0L
-                        val latestCompat = latestCompatByPkg[app.packageName] ?: app.versionCode.toLong()
-                        val candidate = latestCompat > cur
-                        val pref = ignoreMap[app.packageName] ?: UpdatesPreference()
-                        candidate && !(pref.ignoreUpdates || (pref.ignoreVersionCode > 0 && latestCompat <= pref.ignoreVersionCode))
-                    }.let { (u, notU) ->
-                        val suppressedList = notU.filter { app ->
-                            val cur = installedMap[app.packageName]?.versionCode ?: 0L
-                            val latestCompat = latestCompatByPkg[app.packageName] ?: app.versionCode.toLong()
-                            latestCompat > cur
-                        }
-                        u to suppressedList
-                    }
-
-                    _ui.value = _ui.value.copy(
-                        installed = installed,
-                        updates = updates,
-                        suppressed = suppressed,
-                        installedVersionsCode = codeMap,
-                        installedVersionsName = nameMap,
-                        ignoredPrefs = ignoreMap
-                    )
-                }
+                installedRepo.packageChangesFlow().onStart { emit(Unit) },
+                prefsTick.onStart { emit(Unit) } // <- ensure initial emission
+            ) { all, _, _ -> all }
+                .collect { all -> recalc(all) }
         }
 
+        // installer listener stays the same...
         viewModelScope.launch {
             installer.tasks.collect { map ->
                 val installing = mutableSetOf<String>()
@@ -128,24 +90,47 @@ class UpdatesViewModel(
         }
     }
 
-    fun updateInstallProgress(packageName: String, progress: Float) {
-        _ui.value = _ui.value.copy(
-            installProgress = _ui.value.installProgress + (packageName to progress)
-        )
-    }
+    private suspend fun recalc(all: List<FDroidApp>) {
+        val installedDetails = installedRepo.getInstalledDetailed()
+        val installedMap = installedDetails.associateBy { it.packageName }
+        val installed = all.filter { installedMap.containsKey(it.packageName) }
 
-    fun setInstalling(packageName: String, installing: Boolean) {
-        _ui.value = _ui.value.copy(
-            installingPackages = if (installing) {
-                _ui.value.installingPackages + packageName
-            } else {
-                _ui.value.installingPackages - packageName
-            },
-            installProgress = if (!installing) {
-                _ui.value.installProgress - packageName
-            } else {
-                _ui.value.installProgress
+        val ignoreMap = withContext(Dispatchers.IO) {
+            installed.associate { app -> app.packageName to UpdatesPreferences[app.packageName] }
+        }
+
+        val codeMap = installedDetails.associate { it.packageName to it.versionCode }
+        val nameMap = installedDetails.associate { it.packageName to (it.versionName ?: "") }
+
+        val latestCompatByPkg = withContext(Dispatchers.IO) {
+            installed.associate { a ->
+                a.packageName to (AppGraph.db.appDao().maxCompatibleVersionCode(a.packageName)?.toLong()
+                    ?: a.versionCode.toLong())
             }
+        }
+
+        val (updates, suppressed) = installed.partition { app ->
+            val cur = installedMap[app.packageName]?.versionCode ?: 0L
+            val latestCompat = latestCompatByPkg[app.packageName] ?: app.versionCode.toLong()
+            val candidate = latestCompat > cur
+            val pref = ignoreMap[app.packageName] ?: UpdatesPreference()
+            candidate && !(pref.ignoreUpdates || (pref.ignoreVersionCode > 0 && latestCompat <= pref.ignoreVersionCode))
+        }.let { (u, notU) ->
+            val suppressedList = notU.filter { app ->
+                val cur = installedMap[app.packageName]?.versionCode ?: 0L
+                val latestCompat = latestCompatByPkg[app.packageName] ?: app.versionCode.toLong()
+                latestCompat > cur
+            }
+            u to suppressedList
+        }
+
+        _ui.value = _ui.value.copy(
+            installed = installed,
+            updates = updates,
+            suppressed = suppressed,
+            installedVersionsCode = codeMap,
+            installedVersionsName = nameMap,
+            ignoredPrefs = ignoreMap
         )
     }
 
@@ -153,7 +138,7 @@ class UpdatesViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val current = UpdatesPreferences[packageName]
             UpdatesPreferences[packageName] = current.copy(ignoreVersionCode = versionCode)
-            refreshIgnoredFor(packageName)
+            prefsTick.tryEmit(Unit) // force recompute immediately
         }
     }
 
@@ -161,23 +146,14 @@ class UpdatesViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val current = UpdatesPreferences[packageName]
             UpdatesPreferences[packageName] = current.copy(ignoreUpdates = true)
-            refreshIgnoredFor(packageName)
+            prefsTick.tryEmit(Unit)
         }
     }
 
     fun stopIgnoring(packageName: String) {
         viewModelScope.launch(Dispatchers.IO) {
             UpdatesPreferences[packageName] = UpdatesPreference(ignoreUpdates = false, ignoreVersionCode = 0)
-            refreshIgnoredFor(packageName)
-        }
-    }
-
-    private suspend fun refreshIgnoredFor(packageName: String) {
-        val pref = UpdatesPreferences[packageName]
-        withContext(Dispatchers.Main) {
-            _ui.value = _ui.value.copy(
-                ignoredPrefs = _ui.value.ignoredPrefs + (packageName to pref)
-            )
+            prefsTick.tryEmit(Unit)
         }
     }
 }

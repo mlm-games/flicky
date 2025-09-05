@@ -53,7 +53,8 @@ fun UpdatesScreen(
     var showIgnored by remember { mutableStateOf(false) }
 
     MyScreenScaffold(
-        title = stringResource(R.string.nav_updates),
+        // Hiding for space
+        title = if (suppressed.isNotEmpty() && !isTV) "" else stringResource(R.string.nav_updates),
         actions = {
             if (ui.updates.isNotEmpty()) {
                 Button(
@@ -99,26 +100,6 @@ fun UpdatesScreen(
                 }
             }
 
-            if (ui.installed.isNotEmpty()) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        stringResource(R.string.installed_apps),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-                items(ui.installed, key = { "installed_${it.packageName}" }) { app ->
-                    InstalledCard(
-                        app = app,
-                        installedVersionName = ui.installedVersionsName[app.packageName],
-                        installedVersionCode = ui.installedVersionsCode[app.packageName],
-                        onOpenDetails = { actions.openDetails(app) }
-                    )
-                }
-            }
-
             if (showIgnored && suppressed.isNotEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Spacer(Modifier.height(8.dp))
@@ -139,6 +120,26 @@ fun UpdatesScreen(
                         actions = actions,
                         pref = ui.ignoredPrefs[app.packageName],
                         isTV = isTV
+                    )
+                }
+            }
+
+            if (ui.installed.isNotEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        stringResource(R.string.installed_apps),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+                items(ui.installed, key = { "installed_${it.packageName}" }) { app ->
+                    InstalledCard(
+                        app = app,
+                        installedVersionName = ui.installedVersionsName[app.packageName],
+                        installedVersionCode = ui.installedVersionsCode[app.packageName],
+                        onOpenDetails = { actions.openDetails(app) }
                     )
                 }
             }

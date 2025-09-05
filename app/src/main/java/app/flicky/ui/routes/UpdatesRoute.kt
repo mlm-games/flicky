@@ -39,19 +39,11 @@ fun UpdatesRoute(
             override fun updateAll() {
                 scope.launch {
                     for (app in ui.updates) {
-                        vm.setInstalling(app.packageName, true)
-                        installer.install(app) { p -> vm.updateInstallProgress(app.packageName, p) }
-                        vm.setInstalling(app.packageName, false)
+                        installer.install(app)
                     }
                 }
             }
-            override fun updateOne(app: FDroidApp) {
-                scope.launch {
-                    vm.setInstalling(app.packageName, true)
-                    installer.install(app) { p -> vm.updateInstallProgress(app.packageName, p) }
-                    vm.setInstalling(app.packageName, false)
-                }
-            }
+            override fun updateOne(app: FDroidApp) { scope.launch { installer.install(app) } }
             override fun openDetails(app: FDroidApp) = onOpenDetails(app.packageName)
             override fun ignoreThisVersion(app: FDroidApp) = vm.ignoreThisVersion(app.packageName, app.versionCode.toLong())
             override fun ignoreAll(app: FDroidApp) = vm.ignoreAllUpdates(app.packageName)
