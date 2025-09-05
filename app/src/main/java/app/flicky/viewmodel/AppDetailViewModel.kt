@@ -72,6 +72,13 @@ class AppDetailViewModel(
                             error = null
                         )
                     }
+                    is TaskStage.Cancelled -> _ui.update {
+                        it.copy(
+                            isInstalling = false,
+                            stage = stage,
+                            error = null
+                        )
+                    }
                     is TaskStage.Finished -> {
                         _ui.update {
                             it.copy(

@@ -69,6 +69,10 @@ class UpdatesViewModel(
                             progress[pkg] = (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f)
                         }
 
+                        is TaskStage.Cancelled -> {
+                            progress.remove(pkg)
+                        }
+
                         is TaskStage.Finished -> {
                             if (!stage.success) {
                                 progress.remove(pkg)

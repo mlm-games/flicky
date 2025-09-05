@@ -153,14 +153,19 @@ class Installer(
 
         emitStage(req.packageName, TaskStage.Downloading(0f))
         val file = download(req) ?: run {
-            emitStage(req.packageName, TaskStage.Finished(false))
+            if (isCancelled(req.packageName))
+                emitStage(req.packageName, TaskStage.Cancelled)
+            else
+                emitStage(req.packageName, TaskStage.Finished(false))
             if (showDebug) DebugLog.log("Installer", "Download failed for ${req.packageName}")
             clearCancel(req.packageName)
             return@withContext false
         }
 
         emitStage(req.packageName, TaskStage.Verifying)
-        if (isCancelled(req.packageName)) { emitStage(req.packageName, TaskStage.Cancelled); clearCancel(req.packageName); return@withContext false }
+        if (isCancelled(req.packageName)) {
+            emitStage(req.packageName, TaskStage.Cancelled); clearCancel(req.packageName)
+            return@withContext false }
         if (req.sha256.isNotBlank() && !verifySha256File(file, req.sha256)) {
             if (showDebug) DebugLog.log("Installer", "SHA256 mismatch for ${req.packageName}")
             file.delete()
@@ -178,7 +183,12 @@ class Installer(
             else -> { emitStage(req.packageName, TaskStage.Installing(0f)); installSystem(file, req.packageName) }
         }
 
-        emitStage(req.packageName, TaskStage.Finished(ok))
+        val cancelledNow = isCancelled(req.packageName)
+        if (cancelledNow) {
+            emitStage(req.packageName, TaskStage.Cancelled)
+        } else {
+            emitStage(req.packageName, TaskStage.Finished(ok))
+        }
         if (showDebug) DebugLog.log("Installer", "Install ${if (ok) "succeeded" else "failed"} for ${req.packageName}")
 
         if (!settings.settingsFlow.first().keepCache && !existedBefore) {
@@ -659,6 +669,7 @@ class Installer(
                     if (isCancelled(packageName)) {
                         runCatching { out.flush() }
                         session.abandon()
+                        emitStage(packageName, TaskStage.Cancelled)
                         return false
                     }
                     out.write(buf, 0, r)
