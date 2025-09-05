@@ -76,7 +76,6 @@ class AppDetailViewModel(
                         it.copy(
                             isInstalling = false,
                             stage = stage,
-                            progress = 0f,
                             error = null
                         )
                     }

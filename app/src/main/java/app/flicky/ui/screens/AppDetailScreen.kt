@@ -289,7 +289,7 @@ private fun AppHeader(
             }
         }
         Spacer(Modifier.height(12.dp))
-        val installingNow = stage != null && stage !is TaskStage.Finished
+        val installingNow = stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled
         if (installingNow) {
             LinearProgressIndicator(
                 progress = { progress },
