@@ -30,6 +30,7 @@ import app.flicky.helper.DebugLog
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -127,7 +128,7 @@ class Installer(
         return installResolved(req)
     }
 
-    private suspend fun installResolved(req: ResolvedApk): Boolean {
+    private suspend fun installResolved(req: ResolvedApk): Boolean = withContext(NonCancellable) {
         val mode = settings.settingsFlow.first().installerMode
         val showDebug = runCatching { settings.settingsFlow.first().showDebugInfo }.getOrDefault(false)
 
@@ -138,7 +139,7 @@ class Installer(
         val file = download(req) ?: run {
             emitStage(req.packageName, TaskStage.Finished(false))
             if (showDebug) DebugLog.log("Installer", "Download failed for ${req.packageName}")
-            return false
+            return@withContext false
         }
 
         emitStage(req.packageName, TaskStage.Verifying)
@@ -146,7 +147,7 @@ class Installer(
             if (showDebug) DebugLog.log("Installer", "SHA256 mismatch for ${req.packageName}")
             file.delete()
             emitStage(req.packageName, TaskStage.Finished(false))
-            return false
+            return@withContext false
         }
 
 
@@ -164,7 +165,7 @@ class Installer(
         if (!settings.settingsFlow.first().keepCache && !existedBefore) {
             scheduleCleanup(file)
         }
-        return ok
+        return@withContext ok
     }
 
     private data class ResolvedApk(
