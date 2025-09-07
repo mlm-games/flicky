@@ -685,11 +685,9 @@ class Installer(
             val (_, status) = SessionInstallBus.events.first { it.first == sessionId }
             result.complete(status)
         }
-        val intent = Intent("app.flicky.INSTALL_RESULT").apply {
-            component = ComponentName(context, InstallResultReceiver::class.java)
-        }
+        val intent = Intent(context, InstallResultReceiver::class.java)
         val pendingFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         else PendingIntent.FLAG_UPDATE_CURRENT
         val pending = PendingIntent.getBroadcast(context, sessionId, intent, pendingFlags)
         session.commit(pending.intentSender); session.close()
