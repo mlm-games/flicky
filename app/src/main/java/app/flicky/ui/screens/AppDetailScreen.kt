@@ -41,6 +41,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -497,7 +498,7 @@ private fun ScreenshotsSection(urls: List<String>) {
     }
     if (showViewer) {
         Dialog(onDismissRequest = { showViewer = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Surface(modifier = Modifier.fillMaxSize(), color = colorScheme.background) {
                 FullscreenImageViewer(
                     images = urls,
                     initialPage = startIndex,
@@ -513,7 +514,7 @@ private fun SectionTitle(text: String) {
     Text(
         text,
         style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
+        color = colorScheme.primary,
         modifier = Modifier.padding(bottom = 4.dp)
     )
 }
@@ -539,7 +540,7 @@ private fun InfoRow(label: String, value: String) {
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = colorScheme.onSurfaceVariant,
             modifier = Modifier.widthIn(min = 96.dp).wrapContentWidth(Alignment.Start)
         )
         Spacer(Modifier.width(12.dp))

@@ -67,13 +67,7 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/filepaths"/>
         </provider>
-        <receiver
-            android:name=".install.InstallResultReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="app.flicky.INSTALL_RESULT"/>
-            </intent-filter>
-        </receiver>
+        <receiver android:name=".install.InstallResultReceiver" android:exported="false" />
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"
