@@ -1,3 +1,8 @@
+## v3.3.3
+
+- Do not expose intent for install reciever
+
+
 ## v3.3.2
 
 - Nvm, Do not show cancelled
