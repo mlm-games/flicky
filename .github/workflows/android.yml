@@ -34,7 +34,6 @@ env:
   JAVA_VERSION: '21'
   JAVA_DISTRIBUTION: 'corretto'
   BUILD_GRADLE_PATH: 'app/build.gradle.kts'
-  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2 -Dorg.gradle.caching=true"
 
 jobs:
   prepare-version:
@@ -79,7 +78,6 @@ jobs:
           echo "version_name=$NEW_VERSION_NAME" >> $GITHUB_OUTPUT
           echo "version_code=$NEW_VERSION_CODE" >> $GITHUB_OUTPUT
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
-          echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
           # Update build.gradle.kts
           sed -i "s/versionCode = $OLD_VERSION_CODE/versionCode = $NEW_VERSION_CODE/" $BUILD_GRADLE_PATH
@@ -104,6 +102,7 @@ jobs:
           git add .
           git commit -m "chore: bump version to ${{ steps.version.outputs.version_name }} [skip ci]" || echo "No changes to commit"
           git push
+          echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
   build-and-release:
     needs: prepare-version
