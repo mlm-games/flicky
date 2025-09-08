@@ -1,3 +1,11 @@
+## v3.3.4
+
+- fix yml
+- support TV zoom too
+- Pin workflow commit to prevent repro mismatches
+- Full screen image viewer zoom support (only gestures work well for now)
+
+
 ## v3.3.3
 
 - Do not expose intent for install reciever
