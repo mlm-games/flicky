@@ -1,6 +1,9 @@
 package app.flicky.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -28,11 +31,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -58,40 +61,50 @@ fun FullscreenImageViewer(
 ) {
     if (images.isEmpty()) return
 
-    val scope = rememberCoroutineScope()
     val safeInitial = initialPage.coerceIn(0, images.lastIndex)
     val pagerState = rememberPagerState(initialPage = safeInitial, pageCount = { images.size })
 
     BackHandler { onClose() }
 
-    val handleKey: (KeyEvent) -> Boolean = { ev ->
-        if (ev.type != KeyEventType.KeyDown) false else when (ev.key) {
-            Key.DirectionLeft -> {
-                val prev = (pagerState.currentPage - 1).coerceAtLeast(0)
-                if (prev != pagerState.currentPage) { scope.launch { pagerState.animateScrollToPage(prev) }; true } else false
-            }
-            Key.DirectionRight -> {
-                val next = (pagerState.currentPage + 1).coerceAtMost(images.lastIndex)
-                if (next != pagerState.currentPage) { scope.launch { pagerState.animateScrollToPage(next) }; true } else false
-            }
-            Key.Back, Key.Escape -> { onClose(); true }
-            else -> false
-        }
+    val cfg = LocalConfiguration.current
+    val density = LocalDensity.current
+    val widthPx = with(density) { cfg.screenWidthDp.dp.roundToPx() }
+    val heightPx = with(density) { cfg.screenHeightDp.dp.roundToPx() }
+    val targetW = widthPx.coerceIn(720, 2160)
+    val targetH = heightPx.coerceIn(480, 1440)
+
+    val viewerScope = rememberCoroutineScope()
+    var currentPageScale by remember { mutableFloatStateOf(1f) }
+    var isNavigating by remember { mutableStateOf(false) }
+
+    // Store current page's control functions
+    var zoomIn: (() -> Unit)? by remember { mutableStateOf(null) }
+    var zoomOut: (() -> Unit)? by remember { mutableStateOf(null) }
+    var toggleZoom: (() -> Unit)? by remember { mutableStateOf(null) }
+    var panLeft: (() -> Unit)? by remember { mutableStateOf(null) }
+    var panRight: (() -> Unit)? by remember { mutableStateOf(null) }
+    var panUp: (() -> Unit)? by remember { mutableStateOf(null) }
+    var panDown: (() -> Unit)? by remember { mutableStateOf(null) }
+
+    val contentFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        contentFocus.requestFocus()
     }
 
-    // Ensure the viewer content gets focus initially on TV
-    val contentFocus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { contentFocus.requestFocus() }
-
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .onPreviewKeyEvent(handleKey),
+        modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = { Text("${pagerState.currentPage + 1} / ${images.size}") },
-                actions = { TextButton(onClick = onClose) { Text( stringResource(R.string.action_close)) } }
-            )
+            Box(modifier = Modifier.focusable(false)) {
+                TopAppBar(
+                    title = { Text("${pagerState.currentPage + 1} / ${images.size}") },
+                    actions = {
+                        TextButton(
+                            onClick = onClose,
+                            modifier = Modifier.focusable(false)
+                        ) { Text(stringResource(R.string.action_close)) }
+                    }
+                )
+            }
         }
     ) { padding ->
         Box(
@@ -100,64 +113,219 @@ fun FullscreenImageViewer(
                 .padding(padding)
                 .focusRequester(contentFocus)
                 .focusable()
+                .focusProperties {
+                    up = FocusRequester.Cancel
+                    down = FocusRequester.Cancel
+                    left = FocusRequester.Cancel
+                    right = FocusRequester.Cancel
+                }
+                .onPreviewKeyEvent { ev ->
+                    if (ev.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+
+                    when (ev.key) {
+                        Key.Back, Key.Escape -> {
+                            onClose()
+                            true
+                        }
+                        // Zoom controls
+                        Key.Plus, Key.NumPadAdd -> {
+                            zoomIn?.invoke()
+                            true
+                        }
+                        Key.Minus, Key.NumPadSubtract -> {
+                            zoomOut?.invoke()
+                            true
+                        }
+                        Key.Enter, Key.NumPadEnter -> {
+                            toggleZoom?.invoke()
+                            true
+                        }
+                        // Directional keys
+                        Key.DirectionLeft -> {
+                            if (currentPageScale <= 1.01f) {
+                                // Navigate pages at 1x
+                                if (!isNavigating && pagerState.currentPage > 0) {
+                                    isNavigating = true
+                                    viewerScope.launch {
+                                        try {
+                                            pagerState.scrollToPage(pagerState.currentPage - 1)
+                                        } finally {
+                                            isNavigating = false
+                                        }
+                                    }
+                                }
+                            } else {
+                                // Pan when zoomed
+                                panLeft?.invoke()
+                            }
+                            true
+                        }
+                        Key.DirectionRight -> {
+                            if (currentPageScale <= 1.01f) {
+                                // Navigate pages at 1x
+                                if (!isNavigating && pagerState.currentPage < images.lastIndex) {
+                                    isNavigating = true
+                                    viewerScope.launch {
+                                        try {
+                                            pagerState.scrollToPage(pagerState.currentPage + 1)
+                                        } finally {
+                                            isNavigating = false
+                                        }
+                                    }
+                                }
+                            } else {
+                                // Pan when zoomed
+                                panRight?.invoke()
+                            }
+                            true
+                        }
+                        Key.DirectionUp -> {
+                            if (currentPageScale > 1.01f) {
+                                panUp?.invoke()
+                            }
+                            true
+                        }
+                        Key.DirectionDown -> {
+                            if (currentPageScale > 1.01f) {
+                                panDown?.invoke()
+                            }
+                            true
+                        }
+                        else -> {
+                            // Check for DPAD_CENTER
+                            val isDpadCenter = ev.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER
+                            if (isDpadCenter) {
+                                toggleZoom?.invoke()
+                                true
+                            } else false
+                        }
+                    }
+                }
         ) {
-            val cfg = LocalConfiguration.current
-            val density = LocalDensity.current
-            // Convert screen dp to px for Coil's target size to avoid huge allocations or OOMs
-            val widthPx = with(density) { cfg.screenWidthDp.dp.roundToPx() }
-            val heightPx = with(density) { cfg.screenHeightDp.dp.roundToPx() }
-            val targetW = widthPx.coerceAtLeast(720).coerceAtMost(2160)
-            val targetH = heightPx.coerceAtLeast(480).coerceAtMost(1440)
-
-
-            HorizontalPager(state = pagerState) { page ->
-                // Viewport size for clamp calculations
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                beyondViewportPageCount = 0
+            ) { page ->
                 BoxWithConstraints(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
+                    val pageScope = rememberCoroutineScope()
                     val viewportW = constraints.maxWidth.toFloat().coerceAtLeast(1f)
                     val viewportH = constraints.maxHeight.toFloat().coerceAtLeast(1f)
 
-                    var scale by remember(page) { mutableFloatStateOf(1f) }
-                    var offset by remember(page) { mutableStateOf(Offset.Zero) }
-
                     val minScale = 1f
                     val maxScale = 5f
+                    val scaleAnim = remember(page) { Animatable(1f) }
+                    val offsetAnim = remember(page) { Animatable(Offset.Zero, Offset.VectorConverter) }
 
+                    LaunchedEffect(page, scaleAnim.value) {
+                        if (page == pagerState.currentPage) {
+                            currentPageScale = scaleAnim.value
+                        }
+                    }
+
+                    fun maxBoundsX(s: Float) = ((s * viewportW - viewportW) / 2f).coerceAtLeast(0f)
+                    fun maxBoundsY(s: Float) = ((s * viewportH - viewportH) / 2f).coerceAtLeast(0f)
                     fun clampOffset(o: Offset, s: Float): Offset {
-                        // Allow panning only when content is larger than viewport
-                        val maxX = ((s * viewportW - viewportW) / 2f).coerceAtLeast(0f)
-                        val maxY = ((s * viewportH - viewportH) / 2f).coerceAtLeast(0f)
-                        return Offset(
-                            x = o.x.coerceIn(-maxX, maxX),
-                            y = o.y.coerceIn(-maxY, maxY)
-                        )
+                        val mx = maxBoundsX(s)
+                        val my = maxBoundsY(s)
+                        return Offset(o.x.coerceIn(-mx, mx), o.y.coerceIn(-my, my))
                     }
 
                     val transformState = rememberTransformableState { zoomChange, panChange, _ ->
-                        val newScale = (scale * zoomChange).coerceIn(minScale, maxScale)
-                        // Apply pan in screen space and clamp for new scale
-                        val newOffset = clampOffset(offset + panChange, newScale)
-                        scale = newScale
-                        offset = newOffset
+                        val newScale = (scaleAnim.value * zoomChange).coerceIn(minScale, maxScale)
+                        pageScope.launch { scaleAnim.snapTo(newScale) }
+                        val newOffset = clampOffset(offsetAnim.value + panChange, newScale)
+                        pageScope.launch { offsetAnim.snapTo(newOffset) }
                     }
 
-                    // Double‑tap to zoom: 1x -> 2x -> 3x -> 1x, keeping the tap point in place
-                    fun onDoubleTap(pos: Offset) {
-                        val target = when {
-                            scale < 1.75f -> 2f
-                            scale < 2.75f -> 3f
-                            else -> 1f
+                    fun animateZoomTo(target: Float, tap: Offset? = null) {
+                        val startScale = scaleAnim.value
+                        val factor = (target / startScale).coerceIn(0.01f, 100f)
+                        val startOffset = offsetAnim.value
+                        val targetOffset = if (tap != null) {
+                            clampOffset((startOffset - tap) * factor + tap, target)
+                        } else {
+                            if (target == 1f) Offset.Zero else clampOffset(startOffset, target)
                         }
-                        val old = scale
-                        val factor = target / old
-                        // scale around the tap position: o' = (o - pos) * factor + pos
-                        val newOffset = (offset - pos) * factor + pos
-                        scale = target
-                        offset = clampOffset(newOffset, target).let {
-                            // When returning to 1x, recenter
-                            if (target == 1f) Offset.Zero else it
+                        val spec = tween<Float>(durationMillis = 180)
+                        pageScope.launch {
+                            launch { scaleAnim.animateTo(target, spec) }
+                            launch { offsetAnim.animateTo(targetOffset, tween(180)) }
+                        }
+                    }
+
+                    // Register control functions for current page
+                    LaunchedEffect(page) {
+                        if (page == pagerState.currentPage) {
+                            val panStepX = viewportW * 0.25f
+                            val panStepY = viewportH * 0.25f
+
+                            zoomIn = {
+                                val target = (scaleAnim.value + 0.25f).coerceIn(minScale, maxScale)
+                                animateZoomTo(target)
+                            }
+                            zoomOut = {
+                                val target = (scaleAnim.value - 0.25f).coerceIn(minScale, maxScale)
+                                animateZoomTo(if (target == minScale) 1f else target)
+                            }
+                            toggleZoom = {
+                                animateZoomTo(if (scaleAnim.value > 1f) 1f else 2f)
+                            }
+
+                            panLeft = {
+                                val scale = scaleAnim.value
+                                val offset = offsetAnim.value
+                                val new = clampOffset(offset + Offset(panStepX, 0f), scale)
+                                if (new == offset && offset.x >= -4f && maxBoundsX(scale) > 0f && !isNavigating && pagerState.currentPage > 0) {
+                                    // At edge, navigate
+                                    isNavigating = true
+                                    viewerScope.launch {
+                                        try {
+                                            pagerState.scrollToPage(pagerState.currentPage - 1)
+                                        } finally {
+                                            isNavigating = false
+                                        }
+                                    }
+                                } else {
+                                    pageScope.launch { offsetAnim.animateTo(new, tween(120)) }
+                                }
+                            }
+
+                            panRight = {
+                                val scale = scaleAnim.value
+                                val offset = offsetAnim.value
+                                val new = clampOffset(offset + Offset(-panStepX, 0f), scale)
+                                if (new == offset && (maxBoundsX(scale) - offset.x) <= 4f && maxBoundsX(scale) > 0f && !isNavigating && pagerState.currentPage < images.lastIndex) {
+                                    // At edge, navigate
+                                    isNavigating = true
+                                    viewerScope.launch {
+                                        try {
+                                            pagerState.scrollToPage(pagerState.currentPage + 1)
+                                        } finally {
+                                            isNavigating = false
+                                        }
+                                    }
+                                } else {
+                                    pageScope.launch { offsetAnim.animateTo(new, tween(120)) }
+                                }
+                            }
+
+                            panUp = {
+                                val scale = scaleAnim.value
+                                val offset = offsetAnim.value
+                                val new = clampOffset(offset + Offset(0f, panStepY), scale)
+                                pageScope.launch { offsetAnim.animateTo(new, tween(120)) }
+                            }
+
+                            panDown = {
+                                val scale = scaleAnim.value
+                                val offset = offsetAnim.value
+                                val new = clampOffset(offset + Offset(0f, -panStepY), scale)
+                                pageScope.launch { offsetAnim.animateTo(new, tween(120)) }
+                            }
                         }
                     }
 
@@ -166,46 +334,32 @@ fun FullscreenImageViewer(
                             .fillMaxSize()
                             .pointerInput(page) {
                                 detectTapGestures(
-                                    onDoubleTap = { pos -> onDoubleTap(pos) }
+                                    onDoubleTap = { pos ->
+                                        val s = scaleAnim.value
+                                        val next = when {
+                                            s < 1.75f -> 2f
+                                            s < 2.75f -> 3f
+                                            else -> 1f
+                                        }
+                                        animateZoomTo(next, tap = pos)
+                                    }
                                 )
                             }
-                            .transformable(transformState)
+                            .transformable(
+                                state = transformState,
+                                enabled = scaleAnim.value > 1.01f
+                            )
                             .graphicsLayer {
-                                translationX = offset.x
-                                translationY = offset.y
-                                scaleX = scale
-                                scaleY = scale
-                            }
-                            // TV remote/D‑pad zoom controls on this page
-                            .onPreviewKeyEvent { ev ->
-                                if (ev.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                                when (ev.key) {
-                                    Key.DirectionUp, Key.Plus, Key.NumPadAdd -> {
-                                        scale = (scale + 0.25f).coerceIn(minScale, maxScale)
-                                        offset = clampOffset(offset, scale)
-                                        true
-                                    }
-                                    Key.DirectionDown, Key.Minus, Key.NumPadSubtract -> {
-                                        scale = (scale - 0.25f).coerceIn(minScale, maxScale)
-                                        offset = if (scale == minScale) Offset.Zero else clampOffset(offset, scale)
-                                        true
-                                    }
-                                    Key.Enter, Key.MediaPlayPause -> {
-                                        if (scale > 1f) {
-                                            scale = 1f; offset = Offset.Zero
-                                        } else {
-                                            scale = 2f // quick toggle
-                                        }
-                                        true
-                                    }
-                                    else -> false
-                                }
+                                translationX = offsetAnim.value.x
+                                translationY = offsetAnim.value.y
+                                scaleX = scaleAnim.value
+                                scaleY = scaleAnim.value
                             },
                         contentAlignment = Alignment.Center
                     ) {
                         val req = ImageRequest.Builder(LocalContext.current)
                             .data(images[page])
-                            .size(targetW, targetH) // keep your existing target sizes
+                            .size(targetW, targetH)
                             .crossfade(true)
                             .build()
                         AsyncImage(
