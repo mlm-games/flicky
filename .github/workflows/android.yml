@@ -195,16 +195,4 @@ jobs:
           tag_name: ${{ needs.prepare-version.outputs.version_name }}
           target_commitish: ${{ needs.prepare-version.outputs.commit_sha }}
           prerelease: ${{ inputs.mark_prerelease }}
-          body: |
-            ## What's New
-            ${{ needs.prepare-version.outputs.release_notes }}
-            
-            ### Downloads
-            | Architecture | APK |
-            |-------------|-----|
-            | Universal (All ABIs) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-universal.apk` |
-            | ARM64 (Most phones) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-arm64-v8a.apk` |
-            | ARM32 (Older phones) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-armeabi-v7a.apk` |
-            | x86_64 (Emulators) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-x86_64.apk` |
-            | x86 (Old emulators) | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-x86.apk` |
-            | App Bundle | `${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}.aab` |
+          body_path: ./fastlane/metadata/android/en-US/changelogs/${{ needs.prepare-version.outputs.base_version_code }}.txt
