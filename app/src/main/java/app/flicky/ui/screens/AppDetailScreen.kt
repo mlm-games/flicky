@@ -401,7 +401,7 @@ private fun ChipsSection(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ElevatedAssistChip(onClick = {}, label = { Text(stringResource(R.string.version_prefix, app.version)) })
+            ElevatedAssistChip(onClick = {}, label = { Text(if (app.version.startsWith("v", ignoreCase = true)) app.version else "v${app.version}") })
             ElevatedAssistChip(onClick = {}, label = { Text(formatBytes(app.size)) })
 
             if (app.license.isNotBlank()) {
