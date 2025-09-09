@@ -162,10 +162,17 @@ class SettingsRepository(
     val repositoriesFlow: Flow<List<RepositoryInfo>> =
         repositoryDao.observeWithConfig()
             .map { rows ->
+                val defaultNames = RepositoryInfo.defaults().associate {
+                    normalizeUrl(it.url) to it.name
+                }
+
                 rows.map { r ->
+                    val normalizedUrl = normalizeUrl(r.baseUrl)
                     RepositoryInfo(
-                        name = r.name.ifBlank { r.baseUrl },
-                        url = normalizeUrl(r.baseUrl),
+                        name = r.name.ifBlank {
+                            defaultNames[normalizedUrl] ?: normalizedUrl
+                        },
+                        url = normalizedUrl,
                         enabled = r.enabled,
                         signingKey = r.fingerprint,
                         rotateMirrors = r.rotateMirrors
