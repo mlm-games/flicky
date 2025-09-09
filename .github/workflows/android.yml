@@ -96,6 +96,7 @@ jobs:
           auto-commit: 'false'
 
       - name: Commit Changes
+        id: commit-and-push
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
