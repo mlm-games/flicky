@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -105,8 +107,8 @@ fun UpdatesScreen(
                     Spacer(Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.ignored_updates),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        style = typography.titleMedium,
+                        color = colorScheme.onSurface,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
@@ -129,8 +131,8 @@ fun UpdatesScreen(
                     Spacer(Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.installed_apps),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        style = typography.titleMedium,
+                        color = colorScheme.onSurface,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
@@ -151,7 +153,7 @@ fun UpdatesScreen(
 private fun EmptyUpdatesCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant)
     ) {
         Box(
             modifier = Modifier.fillMaxWidth().padding(32.dp),
@@ -159,8 +161,8 @@ private fun EmptyUpdatesCard() {
         ) {
             Text(
                 stringResource(R.string.no_updates),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = typography.bodyLarge,
+                color = colorScheme.onSurfaceVariant
             )
         }
     }
@@ -180,8 +182,8 @@ private fun UpdateCard(
     ElevatedCard(
         modifier = Modifier.fillMaxWidth().cardAsFocusGroup(),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
+            containerColor = colorScheme.surface,
+            contentColor = colorScheme.onSurface
         )
     ) {
         Column(Modifier.padding(12.dp)) {
@@ -217,22 +219,22 @@ private fun UpdateCard(
                 LinearProgressIndicator(
                     progress = { progress },
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    color = colorScheme.primary,
+                    trackColor = colorScheme.surfaceVariant
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     stringResource(R.string.progress_percentage, (progress * 100).toInt()),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = typography.labelSmall,
+                    color = colorScheme.onSurfaceVariant
                 )
             } else {
                 Button(
                     onClick = { actions.updateOne(app) },
                     modifier = Modifier.fillMaxWidth().focusable(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
+                        containerColor = colorScheme.primary,
+                        contentColor = colorScheme.onPrimary
                     )
                 ) { Text(stringResource(R.string.action_update)) }
             }
@@ -250,8 +252,8 @@ private fun InstalledCard(
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
+            containerColor = colorScheme.surface,
+            contentColor = colorScheme.onSurface
         )
     ) {
         Row(

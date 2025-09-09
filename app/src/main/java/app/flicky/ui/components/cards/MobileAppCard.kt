@@ -3,6 +3,8 @@ package app.flicky.ui.components.cards
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -48,13 +50,13 @@ fun MobileAppCard(
             Spacer(Modifier.height(8.dp))
             Text(
                 app.name,
-                style = MaterialTheme.typography.titleSmall,
+                style = typography.titleSmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 app.summary,
-                style = MaterialTheme.typography.bodySmall,
+                style = typography.bodySmall,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -62,13 +64,13 @@ fun MobileAppCard(
             Row {
                 Text(
                     text = app.category,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
+                    style = typography.labelSmall,
+                    color = colorScheme.primary
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
                     text = "v${app.version}",
-                    style = MaterialTheme.typography.labelSmall
+                    style = typography.labelSmall
                 )
             }
         }

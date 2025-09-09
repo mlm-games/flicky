@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -18,7 +20,7 @@ fun TvNavigationSidebar(selected: Int, onSelect: (Int)->Unit) {
         modifier = Modifier
             .fillMaxHeight()
             .width(280.dp),
-        color = MaterialTheme.colorScheme.surface
+        color = colorScheme.surface
     ) {
         Column(
             modifier = Modifier
@@ -29,19 +31,19 @@ fun TvNavigationSidebar(selected: Int, onSelect: (Int)->Unit) {
                 Icon(
                     Icons.Default.Shop,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = colorScheme.primary
                 )
                 Spacer(Modifier.width(8.dp))
                 Column {
                     Text(
                         stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = typography.titleLarge,
+                        color = colorScheme.onSurface
                     )
                     Text(
                         stringResource(R.string.app_description),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -65,7 +67,7 @@ private fun NavItem(
     selected: Boolean,
     onClick:()->Unit
 ) {
-    val colors = MaterialTheme.colorScheme
+    val colors = colorScheme
 
     FilledTonalButton(
         onClick = onClick,

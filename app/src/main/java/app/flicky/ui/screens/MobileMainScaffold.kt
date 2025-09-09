@@ -14,7 +14,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shop
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -54,18 +54,22 @@ fun MobileMainScaffold(
         Row(Modifier.fillMaxSize()) {
             NavigationRail(
                 modifier = Modifier.fillMaxHeight(),
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                containerColor =
+                    colorScheme.surface,
+                contentColor =
+                    colorScheme.onSurfaceVariant,
                 header = {
                     Column(Modifier.padding(12.dp)) {
                         Icon(
                             Icons.Default.Shop,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+                            tint =
+                                colorScheme.primary
                         )
                         Text(
                             stringResource(R.string.app_name),
-                            color = MaterialTheme.colorScheme.onSurface
+                            color =
+                                colorScheme.onSurface
                         )
                     }
                 }
@@ -78,11 +82,16 @@ fun MobileMainScaffold(
                         icon = { Icon(item.icon, contentDescription = label) },
                         label = { Text(label) },
                         colors = NavigationRailItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            selectedIconColor =
+                                colorScheme.onPrimaryContainer,
+                            selectedTextColor =
+                                colorScheme.onPrimaryContainer,
+                            indicatorColor =
+                                colorScheme.primaryContainer,
+                            unselectedIconColor =
+                                colorScheme.onSurfaceVariant,
+                            unselectedTextColor =
+                                colorScheme.onSurfaceVariant
                         )
                     )
                 }
@@ -94,8 +103,10 @@ fun MobileMainScaffold(
         Scaffold(
             bottomBar = {
                 NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    containerColor =
+                        colorScheme.surface,
+                    contentColor =
+                        colorScheme.onSurfaceVariant,
                     tonalElevation = 3.dp
                 ) {
                     navItems.forEach { item ->
@@ -106,11 +117,16 @@ fun MobileMainScaffold(
                             icon = { Icon(item.icon, contentDescription = label) },
                             label = { Text(label) },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                selectedIconColor =
+                                    colorScheme.onPrimaryContainer,
+                                selectedTextColor =
+                                    colorScheme.onPrimaryContainer,
+                                indicatorColor =
+                                    colorScheme.primaryContainer,
+                                unselectedIconColor =
+                                    colorScheme.onSurfaceVariant,
+                                unselectedTextColor =
+                                    colorScheme.onSurfaceVariant
                             )
                         )
                     }

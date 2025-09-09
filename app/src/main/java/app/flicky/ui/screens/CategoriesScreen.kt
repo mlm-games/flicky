@@ -11,6 +11,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -53,19 +55,19 @@ fun CategoriesScreen(
         topBar = {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface,
+                color = colorScheme.surface,
                 tonalElevation = 3.dp
             ) {
                 TopAppBar(
                     title = {
                         Text(
                             stringResource(R.string.nav_categories),
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = colorScheme.onSurface
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface
+                        containerColor = colorScheme.surface,
+                        titleContentColor = colorScheme.onSurface
                     )
                 )
             }
@@ -75,7 +77,7 @@ fun CategoriesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            color = MaterialTheme.colorScheme.background
+            color = colorScheme.background
         ) {
             LazyVerticalGrid(
                 columns = gridCells,
@@ -133,8 +135,8 @@ fun CategoriesScreen(
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         Text(
                             "No apps in this category",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = typography.bodyMedium,
+                            color = colorScheme.onSurfaceVariant
                         )
                     }
                 } else {
@@ -162,9 +164,9 @@ private fun FilterChipCategory(label: String, count: Int, selected: Boolean, onS
             if (selected) Icon(Icons.Default.Check, contentDescription = null)
         },
         colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
+            selectedContainerColor = colorScheme.primaryContainer,
+            selectedLabelColor = colorScheme.onPrimaryContainer,
+            selectedLeadingIconColor = colorScheme.onPrimaryContainer
         )
     )
 }

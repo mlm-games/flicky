@@ -2,6 +2,7 @@ package app.flicky.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -17,19 +18,19 @@ fun MyScreenScaffold(
         topBar = {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface,
+                color = colorScheme.surface,
                 tonalElevation = 3.dp
             ) {
                 TopAppBar(
                     title = {
                         Text(
                             title,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = colorScheme.onSurface
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface
+                        containerColor = colorScheme.surface,
+                        titleContentColor = colorScheme.onSurface
                     ),
                     actions = actions
                 )
@@ -40,7 +41,7 @@ fun MyScreenScaffold(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            color = MaterialTheme.colorScheme.background
+            color = colorScheme.background
         ) {
             content(paddingValues)
         }

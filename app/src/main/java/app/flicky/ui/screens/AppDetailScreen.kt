@@ -42,6 +42,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -104,8 +105,8 @@ fun AppDetailScreen(
                     Text(app.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = colorScheme.surface,
+                    titleContentColor = colorScheme.onSurface
                 ),
                 actions = {
                     val ctx = LocalContext.current
@@ -132,7 +133,7 @@ fun AppDetailScreen(
     ) { paddingValues ->
         Surface(
             modifier = Modifier.fillMaxSize().padding(paddingValues),
-            color = MaterialTheme.colorScheme.background
+            color = colorScheme.background
         ) {
             if (isWide) {
                 DesktopLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onCancel, onUninstall, error, onOpenCategory)
@@ -160,7 +161,7 @@ private fun DesktopLayout(
     Row(Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier.width(380.dp).fillMaxHeight(),
-            color = MaterialTheme.colorScheme.surface,
+            color = colorScheme.surface,
             tonalElevation = 1.dp
         ) {
             LazyColumn(
@@ -179,7 +180,7 @@ private fun DesktopLayout(
         }
 
         Box(Modifier.fillMaxHeight().width(1.dp)) {
-            HorizontalDivider(Modifier, DividerDefaults.Thickness, color = MaterialTheme.colorScheme.outlineVariant)
+            HorizontalDivider(Modifier, DividerDefaults.Thickness, color = colorScheme.outlineVariant)
         }
 
         LazyColumn(
@@ -212,7 +213,7 @@ private fun MobileLayout(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+            ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = colorScheme.surface)) {
                 AppHeader(
                     app = app,
                     installedVersionCode = installedVersionCode,
@@ -240,7 +241,7 @@ private fun RightPaneContent(app: FDroidApp) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (app.summary.isNotBlank()) {
             SectionTitle(stringResource(R.string.overview))
-            Text(app.summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)
+            Text(app.summary, style = typography.bodyMedium, color = colorScheme.onBackground)
         }
         if (app.whatsNew.isNotBlank()) {
             SectionTitle(stringResource(R.string.whats_new))
@@ -282,10 +283,10 @@ private fun AppHeader(
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(app.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(app.packageName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(app.name, style = typography.titleLarge, color = colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(app.packageName, style = typography.bodySmall, color = colorScheme.onSurfaceVariant)
                 if (app.author.isNotBlank()) {
-                    Text(app.author, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(app.author, style = typography.bodySmall, color = colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -295,8 +296,8 @@ private fun AppHeader(
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                color = colorScheme.primary,
+                trackColor = colorScheme.surfaceVariant
             )
             Spacer(Modifier.height(6.dp))
 
@@ -312,8 +313,8 @@ private fun AppHeader(
             val percent = (progress * 100).toInt()
             Text(
                 if (showPercent) "$label $percent%" else label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = typography.bodySmall,
+                color = colorScheme.onSurfaceVariant
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -381,7 +382,7 @@ private fun AppHeader(
         }
         error?.takeIf { it.isNotBlank() }?.let {
             Spacer(Modifier.height(8.dp))
-            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            Text(it, color = colorScheme.error, style = typography.bodySmall)
         }
     }
 }
@@ -513,7 +514,7 @@ private fun ScreenshotsSection(urls: List<String>) {
 private fun SectionTitle(text: String) {
     Text(
         text,
-        style = MaterialTheme.typography.titleSmall,
+        style = typography.titleSmall,
         color = colorScheme.primary,
         modifier = Modifier.padding(bottom = 4.dp)
     )
@@ -539,12 +540,12 @@ private fun InfoRow(label: String, value: String) {
     ) {
         Text(
             label,
-            style = MaterialTheme.typography.bodyMedium,
+            style = typography.bodyMedium,
             color = colorScheme.onSurfaceVariant,
             modifier = Modifier.widthIn(min = 96.dp).wrapContentWidth(Alignment.Start)
         )
         Spacer(Modifier.width(12.dp))
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+        Text(value, style = typography.bodyMedium, color = colorScheme.onSurface)
     }
 }
 

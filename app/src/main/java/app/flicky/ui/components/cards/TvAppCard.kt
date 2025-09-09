@@ -6,6 +6,8 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -31,7 +33,7 @@ fun TVAppCard(
 ) {
     var focused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(targetValue = if (focused) 1.05f else 1f, label = "tv_card_scale")
-    val colors = MaterialTheme.colorScheme
+    val colors = colorScheme
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(autofocus) { if (autofocus) focusRequester.requestFocus() }
 
@@ -68,13 +70,13 @@ fun TVAppCard(
             Spacer(Modifier.height(8.dp))
             Text(
                 app.name,
-                style = MaterialTheme.typography.titleSmall,
+                style = typography.titleSmall,
                 maxLines = 1,
                 color = if (focused) colors.onPrimaryContainer else colors.onSurface
             )
             Text(
                 app.summary,
-                style = MaterialTheme.typography.bodySmall,
+                style = typography.bodySmall,
                 maxLines = 2,
                 color = if (focused) colors.onPrimaryContainer.copy(alpha = 0.8f) else colors.onSurfaceVariant
             )

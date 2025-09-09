@@ -6,6 +6,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.Dp
@@ -30,12 +32,12 @@ fun AppTexts(
     newLabel: String?,
     summary: String,
 ) {
-    Text(name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    Text(name, style = typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
     installedLabel?.let {
-        Text("Installed: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Installed: $it", style = typography.bodySmall, color = colorScheme.onSurfaceVariant)
     }
     newLabel?.let {
-        Text("New: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+        Text("New: $it", style = typography.bodySmall, color = colorScheme.primary)
     }
-    Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    Text(summary, style = typography.bodySmall, color = colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
 }

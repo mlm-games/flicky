@@ -11,6 +11,8 @@ import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,14 +46,14 @@ fun SettingsSection(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
+            style = typography.titleMedium,
+            color = colorScheme.primary,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surface,
+            color = colorScheme.surface,
             tonalElevation = 1.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -92,16 +94,16 @@ fun SettingsItem(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.5f),
+                style = typography.bodyLarge,
+                color = colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.5f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = typography.bodyMedium,
+                    color = colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -110,8 +112,8 @@ fun SettingsItem(
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -122,7 +124,7 @@ fun SettingsItem(
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = colorScheme.onSurfaceVariant
         )
     }
 }
@@ -156,8 +158,8 @@ fun SettingsToggle(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.5f),
+                style = typography.bodyLarge,
+                color = colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.5f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -165,8 +167,8 @@ fun SettingsToggle(
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -206,8 +208,8 @@ fun SettingsAction(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.5f),
+                style = typography.bodyLarge,
+                color = colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.5f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -215,8 +217,8 @@ fun SettingsAction(
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -227,10 +229,10 @@ fun SettingsAction(
             onClick = onClick,
             enabled = enabled,
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                containerColor = colorScheme.primary,
+                contentColor = colorScheme.onPrimary,
+                disabledContainerColor = colorScheme.surfaceVariant,
+                disabledContentColor = colorScheme.onSurfaceVariant
             )
         ) {
             Text(buttonText)
@@ -253,7 +255,7 @@ private fun SettingRowContainer(
     shape: Shape = RoundedCornerShape(14.dp),
     content: @Composable RowScope.() -> Unit
 ) {
-    val colors = MaterialTheme.colorScheme
+    val colors = colorScheme
     var focused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(targetValue = if (focused) 1.02f else 1f, label = "setting_row_scale")
     val borderColor by animateColorAsState(
@@ -331,7 +333,7 @@ fun <T> SelectionDialog(
                 },
                 enabled = selected != null,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
+                    contentColor = colorScheme.primary
                 )
             ) {
                 Text("Select")
@@ -341,7 +343,7 @@ fun <T> SelectionDialog(
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    contentColor = colorScheme.onSurfaceVariant
                 )
             ) {
                 Text("Cancel")
@@ -364,15 +366,15 @@ fun <T> SelectionDialog(
                         selected = (selected == item),
                         onClick = { selected = item },
                         colors = RadioButtonDefaults.colors(
-                            selectedColor = MaterialTheme.colorScheme.primary,
-                            unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            selectedColor = colorScheme.primary,
+                            unselectedColor = colorScheme.onSurfaceVariant
                         )
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = itemContent(item),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = typography.bodyLarge,
+                        color = colorScheme.onSurface
                     )
                 }
             }

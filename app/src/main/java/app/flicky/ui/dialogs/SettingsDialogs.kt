@@ -16,6 +16,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
@@ -61,7 +63,7 @@ fun SliderSettingDialog(
             TextButton(
                 onClick = { onValueSelected(sliderValue) },
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
+                    contentColor = colorScheme.primary
                 )
             ) {
                 Text("Apply")
@@ -71,7 +73,7 @@ fun SliderSettingDialog(
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    contentColor = colorScheme.onSurfaceVariant
                 )
             ) {
                 Text("Cancel")
@@ -83,7 +85,7 @@ fun SliderSettingDialog(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    containerColor = colorScheme.primaryContainer.copy(alpha = 0.3f)
                 )
             ) {
                 Box(
@@ -94,8 +96,8 @@ fun SliderSettingDialog(
                 ) {
                     Text(
                         text = String.format(Locale.getDefault(), "%.1f", sliderValue),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        style = typography.headlineMedium,
+                        color = colorScheme.onPrimaryContainer
                     )
                 }
             }
@@ -113,9 +115,9 @@ fun SliderSettingDialog(
                 valueRange = min..max,
                 steps = stepsCount,
                 colors = SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.primary,
-                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                    thumbColor = colorScheme.primary,
+                    activeTrackColor = colorScheme.primary,
+                    inactiveTrackColor = colorScheme.surfaceVariant
                 )
             )
 
@@ -126,13 +128,13 @@ fun SliderSettingDialog(
             ) {
                 Text(
                     text = min.toString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = typography.labelSmall,
+                    color = colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = max.toString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = typography.labelSmall,
+                    color = colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -179,15 +181,15 @@ fun FlickyDialog(
             {
                 Text(
                     text = it,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = typography.headlineSmall,
+                    color = colorScheme.onSurface
                 )
             }
         },
         text = {
             Surface(
-                color = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                color = colorScheme.surface,
+                contentColor = colorScheme.onSurfaceVariant
             ) {
                 Column(
                     modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -196,10 +198,10 @@ fun FlickyDialog(
             }
         },
         properties = properties,
-        containerColor = MaterialTheme.colorScheme.surface,
-        iconContentColor = MaterialTheme.colorScheme.secondary,
-        titleContentColor = MaterialTheme.colorScheme.onSurface,
-        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        containerColor = colorScheme.surface,
+        iconContentColor = colorScheme.secondary,
+        titleContentColor = colorScheme.onSurface,
+        textContentColor = colorScheme.onSurfaceVariant,
         tonalElevation = 6.dp
     )
 }
@@ -225,9 +227,9 @@ fun ConfirmationDialog(
                 onClick = onConfirm,
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = if (isDangerous) {
-                        MaterialTheme.colorScheme.error
+                        colorScheme.error
                     } else {
-                        MaterialTheme.colorScheme.primary
+                        colorScheme.primary
                     }
                 )
             ) {
@@ -238,7 +240,7 @@ fun ConfirmationDialog(
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    contentColor = colorScheme.onSurfaceVariant
                 )
             ) {
                 Text(dismissText)
@@ -247,8 +249,8 @@ fun ConfirmationDialog(
     ) {
         Text(
             text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = typography.bodyMedium,
+            color = colorScheme.onSurfaceVariant
         )
     }
 }
@@ -279,8 +281,8 @@ fun InputDialog(
                 onClick = { onConfirm(inputValue) },
                 enabled = isValid,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    contentColor = colorScheme.primary,
+                    disabledContentColor = colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                 )
             ) {
                 Text(confirmText)
@@ -290,7 +292,7 @@ fun InputDialog(
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    contentColor = colorScheme.onSurfaceVariant
                 )
             ) {
                 Text(dismissText)
@@ -305,12 +307,12 @@ fun InputDialog(
             isError = !isValid && inputValue.isNotEmpty(),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                errorBorderColor = MaterialTheme.colorScheme.error,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                errorLabelColor = MaterialTheme.colorScheme.error
+                focusedBorderColor = colorScheme.primary,
+                unfocusedBorderColor = colorScheme.outline,
+                errorBorderColor = colorScheme.error,
+                focusedLabelColor = colorScheme.primary,
+                unfocusedLabelColor = colorScheme.onSurfaceVariant,
+                errorLabelColor = colorScheme.error
             ),
             modifier = Modifier.fillMaxWidth()
         )

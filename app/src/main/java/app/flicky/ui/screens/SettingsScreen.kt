@@ -10,6 +10,8 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
@@ -97,8 +99,8 @@ fun SettingsScreen(vm: SettingsViewModel) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
                         text = category.name.lowercase().replaceFirstChar { it.uppercase() },
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        style = typography.titleMedium,
+                        color = colorScheme.primary,
                         modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
                     )
                 }
@@ -168,8 +170,8 @@ fun SettingsScreen(vm: SettingsViewModel) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Text(
                     text = "Repositories",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    style = typography.titleMedium,
+                    color = colorScheme.primary,
                     modifier = Modifier.padding(start = 4.dp, top = 12.dp, bottom = 4.dp)
                 )
             }
@@ -207,11 +209,11 @@ fun SettingsScreen(vm: SettingsViewModel) {
                     Column(Modifier.fillMaxWidth().padding(14.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(Modifier.weight(1f)) {
-                                Text(r.name, style = MaterialTheme.typography.bodyLarge)
+                                Text(r.name, style = typography.bodyLarge)
                                 Text(
                                     r.url,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    style = typography.bodySmall,
+                                    color = colorScheme.onSurfaceVariant
                                 )
                             }
                             Switch(
@@ -290,7 +292,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                         Spacer(Modifier.height(12.dp))
 
                         // Trust options
-                        Text(stringResource(id = R.string.trust), style = MaterialTheme.typography.labelLarge)
+                        Text(stringResource(id = R.string.trust), style = typography.labelLarge)
                         Spacer(Modifier.height(6.dp))
 
                         var openTrust by remember { mutableStateOf(false) }
@@ -381,7 +383,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                         onClick = { showResetConfirm = true },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
+                            contentColor = colorScheme.error
                         )
                     ) {
                         Text("Reset to defaults")
@@ -475,8 +477,8 @@ private fun AddRepoDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit
                 onClick = { if (canAdd) onAdd(name.ifBlank { url }, url) },
                 enabled = canAdd,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    contentColor = colorScheme.primary,
+                    disabledContentColor = colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                 )
             ) {
                 Text(stringResource(id = R.string.action_add))
@@ -486,7 +488,7 @@ private fun AddRepoDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    contentColor = colorScheme.onSurfaceVariant
                 )
             ) { Text(stringResource(R.string.action_cancel)) }
         }

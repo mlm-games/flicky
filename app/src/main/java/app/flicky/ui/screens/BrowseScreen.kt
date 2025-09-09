@@ -35,6 +35,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
@@ -112,7 +114,7 @@ fun BrowseScreen(
             Column {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.surface,
+                    color = colorScheme.surface,
                     tonalElevation = 3.dp
                 ) {
                     Row(
@@ -133,7 +135,7 @@ fun BrowseScreen(
 
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    color = colorScheme.surfaceVariant.copy(alpha = 0.3f)
                 ) {
                     Row(
                         modifier = Modifier
@@ -215,8 +217,8 @@ fun BrowseScreen(
                     if (!status.isNullOrBlank()) {
                         Text(
                             text = status,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = typography.labelSmall,
+                            color = colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                         )
                     }
@@ -237,19 +239,19 @@ fun BrowseScreen(
                         Icons.Default.SearchOff,
                         contentDescription = null,
                         modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        tint = colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
                         stringResource(R.string.no_apps_found),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = typography.titleLarge,
+                        color = colorScheme.onSurfaceVariant
                     )
                     if (query.isNotEmpty()) {
                         Text(
                             stringResource(R.string.try_different_search),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            style = typography.bodyMedium,
+                            color = colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -323,15 +325,15 @@ private fun SortDialog(
                         selected = currentSort == option,
                         onClick = { onSortSelected(option) },
                         colors = RadioButtonDefaults.colors(
-                            selectedColor = MaterialTheme.colorScheme.primary,
-                            unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            selectedColor = colorScheme.primary,
+                            unselectedColor = colorScheme.onSurfaceVariant
                         )
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         optionText,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = typography.bodyLarge,
+                        color = colorScheme.onSurface
                     )
                 }
             }
@@ -370,8 +372,8 @@ private fun TvAwareDockedSearchBar(
         }
     }
     val colors1 = SearchBarDefaults.colors(
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+        colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        colorScheme.surfaceVariant.copy(alpha = 0.7f),
     )
     DockedSearchBar(
         inputField = {
@@ -405,12 +407,12 @@ private fun TvAwareDockedSearchBar(
                     }
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                    focusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    unfocusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    focusedBorderColor = colorScheme.primary,
+                    unfocusedBorderColor = colorScheme.surfaceVariant,
+                    focusedTextColor = colorScheme.onSurface,
+                    unfocusedTextColor = colorScheme.onSurface
                 ),
                 modifier = Modifier.fillMaxWidth(1f)
             )

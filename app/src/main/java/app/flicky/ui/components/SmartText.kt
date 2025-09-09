@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,8 +42,8 @@ fun SmartText(
     val plain = remember(text, hasHtml) { if (hasHtml) HtmlUtils.toPlainText(text) else text }
 
     if (rich && hasHtml) {
-        val color = MaterialTheme.colorScheme.onSurface.toArgb()
-        val link = MaterialTheme.colorScheme.primary.toArgb()
+        val color = colorScheme.onSurface.toArgb()
+        val link = colorScheme.primary.toArgb()
         val spanned = remember(text) { HtmlUtils.toSpanned(text) }
 
         AndroidView(
@@ -76,8 +78,8 @@ fun SmartText(
         Text(
             text = plain,
             modifier = modifier,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            style = typography.bodyMedium,
+            color = colorScheme.onSurface,
             maxLines = maxLines
         )
     }
