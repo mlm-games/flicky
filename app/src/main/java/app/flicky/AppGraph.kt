@@ -73,7 +73,10 @@ object AppGraph {
                     cfgDao.insertIgnore(
                         RepoConfig(
                             baseUrl = base,
-                            enabled = def.enabled
+                            enabled = def.enabled,
+                            rotateMirrors = base.equals("https://f-droid.org/repo", ignoreCase = true),
+                            strategy = if (base.equals("https://f-droid.org/repo", ignoreCase = true))
+                                "RoundRobin" else "StickyLastGood"
                         )
                     )
                 }

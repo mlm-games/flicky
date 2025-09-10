@@ -255,7 +255,18 @@ class SettingsRepository(
                 name = name.ifBlank { base }
             )
         )
-        repoConfigDao.insertIgnore(RepoConfig(baseUrl = base, enabled = true))
+        val isFDroid = base.equals("https://f-droid.org/repo", ignoreCase = true) ||
+                name.equals("F-Droid", ignoreCase = true) ||
+                base.contains("f-droid.org", ignoreCase = true)
+
+        repoConfigDao.insertIgnore(
+            RepoConfig(
+                baseUrl = base,
+                enabled = true,
+                rotateMirrors = isFDroid,
+                strategy = if (isFDroid) "RoundRobin" else "StickyLastGood"
+            )
+        )
     }
 
     suspend fun deleteRepository(url: String) {
@@ -278,10 +289,14 @@ class SettingsRepository(
                     name = def.name
                 )
             )
+            val isFDroid = base.equals("https://f-droid.org/repo", ignoreCase = true)
+
             repoConfigDao.insertIgnore(
                 RepoConfig(
                     baseUrl = base,
-                    enabled = def.enabled
+                    enabled = def.enabled,
+                    rotateMirrors = isFDroid,
+                    strategy = if (isFDroid) "RoundRobin" else "StickyLastGood"
                 )
             )
         }
