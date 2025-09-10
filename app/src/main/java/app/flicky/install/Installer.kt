@@ -261,8 +261,8 @@ class Installer(
                             trustMode.equals("Pinned", true) ||
                             trustMode.equals("CustomCA", true) -> (listOf(normalize(dlBase)) + basesRaw)
                         .distinct()
-                        .filter { it.startsWith("https://") || it.contains(".onion") }
-                    else -> (listOf(normalize(dlBase)) + basesRaw).distinct()
+                        .filter { it.startsWith("https://") || (policy.includeOnion && it.contains(".onion")) }
+                            else -> (listOf(normalize(dlBase)) + basesRaw).distinct()
                 }
                 return filteredBases.map { b -> "${normalize(b)}/$relPath" }
             }
@@ -283,7 +283,7 @@ class Installer(
                     trustMode.equals("Pinned", true) ||
                     trustMode.equals("CustomCA", true) -> (listOf(normalize(dlBase)) + basesRaw)
                 .distinct()
-                .filter { it.startsWith("https://") || it.contains(".onion") }
+                .filter { it.startsWith("https://") || (policy.includeOnion && it.contains(".onion")) }
             else -> (listOf(normalize(dlBase)) + basesRaw).distinct()
         }
         val path = apkPathOrUrl.trimStart('/')

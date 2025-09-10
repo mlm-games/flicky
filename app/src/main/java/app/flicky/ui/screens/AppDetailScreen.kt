@@ -373,7 +373,7 @@ private fun AppHeader(
                 Button(onClick = onInstall, modifier = Modifier.fillMaxWidth()) {
                     Icon(
                         imageVector = Icons.Outlined.InstallDesktop, //else Icons.Outlined.InstallMobile
-                        contentDescription = stringResource(R.string.action_uninstall)
+                        contentDescription = stringResource(R.string.action_install)
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.action_install))

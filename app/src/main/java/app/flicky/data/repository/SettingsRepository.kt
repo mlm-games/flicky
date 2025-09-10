@@ -314,8 +314,7 @@ class SettingsRepository(
         return context.ds.data.first()[REPO_HEADERS] ?: "{}"
     }
 
-    fun normalizeUrl(url: String): String =
-        url.trim().removeSuffix("/")
+    fun normalizeUrl(url: String): String = url.trim().trimEnd('/')
 
     suspend fun clearCache() {
         context.ds.edit {
