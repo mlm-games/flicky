@@ -1,3 +1,17 @@
+## v3.4.1
+
+- Shorten versions section
+- Add pull to refresh syncing, add copy and share buttons in versions section
+- Bump major ver (might need to clear cache)
+- Add choosable versions to the bottom (repo specific)
+- Other misc fixes
+- Enable mirrors only for fdroid by default (with roundrobin)
+- (misc) import colorscheme and typography directly
+- Show default names for predefined repos
+- only add an extra v if not present (for app versions)
+- Update android.yml for GH release notes
+
+
 ## v3.3.6
 
 - Update android.yml to use correct id
