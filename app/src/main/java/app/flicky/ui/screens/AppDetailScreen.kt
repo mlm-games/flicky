@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.InstallDesktop
 import androidx.compose.material.icons.outlined.KeyboardDoubleArrowUp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ElevatedAssistChip
@@ -68,6 +69,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import app.flicky.R
+import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.helper.openUrl
 import app.flicky.helper.shareText
@@ -89,11 +91,13 @@ fun AppDetailScreen(
     stage: TaskStage?,
     progress: Float,
     onInstall: () -> Unit,
+    onInstallVariant: (AppVariant) -> Unit,
     onOpen: () -> Unit,
     onCancel: () -> Unit,
     onUninstall: () -> Unit,
     error: String?,
     onOpenCategory: (String) -> Unit,
+    variants: List<AppVariant>,
 ) {
     val cfg = LocalConfiguration.current
     val isWide = cfg.screenWidthDp >= 900
@@ -136,9 +140,9 @@ fun AppDetailScreen(
             color = colorScheme.background
         ) {
             if (isWide) {
-                DesktopLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onCancel, onUninstall, error, onOpenCategory)
+                DesktopLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onInstallVariant, onOpen, onCancel, onUninstall, error, onOpenCategory, variants)
             } else {
-                MobileLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onCancel,  onUninstall, error, onOpenCategory)
+                MobileLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onInstallVariant, onOpen, onCancel,  onUninstall, error, onOpenCategory, variants)
             }
         }
     }
@@ -152,12 +156,14 @@ private fun DesktopLayout(
     stage: TaskStage?,
     progress: Float,
     onInstall: () -> Unit,
+    onInstallVariant: (AppVariant) -> Unit,
     onOpen: () -> Unit,
     onCancel: () -> Unit,
     onUninstall: () -> Unit,
     error: String?,
-    onOpenCategory: (String) -> Unit
-) {
+    onOpenCategory: (String) -> Unit,
+    variants: List<AppVariant>,
+    ) {
     Row(Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier.width(380.dp).fillMaxHeight(),
@@ -188,7 +194,12 @@ private fun DesktopLayout(
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { RightPaneContent(app) }
+            item { RightPaneContent(
+                app = app,
+                variants = variants,
+                installedVersionCode = installedVersionCode,
+                onInstallVariant = onInstallVariant,
+            ) }
         }
     }
 }
@@ -201,12 +212,14 @@ private fun MobileLayout(
     stage: TaskStage?,
     progress: Float,
     onInstall: () -> Unit,
+    onInstallVariant: (AppVariant) -> Unit,
     onOpen: () -> Unit,
     onCancel: () -> Unit,
     onUninstall: () -> Unit,
     error: String?,
-    onOpenCategory: (String) -> Unit
-) {
+    onOpenCategory: (String) -> Unit,
+    variants: List<AppVariant>,
+    ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -231,13 +244,23 @@ private fun MobileLayout(
             }
         }
         item { ChipsSection(app, installedVersionCode, onOpenCategory) }
-        item { RightPaneContent(app) }
+        item { RightPaneContent(
+            app = app,
+            variants = variants,
+            installedVersionCode = installedVersionCode,
+            onInstallVariant = onInstallVariant
+        ) }
     }
 }
 
 
 @Composable
-private fun RightPaneContent(app: FDroidApp) {
+private fun RightPaneContent(
+    app: FDroidApp,
+    variants: List<AppVariant>,
+    installedVersionCode: Long?,
+    onInstallVariant: (AppVariant) -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (app.summary.isNotBlank()) {
             SectionTitle(stringResource(R.string.overview))
@@ -247,12 +270,22 @@ private fun RightPaneContent(app: FDroidApp) {
             SectionTitle(stringResource(R.string.whats_new))
             SmartExpandableText(text = app.whatsNew, rich = true, collapsedMaxLines = 8)
         }
+
         if (app.screenshots.isNotEmpty()) {
             ScreenshotsSection(app.screenshots)
         }
         if (app.description.isNotBlank()) {
             SectionTitle(stringResource(R.string.about))
             SmartExpandableText(text = app.description, rich = true, collapsedMaxLines = 10)
+        }
+
+        if (variants.isNotEmpty()) {
+            SectionTitle(stringResource(id = R.string.versions))
+            VersionsSection(
+                variants = variants.take(8), // last few
+                installedVersionCode = installedVersionCode,
+                onInstallVariant = onInstallVariant
+            )
         }
     }
 }
@@ -594,4 +627,66 @@ private fun openAppSettings(context: Context, packageName: String) {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
     context.startActivity(intent)
+}
+
+@Composable
+private fun VersionsSection(
+    variants: List<AppVariant>,
+    installedVersionCode: Long?,
+    onInstallVariant: (AppVariant) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        variants.forEach { v ->
+            val installed = installedVersionCode?.let { v.versionCode.toLong() == it } == true
+            val compat = v.isCompatible
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = colorScheme.surface,
+                    contentColor = colorScheme.onSurface
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = "v${v.versionName} (${v.versionCode})",
+                            style = typography.bodyLarge
+                        )
+                        Text(
+                            text = "${v.repositoryName} • ${formatBytes(v.size)}",
+                            style = typography.bodySmall,
+                            color = colorScheme.onSurfaceVariant
+                        )
+                        if (installed) {
+                            Text(
+                                text = stringResource(id = R.string.installed),
+                                style = typography.labelSmall,
+                                color = colorScheme.primary
+                            )
+                        } else if (!compat) {
+                            Text(
+                                text = stringResource(id = R.string.incompatible),
+                                style = typography.labelSmall,
+                                color = colorScheme.error
+                            )
+                        }
+                    }
+                    Button(
+                        onClick = { onInstallVariant(v) },
+                        enabled = compat && !installed,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorScheme.primary,
+                            contentColor = colorScheme.onPrimary
+                        )
+                    ) { Text(stringResource(id = R.string.action_install)) }
+                }
+            }
+        }
+    }
 }

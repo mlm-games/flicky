@@ -1,5 +1,6 @@
 package app.flicky.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -42,17 +43,13 @@ fun UpdatesScreen(
     val ctx = LocalContext.current
     val isTV = remember { DeviceUtils.isTV(ctx.packageManager) }
 
-    val suppressed = remember(ui) {
-        ui.installed.filter { app ->
-            val cur = ui.installedVersionsCode[app.packageName] ?: 0L
-            val candidate = app.versionCode.toLong() > cur
-            if (!candidate) return@filter false
-            val pref = ui.ignoredPrefs[app.packageName]
-            pref?.ignoreUpdates == true || ((pref?.ignoreVersionCode ?: 0L) >= app.versionCode.toLong())
-        }
-    }
+    val suppressed = ui.suppressed
 
     var showIgnored by remember { mutableStateOf(false) }
+
+    LaunchedEffect(suppressed) {
+        if (suppressed.isEmpty() && showIgnored) showIgnored = false
+    }
 
     MyScreenScaffold(
         // Hiding for space
@@ -64,7 +61,7 @@ fun UpdatesScreen(
                     modifier = Modifier.padding(end = 8.dp)
                 ) { Text(stringResource(R.string.update_all, ui.updates.size)) }
             }
-            if (suppressed.isNotEmpty()) {
+            AnimatedVisibility(visible = suppressed.isNotEmpty()) {
                 OutlinedButton(onClick = { showIgnored = !showIgnored }) {
                     Text(
                         stringResource(
@@ -75,6 +72,7 @@ fun UpdatesScreen(
                 }
             }
         }
+
     ) {
         LazyVerticalGrid(
             columns = gridCells,

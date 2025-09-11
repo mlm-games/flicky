@@ -7,4 +7,7 @@
     <string name="exodus_privacy">Exodus Privacy</string>
     <string name="permissions">App Info</string>
     <string name="app_not_installed">App not installed</string>
+    <string name="versions">Versions</string>
+    <string name="installed" />
+    <string name="incompatible">Incompatible</string>
 </resources>

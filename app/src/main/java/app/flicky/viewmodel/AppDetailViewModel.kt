@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.flicky.data.local.AppDao
+import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.InstalledAppsRepository
 import app.flicky.data.repository.SettingsRepository
@@ -21,7 +22,8 @@ data class DetailUiState(
     val isInstalling: Boolean = false,
     val progress: Float = 0f,
     val error: String? = null,
-    val stage: TaskStage? = null
+    val stage: TaskStage? = null,
+    val variants: List<AppVariant> = emptyList(),
 )
 
 class AppDetailViewModel(
@@ -39,7 +41,12 @@ class AppDetailViewModel(
         viewModelScope.launch {
             dao.observeOne(packageName).collect { app ->
                 val installed = installedRepo.getVersionCode(packageName)
-                _ui.value = _ui.value.copy(app = app, installedVersionCode = installed)
+                val variants = runCatching { dao.variantsFor(packageName) }.getOrElse { emptyList() }
+                _ui.value = _ui.value.copy(
+                    app = app,
+                    installedVersionCode = installed,
+                    variants = variants.sortedByDescending { it.versionCode } // newest first
+                )
             }
         }
         viewModelScope.launch {
@@ -159,6 +166,28 @@ class AppDetailViewModel(
             delay(1000)
             val newInstalled = installedRepo.getVersionCode(packageName)
             _ui.value = _ui.value.copy(installedVersionCode = newInstalled)
+        }
+    }
+
+    fun installVariant(variant: AppVariant) {
+        viewModelScope.launch {
+            _ui.value = _ui.value.copy(isInstalling = true, progress = 0f, error = null, stage = TaskStage.Downloading(0f))
+            try {
+                val ok = installer.install(variant)
+                _ui.update {
+                    it.copy(
+                        isInstalling = false,
+                        stage = TaskStage.Finished(ok),
+                        progress = if (ok) 1f else it.progress,
+                        error = if (ok) null else "Installation failed"
+                    )
+                }
+                delay(1000)
+                val newInstalled = installedRepo.getVersionCode(packageName)
+                _ui.update { it.copy(installedVersionCode = newInstalled) }
+            } catch (e: Exception) {
+                _ui.update { it.copy(isInstalling = false, error = "Install failed: ${e.message}", stage = TaskStage.Finished(false)) }
+            }
         }
     }
 }

@@ -31,10 +31,12 @@ fun AppDetailRoute(
         stage = ui.stage,
         progress = ui.progress,
         onInstall = { vm.install() },
+        onInstallVariant = { v -> vm.installVariant(v) },
         onOpen = { vm.openApp() },
         onCancel = { vm.cancel() },
         onUninstall = { vm.uninstall() },
         error = ui.error,
-        onOpenCategory = onOpenCategory
+        onOpenCategory = onOpenCategory,
+        variants = ui.variants,
     )
 }
