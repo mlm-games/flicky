@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.InstallDesktop
 import androidx.compose.material.icons.outlined.KeyboardDoubleArrowUp
@@ -36,6 +37,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedAssistChip
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,6 +60,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -167,7 +171,7 @@ private fun DesktopLayout(
     error: String?,
     onOpenCategory: (String) -> Unit,
     variants: List<AppVariant>,
-    ) {
+) {
     Row(Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier.width(350.dp).fillMaxHeight(),
@@ -223,7 +227,7 @@ private fun MobileLayout(
     error: String?,
     onOpenCategory: (String) -> Unit,
     variants: List<AppVariant>,
-    ) {
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -391,7 +395,7 @@ private fun AppHeader(
 //                        )
 //                        if (!compact) {
 //                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.action_open))
+                        Text(stringResource(R.string.action_open))
 //                        }
                     }
                     Spacer(Modifier.width(8.dp))
@@ -402,7 +406,7 @@ private fun AppHeader(
 //                        )
 //                        if (!compact) {
 //                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.action_uninstall))
+                        Text(stringResource(R.string.action_uninstall))
 //                        }
                     }
                 }
@@ -646,12 +650,11 @@ private fun VersionsSection(
         variants.forEach { v ->
             val installed = installedVersionCode?.let { v.versionCode.toLong() == it } == true
             val compat = v.isCompatible
+            var showMenu by remember { mutableStateOf(false) }
+
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = colorScheme.surface,
-                    contentColor = colorScheme.onSurface
-                )
+                colors = CardDefaults.elevatedCardColors(containerColor = colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier
@@ -660,55 +663,70 @@ private fun VersionsSection(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Version info
                     Column(Modifier.weight(1f)) {
                         Text("v${v.versionName} (${v.versionCode})", style = typography.bodyLarge)
-                        Text("${v.repositoryName} • ${formatBytes(v.size)}",
-                            style = typography.bodySmall, color = colorScheme.onSurfaceVariant)
+                        Text(
+                            "${v.repositoryName} • ${formatBytes(v.size)}",
+                            style = typography.bodySmall,
+                            color = colorScheme.onSurfaceVariant
+                        )
                         if (installed) {
-                            Text(stringResource(id = R.string.installed), style = typography.labelSmall, color = colorScheme.primary)
-                        } else if (!compat) {
-                            Text(stringResource(id = R.string.incompatible), style = typography.labelSmall, color = colorScheme.error)
+                            Text(
+                                "✓ Installed",
+                                style = typography.labelSmall,
+                                color = colorScheme.primary
+                            )
                         }
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        IconButton(
-                            onClick = {
-                                clipboard.nativeClipboard.text = AnnotatedString(v.apkUrl)
-                                Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
+                    // Actions
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box {
+                            IconButton(
+                                onClick = { showMenu = true },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.MoreVert,
+                                    contentDescription = "More",
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
-                        ) { Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.copy_url)) }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Copy URL") },
+                                    onClick = {
+                                        clipboard.nativeClipboard.setText(AnnotatedString(v.apkUrl))
+                                        Toast.makeText(ctx, "Copied", Toast.LENGTH_SHORT).show()
+                                        showMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Share") },
+                                    onClick = {
+                                        shareText(ctx, v.apkUrl)
+                                        showMenu = false
+                                    }
+                                )
+                            }
+                        }
 
-                        IconButton(
-                            onClick = {
-                                shareText(ctx, v.apkUrl)
-                            }
-                        ) { Icon(Icons.Default.Share, contentDescription = stringResource(R.string.action_share)) }
+                        Spacer(Modifier.width(4.dp))
 
                         Button(
                             onClick = { onInstallVariant(v) },
                             enabled = compat && !installed,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colorScheme.primary,
-                                contentColor = colorScheme.onPrimary
-                            )
-                        ) { Text(stringResource(id = R.string.action_install)) }
+                            modifier = Modifier.height(36.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+                        ) {
+                            Text(if (installed) "Installed" else "Install")
+                        }
                     }
                 }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .combinedClickable(
-                            onClick = {},
-                            onLongClick = {
-                                if (v.sha256.isNotBlank()) {
-                                    clipboard.nativeClipboard.text = AnnotatedString(v.sha256)
-                                    Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        )
-                )
             }
         }
     }
