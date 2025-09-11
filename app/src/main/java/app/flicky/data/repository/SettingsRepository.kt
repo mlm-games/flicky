@@ -76,6 +76,8 @@ class SettingsRepository(
         val PREFERRED_REPO = intPreferencesKey("preferred_repo")
         val SHOW_DEBUG_INFO = booleanPreferencesKey("show_debug_info")
         val FAIL_ON_TRUST_ERRORS = booleanPreferencesKey("fail_on_trust_errors")
+        val LAST_QUERY = stringPreferencesKey("last_query")
+
 
     }
 
@@ -313,6 +315,14 @@ class SettingsRepository(
     suspend fun getRepoHeadersMap(): String {
         return context.ds.data.first()[REPO_HEADERS] ?: "{}"
     }
+
+    suspend fun setLastQuery(q: String) {
+        context.ds.edit { it[LAST_QUERY] = q }
+    }
+    suspend fun getLastQuery(): String {
+        return context.ds.data.first()[LAST_QUERY] ?: ""
+    }
+
 
     fun normalizeUrl(url: String): String = url.trim().trimEnd('/')
 

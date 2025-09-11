@@ -61,6 +61,9 @@ class BrowseViewModel(
 
     init {
         viewModelScope.launch {
+            _query.value = runCatching { settings.getLastQuery() }.getOrDefault("")
+        }
+        viewModelScope.launch {
             settings.settingsFlow
                 .map { it.defaultSort }
                 .distinctUntilChanged()
@@ -87,6 +90,9 @@ class BrowseViewModel(
                     )
                 }
             }
+        }
+        viewModelScope.launch {
+            query.debounce(400).collect { q -> runCatching { settings.setLastQuery(q) } }
         }
     }
 

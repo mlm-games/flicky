@@ -34,7 +34,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -47,6 +46,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -99,6 +99,7 @@ fun BrowseScreen(
     var menuOpen by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     var showSortDialog by remember { mutableStateOf(false) }
+
 
     val resolvedError = errorMessage?.asString()
     LaunchedEffect(resolvedError) {
@@ -226,10 +227,14 @@ fun BrowseScreen(
             }
         }
     ) { padding ->
-        Box(
-            modifier = Modifier.fillMaxSize().padding(padding)
+        PullToRefreshBox(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            isRefreshing = isSyncing,
+            onRefresh = onSyncClick
         ) {
-            if (apps.itemCount == 0 && !isSyncing) {
+        if (apps.itemCount == 0 && !isSyncing) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(32.dp),
                     verticalArrangement = Arrangement.Center,

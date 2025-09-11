@@ -15,7 +15,9 @@ lifecycleExtensions = "2.2.0"
 lifecycleViewmodelCompose = "2.9.2"
 lifecycleViewmodelKtx = "2.9.2"
 material = "1.12.0"
+material3 = "1.3.2"
 materialIconsExtended = "1.7.8"
+materialPullRefresh = "1.3.1"
 navigationFragmentKtx = "2.9.3"
 okhttp = "5.1.0"
 pagingRuntimeKtx = "3.3.6"
@@ -37,6 +39,8 @@ uiText = "1.9.0"
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+androidx-material-pull-refresh = { module = "androidx.compose.material:material-pull-refresh", version.ref = "materialPullRefresh" }
+androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingRuntimeKtx" }
 androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "pagingRuntimeKtx" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }

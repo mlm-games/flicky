@@ -43,6 +43,7 @@ import app.flicky.ui.dialogs.SliderSettingDialog
 import app.flicky.viewmodel.SettingsViewModel
 import kotlin.reflect.KProperty1
 import app.flicky.R
+import app.flicky.data.remote.MirrorRegistry
 import app.flicky.ui.dialogs.FlickyDialog
 import java.util.Locale
 import kotlinx.coroutines.launch
@@ -226,6 +227,8 @@ fun SettingsScreen(vm: SettingsViewModel) {
 
                         Spacer(Modifier.height(8.dp))
 
+                        val ctx = LocalContext.current
+
                         // Mirror policy
                         Row(
                             Modifier.fillMaxWidth(),
@@ -241,6 +244,13 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                 onClick = { persist(cfgState.copy(includeOnion = !cfgState.includeOnion)) },
                                 label = { Text("Use onion") }
                             )
+                            Spacer(Modifier.weight(1f))
+                            TextButton(
+                                onClick = {
+                                    MirrorRegistry.clear(base)
+                                    Toast.makeText(ctx, "Forgot last mirror", Toast.LENGTH_SHORT).show()
+                                }
+                            ) { Text("Forget last mirror") }
                         }
 
                         Spacer(Modifier.height(8.dp))

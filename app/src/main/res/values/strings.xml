@@ -148,4 +148,6 @@
     <string name="versions">Versions</string>
     <string name="installed">Installed</string>
     <string name="incompatible">Incompatible</string>
+    <string name="copied">Copied</string>
+    <string name="copy_url">Copy URL</string>
 </resources>

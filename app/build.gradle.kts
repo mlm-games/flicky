@@ -11,8 +11,6 @@ plugins {
     id("org.jetbrains.kotlin.plugin.parcelize")
     id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.plugin.serialization")
-
-
 }
 
 kotlin {
@@ -205,7 +203,7 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.client.logging)
-
+    implementation(libs.androidx.material3)
     // Shizuku
     implementation(libs.api)
     implementation(libs.provider)

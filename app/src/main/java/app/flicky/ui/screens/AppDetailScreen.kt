@@ -5,6 +5,7 @@ import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.InstallDesktop
 import androidx.compose.material.icons.outlined.KeyboardDoubleArrowUp
 import androidx.compose.material3.AssistChip
@@ -41,7 +44,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedButton
@@ -59,10 +61,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -166,7 +170,7 @@ private fun DesktopLayout(
     ) {
     Row(Modifier.fillMaxSize()) {
         Surface(
-            modifier = Modifier.width(380.dp).fillMaxHeight(),
+            modifier = Modifier.width(350.dp).fillMaxHeight(),
             color = colorScheme.surface,
             tonalElevation = 1.dp
         ) {
@@ -635,6 +639,9 @@ private fun VersionsSection(
     installedVersionCode: Long?,
     onInstallVariant: (AppVariant) -> Unit
 ) {
+    val ctx = LocalContext.current
+    val clipboard = LocalClipboard.current
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         variants.forEach { v ->
             val installed = installedVersionCode?.let { v.versionCode.toLong() == it } == true
@@ -654,38 +661,54 @@ private fun VersionsSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(
-                            text = "v${v.versionName} (${v.versionCode})",
-                            style = typography.bodyLarge
-                        )
-                        Text(
-                            text = "${v.repositoryName} • ${formatBytes(v.size)}",
-                            style = typography.bodySmall,
-                            color = colorScheme.onSurfaceVariant
-                        )
+                        Text("v${v.versionName} (${v.versionCode})", style = typography.bodyLarge)
+                        Text("${v.repositoryName} • ${formatBytes(v.size)}",
+                            style = typography.bodySmall, color = colorScheme.onSurfaceVariant)
                         if (installed) {
-                            Text(
-                                text = stringResource(id = R.string.installed),
-                                style = typography.labelSmall,
-                                color = colorScheme.primary
-                            )
+                            Text(stringResource(id = R.string.installed), style = typography.labelSmall, color = colorScheme.primary)
                         } else if (!compat) {
-                            Text(
-                                text = stringResource(id = R.string.incompatible),
-                                style = typography.labelSmall,
-                                color = colorScheme.error
-                            )
+                            Text(stringResource(id = R.string.incompatible), style = typography.labelSmall, color = colorScheme.error)
                         }
                     }
-                    Button(
-                        onClick = { onInstallVariant(v) },
-                        enabled = compat && !installed,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.primary,
-                            contentColor = colorScheme.onPrimary
-                        )
-                    ) { Text(stringResource(id = R.string.action_install)) }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        IconButton(
+                            onClick = {
+                                clipboard.nativeClipboard.text = AnnotatedString(v.apkUrl)
+                                Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
+                            }
+                        ) { Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.copy_url)) }
+
+                        IconButton(
+                            onClick = {
+                                shareText(ctx, v.apkUrl)
+                            }
+                        ) { Icon(Icons.Default.Share, contentDescription = stringResource(R.string.action_share)) }
+
+                        Button(
+                            onClick = { onInstallVariant(v) },
+                            enabled = compat && !installed,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colorScheme.primary,
+                                contentColor = colorScheme.onPrimary
+                            )
+                        ) { Text(stringResource(id = R.string.action_install)) }
+                    }
                 }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .combinedClickable(
+                            onClick = {},
+                            onLongClick = {
+                                if (v.sha256.isNotBlank()) {
+                                    clipboard.nativeClipboard.text = AnnotatedString(v.sha256)
+                                    Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        )
+                )
             }
         }
     }
