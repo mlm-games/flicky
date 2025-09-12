@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -45,8 +46,24 @@ import kotlin.reflect.KProperty1
 import app.flicky.R
 import app.flicky.data.remote.MirrorRegistry
 import app.flicky.ui.dialogs.FlickyDialog
+import kotlinx.coroutines.Dispatchers
 import java.util.Locale
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.util.concurrent.TimeUnit
+import kotlin.system.measureTimeMillis
+
+
+private data class ProbeResult(
+    val url: String,
+    val ok: Boolean,
+    val code: Int,
+    val ms: Long
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -244,13 +261,41 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                 onClick = { persist(cfgState.copy(includeOnion = !cfgState.includeOnion)) },
                                 label = { Text("Use onion") }
                             )
-                            Spacer(Modifier.weight(1f))
+//                            Spacer(Modifier.weight(1f))
                             TextButton(
                                 onClick = {
                                     MirrorRegistry.clear(base)
                                     Toast.makeText(ctx, "Forgot last mirror", Toast.LENGTH_SHORT).show()
                                 }
                             ) { Text("Forget last mirror") }
+
+//                            Spacer(Modifier.height(8.dp))
+
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Spacer(Modifier.weight(1f))
+                                TextButton(
+                                    onClick = {
+                                        scope.launch {
+                                            val results = testRepoMirrors(base)
+                                            val message = buildString {
+//                                                append("Mirror test (").append(r.name).append(")\n\n")
+                                                results.forEach { (url, ok, code, ms) ->
+                                                    append(if (ok) "✓" else "✗")
+                                                    append(" ").append(url).append(" — ")
+                                                    append(if (ok) "${ms}ms (HTTP $code)" else "HTTP $code / fail")
+                                                    append("\n")
+                                                }
+                                            }
+                                            Toast.makeText(ctx, message, Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                ) { Text("Test Ping") }
+                            }
+
                         }
 
                         Spacer(Modifier.height(8.dp))
@@ -472,7 +517,6 @@ fun SettingsScreen(vm: SettingsViewModel) {
     }
 }
 
-
 @Composable
 private fun AddRepoDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
     var name by remember { mutableStateOf("") }
@@ -521,4 +565,78 @@ private fun AddRepoDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit
             )
         }
     }
+}
+
+
+private suspend fun testRepoMirrors(base: String): List<ProbeResult> = withContext(Dispatchers.IO) {
+    val policy = AppGraph.mirrorPolicyProvider.policyFor(base)
+    val candidates = MirrorRegistry.candidates(
+        base = base,
+        includeOnion = policy.includeOnion,
+        strategy = MirrorRegistry.Strategy.RoundRobin
+    ).ifEmpty { listOf(base) }
+
+    val client = try {
+        AppGraph.httpClients.clientFor(base).newBuilder()
+            .callTimeout(5, TimeUnit.SECONDS)
+            .connectTimeout(3, TimeUnit.SECONDS)
+            .readTimeout(5, TimeUnit.SECONDS)
+            .build()
+    } catch (_: Exception) {
+        OkHttpClient.Builder()
+            .callTimeout(5, TimeUnit.SECONDS)
+            .connectTimeout(3, TimeUnit.SECONDS)
+            .readTimeout(5, TimeUnit.SECONDS)
+            .build()
+    }
+
+    fun headV2(urlBase: String): ProbeResult {
+        val url = "$urlBase/index-v2.json"
+        var ok = false
+        var code = -1
+        val elapsed = measureTimeMillis {
+            runCatching {
+                runBlocking {
+                    withTimeout(5000) {
+                        val req = Request.Builder().url(url).head().build()
+                        client.newCall(req).execute().use { resp ->
+                            code = resp.code
+                            ok = resp.isSuccessful || resp.code in 200..399 || resp.code == 405 || resp.code == 501
+                        }
+                    }
+                }
+            }
+        }
+        return ProbeResult(urlBase, ok, code, elapsed)
+    }
+
+    fun rangeV1(urlBase: String): ProbeResult {
+        val url = "$urlBase/index-v1.jar"
+        var ok = false
+        var code = -1
+        val elapsed = measureTimeMillis {
+            runCatching {
+                runBlocking {
+                    withTimeout(5000) {
+                        val req = Request.Builder().url(url)
+                            .get()
+                            .header("Range", "bytes=0-0")
+                            .build()
+                        client.newCall(req).execute().use { resp ->
+                            code = resp.code
+                            ok = resp.isSuccessful || resp.code in 200..399 || resp.code == 206
+                        }
+                    }
+                }
+            }
+        }
+        return ProbeResult(urlBase, ok, code, elapsed)
+    }
+
+    val out = mutableListOf<ProbeResult>()
+    for (cand in candidates) {
+        val h = headV2(cand)
+        out += if (h.ok) h else rangeV1(cand)
+    }
+    out
 }

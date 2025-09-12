@@ -150,4 +150,7 @@
     <string name="incompatible">Incompatible</string>
     <string name="copied">Copied</string>
     <string name="copy_url">Copy URL</string>
+    <string name="no_variants_found">No variants found</string>
+    <string name="downloading">Downloading</string>
+    <string name="verifying">Verifying</string>
 </resources>

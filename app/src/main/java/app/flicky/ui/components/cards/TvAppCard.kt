@@ -2,6 +2,7 @@ package app.flicky.ui.components.cards
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,7 +30,8 @@ import app.flicky.data.repository.AppSettings
 fun TVAppCard(
     app: FDroidApp,
     autofocus: Boolean = false,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {}
 ) {
     var focused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(targetValue = if (focused) 1.05f else 1f, label = "tv_card_scale")
@@ -38,12 +40,12 @@ fun TVAppCard(
     LaunchedEffect(autofocus) { if (autofocus) focusRequester.requestFocus() }
 
     ElevatedCard(
-        onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .scale(scale)
             .focusRequester(focusRequester)
-            .onFocusChanged { focused = it.isFocused },
+            .onFocusChanged { focused = it.isFocused }
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
         colors = CardDefaults.elevatedCardColors(
             containerColor = if (focused) colors.primaryContainer else colors.surface,
             contentColor = if (focused) colors.onPrimaryContainer else colors.onSurface
@@ -52,34 +54,22 @@ fun TVAppCard(
         Column(Modifier.padding(16.dp)) {
             val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
             if (settings.showAppIcons) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(app.iconUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = app.name,
-                placeholder = painterResource(R.drawable.ic_app_placeholder),
-                error = painterResource(R.drawable.ic_app_placeholder),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp)
-            )
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(app.iconUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = app.name,
+                    placeholder = painterResource(R.drawable.ic_app_placeholder),
+                    error = painterResource(R.drawable.ic_app_placeholder),
+                    modifier = Modifier.fillMaxWidth().height(140.dp)
+                )
             } else {
                 Box(Modifier.fillMaxWidth().height(140.dp))
             }
             Spacer(Modifier.height(8.dp))
-            Text(
-                app.name,
-                style = typography.titleSmall,
-                maxLines = 1,
-                color = if (focused) colors.onPrimaryContainer else colors.onSurface
-            )
-            Text(
-                app.summary,
-                style = typography.bodySmall,
-                maxLines = 2,
-                color = if (focused) colors.onPrimaryContainer.copy(alpha = 0.8f) else colors.onSurfaceVariant
-            )
+            Text(app.name, style = typography.titleSmall, maxLines = 1, color = if (focused) colors.onPrimaryContainer else colors.onSurface)
+            Text(app.summary, style = typography.bodySmall, maxLines = 2, color = if (focused) colors.onPrimaryContainer.copy(alpha = 0.8f) else colors.onSurfaceVariant)
         }
     }
 }

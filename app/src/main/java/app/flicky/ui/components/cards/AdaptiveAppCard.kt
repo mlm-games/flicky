@@ -9,12 +9,13 @@ import app.flicky.helper.DeviceUtils
 fun AdaptiveAppCard(
     app: FDroidApp,
     autofocus: Boolean = false,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {}
 ) {
     val isTV = DeviceUtils.isTV(LocalContext.current.packageManager)
     if (isTV) {
-        TVAppCard(app = app, autofocus = autofocus, onClick = onClick)
+        TVAppCard(app = app, autofocus = autofocus, onClick = onClick, onLongClick = onLongClick)
     } else {
-        MobileAppCard(app = app, onClick = onClick)
+        MobileAppCard(app = app, onClick = onClick, onLongClick = onLongClick)
     }
 }

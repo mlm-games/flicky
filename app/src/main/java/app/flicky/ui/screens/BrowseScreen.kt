@@ -2,6 +2,8 @@ package app.flicky.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,11 +13,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Clear
@@ -25,15 +30,20 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -49,9 +59,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -114,7 +126,24 @@ fun BrowseScreen(
     val s by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
 
 
+    val scope = rememberCoroutineScope()
+    var installFromTarget by remember { mutableStateOf<FDroidApp?>(null) }
+    var installVariants by remember { mutableStateOf<List<AppVariant>>(emptyList()) }
+    val installer = AppGraph.installer
+    val installerTasks by installer.tasks.collectAsState(initial = emptyMap())
+
     val resolvedError = errorMessage?.asString()
+
+    fun onShowInstallFrom(app: FDroidApp) {
+        installFromTarget = app
+        scope.launch(Dispatchers.IO) {
+            val vars = AppGraph.db.appDao().variantsFor(app.packageName).sortedByDescending { it.versionCode }
+            withContext(Dispatchers.Main) {
+                installVariants = vars
+            }
+        }
+    }
+
     LaunchedEffect(resolvedError) {
         resolvedError?.let {
             snackbarHostState.showSnackbar(it)
@@ -247,7 +276,7 @@ fun BrowseScreen(
             isRefreshing = isSyncing,
             onRefresh = onSyncClick
         ) {
-        if (apps.itemCount == 0 && !isSyncing) {
+            if (apps.itemCount == 0 && !isSyncing) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(32.dp),
                     verticalArrangement = Arrangement.Center,
@@ -274,42 +303,65 @@ fun BrowseScreen(
                     }
                 }
             } else {
-            if (s.useListLayout) {
-                LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(apps.itemCount, key = { idx -> apps[idx]?.packageName ?: "placeholder_$idx" }) { idx ->
-                        apps[idx]?.let { app ->
-                            AppListRow(
-                                app = app,
-                                onClick = { onAppClick(app) },
-                                onLongClick = { onShowInstallFrom(app) } // see feature 3 below
-                            )
+                if (s.useListLayout) {
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(apps.itemCount, key = { idx -> apps[idx]?.packageName ?: "placeholder_$idx" }) { idx ->
+                            apps[idx]?.let { app ->
+                                AppListRow(
+                                    app = app,
+                                    onClick = { onAppClick(app) },
+                                    onLongClick = { onShowInstallFrom(app) } // see feature 3 below
+                                )
+                            }
                         }
                     }
-                }
-            } else {
-                val columns = when {
-                    widthDp > 1400 -> 6
-                    widthDp > 1200 -> 5
-                    widthDp > 900 -> 4
-                    widthDp > 600 -> 3
-                    else -> 2
-                }
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(columns),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(apps.itemCount, key = { idx -> apps[idx]?.packageName ?: "placeholder_$idx" }) { idx ->
-                        apps[idx]?.let { app ->
-                            AdaptiveAppCard(app = app, onClick = { onAppClick(app) })
+                } else {
+                    val columns = when {
+                        widthDp > 1400 -> 6
+                        widthDp > 1200 -> 5
+                        widthDp > 900 -> 4
+                        widthDp > 600 -> 3
+                        else -> 2
+                    }
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(columns),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(
+                            apps.itemCount,
+                            key = { idx -> apps[idx]?.packageName ?: "placeholder_$idx" }) { idx ->
+                            apps[idx]?.let { app ->
+                                AdaptiveAppCard(
+                                    app = app,
+                                    onClick = { onAppClick(app) },
+                                    onLongClick = { onShowInstallFrom(app) } // see feature 3
+                                )
+                            }
                         }
                     }
                 }
             }
+        }
+        installFromTarget?.let { target ->
+            InstallFromDialog(
+                app = target,
+                variants = installVariants,
+                installerTasks = installerTasks,
+                onDismiss = { installFromTarget = null },
+                onInstall = { v ->
+                    scope.launch {
+                        installer.install(v)
+                    }
+                },
+                onCancelInstall = { pkg ->
+                    installer.cancel(pkg)
+                }
+            )
         }
     }
 
@@ -322,6 +374,135 @@ fun BrowseScreen(
             },
             onDismiss = { showSortDialog = false }
         )
+    }
+}
+
+@Composable
+private fun InstallFromDialog(
+    app: FDroidApp,
+    variants: List<AppVariant>,
+    installerTasks: Map<String, TaskStage>,
+    onDismiss: () -> Unit,
+    onInstall: (AppVariant) -> Unit,
+    onCancelInstall: (String) -> Unit
+) {
+    // Track active task for this package and progress for feedback
+    val stage = installerTasks[app.packageName]
+    val isWorking = stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled
+    val progress = when (stage) {
+        is TaskStage.Downloading -> stage.progress.coerceIn(0f, 0.99f)
+        is TaskStage.Verifying -> 0.995f
+        is TaskStage.Installing -> (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f)
+        else -> 0f
+    }
+    // Auto-dismiss when finished successfully
+    LaunchedEffect(stage) {
+        if (stage is TaskStage.Finished && stage.success) onDismiss()
+    }
+
+    FlickyDialog(
+        onDismissRequest = { if (!isWorking) onDismiss() },
+        title = "Install from…",
+        confirmButton = {
+            TextButton(
+                onClick = { if (!isWorking) onDismiss() },
+                enabled = !isWorking,
+                colors = ButtonDefaults.textButtonColors(contentColor = colorScheme.primary)
+            ) { Text(stringResource(R.string.action_close)) }
+        }
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (variants.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.no_variants_found),
+                    style = typography.bodyMedium,
+                    color = colorScheme.onSurfaceVariant
+                )
+            } else {
+                // TV-friendly: big focusable rows with clear buttons
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 420.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(variants.take(20), key = { "${it.repositoryUrl}_${it.versionCode}" }) { v ->
+                        val compat = v.isCompatible
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusable()
+                                .semantics { role = Role.Button }
+                                .clickable(enabled = compat && !isWorking) { onInstall(v) },
+                            shape = MaterialTheme.shapes.medium,
+                            color = colorScheme.surface,
+                            tonalElevation = 1.dp
+                        ) {
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(v.repositoryName, style = typography.bodyMedium, color = colorScheme.onSurface)
+                                    Text(
+                                        "v${v.versionName} (${v.versionCode}) • ${formatBytes(v.size)}",
+                                        style = typography.bodySmall,
+                                        color = colorScheme.onSurfaceVariant
+                                    )
+                                    if (!compat) {
+                                        Text(
+                                            text = stringResource(id = R.string.incompatible),
+                                            style = typography.labelSmall,
+                                            color = colorScheme.error
+                                        )
+                                    }
+                                }
+                                Button(
+                                    onClick = { onInstall(v) },
+                                    enabled = compat && !isWorking,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colorScheme.primary,
+                                        contentColor = colorScheme.onPrimary
+                                    )
+                                ) { Text(stringResource(R.string.action_install)) }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (isWorking) {
+                Spacer(Modifier.height(6.dp))
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = colorScheme.primary,
+                    trackColor = colorScheme.surfaceVariant
+                )
+                Spacer(Modifier.height(4.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        text = when (stage) {
+                            is TaskStage.Downloading -> stringResource(R.string.downloading)
+                            is TaskStage.Verifying -> stringResource(R.string.verifying)
+                            is TaskStage.Installing -> stringResource(R.string.installing)
+                            else -> ""
+                        },
+                        style = typography.labelSmall,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                    TextButton(
+                        onClick = { onCancelInstall(app.packageName) },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = colorScheme.error
+                        )
+                    ) { Text(stringResource(R.string.action_cancel)) }
+                }
+            }
+        }
     }
 }
 
