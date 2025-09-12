@@ -3,6 +3,7 @@ package app.flicky.ui.components.cards
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
@@ -22,6 +23,7 @@ import app.flicky.R
 import app.flicky.data.repository.AppSettings
 import coil.request.ImageRequest
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MobileAppCard(
     app: FDroidApp,

@@ -25,7 +25,7 @@ import coil.request.ImageRequest
 import app.flicky.R
 import app.flicky.data.repository.AppSettings
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TVAppCard(
     app: FDroidApp,

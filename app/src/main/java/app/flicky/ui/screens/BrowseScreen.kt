@@ -654,6 +654,7 @@ private fun TvAwareDockedSearchBar(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppListRow(app: FDroidApp, onClick: () -> Unit, onLongClick: () -> Unit) {
     ElevatedCard(
