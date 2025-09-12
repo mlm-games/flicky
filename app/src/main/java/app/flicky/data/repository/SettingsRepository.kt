@@ -78,6 +78,7 @@ class SettingsRepository(
         val FAIL_ON_TRUST_ERRORS = booleanPreferencesKey("fail_on_trust_errors")
         val LAST_QUERY = stringPreferencesKey("last_query")
 
+        val USE_LIST_LAYOUT = booleanPreferencesKey("use_list_layout")
 
     }
 
@@ -117,7 +118,9 @@ class SettingsRepository(
         "preferredRepo" to SettingDefinition.IntSetting("preferredRepo", PREFERRED_REPO) { it.preferredRepo },
         "failOnTrustErrors" to SettingDefinition.BooleanSetting("failOnTrustErrors", FAIL_ON_TRUST_ERRORS) { it.failOnTrustErrors },
         "showDebugInfo" to SettingDefinition.BooleanSetting("showDebugInfo", SHOW_DEBUG_INFO) { it.showDebugInfo },
-    )
+        "useListLayout" to SettingDefinition.BooleanSetting("useListLayout", USE_LIST_LAYOUT) { it.useListLayout },
+
+        )
 
     val settingsFlow: Flow<AppSettings> = context.ds.data.map { p ->
         AppSettings(
@@ -155,7 +158,9 @@ class SettingsRepository(
             lastSync = p[LAST_SYNC] ?: 0L,
             proxyHost = p[PROXY_HOST] ?: "",
             proxyPort = p[PROXY_PORT] ?: 9050,
-        )
+            useListLayout = p[USE_LIST_LAYOUT] ?: false,
+
+            )
     }.distinctUntilChanged()
 
     /**

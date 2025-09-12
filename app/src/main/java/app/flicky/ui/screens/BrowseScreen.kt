@@ -65,15 +65,27 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
+import app.flicky.AppGraph
 import app.flicky.R
+import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
+import app.flicky.data.repository.AppSettings
+import app.flicky.install.TaskStage
+import app.flicky.ui.components.AppIcon
+import app.flicky.ui.components.AppTexts
 import app.flicky.ui.components.VoiceSearchButton
 import app.flicky.ui.components.cards.AdaptiveAppCard
 import app.flicky.ui.dialogs.FlickyDialog
 import app.flicky.viewmodel.UiText
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,6 +111,7 @@ fun BrowseScreen(
     var menuOpen by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     var showSortDialog by remember { mutableStateOf(false) }
+    val s by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
 
 
     val resolvedError = errorMessage?.asString()
@@ -258,6 +271,22 @@ fun BrowseScreen(
                             style = typography.bodyMedium,
                             color = colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
+                    }
+                }
+            } else {
+            if (s.useListLayout) {
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(apps.itemCount, key = { idx -> apps[idx]?.packageName ?: "placeholder_$idx" }) { idx ->
+                        apps[idx]?.let { app ->
+                            AppListRow(
+                                app = app,
+                                onClick = { onAppClick(app) },
+                                onLongClick = { onShowInstallFrom(app) } // see feature 3 below
+                            )
+                        }
                     }
                 }
             } else {
@@ -442,4 +471,38 @@ private fun TvAwareDockedSearchBar(
         shadowElevation = SearchBarDefaults.ShadowElevation,
         content = { /* suggestions/history later? */ },
     )
+}
+
+@Composable
+private fun AppListRow(app: FDroidApp, onClick: () -> Unit, onLongClick: () -> Unit) {
+    ElevatedCard(
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = colorScheme.surface,
+            contentColor = colorScheme.onSurface
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+    ) {
+        Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            AppIcon(app.name, app.iconUrl, size = 56.dp)
+            Column(Modifier.weight(1f)) {
+                val installedRepo = AppGraph.installedRepo
+                val installedVc = remember { mutableStateOf<Long?>(null) }
+                LaunchedEffect(app.packageName) { installedVc.value = installedRepo.getVersionCode(app.packageName) }
+                val installedLabel = installedVc.value?.let { "v$it" }
+                AppTexts(
+                    name = app.name,
+                    installedLabel = installedLabel,
+                    newLabel = app.version,
+                    summary = app.summary
+                )
+            }
+            Text(
+                text = app.category,
+                style = typography.labelSmall,
+                color = colorScheme.primary
+            )
+        }
+    }
 }

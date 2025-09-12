@@ -155,6 +155,14 @@ data class AppSettings(
     val importSettings: Boolean = false,
 
     @Setting(
+        title = "Use list layout",
+        description = "Show a denser list instead of a grid",
+        category = SettingCategory.APPEARANCE,
+        type = SettingType.TOGGLE
+    )
+    val useListLayout: Boolean = false,
+
+    @Setting(
         title = "Preferred repository",
         description = "Default source when app exists in multiple repos",
         category = SettingCategory.DOWNLOADS,
