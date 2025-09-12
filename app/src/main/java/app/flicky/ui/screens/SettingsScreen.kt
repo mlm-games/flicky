@@ -9,6 +9,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
@@ -81,7 +85,13 @@ fun SettingsScreen(vm: SettingsViewModel) {
 
     val grouped = remember { manager.getByCategory() }
     val cfg = LocalConfiguration.current
-    val gridCells = remember(cfg.screenWidthDp) { GridCells.Adaptive(minSize = 420.dp) }
+
+    val isTablet = cfg.screenWidthDp >= 600
+    val gridCells = if (isTablet) {
+        GridCells.Adaptive(minSize = 400.dp)
+    } else {
+        GridCells.Fixed(1)
+    }
 
     val context = LocalContext.current
     LaunchedEffect(vm) {
@@ -194,7 +204,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                 )
             }
 
-            // Repositories list with per-repo mirror/trust controls (unchanged from earlier step)
+            // Repositories list with per-repo mirror/trust controls
             items(repos, key = { it.url }) { r ->
                 val base = r.url.trimEnd('/')
 
@@ -234,19 +244,84 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                     color = colorScheme.onSurfaceVariant
                                 )
                             }
-                            Switch(
-                                checked = r.enabled,
-                                onCheckedChange = {
-                                    scope.launch { vm.toggleRepository(r.url) }
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                // Dropdown menu for repository actions
+                                var showMenu by remember { mutableStateOf(false) }
+                                Box {
+                                    IconButton(
+                                        onClick = { showMenu = true },
+                                        modifier = Modifier.size(36.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.MoreVert,
+                                            contentDescription = "More options for ${r.name}",
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    DropdownMenu(
+                                        expanded = showMenu,
+                                        onDismissRequest = { showMenu = false }
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text("Test Ping") },
+                                            leadingIcon = {
+                                                Icon(
+                                                    Icons.Default.Speed,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            },
+                                            onClick = {
+                                                showMenu = false
+                                                scope.launch {
+                                                    val results = testRepoMirrors(base)
+                                                    val message = buildString {
+//                                                        append("Mirror test results:\n\n")
+                                                        results.forEach { (url, ok, code, ms) ->
+                                                            append(if (ok) "✓" else "✗")
+                                                            append(" ").append(url).append("\n")
+                                                            append("   ").append(if (ok) "${ms}ms (HTTP $code)" else "HTTP $code / fail")
+                                                            append("\n")
+                                                        }
+                                                    }
+                                                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                                                }
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Forget Last Mirror") },
+                                            leadingIcon = {
+                                                Icon(
+                                                    Icons.Default.Clear,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            },
+                                            onClick = {
+                                                showMenu = false
+                                                MirrorRegistry.clear(base)
+                                                Toast.makeText(context, "Forgot last mirror for ${r.name}", Toast.LENGTH_SHORT).show()
+                                            }
+                                        )
+                                    }
                                 }
-                            )
+
+                                Spacer(Modifier.width(8.dp))
+
+                                // Enable/disable switch
+                                Switch(
+                                    checked = r.enabled,
+                                    onCheckedChange = {
+                                        scope.launch { vm.toggleRepository(r.url) }
+                                    }
+                                )
+                            }
                         }
 
                         Spacer(Modifier.height(8.dp))
 
-                        val ctx = LocalContext.current
-
-                        // Mirror policy
+                        // Mirror policy chips
                         Row(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -261,45 +336,11 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                 onClick = { persist(cfgState.copy(includeOnion = !cfgState.includeOnion)) },
                                 label = { Text("Use onion") }
                             )
-//                            Spacer(Modifier.weight(1f))
-                            TextButton(
-                                onClick = {
-                                    MirrorRegistry.clear(base)
-                                    Toast.makeText(ctx, "Forgot last mirror", Toast.LENGTH_SHORT).show()
-                                }
-                            ) { Text("Forget last mirror") }
-
-//                            Spacer(Modifier.height(8.dp))
-
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Spacer(Modifier.weight(1f))
-                                TextButton(
-                                    onClick = {
-                                        scope.launch {
-                                            val results = testRepoMirrors(base)
-                                            val message = buildString {
-//                                                append("Mirror test (").append(r.name).append(")\n\n")
-                                                results.forEach { (url, ok, code, ms) ->
-                                                    append(if (ok) "✓" else "✗")
-                                                    append(" ").append(url).append(" — ")
-                                                    append(if (ok) "${ms}ms (HTTP $code)" else "HTTP $code / fail")
-                                                    append("\n")
-                                                }
-                                            }
-                                            Toast.makeText(ctx, message, Toast.LENGTH_LONG).show()
-                                        }
-                                    }
-                                ) { Text("Test Ping") }
-                            }
-
                         }
 
                         Spacer(Modifier.height(8.dp))
 
+                        // Mirror strategy dropdown
                         var openStrategy by remember { mutableStateOf(false) }
                         val strategies = listOf("StickyLastGood", "RoundRobin", "CanonicalFirst")
                         val strategyIdx = strategies.indexOf(cfgState.strategy).coerceAtLeast(0)
@@ -327,7 +368,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                 value = strategies[strategyIdx],
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text(stringResource(id = R.string.mirror_strategy)) }, // move label to strings.xml
+                                label = { Text(stringResource(id = R.string.mirror_strategy)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = openStrategy) },
                                 modifier = anchorModifier
                             )
@@ -377,7 +418,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                 value = trustModes[trustIdx],
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text(stringResource(id = R.string.trust_mode)) }, // move label to strings.xml
+                                label = { Text(stringResource(id = R.string.trust_mode)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = openTrust) },
                                 modifier = anchorModifier
                             )

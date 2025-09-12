@@ -689,7 +689,7 @@ private fun VersionsSection(
                             ) {
                                 Icon(
                                     Icons.Default.MoreVert,
-                                    contentDescription = "More",
+                                    contentDescription = "More options",
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -699,14 +699,28 @@ private fun VersionsSection(
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Copy URL") },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.ContentCopy,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    },
                                     onClick = {
                                         clipboard.nativeClipboard.setText(AnnotatedString(v.apkUrl))
-                                        Toast.makeText(ctx, "Copied", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(ctx, "URL copied to clipboard", Toast.LENGTH_SHORT).show()
                                         showMenu = false
                                     }
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Share") },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Share,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    },
                                     onClick = {
                                         shareText(ctx, v.apkUrl)
                                         showMenu = false
