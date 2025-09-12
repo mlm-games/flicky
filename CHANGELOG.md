@@ -1,3 +1,10 @@
+## v3.4.2
+
+- Add dropdowns for repo settings too (for test ping and forget last mirror buttons)
+- Non mobile friendly extra settings options
+- Add "use list layout" setting.
+
+
 ## v3.4.1
 
 - Shorten versions section
