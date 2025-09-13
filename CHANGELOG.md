@@ -1,3 +1,12 @@
+## v3.4.5
+
+- Use a file wide optin instead and small structural refactor
+- missed Opt-ins for experimental m3
+- Add dropdowns for repo settings too (for test ping and forget last mirror buttons)
+- Non mobile friendly extra settings options
+- Add "use list layout" setting.
+
+
 ## v3.4.4
 
 - missed Opt-ins for experimental m3
