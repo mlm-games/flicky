@@ -1,3 +1,11 @@
+## v3.4.4
+
+- missed Opt-ins for experimental m3
+- Add dropdowns for repo settings too (for test ping and forget last mirror buttons)
+- Non mobile friendly extra settings options
+- Add "use list layout" setting.
+
+
 ## v3.4.3
 
 - missed Opt-ins for experimental m3
