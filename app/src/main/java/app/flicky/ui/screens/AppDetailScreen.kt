@@ -5,11 +5,9 @@ import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -34,14 +32,12 @@ import androidx.compose.material.icons.outlined.InstallDesktop
 import androidx.compose.material.icons.outlined.KeyboardDoubleArrowUp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedAssistChip
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -90,7 +86,7 @@ import java.util.Locale
 import kotlin.math.log10
 import kotlin.math.pow
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun AppDetailScreen(
     app: FDroidApp,
@@ -428,7 +424,6 @@ private fun AppHeader(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ChipsSection(
     app: FDroidApp,
@@ -561,7 +556,6 @@ private fun SectionTitle(text: String) {
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AssistChipsFlow(items: List<String>) {
     FlowRow(
@@ -707,7 +701,7 @@ private fun VersionsSection(
                                         )
                                     },
                                     onClick = {
-                                        clipboard.nativeClipboard.setText(AnnotatedString(v.apkUrl))
+                                        clipboard.nativeClipboard.text = (AnnotatedString(v.apkUrl))
                                         Toast.makeText(ctx, "URL copied to clipboard", Toast.LENGTH_SHORT).show()
                                         showMenu = false
                                     }

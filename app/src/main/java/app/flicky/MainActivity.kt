@@ -150,7 +150,14 @@ class MainActivity : ComponentActivity() {
                         },
                         settingsContent = { SettingsScreen(vm = settingsViewModel) },
                         detailContent = { pkg ->
-                            AppDetailRoute(pkg = pkg, onOpenCategory = { cat -> navController.navigate(Routes.categories(cat)) },)
+                            AppDetailRoute(
+                                pkg = pkg,
+                                onOpenCategory = { cat ->
+                                    navController.navigate(
+                                        Routes.categories(cat),
+                                    )
+                                },
+                            )
                         }
                     )
                 }

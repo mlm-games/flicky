@@ -2,17 +2,21 @@ package app.flicky.ui.theme
 
 import android.app.Activity
 import android.os.Build
-import android.view.WindowInsets.Type.statusBars
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.typography
+import androidx.compose.material3.Surface
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
-import androidx.core.graphics.alpha
 import androidx.core.view.WindowCompat
 
 private val LightTheme = lightColorScheme(
@@ -113,18 +117,31 @@ fun FlickyTheme(
         SideEffect {
             val window = (view.context as Activity).window
 
-            window.statusBarColor = colorScheme.surface.toArgb()
-            window.navigationBarColor = colorScheme.surface.toArgb()
+            WindowCompat.setDecorFitsSystemWindows(window, false)
 
             val insetsController = WindowCompat.getInsetsController(window, view)
             insetsController.isAppearanceLightStatusBars = !darkTheme
             insetsController.isAppearanceLightNavigationBars = !darkTheme
+
+            // For older API levels
+            if (Build.VERSION.SDK_INT < 35) {
+                @Suppress("DEPRECATION")
+                window.statusBarColor = colorScheme.surface.toArgb()
+                @Suppress("DEPRECATION")
+                window.navigationBarColor = colorScheme.surface.toArgb()
+            }
         }
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = typography,
-        content = content
-    )
+        typography = typography
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = colorScheme.surface
+        ) {
+            content()
+        }
+    }
 }

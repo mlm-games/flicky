@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+
 package app.flicky.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
@@ -32,7 +34,6 @@ import app.flicky.ui.components.global.MyScreenScaffold
 import app.flicky.ui.routes.UpdatesActions
 import app.flicky.viewmodel.UpdatesUiState
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun UpdatesScreen(
     ui: UpdatesUiState,

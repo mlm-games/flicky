@@ -26,7 +26,7 @@ import app.flicky.data.repository.AppSettings
 import app.flicky.ui.components.AdaptiveAppCard
 import app.flicky.R
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun CategoriesScreen(
     isSyncing: Boolean,

@@ -1,5 +1,6 @@
 package app.flicky.ui.screens
 
+import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -32,33 +33,33 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.flicky.AppGraph
+import app.flicky.R
 import app.flicky.data.local.RepoConfig
+import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.Setting
 import app.flicky.data.repository.SettingCategory
 import app.flicky.data.repository.SettingType
 import app.flicky.data.repository.SettingsManager
+import app.flicky.ui.components.global.ConfirmationDialog
+import app.flicky.ui.components.global.DropdownSettingDialog
+import app.flicky.ui.components.global.FlickyDialog
 import app.flicky.ui.components.global.MyScreenScaffold
 import app.flicky.ui.components.global.SettingsAction
 import app.flicky.ui.components.global.SettingsItem
 import app.flicky.ui.components.global.SettingsToggle
-import app.flicky.ui.components.global.ConfirmationDialog
-import app.flicky.ui.components.global.DropdownSettingDialog
 import app.flicky.ui.components.global.SliderSettingDialog
 import app.flicky.viewmodel.SettingsViewModel
-import kotlin.reflect.KProperty1
-import app.flicky.R
-import app.flicky.data.remote.MirrorRegistry
-import app.flicky.ui.components.global.FlickyDialog
 import kotlinx.coroutines.Dispatchers
-import java.util.Locale
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KProperty1
 import kotlin.system.measureTimeMillis
 
 
@@ -69,7 +70,6 @@ private data class ProbeResult(
     val ms: Long
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(vm: SettingsViewModel) {
     val settings by vm.settings.collectAsState()

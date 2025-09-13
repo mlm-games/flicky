@@ -11,7 +11,7 @@ import androidx.compose.ui.focus.focusProperties
 fun Modifier.cardAsFocusGroup() = this.focusGroup().focusProperties { canFocus = false }
 
 @Composable
-private fun Modifier.clickableNoIndication(onClick: () -> Unit): Modifier =
+fun Modifier.clickableNoIndication(onClick: () -> Unit): Modifier =
     this.then(Modifier).let { clickableModifier ->
         clickable(
             indication = null,

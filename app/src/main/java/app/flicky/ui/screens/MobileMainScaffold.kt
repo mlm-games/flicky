@@ -1,11 +1,12 @@
 package app.flicky.ui.screens
 
+import android.annotation.SuppressLint
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
@@ -41,6 +42,7 @@ private val navItems = listOf(
     NavItem(R.string.nav_settings, Icons.Default.Settings, 3)
 )
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun MobileMainScaffold(
     selectedIndex: Int,

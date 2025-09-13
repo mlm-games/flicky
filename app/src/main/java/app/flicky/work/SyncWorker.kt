@@ -16,7 +16,7 @@ class SyncWorker(appContext: Context, params: WorkerParameters): CoroutineWorker
                 AutoUpdateWorker.enqueue(applicationContext, s.wifiOnly)
             }
             Result.success()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Result.retry()
         }
     }
