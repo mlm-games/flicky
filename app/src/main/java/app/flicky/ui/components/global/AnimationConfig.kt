@@ -1,4 +1,4 @@
-package app.flicky.ui.theme
+package app.flicky.ui.components.global
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*

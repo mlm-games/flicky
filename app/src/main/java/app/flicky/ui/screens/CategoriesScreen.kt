@@ -23,7 +23,7 @@ import app.flicky.AppGraph
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppSettings
-import app.flicky.ui.components.cards.AdaptiveAppCard
+import app.flicky.ui.components.AdaptiveAppCard
 import app.flicky.R
 
 @OptIn(ExperimentalMaterial3Api::class)

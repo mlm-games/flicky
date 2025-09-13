@@ -1,4 +1,4 @@
-package app.flicky.ui.components
+package app.flicky.ui.components.global
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -26,7 +26,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import app.flicky.ui.dialogs.FlickyDialog
 
 /**
  * TV-friendly setting section wrapper.

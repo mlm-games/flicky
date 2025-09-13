@@ -1,4 +1,4 @@
-package app.flicky.ui.components
+package app.flicky.ui.components.global
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*

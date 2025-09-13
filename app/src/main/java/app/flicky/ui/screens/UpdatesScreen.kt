@@ -28,7 +28,7 @@ import app.flicky.helper.DeviceUtils
 import app.flicky.helper.cardAsFocusGroup
 import app.flicky.ui.components.AppIcon
 import app.flicky.ui.components.AppTexts
-import app.flicky.ui.components.MyScreenScaffold
+import app.flicky.ui.components.global.MyScreenScaffold
 import app.flicky.ui.routes.UpdatesActions
 import app.flicky.viewmodel.UpdatesUiState
 

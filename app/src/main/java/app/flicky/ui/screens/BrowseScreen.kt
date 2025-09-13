@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+
 package app.flicky.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
@@ -92,14 +95,12 @@ import app.flicky.install.TaskStage
 import app.flicky.ui.components.AppIcon
 import app.flicky.ui.components.AppTexts
 import app.flicky.ui.components.VoiceSearchButton
-import app.flicky.ui.components.cards.AdaptiveAppCard
-import app.flicky.ui.dialogs.FlickyDialog
+import app.flicky.ui.components.AdaptiveAppCard
+import app.flicky.ui.components.global.FlickyDialog
 import app.flicky.viewmodel.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowseScreen(
     apps: LazyPagingItems<FDroidApp>,
@@ -562,8 +563,6 @@ fun UiText.asString(): String {
         is UiText.StringResource -> stringResource(this.resId, *this.args.toTypedArray())
     }
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TvAwareDockedSearchBar(
     query: String,
@@ -653,8 +652,6 @@ private fun TvAwareDockedSearchBar(
         content = { /* suggestions/history later? */ },
     )
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppListRow(app: FDroidApp, onClick: () -> Unit, onLongClick: () -> Unit) {
     ElevatedCard(
