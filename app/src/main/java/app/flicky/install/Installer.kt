@@ -102,20 +102,37 @@ class Installer(
 
     fun cancel(packageName: String) {
         cancelFlags[packageName] = true
+
+        // Cancel downloads
         activeDownloads.entries
             .filter { it.key.startsWith("$packageName-") }
             .toList()
-            .forEach { (_, id) -> dm.remove(id) }
-        activeDownloads.keys.removeAll { it.startsWith("$packageName-") }
+            .forEach { (key, id) ->
+                dm.remove(id)
+                activeDownloads.remove(key)
+            }
+
         // Cancel any active OkHttp call
         activeCalls.remove(packageName)?.cancel()
-        // Kill any active root/shizuku process
-        runCatching { activeProcs.remove(packageName)?.destroy() }
-        // Best effort: remove partials
-        getBaseCacheDir().listFiles()?.forEach { f ->
-            if (f.name.startsWith("$packageName-")) runCatching { f.delete() }
+
+        // Kill any active root/shizuku process with proper cleanup
+        activeProcs.remove(packageName)?.let { process ->
+            runCatching {
+                process.destroyForciblyCompat()
+                // Don't wait here as it might block
+            }
         }
-        // Notify UI; if an operation later completes, it will emit again, which is fine.
+
+        // Best effort: remove partial files
+        scope.launch(Dispatchers.IO) {
+            getBaseCacheDir().listFiles()?.forEach { f ->
+                if (f.name.startsWith("$packageName-")) {
+                    runCatching { f.delete() }
+                }
+            }
+        }
+
+        // Notify UI
         emitStage(packageName, TaskStage.Cancelled)
     }
 
@@ -142,6 +159,53 @@ class Installer(
         val req = resolve(variant) ?: return false
         return installResolved(req)
     }
+
+    private suspend fun executeWithProcess(
+        packageName: String,
+        processBuilder: () -> Process?,
+        pipeData: suspend (Process) -> Boolean
+    ): Boolean = withContext(Dispatchers.IO) {
+        var process: Process? = null
+
+        try {
+            process = processBuilder()
+            if (process == null) return@withContext false
+
+            activeProcs[packageName] = process
+
+            // Execute the actual operation
+            val result = pipeData(process)
+
+            // Wait for process completion with timeout
+            val exitCode = withTimeoutOrNull(30_000) {
+                process.waitFor()
+            }
+
+            return@withContext result && exitCode == 0
+
+        } catch (e: Exception) {
+            DebugLog.log("Installer", "Process execution failed: ${e.message}")
+            false
+        } finally {
+            // Ensure cleanup happens even if coroutine is cancelled
+            withContext(NonCancellable) {
+                activeProcs.remove(packageName)
+
+                // Force destroy if still running
+                process?.let {
+                    if (it.isAliveCompat()) {
+                        it.destroyForciblyCompat()
+                        // Wait a bit for process to terminate
+                        withTimeoutOrNull(1000) {
+                            it.waitFor()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
 
     private suspend fun installResolved(req: ResolvedApk): Boolean = withContext(NonCancellable) {
         val mode = settings.settingsFlow.first().installerMode
@@ -694,34 +758,77 @@ class Installer(
         return status == PackageInstaller.STATUS_SUCCESS
     }
 
-    private suspend fun installRootStream(file: File, packageName: String): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val size = file.length().coerceAtLeast(1L)
-            val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd package install -r -S $size"))
-            activeProcs[packageName] = proc
-            FileInputStream(file).use { fis -> proc.outputStream.use { os -> pipeWithProgress(fis, os, size, packageName) } }
-            withTimeoutOrNull(300_000) { proc.waitFor() } == 0
-        } catch (_: Exception) { false } finally {
-            activeProcs.remove(packageName)
-        }
+    private suspend fun installRootStream(file: File, packageName: String): Boolean {
+        val size = file.length().coerceAtLeast(1L)
+
+        return executeWithProcess(
+            packageName = packageName,
+            processBuilder = {
+                try {
+                    Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd package install -r -S $size"))
+                } catch (e: Exception) {
+                    DebugLog.log("Installer", "Failed to start root process: ${e.message}")
+                    null
+                }
+            },
+            pipeData = { process ->
+                try {
+                    FileInputStream(file).use { fis ->
+                        process.outputStream.use { os ->
+                            pipeWithProgress(fis, os, size, packageName)
+                        }
+                    }
+                    true
+                } catch (e: Exception) {
+                    DebugLog.log("Installer", "Root install pipe failed: ${e.message}")
+                    false
+                }
+            }
+        )
     }
 
-    private suspend fun installShizukuStream(file: File, packageName: String): Boolean = withContext(Dispatchers.IO) {
-        if (!Shizuku.pingBinder()) return@withContext false
-        if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-            if (!requestShizukuPermission()) return@withContext false
+
+    private suspend fun installShizukuStream(file: File, packageName: String): Boolean {
+        if (!Shizuku.pingBinder()) {
+            DebugLog.log("Installer", "Shizuku not available")
+            return false
         }
-        try {
-            val size = file.length().coerceAtLeast(1L)
-            val proc = shizukuNewProcess(arrayOf("cmd", "package", "install", "-r", "-S", size.toString()))
-                ?: return@withContext false
-            activeProcs[packageName] = proc
-            val ok = try {
-                FileInputStream(file).use { fis -> proc.outputStream.use { os -> pipeWithProgress(fis, os, size, packageName) } }
-                withTimeoutOrNull(300_000) { proc.waitFor() } == 0
-            } finally { runCatching { proc.destroy() }; activeProcs.remove(packageName) }
-            ok
-        } catch (_: Exception) { false }
+
+        if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+            if (!requestShizukuPermission()) {
+                DebugLog.log("Installer", "Shizuku permission denied")
+                return false
+            }
+        }
+
+        val size = file.length().coerceAtLeast(1L)
+
+        return executeWithProcess(
+            packageName = packageName,
+            processBuilder = {
+                try {
+                    shizukuNewProcess(
+                        arrayOf("cmd", "package", "install", "-r", "-S", size.toString())
+                    )
+                } catch (e: Exception) {
+                    DebugLog.log("Installer", "Failed to start Shizuku process: ${e.message}")
+                    null
+                }
+            },
+            pipeData = { process ->
+                try {
+                    FileInputStream(file).use { fis ->
+                        process.outputStream.use { os ->
+                            pipeWithProgress(fis, os, size, packageName)
+                        }
+                    }
+                    true
+                } catch (e: Exception) {
+                    DebugLog.log("Installer", "Shizuku install pipe failed: ${e.message}")
+                    false
+                }
+            }
+        )
     }
 
     private suspend fun requestShizukuPermission(timeoutMs: Long = 15_000): Boolean {
@@ -767,6 +874,38 @@ class Installer(
         scope.launch {
             val cutoff = System.currentTimeMillis() - CACHE_EXPIRY_HOURS * 60L * 60L * 1000L
             getBaseCacheDir().listFiles()?.forEach { f -> if (f.lastModified() < cutoff) runCatching { f.delete() } }
+        }
+    }
+}
+
+private fun Process.isAliveCompat(): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        this.isAlive
+    } else {
+        try {
+            exitValue()
+            false
+        } catch (e: IllegalThreadStateException) {
+            true
+        }
+    }
+}
+
+private fun Process.destroyForciblyCompat() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        this.destroyForcibly()
+    } else {
+        this.destroy()
+
+        // try to use reflection for better termination
+        try {
+            val pidField = this.javaClass.getDeclaredField("pid")
+            pidField.isAccessible = true
+            val pid = pidField.getInt(this)
+            Runtime.getRuntime().exec("kill -9 $pid")
+        } catch (e: Exception) {
+            // Fallback already done with destroy()
+            DebugLog.log("Installer", "Force kill failed: ${e.message}")
         }
     }
 }
