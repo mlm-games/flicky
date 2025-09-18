@@ -29,6 +29,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 object AppGraph {
     @Volatile
@@ -38,49 +40,63 @@ object AppGraph {
     private class AppGraphInstance(context: Context) {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+        private val seedMutex = Mutex()
+        private var hasSeeded = false
+
         val db: AppDatabase = Room.databaseBuilder(
             context.applicationContext,
             AppDatabase::class.java,
             "flicky.db"
         )
             .fallbackToDestructiveMigration(true)
-            // Seed defaults when the DB is first created
+            // Only use onCreate callback for initial seeding
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
-                    scope.launch { seedDefaultRepositories() }
+                    scope.launch { seedDefaultRepositoriesOnce() }
                 }
             })
             .build()
 
-        // Seed default repositories into Room if empty (also useful after destructive migration
-        // during cold start, in case onCreate callback races with app usage)
         init {
-            scope.launch { seedDefaultRepositories() }
+            // Check if we need to seed after a destructive migration
+            scope.launch {
+                seedDefaultRepositoriesOnce()
+            }
         }
 
-        private suspend fun seedDefaultRepositories() {
-            val repoDao = db.repositoryDao()
-            val cfgDao = db.repoConfigDao()
-            if (repoDao.getAll().isEmpty()) {
-                RepositoryInfo.defaults().forEach { def ->
-                    val base = def.url.trim().removeSuffix("/")
-                    repoDao.upsert(
-                        RepositoryEntity(
-                            baseUrl = base,
-                            name = def.name
-                        )
-                    )
-                    cfgDao.insertIgnore(
-                        RepoConfig(
-                            baseUrl = base,
-                            enabled = def.enabled,
-                            rotateMirrors = base.equals("https://f-droid.org/repo", ignoreCase = true),
-                            strategy = if (base.equals("https://f-droid.org/repo", ignoreCase = true))
-                                "RoundRobin" else "StickyLastGood"
-                        )
-                    )
+        // Thread-safe seeding with proper transaction handling
+        private suspend fun seedDefaultRepositoriesOnce() {
+            seedMutex.withLock {
+                if (hasSeeded) return
+
+                db.withTransaction {
+                    val repoDao = db.repositoryDao()
+                    val cfgDao = db.repoConfigDao()
+
+                    // Check if already seeded
+                    if (repoDao.getAll().isEmpty()) {
+                        RepositoryInfo.defaults().forEach { def ->
+                            val base = def.url.trim().removeSuffix("/")
+                            repoDao.upsert(
+                                RepositoryEntity(
+                                    baseUrl = base,
+                                    name = def.name
+                                )
+                            )
+                            cfgDao.insertIgnore(
+                                RepoConfig(
+                                    baseUrl = base,
+                                    enabled = def.enabled,
+                                    rotateMirrors = base.equals("https://f-droid.org/repo", ignoreCase = true),
+                                    strategy = if (base.equals("https://f-droid.org/repo", ignoreCase = true))
+                                        "RoundRobin" else "StickyLastGood"
+                                )
+                            )
+                        }
+                    }
                 }
+                hasSeeded = true
             }
         }
 
@@ -91,8 +107,7 @@ object AppGraph {
         val headersStore = RepoHeadersStore(settings)
         val syncManager = RepositorySyncManager(api, db.appDao(), settings, headersStore)
         val appRepo = AppRepository(db.appDao())
-        val installer =
-            Installer(context.applicationContext, settings, mirrorPolicyProvider, httpClients)
+        val installer = Installer(context.applicationContext, settings, mirrorPolicyProvider, httpClients)
         val installedRepo = InstalledAppsRepository(context.applicationContext)
     }
 
@@ -147,4 +162,3 @@ object AppGraph {
         runCatching { installer.clearDownloadCache() }
     }
 }
-
