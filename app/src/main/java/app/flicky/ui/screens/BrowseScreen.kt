@@ -270,7 +270,7 @@ fun BrowseScreen(
             }
         }
     ) { padding ->
-        val body: @Composable () -> Unit = {
+        val Body: @Composable () -> Unit = {
             if (apps.itemCount == 0 && !isSyncing) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(32.dp),
@@ -342,7 +342,7 @@ fun BrowseScreen(
                     .fillMaxSize()
                     .padding(padding),
             ) {
-                body
+                Body()
             }
         }
         else {
@@ -353,7 +353,7 @@ fun BrowseScreen(
                 isRefreshing = isSyncing,
                 onRefresh = onSyncClick
             ) {
-                body
+                Body()
             }
         }
         installFromTarget?.let { target ->
