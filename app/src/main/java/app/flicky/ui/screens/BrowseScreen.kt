@@ -270,13 +270,7 @@ fun BrowseScreen(
             }
         }
     ) { padding ->
-        PullToRefreshBox(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            isRefreshing = isSyncing,
-            onRefresh = onSyncClick
-        ) {
+        val body: @Composable () -> Unit = {
             if (apps.itemCount == 0 && !isSyncing) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(32.dp),
@@ -284,17 +278,12 @@ fun BrowseScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
-                        Icons.Default.SearchOff,
-                        contentDescription = null,
+                        Icons.Default.SearchOff, contentDescription = null,
                         modifier = Modifier.size(64.dp),
                         tint = colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     )
                     Spacer(Modifier.height(16.dp))
-                    Text(
-                        stringResource(R.string.no_apps_found),
-                        style = typography.titleLarge,
-                        color = colorScheme.onSurfaceVariant
-                    )
+                    Text(stringResource(R.string.no_apps_found), style = typography.titleLarge, color = colorScheme.onSurfaceVariant)
                     if (query.isNotEmpty()) {
                         Text(
                             stringResource(R.string.try_different_search),
@@ -314,7 +303,7 @@ fun BrowseScreen(
                                 AppListRow(
                                     app = app,
                                     onClick = { onAppClick(app) },
-                                    onLongClick = { onShowInstallFrom(app) } // see feature 3 below
+                                    onLongClick = { onShowInstallFrom(app) }
                                 )
                             }
                         }
@@ -333,19 +322,38 @@ fun BrowseScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(
-                            apps.itemCount,
-                            key = { idx -> apps[idx]?.packageName ?: "placeholder_$idx" }) { idx ->
+                        items(apps.itemCount, key = { idx -> apps[idx]?.packageName ?: "placeholder_$idx" }) { idx ->
                             apps[idx]?.let { app ->
                                 AdaptiveAppCard(
                                     app = app,
                                     onClick = { onAppClick(app) },
-                                    onLongClick = { onShowInstallFrom(app) } // see feature 3
+                                    onLongClick = { onShowInstallFrom(app) }
                                 )
                             }
                         }
                     }
                 }
+            }
+        }
+
+        if (isTv) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+            ) {
+                body
+            }
+        }
+        else {
+            PullToRefreshBox(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                isRefreshing = isSyncing,
+                onRefresh = onSyncClick
+            ) {
+                body
             }
         }
         installFromTarget?.let { target ->
