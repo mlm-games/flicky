@@ -1,5 +1,6 @@
 package app.flicky.install
 
+import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
@@ -325,7 +326,7 @@ class Installer(
                             trustMode.equals("CustomCA", true) -> (listOf(normalize(dlBase)) + basesRaw)
                         .distinct()
                         .filter { it.startsWith("https://") || (policy.includeOnion && it.contains(".onion")) }
-                            else -> (listOf(normalize(dlBase)) + basesRaw).distinct()
+                    else -> (listOf(normalize(dlBase)) + basesRaw).distinct()
                 }
                 return filteredBases.map { b -> "${normalize(b)}/$relPath" }
             }
@@ -617,7 +618,7 @@ class Installer(
                                     if (p != lastProgress) {
                                         if (isCancelled(packageName)) { dm.remove(id); return@withContext null }
                                         lastProgress = p
-                                    emitStage(packageName, TaskStage.Downloading(p.coerceIn(0f, 0.999f))) }
+                                        emitStage(packageName, TaskStage.Downloading(p.coerceIn(0f, 0.999f))) }
                                 }
                             }
                             val waitingOnNetwork = reason == DownloadManager.PAUSED_WAITING_FOR_NETWORK ||
@@ -700,6 +701,7 @@ class Installer(
         return result == true
     }
 
+    @SuppressLint("RequestInstallPackagesPolicy")
     private suspend fun installSessionFromFile(
         file: File,
         packageName: String,
@@ -885,7 +887,7 @@ private fun Process.isAliveCompat(): Boolean {
         try {
             exitValue()
             false
-        } catch (e: IllegalThreadStateException) {
+        } catch (_: IllegalThreadStateException) {
             true
         }
     }

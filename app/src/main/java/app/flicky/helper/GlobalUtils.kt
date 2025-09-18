@@ -12,15 +12,3 @@ inline fun <reified T : ViewModel> viewModelFactory(
         return creator() as VM
     }
 }
-
-val Process.isAlive: Boolean
-    get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        this.isAlive
-    } else {
-        try {
-            this.exitValue()
-            false
-        } catch (e: IllegalThreadStateException) {
-            true
-        }
-    }
