@@ -91,9 +91,7 @@ import kotlin.math.pow
 fun AppDetailScreen(
     app: FDroidApp,
     installedVersionCode: Long?,
-    isInstalling: Boolean,
     stage: TaskStage?,
-    progress: Float,
     onInstall: () -> Unit,
     onInstallVariant: (AppVariant) -> Unit,
     onOpen: () -> Unit,
@@ -144,9 +142,9 @@ fun AppDetailScreen(
             color = colorScheme.background
         ) {
             if (isWide) {
-                DesktopLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onInstallVariant, onOpen, onCancel, onUninstall, error, onOpenCategory, variants)
+                DesktopLayout(app, installedVersionCode, stage, onInstall, onInstallVariant, onOpen, onCancel, onUninstall, error, onOpenCategory, variants)
             } else {
-                MobileLayout(app, installedVersionCode, isInstalling, stage, progress, onInstall, onInstallVariant, onOpen, onCancel,  onUninstall, error, onOpenCategory, variants)
+                MobileLayout(app, installedVersionCode, stage, onInstall, onInstallVariant, onOpen, onCancel,  onUninstall, error, onOpenCategory, variants)
             }
         }
     }
@@ -156,9 +154,7 @@ fun AppDetailScreen(
 private fun DesktopLayout(
     app: FDroidApp,
     installedVersionCode: Long?,
-    isInstalling: Boolean,
     stage: TaskStage?,
-    progress: Float,
     onInstall: () -> Unit,
     onInstallVariant: (AppVariant) -> Unit,
     onOpen: () -> Unit,
@@ -180,7 +176,7 @@ private fun DesktopLayout(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    AppHeader(app, installedVersionCode, isInstalling, stage, progress, onInstall, onOpen, onCancel, onUninstall, error, 96.dp)
+                    AppHeader(app, installedVersionCode, stage, onInstall, onOpen, onCancel, onUninstall, error, 96.dp)
                 }
                 item { ChipsSection(app, installedVersionCode, onOpenCategory) }
                 item { DetailsSection(app) }
@@ -212,9 +208,7 @@ private fun DesktopLayout(
 private fun MobileLayout(
     app: FDroidApp,
     installedVersionCode: Long?,
-    isInstalling: Boolean,
     stage: TaskStage?,
-    progress: Float,
     onInstall: () -> Unit,
     onInstallVariant: (AppVariant) -> Unit,
     onOpen: () -> Unit,
@@ -234,9 +228,7 @@ private fun MobileLayout(
                 AppHeader(
                     app = app,
                     installedVersionCode = installedVersionCode,
-                    isInstalling = isInstalling,
                     stage = stage,
-                    progress = progress,
                     onInstall = onInstall,
                     onOpen = onOpen,
                     onCancel =  onCancel,
@@ -298,9 +290,7 @@ private fun RightPaneContent(
 private fun AppHeader(
     app: FDroidApp,
     installedVersionCode: Long?,
-    isInstalling: Boolean,
     stage: TaskStage?,
-    progress: Float,
     onInstall: () -> Unit,
     onOpen: () -> Unit,
     onCancel: () -> Unit,
@@ -320,18 +310,40 @@ private fun AppHeader(
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(app.name, style = typography.titleLarge, color = colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(app.packageName, style = typography.bodySmall, color = colorScheme.onSurfaceVariant)
+                Text(
+                    app.name,
+                    style = typography.titleLarge,
+                    color = colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    app.packageName,
+                    style = typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant
+                )
                 if (app.author.isNotBlank()) {
-                    Text(app.author, style = typography.bodySmall, color = colorScheme.onSurfaceVariant)
+                    Text(
+                        app.author,
+                        style = typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
         Spacer(Modifier.height(12.dp))
-        val installingNow = stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled
-        if (installingNow) {
+
+        val progressValue = when (stage) {
+            is TaskStage.Downloading -> stage.progress.coerceIn(0f, 0.999f)
+            is TaskStage.Verifying   -> 0.995f
+            is TaskStage.Installing  -> (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f)
+            else -> -1f // means no bar
+        }
+        val showBar = stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled && progressValue >= 0f
+
+        if (showBar) {
             LinearProgressIndicator(
-                progress = { progress },
+                progress = { progressValue },
                 modifier = Modifier.fillMaxWidth(),
                 color = colorScheme.primary,
                 trackColor = colorScheme.surfaceVariant
@@ -347,22 +359,21 @@ private fun AppHeader(
                 else -> "Working"
             }
             val showPercent = stage is TaskStage.Downloading || stage is TaskStage.Installing
-            val percent = (progress * 100).toInt()
+            val percent = (progressValue * 100).toInt()
             Text(
                 if (showPercent) "$label $percent%" else label,
                 style = typography.bodySmall,
                 color = colorScheme.onSurfaceVariant
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onCancel, Modifier.fillMaxWidth()) {
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = onCancel, Modifier.fillMaxWidth()) {
                     Icon(
                         painterResource(id = R.drawable.ic_close),
                         contentDescription = stringResource(R.string.action_cancel)
                     )
-                    Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.action_cancel))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         } else {
