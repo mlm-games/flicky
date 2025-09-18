@@ -308,7 +308,7 @@ class Installer(
         return File(getBaseCacheDir(), "${req.packageName}-$key.apk")
     }
 
-    private fun preflightPickUrl(repoBase: String, urls: List<String>): String? {
+    private suspend fun preflightPickUrl(repoBase: String, urls: List<String>): String? {
         val client = runCatching { httpClients.clientFor(repoBase) }.getOrNull() ?: return urls.firstOrNull()
         for (u in urls) {
             runCatching {

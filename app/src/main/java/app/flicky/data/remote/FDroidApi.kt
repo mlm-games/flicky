@@ -70,7 +70,7 @@ class FDroidApi(
         val baseUrl = repo.url.trimEnd('/')
         val strict = runCatching { AppGraph.settings.settingsFlow.first().failOnTrustErrors }
             .getOrDefault(false)
-        fun client(): OkHttpClient {
+        suspend fun client(): OkHttpClient {
             return try {
                 clientProvider.clientFor(baseUrl)
             } catch (e: Exception) {

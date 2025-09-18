@@ -1,32 +1,33 @@
 package app.flicky.data.remote
 
-import android.util.Base64
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.local.RepoConfigDao
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import okhttp3.CertificatePinner
-import okhttp3.OkHttpClient
-import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
 import java.security.KeyStore
 import java.security.SecureRandom
 import java.security.cert.CertificateFactory
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 
 interface HttpClientProvider {
-    fun clientFor(baseUrl: String): OkHttpClient
+    // suspend to avoid blocking
+    suspend fun clientFor(baseUrl: String): OkHttpClient
+
+    fun clientForSync(baseUrl: String): OkHttpClient
 }
 
 /**
+ * Thread-safe HTTP client provider with proper async support.
  * Builds per-repo OkHttp clients based on RepoConfig (trustMode, pins, caPem).
- * Caches clients by (baseUrl, config snapshot).
  */
 class DbHttpClientProvider(
     private val repoConfigDao: RepoConfigDao
@@ -40,60 +41,86 @@ class DbHttpClientProvider(
     )
 
     private val cache = ConcurrentHashMap<CacheKey, OkHttpClient>()
-    private val defaultClient: OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(300, TimeUnit.SECONDS)
-        .retryOnConnectionFailure(true)
-        .build()
 
-    override fun clientFor(baseUrl: String): OkHttpClient {
-        val cfg = runBlocking(Dispatchers.IO) {
-            repoConfigDao.get(baseUrl.trim().trimEnd('/')) ?: RepoConfig(baseUrl = baseUrl.trim().trimEnd('/'))
-        }
+    // Shared default client instance
+    private val defaultClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(300, TimeUnit.SECONDS)
+            .writeTimeout(300, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .build()
+    }
+
+    /**
+     * Async version - properly handles suspension
+     */
+    override suspend fun clientFor(baseUrl: String): OkHttpClient = withContext(Dispatchers.IO) {
+        val normalizedUrl = baseUrl.trim().trimEnd('/')
+        val cfg = repoConfigDao.get(normalizedUrl) ?: RepoConfig(baseUrl = normalizedUrl)
         val key = CacheKey(cfg.baseUrl, cfg.trustMode, cfg.pins, cfg.caPem)
-        return cache.getOrPut(key) { buildClient(cfg) }
+
+        cache.getOrPut(key) {
+            buildClient(cfg)
+        }
+    }
+
+    /**
+     * Synchronous version for backward compatibility - returns default client if config not cached
+     */
+    override fun clientForSync(baseUrl: String): OkHttpClient {
+        val normalizedUrl = baseUrl.trim().trimEnd('/')
+        // Check if we have a cached client for this URL
+        val cachedKey = cache.keys.find { it.base == normalizedUrl }
+        return cachedKey?.let { cache[it] } ?: defaultClient
     }
 
     private fun buildClient(cfg: RepoConfig): OkHttpClient {
         val url = cfg.baseUrl.toHttpUrlOrNull()
             ?: return defaultClient
 
-        if (cfg.trustMode.equals("HttpsOnly", ignoreCase = true)) {
-            if (!url.isHttps) {
-                // Enforce https-only
-                throw IllegalStateException("Repo ${cfg.baseUrl} requires HTTPS (trustMode=HttpsOnly)")
+        when (cfg.trustMode.lowercase()) {
+            "httpsonly" -> {
+                if (!url.isHttps) {
+                    throw IllegalStateException("Repo ${cfg.baseUrl} requires HTTPS (trustMode=HttpsOnly)")
+                }
+                return defaultClient
             }
-            return defaultClient
-        }
 
-        if (cfg.trustMode.equals("Pinned", ignoreCase = true)) {
-            if (!url.isHttps) {
-                throw IllegalStateException("Pinned mode requires HTTPS: ${cfg.baseUrl}")
+            "pinned" -> {
+                if (!url.isHttps) {
+                    throw IllegalStateException("Pinned mode requires HTTPS: ${cfg.baseUrl}")
+                }
+                val host = url.host
+                val pins = parsePins(cfg.pins)
+                if (pins.isEmpty()) return defaultClient
+
+                val pinner = CertificatePinner.Builder().apply {
+                    pins.forEach { pin ->
+                        // Validate pin format
+                        if (isValidPin(pin)) {
+                            add(host, pin)
+                        }
+                    }
+                }.build()
+
+                return defaultClient.newBuilder()
+                    .certificatePinner(pinner)
+                    .build()
             }
-            val host = url.host
-            val pins = parsePins(cfg.pins)
-            if (pins.isEmpty()) return defaultClient
 
-            val pinner = CertificatePinner.Builder().apply {
-                pins.forEach { add(host, it) }
-            }.build()
-
-            return defaultClient.newBuilder()
-                .certificatePinner(pinner)
-                .build()
-        }
-
-        if (cfg.trustMode.equals("CustomCA", ignoreCase = true)) {
-            if (!url.isHttps) {
-                throw IllegalStateException("CustomCA mode requires HTTPS: ${cfg.baseUrl}")
+            "customca" -> {
+                if (!url.isHttps) {
+                    throw IllegalStateException("CustomCA mode requires HTTPS: ${cfg.baseUrl}")
+                }
+                val trust = buildTrustFromPem(cfg.caPem)
+                return defaultClient.newBuilder()
+                    .sslSocketFactory(trust.first, trust.second)
+                    .build()
             }
-            val trust = buildTrustFromPem(cfg.caPem)
-            return defaultClient.newBuilder()
-                .sslSocketFactory(trust.first, trust.second)
-                .build()
-        }
 
-        return defaultClient
+            else -> return defaultClient
+        }
     }
 
     private fun parsePins(raw: String): List<String> {
@@ -104,6 +131,14 @@ class DbHttpClientProvider(
             .map {
                 if (it.startsWith("sha256/", true)) it else "sha256/$it"
             }
+    }
+
+    /**
+     * Validate certificate pin format
+     */
+    private fun isValidPin(pin: String): Boolean {
+        val pattern = "^sha256/[A-Za-z0-9+/]{43}=$".toRegex()
+        return pattern.matches(pin)
     }
 
     /**
@@ -135,8 +170,10 @@ class DbHttpClientProvider(
         val tms = tmf.trustManagers
         val x509 = tms.firstOrNull { it is X509TrustManager } as? X509TrustManager
             ?: throw IllegalStateException("No X509TrustManager from custom CA")
+
         val ctx = SSLContext.getInstance("TLS")
         ctx.init(null, arrayOf<TrustManager>(x509), SecureRandom())
+
         return Pair(ctx.socketFactory, x509)
     }
 }

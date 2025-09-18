@@ -1,6 +1,7 @@
 package app.flicky.network
 
 import app.flicky.data.remote.HttpClientProvider
+import kotlinx.coroutines.runBlocking
 import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -21,14 +22,16 @@ class CoilCallFactory(
         val url = request.url
         val hostBase = "${url.scheme}://${url.host}"
         val client = cache.getOrPut(hostBase) {
-            try {
-                clients.clientFor(hostBase)
-            } catch (e: Exception) {
-                if (failOnTrustErrors) throw e
-                // permissive fallback
-                OkHttpClient.Builder()
-                    .retryOnConnectionFailure(true)
-                    .build()
+            runBlocking {
+                try {
+                    clients.clientFor(hostBase)
+                } catch (e: Exception) {
+                    if (failOnTrustErrors) throw e
+                    // permissive fallback
+                    OkHttpClient.Builder()
+                        .retryOnConnectionFailure(true)
+                        .build()
+                }
             }
         }
         return client.newCall(request)
