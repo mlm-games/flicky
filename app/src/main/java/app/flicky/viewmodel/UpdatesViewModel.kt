@@ -16,24 +16,26 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-data class UpdatesUiState(
+data class UpdatesUi(
     val installed: List<FDroidApp> = emptyList(),
-    val updates: List<FDroidApp> = emptyList(),
     val suppressed: List<FDroidApp> = emptyList(),
+    val updates: List<FDroidApp> = emptyList(),
     val installingPackages: Set<String> = emptySet(),
-    val installProgress: Map<String, Float> = emptyMap(),
     val installedVersionsCode: Map<String, Long> = emptyMap(),
     val installedVersionsName: Map<String, String> = emptyMap(),
-    val ignoredPrefs: Map<String, UpdatesPreference> = emptyMap()
+    val ignoredPrefs: Map<String, UpdatesPreference> = emptyMap(),
+    val ignored: Set<String> = emptySet(),
+    val message: String? = null
 )
+
 class UpdatesViewModel(
     private val repo: AppRepository,
     private val installedRepo: InstalledAppsRepository,
     private val installer: Installer
 ) : ViewModel() {
 
-    private val _ui = MutableStateFlow(UpdatesUiState())
-    val ui: StateFlow<UpdatesUiState> = _ui.asStateFlow()
+    private val _ui = MutableStateFlow(UpdatesUi())
+    val ui: StateFlow<UpdatesUi> = _ui.asStateFlow()
 
     private val prefsTick = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
@@ -83,12 +85,6 @@ class UpdatesViewModel(
 
                         else -> {}
                     }
-                }
-                _ui.update {
-                    it.copy(
-                        installingPackages = installing,
-                        installProgress = progress
-                    )
                 }
             }
         }

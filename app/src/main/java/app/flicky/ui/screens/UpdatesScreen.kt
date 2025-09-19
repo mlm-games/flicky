@@ -1,22 +1,44 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-
 package app.flicky.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
-import androidx.compose.runtime.*
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -28,16 +50,18 @@ import app.flicky.data.external.UpdatesPreference
 import app.flicky.data.model.FDroidApp
 import app.flicky.helper.DeviceUtils
 import app.flicky.helper.cardAsFocusGroup
+import app.flicky.install.TaskStage
 import app.flicky.ui.components.AppIcon
 import app.flicky.ui.components.AppTexts
 import app.flicky.ui.components.global.MyScreenScaffold
 import app.flicky.ui.routes.UpdatesActions
-import app.flicky.viewmodel.UpdatesUiState
+import app.flicky.viewmodel.UpdatesUi
 
 @Composable
 fun UpdatesScreen(
-    ui: UpdatesUiState,
-    actions: UpdatesActions
+    ui: UpdatesUi,
+    actions: UpdatesActions,
+    installerTasks: Map<String, TaskStage>
 ) {
     val cfg = LocalConfiguration.current
     val gridCells = remember(cfg.screenWidthDp) { GridCells.Adaptive(minSize = 320.dp) }
@@ -52,9 +76,10 @@ fun UpdatesScreen(
         if (suppressed.isEmpty() && showIgnored) showIgnored = false
     }
 
+
     MyScreenScaffold(
         // Hiding for space
-        title = if (suppressed.isNotEmpty() && !isTV) "" else stringResource(R.string.nav_updates),
+        title = if (suppressed.isNotEmpty() && ui.updates.isNotEmpty() && !isTV) "" else stringResource(R.string.nav_updates),
         actions = {
             if (ui.updates.isNotEmpty()) {
                 Button(
@@ -90,8 +115,7 @@ fun UpdatesScreen(
                 items(ui.updates, key = { "update_${it.packageName}" }) { app ->
                     UpdateCard(
                         app = app,
-                        installing = app.packageName in ui.installingPackages,
-                        progress = ui.installProgress[app.packageName] ?: 0f,
+                        stage = installerTasks[app.packageName],
                         installedVersionName = ui.installedVersionsName[app.packageName],
                         installedVersionCode = ui.installedVersionsCode[app.packageName],
                         actions = actions,
@@ -114,8 +138,7 @@ fun UpdatesScreen(
                 items(suppressed, key = { "ignored_${it.packageName}" }) { app ->
                     UpdateCard(
                         app = app,
-                        installing = app.packageName in ui.installingPackages,
-                        progress = ui.installProgress[app.packageName] ?: 0f,
+                        stage = installerTasks[app.packageName],
                         installedVersionName = ui.installedVersionsName[app.packageName],
                         installedVersionCode = ui.installedVersionsCode[app.packageName],
                         actions = actions,
@@ -149,29 +172,9 @@ fun UpdatesScreen(
 }
 
 @Composable
-private fun EmptyUpdatesCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant)
-    ) {
-        Box(
-            modifier = Modifier.fillMaxWidth().padding(32.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                stringResource(R.string.no_updates),
-                style = typography.bodyLarge,
-                color = colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
 private fun UpdateCard(
     app: FDroidApp,
-    installing: Boolean,
-    progress: Float,
+    stage: TaskStage?,
     installedVersionName: String?,
     installedVersionCode: Long?,
     actions: UpdatesActions,
@@ -214,19 +217,30 @@ private fun UpdateCard(
                 )
             }
             Spacer(Modifier.height(8.dp))
-            if (installing) {
+            if (stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled) {
+                val progress = when (stage) {
+                    is TaskStage.Downloading -> stage.progress
+                    is TaskStage.Verifying -> 0.995f
+                    is TaskStage.Installing -> stage.progress
+                    else -> 0f
+                }
+
                 LinearProgressIndicator(
                     progress = { progress },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     color = colorScheme.primary,
                     trackColor = colorScheme.surfaceVariant
                 )
                 Spacer(Modifier.height(4.dp))
-                Text(
-                    stringResource(R.string.progress_percentage, (progress * 100).toInt()),
-                    style = typography.labelSmall,
-                    color = colorScheme.onSurfaceVariant
-                )
+                val label = when (stage) {
+                    is TaskStage.Downloading -> "Downloading ${(progress * 100).toInt()}%"
+                    is TaskStage.Verifying   -> "Verifying"
+                    is TaskStage.Installing  -> "Installing ${(progress * 100).toInt()}%"
+                    is TaskStage.Finished    -> if (stage.success) "Completed" else "Failed"
+                    is TaskStage.Cancelled   -> "Cancelled"
+                    else -> ""
+                }
+                Text(label, style = typography.labelSmall, color = colorScheme.onSurfaceVariant)
             } else {
                 Button(
                     onClick = { actions.updateOne(app) },
@@ -240,6 +254,7 @@ private fun UpdateCard(
         }
     }
 }
+
 
 @Composable
 private fun InstalledCard(
@@ -319,6 +334,25 @@ private fun IgnoreMenu(
                     onClick = { open = false; onIgnoreAll() }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun EmptyUpdatesCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                stringResource(R.string.no_updates),
+                style = typography.bodyLarge,
+                color = colorScheme.onSurfaceVariant
+            )
         }
     }
 }

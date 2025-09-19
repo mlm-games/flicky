@@ -6,6 +6,7 @@ import app.flicky.AppGraph
 import app.flicky.data.model.FDroidApp
 import app.flicky.helper.viewModelFactory
 import app.flicky.install.Installer
+import app.flicky.install.TaskStage
 import app.flicky.ui.screens.UpdatesScreen
 import app.flicky.viewmodel.UpdatesViewModel
 import kotlinx.coroutines.launch
@@ -34,6 +35,8 @@ fun UpdatesRoute(
     val ui by vm.ui.collectAsState()
     val scope = rememberCoroutineScope()
 
+    val installerTasks by installer.tasks.collectAsState(initial = emptyMap())
+
     val actions = remember(vm, installer, ui) {
         object : UpdatesActions {
             override fun updateAll() {
@@ -51,5 +54,5 @@ fun UpdatesRoute(
         }
     }
 
-    UpdatesScreen(ui = ui, actions = actions)
+    UpdatesScreen(ui = ui, actions = actions, installerTasks = installerTasks)
 }
