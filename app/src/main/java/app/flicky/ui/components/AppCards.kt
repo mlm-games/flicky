@@ -41,6 +41,8 @@ import app.flicky.R
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.AppSettings
 import app.flicky.helper.DeviceUtils
+import app.flicky.helper.TvFocusConfig
+import app.flicky.helper.rememberDebouncedFocusState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
@@ -108,8 +110,12 @@ fun TVAppCard(
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {}
 ) {
-    var focused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(targetValue = if (focused) 1.05f else 1f, label = "tv_card_scale")
+    val (focused, setFocused) = rememberDebouncedFocusState()
+    val scale by animateFloatAsState(
+        targetValue = if (focused) 1.05f else 1f,
+        animationSpec = TvFocusConfig.tvFocusAnimationSpec,
+        label = "tv_card_scale"
+    )
     val colors = colorScheme
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(autofocus) { if (autofocus) focusRequester.requestFocus() }
@@ -119,14 +125,14 @@ fun TVAppCard(
         modifier = Modifier
             .scale(scale)
             .focusRequester(focusRequester)
-            .onFocusChanged { focused = it.isFocused }
+            .onFocusChanged { setFocused(it.isFocused) }
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
         colors = CardDefaults.elevatedCardColors(
             containerColor = if (focused) colors.primaryContainer else colors.surface,
             contentColor = if (focused) colors.onPrimaryContainer else colors.onSurface
         )
     ) {
-        Column(Modifier.padding(16.dp)) {
+    Column(Modifier.padding(16.dp)) {
             val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
             if (settings.showAppIcons) {
                 AsyncImage(

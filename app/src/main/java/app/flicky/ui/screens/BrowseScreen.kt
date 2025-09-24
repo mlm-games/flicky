@@ -71,6 +71,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -99,6 +102,7 @@ import app.flicky.ui.components.AdaptiveAppCard
 import app.flicky.ui.components.global.FlickyDialog
 import app.flicky.viewmodel.UiText
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 @Composable
@@ -126,6 +130,8 @@ fun BrowseScreen(
     var showSortDialog by remember { mutableStateOf(false) }
     val s by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
 
+    val focusRequesters = remember { mutableMapOf<String, FocusRequester>() }
+    var lastFocusedKey by rememberSaveable { mutableStateOf<String?>(null) }
 
     val scope = rememberCoroutineScope()
     var installFromTarget by remember { mutableStateOf<FDroidApp?>(null) }
@@ -320,15 +326,41 @@ fun BrowseScreen(
                         columns = GridCells.Fixed(columns),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+//                        beyondBoundsItemCount = columns * 2
                     ) {
-                        items(apps.itemCount, key = { idx -> apps[idx]?.packageName ?: "placeholder_$idx" }) { idx ->
+                        items(
+                            count = apps.itemCount,
+                            key = { idx -> apps[idx]?.packageName ?: "placeholder_$idx" }
+                        ) { idx ->
                             apps[idx]?.let { app ->
-                                AdaptiveAppCard(
-                                    app = app,
-                                    onClick = { onAppClick(app) },
-                                    onLongClick = { onShowInstallFrom(app) }
-                                )
+                                val key = app.packageName
+                                val focusRequester = focusRequesters.getOrPut(key) { FocusRequester() }
+
+                                Box(
+                                    modifier = Modifier
+                                        .focusRequester(focusRequester)
+                                        .onFocusChanged {
+                                            if (it.isFocused) lastFocusedKey = key
+                                        }
+                                ) {
+                                    AdaptiveAppCard(
+                                        app = app,
+                                        onClick = { onAppClick(app) },
+                                        onLongClick = { onShowInstallFrom(app) }
+                                    )
+                                }
+
+                                LaunchedEffect(key) {
+                                    if (lastFocusedKey == key) {
+                                        delay(50)
+                                        try {
+                                            focusRequester.requestFocus()
+                                        } catch (_: Exception) {
+                                            // Ignore if focus request fails
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
