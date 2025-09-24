@@ -1,0 +1,10 @@
+- Try to solve #29 (Add anim debouncing for TV browseScreen)
+- TaskStage progress for installs in UpdatesScreen too
+- Use only TaskStage progress for installs in AppDetailScreen
+- Installer cancellation changes for API 24-25
+- Use more robust cancellation (send SIGKILL for cancel)
+- repo seeding, HTTPClientProvider thread safety Improvements,
+- PullToRefreshBox change fix
+- repo seeding Improvements
+- Use a normal box for TVs
+- Add project level optins and rem unused imports
