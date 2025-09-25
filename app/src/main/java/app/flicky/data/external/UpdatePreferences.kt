@@ -4,10 +4,15 @@ import android.content.Context
 import android.content.SharedPreferences
 import org.json.JSONObject
 import androidx.core.content.edit
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 
 data class UpdatesPreference(
     val ignoreUpdates: Boolean = false,
-    val ignoreVersionCode: Long = 0L
+    val ignoreVersionCode: Long = 0L,
+    val preferredRepoUrl: String? = null,
+    val lockToRepo: Boolean = true,
 )
 
 object UpdatesPreferences {
@@ -23,7 +28,10 @@ object UpdatesPreferences {
             val obj = JSONObject(json)
             UpdatesPreference(
                 ignoreUpdates = obj.optBoolean("ignoreUpdates", false),
-                ignoreVersionCode = obj.optLong("ignoreVersionCode", 0L)
+                ignoreVersionCode = obj.optLong("ignoreVersionCode", 0L),
+                preferredRepoUrl = obj.optString("preferredRepoUrl", "")
+                    .takeIf { it.isNotBlank() },
+                lockToRepo = obj.optBoolean("lockToRepo", true)
             )
         } catch (_: Exception) {
             UpdatesPreference()
@@ -34,7 +42,24 @@ object UpdatesPreferences {
         val obj = JSONObject().apply {
             put("ignoreUpdates", pref.ignoreUpdates)
             put("ignoreVersionCode", pref.ignoreVersionCode)
+            put("preferredRepoUrl", pref.preferredRepoUrl ?: "")
+            put("lockToRepo", pref.lockToRepo)
         }
         prefs.edit { putString(packageName, obj.toString()) }
+    }
+
+    fun setPreferredRepo(packageName: String, repoUrl: String?, lock: Boolean = true) {
+        val cur = get(packageName)
+        set(packageName, cur.copy(preferredRepoUrl = repoUrl, lockToRepo = lock))
+    }
+
+    fun observe(packageName: String): Flow<UpdatesPreference> = callbackFlow {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == packageName) trySend(get(packageName)).isSuccess
+        }
+        // emit current
+        trySend(get(packageName))
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
 }

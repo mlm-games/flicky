@@ -15,4 +15,9 @@
     <string name="no_variants_found">No variants found</string>
     <string name="downloading">Downloading</string>
     <string name="verifying">Verifying</string>
+    <string name="preferred_source">Preferred Source</string>
+    <string name="auto">Auto</string>
+    <string name="locked_to_repo">Locked to Repo</string>
+    <string name="unlocked_repo">Unlocked</string>
+    <string name="lock_to_repo">Lock to Repo</string>
 </resources>

@@ -9,6 +9,8 @@ import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppRepository
 import app.flicky.data.repository.InstalledAppsRepository
+import app.flicky.data.repository.PreferredRepo
+import app.flicky.data.repository.VariantSelector
 import app.flicky.install.Installer
 import app.flicky.install.TaskStage
 import kotlinx.coroutines.Dispatchers
@@ -104,8 +106,17 @@ class UpdatesViewModel(
 
         val latestCompatByPkg = withContext(Dispatchers.IO) {
             installed.associate { a ->
-                a.packageName to (AppGraph.db.appDao().maxCompatibleVersionCode(a.packageName)?.toLong()
-                    ?: a.versionCode.toLong())
+                val pref = UpdatesPreferences[a.packageName]
+                val all = AppGraph.db.appDao().variantsFor(a.packageName)
+                val chosen = VariantSelector.pick(
+                    variants = all,
+                    preferred = PreferredRepo.Auto, // we only want “best latest” respecting pin
+                    preferredRepoUrl = pref.preferredRepoUrl,
+                    strict = pref.lockToRepo
+                )
+                val best = chosen?.takeIf { it.isCompatible }
+                    ?: all.filter { it.isCompatible }.maxByOrNull { it.versionCode }
+                a.packageName to ((best?.versionCode ?: a.versionCode).toLong())
             }
         }
 

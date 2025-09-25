@@ -3,6 +3,7 @@ package app.flicky.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.local.AppDao
 import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
@@ -129,9 +130,16 @@ class AppDetailViewModel(
                 Log.d("AppDetailViewModel", "Starting install for ${app.packageName}")
 
                 val prefIdx = settings.settingsFlow.first().preferredRepo
-                val pref = PreferredRepo.fromIndex(prefIdx)
+                val globalPref = PreferredRepo.fromIndex(prefIdx)
+                val perAppPref = UpdatesPreferences[packageName]
                 val variants = dao.variantsFor(app.packageName)
-                val chosen = VariantSelector.pick(variants, pref)
+
+                val chosen = VariantSelector.pick(
+                    variants = variants,
+                    preferred = globalPref,
+                    preferredRepoUrl = perAppPref.preferredRepoUrl,
+                    strict = perAppPref.lockToRepo
+                )
 
                 val success = if (chosen != null) {
                     Log.d("AppDetailViewModel", "Installing via variant from ${chosen.repositoryName} (${chosen.repositoryUrl}) with vercode: ${chosen.versionCode}")
@@ -173,6 +181,11 @@ class AppDetailViewModel(
         viewModelScope.launch {
             _ui.value = _ui.value.copy(isInstalling = true, progress = 0f, error = null, stage = TaskStage.Downloading(0f))
             try {
+                val cur = UpdatesPreferences[packageName]
+                UpdatesPreferences[packageName] = cur.copy(
+                    preferredRepoUrl = variant.repositoryUrl.trim().trimEnd('/'),
+                    lockToRepo = true
+                )
                 val ok = installer.install(variant)
                 _ui.update {
                     it.copy(

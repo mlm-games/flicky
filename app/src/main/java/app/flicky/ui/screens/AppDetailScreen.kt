@@ -39,6 +39,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedAssistChip
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,6 +54,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -68,11 +70,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import app.flicky.R
+import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.helper.openUrl
@@ -80,6 +84,7 @@ import app.flicky.helper.shareText
 import app.flicky.install.TaskStage
 import app.flicky.ui.components.SmartExpandableText
 import coil.compose.AsyncImage
+import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -282,6 +287,7 @@ private fun RightPaneContent(
                 installedVersionCode = installedVersionCode,
                 onInstallVariant = onInstallVariant
             )
+            PreferredSourceSection(app.packageName, variants)
         }
     }
 }
@@ -296,7 +302,7 @@ private fun AppHeader(
     onCancel: () -> Unit,
     onUninstall: () -> Unit,
     error: String?,
-    iconSize: androidx.compose.ui.unit.Dp,
+    iconSize: Dp,
     modifier: Modifier = Modifier
 ) {
     Column(modifier) {
@@ -628,7 +634,7 @@ private fun resolveLicenseLink(raw: String): String {
     val looksSpdx = firstToken.matches(Regex("^[A-Za-z0-9.+-]+$"))
     return if (looksSpdx) spdxUrl
     else "https://www.duckduckgo.com/search?q=" +
-            java.net.URLEncoder.encode("$id license", "UTF-8")
+            URLEncoder.encode("$id license", "UTF-8")
 }
 
 private fun exodusReportUrl(packageName: String) =
@@ -746,6 +752,60 @@ private fun VersionsSection(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreferredSourceSection(
+    pkg: String,
+    variants: List<AppVariant>
+) {
+    val pref by UpdatesPreferences.observe(pkg)
+        .collectAsState(initial = UpdatesPreferences[pkg])
+    var showMenu by remember { mutableStateOf(false) }
+    val repos = variants
+        .map { it.repositoryName to it.repositoryUrl.trim().trimEnd('/') }
+        .distinct()
+
+    val pinnedLabel = remember(pref, repos) {
+        pref.preferredRepoUrl?.let { url ->
+            repos.firstOrNull { it.second.equals(url.trimEnd('/'), ignoreCase = true) }?.first ?: url
+        } ?: "Auto"
+    }
+
+    Column {
+        SectionTitle(stringResource(R.string.preferred_source))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AssistChip(
+                onClick = { showMenu = true },
+                label = {
+                    Text(pinnedLabel)
+                }
+            )
+            FilterChip(
+                selected = pref.lockToRepo,
+                onClick = { UpdatesPreferences[pkg] = pref.copy(lockToRepo = !pref.lockToRepo) },
+                label = { Text(stringResource(R.string.lock_to_repo)) }
+            )
+        }
+        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.auto)) },
+                onClick = {
+                    UpdatesPreferences.setPreferredRepo(pkg, null, lock = false)
+                    showMenu = false
+                }
+            )
+            repos.forEach { (name, url) ->
+                DropdownMenuItem(
+                    text = { Text(name) },
+                    onClick = {
+                        UpdatesPreferences.setPreferredRepo(pkg, url, lock = true)
+                        showMenu = false
+                    }
+                )
             }
         }
     }

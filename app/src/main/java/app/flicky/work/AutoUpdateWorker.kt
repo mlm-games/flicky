@@ -5,6 +5,8 @@ import androidx.work.*
 import app.flicky.AppGraph
 import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.model.FDroidApp
+import app.flicky.data.repository.PreferredRepo
+import app.flicky.data.repository.VariantSelector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -33,7 +35,17 @@ class AutoUpdateWorker(
             }
 
             for (app in candidates) {
-                AppGraph.installer.install(app)
+                val pref = UpdatesPreferences[app.packageName]
+                val variants = AppGraph.db.appDao().variantsFor(app.packageName)
+                val chosen = VariantSelector.pick(
+                    variants, PreferredRepo.Auto, pref.preferredRepoUrl, strict = pref.lockToRepo
+                )
+                if (chosen != null) {
+                    AppGraph.installer.install(chosen)
+                } else {
+                    // Skip if locked and no variant matches; otherwise fallback
+                    if (!pref.lockToRepo) AppGraph.installer.install(app)
+                }
             }
             Result.success()
         } catch (_: Exception) {
