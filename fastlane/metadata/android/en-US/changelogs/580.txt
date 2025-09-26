@@ -1,0 +1,2 @@
+- Add preference options for individual apps (#30)
+- Reduce strings in build.gradle.kts

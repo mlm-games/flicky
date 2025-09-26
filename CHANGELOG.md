@@ -1,3 +1,9 @@
+## v3.4.7
+
+- Add preference options for individual apps (#30)
+- Reduce strings in build.gradle.kts
+
+
 ## v3.4.6
 
 - Try to solve #29 (Add anim debouncing for TV browseScreen)
