@@ -1,1 +1,1 @@
-Android TV Fdroid repositories client
+Unofficial Fdroid client (for Android TV)
