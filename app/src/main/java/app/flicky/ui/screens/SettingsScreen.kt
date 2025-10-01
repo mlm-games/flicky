@@ -1,40 +1,67 @@
 package app.flicky.ui.screens
 
-import android.annotation.SuppressLint
 import android.widget.Toast
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
-import androidx.compose.runtime.*
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.flicky.AppGraph
 import app.flicky.R
 import app.flicky.data.local.RepoConfig
+import app.flicky.data.model.RepositoryInfo
 import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.Setting
@@ -47,6 +74,7 @@ import app.flicky.ui.components.global.FlickyDialog
 import app.flicky.ui.components.global.MyScreenScaffold
 import app.flicky.ui.components.global.SettingsAction
 import app.flicky.ui.components.global.SettingsItem
+import app.flicky.ui.components.global.SettingsSection
 import app.flicky.ui.components.global.SettingsToggle
 import app.flicky.ui.components.global.SliderSettingDialog
 import app.flicky.viewmodel.SettingsViewModel
@@ -61,7 +89,6 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KProperty1
 import kotlin.system.measureTimeMillis
-
 
 private data class ProbeResult(
     val url: String,
@@ -82,6 +109,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
     var currentProp by remember { mutableStateOf<KProperty1<AppSettings, *>?>(null) }
     var currentAnn by remember { mutableStateOf<Setting?>(null) }
     var showResetConfirm by remember { mutableStateOf(false) }
+    var showAddRepo by remember { mutableStateOf(false) }
 
     val grouped = remember { manager.getByCategory() }
     val cfg = LocalConfiguration.current
@@ -94,6 +122,24 @@ fun SettingsScreen(vm: SettingsViewModel) {
     }
 
     val context = LocalContext.current
+
+    // Load all repo configs at once
+    val repoConfigs by produceState(
+        initialValue = emptyMap(),
+        key1 = repos
+    ) {
+        value = withContext(Dispatchers.IO) {
+            val dao = AppGraph.db.repoConfigDao()
+            repos.associate { repo ->
+                val base = repo.url.trimEnd('/')
+                base to (dao.get(base) ?: RepoConfig(
+                    baseUrl = base,
+                    enabled = repo.enabled
+                ))
+            }
+        }
+    }
+
     LaunchedEffect(vm) {
         vm.events.collect { event ->
             when (event) {
@@ -105,13 +151,20 @@ fun SettingsScreen(vm: SettingsViewModel) {
                     ).show()
                 }
                 is SettingsViewModel.UiEvent.RequestExport -> {
-                    // TODO
+                    // TODO: Implement settings export
                 }
             }
         }
     }
 
-    MyScreenScaffold(title = "Settings") {
+    MyScreenScaffold(
+        title = stringResource(R.string.nav_settings),
+        actions = {
+//            IconButton(onClick = { /* TODO: Search settings */ }) {
+//                Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
+//            }
+        }
+    ) {
         LazyVerticalGrid(
             columns = gridCells,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -125,12 +178,19 @@ fun SettingsScreen(vm: SettingsViewModel) {
                 if (itemsForCat.isEmpty()) continue
 
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    Text(
-                        text = category.name.lowercase().replaceFirstChar { it.uppercase() },
-                        style = typography.titleMedium,
-                        color = colorScheme.primary,
-                        modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
-                    )
+                    SettingsSection(
+                        title = when (category) {
+                            SettingCategory.APPEARANCE -> stringResource(R.string.category_appearance)
+                            SettingCategory.GENERAL -> stringResource(R.string.category_general)
+                            SettingCategory.DOWNLOADS -> stringResource(R.string.category_downloads)
+                            SettingCategory.FILTERS -> stringResource(R.string.category_filters)
+                            SettingCategory.SYNC -> stringResource(R.string.category_sync)
+                            SettingCategory.PROXY -> stringResource(R.string.category_proxy)
+                            SettingCategory.OTHER -> stringResource(R.string.category_other)
+                        }
+                    ) {
+                        // Content is added as items below
+                    }
                 }
 
                 items(itemsForCat, key = { it.first.name }) { (prop, ann) ->
@@ -153,39 +213,41 @@ fun SettingsScreen(vm: SettingsViewModel) {
                             val options = ann.options.toList()
                             SettingsItem(
                                 title = ann.title,
-                                subtitle = options.getOrNull(idx) ?: "Unknown",
+                                subtitle = options.getOrNull(idx) ?: stringResource(R.string.unknown),
                                 description = ann.description.takeIf { it.isNotBlank() },
-                                enabled = enabled
-                            ) {
-                                currentProp = prop
-                                currentAnn = ann
-                                showDropdown = true
-                            }
+                                enabled = enabled,
+                                onClick = {
+                                    currentProp = prop
+                                    currentAnn = ann
+                                    showDropdown = true
+                                }
+                            )
                         }
 
                         SettingType.SLIDER -> {
                             val valueText = when (val v = prop.get(settings)) {
                                 is Int -> v.toString()
-                                is Float -> String.format(Locale.getDefault() , "%.1f", v)
+                                is Float -> String.format(Locale.getDefault(), "%.1f", v)
                                 else -> ""
                             }
                             SettingsItem(
                                 title = ann.title,
                                 subtitle = valueText,
                                 description = ann.description.takeIf { it.isNotBlank() },
-                                enabled = enabled
-                            ) {
-                                currentProp = prop
-                                currentAnn = ann
-                                showSlider = true
-                            }
+                                enabled = enabled,
+                                onClick = {
+                                    currentProp = prop
+                                    currentAnn = ann
+                                    showSlider = true
+                                }
+                            )
                         }
 
                         SettingType.BUTTON -> {
                             SettingsAction(
                                 title = ann.title,
                                 description = ann.description.takeIf { it.isNotBlank() },
-                                buttonText = "Run",
+                                buttonText = stringResource(R.string.run),
                                 enabled = enabled,
                                 onClick = { vm.performAction(prop.name) }
                             )
@@ -194,287 +256,75 @@ fun SettingsScreen(vm: SettingsViewModel) {
                 }
             }
 
-            // Repositories header
+            // Repositories section
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Text(
-                    text = "Repositories",
+                    text = stringResource(R.string.repositories),
                     style = typography.titleMedium,
                     color = colorScheme.primary,
                     modifier = Modifier.padding(start = 4.dp, top = 12.dp, bottom = 4.dp)
                 )
             }
 
-            // Repositories list with per-repo mirror/trust controls
-            items(repos, key = { it.url }) { r ->
-                val base = r.url.trimEnd('/')
+            // Repository cards
+            items(repos, key = { it.url }) { repo ->
+                val base = repo.url.trimEnd('/')
+                val config = repoConfigs[base] ?: RepoConfig(
+                    baseUrl = base,
+                    enabled = repo.enabled
+                )
 
-                // Ensure a default config exists
-                LaunchedEffect(base) { AppGraph.mirrorPolicyProvider.ensureDefault(base) }
-
-                var cfgState by remember {
-                    mutableStateOf(
-                        RepoConfig(
-                            baseUrl = base,
-                            enabled = r.enabled
-                        )
-                    )
-                }
-                LaunchedEffect(base) {
-                    val dao = AppGraph.db.repoConfigDao()
-                    cfgState = dao.get(base) ?: RepoConfig(baseUrl = base, enabled = r.enabled)
-                }
-
-                fun persist(newCfg: RepoConfig) {
-                    cfgState = newCfg
-                    scope.launch { AppGraph.db.repoConfigDao().upsert(newCfg) }
-                }
-
-                Surface(
-                    tonalElevation = 1.dp,
-                    shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(Modifier.fillMaxWidth().padding(14.dp)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Column(Modifier.weight(1f)) {
-                                Text(r.name, style = typography.bodyLarge)
-                                Text(
-                                    r.url,
-                                    style = typography.bodySmall,
-                                    color = colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                // Dropdown menu for repository actions
-                                var showMenu by remember { mutableStateOf(false) }
-                                Box {
-                                    IconButton(
-                                        onClick = { showMenu = true },
-                                        modifier = Modifier.size(36.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.MoreVert,
-                                            contentDescription = "More options for ${r.name}",
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                    DropdownMenu(
-                                        expanded = showMenu,
-                                        onDismissRequest = { showMenu = false }
-                                    ) {
-                                        DropdownMenuItem(
-                                            text = { Text("Test Ping") },
-                                            leadingIcon = {
-                                                Icon(
-                                                    Icons.Default.Speed,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                            },
-                                            onClick = {
-                                                showMenu = false
-                                                scope.launch {
-                                                    val results = testRepoMirrors(base)
-                                                    val message = buildString {
-//                                                        append("Mirror test results:\n\n")
-                                                        results.forEach { (url, ok, code, ms) ->
-                                                            append(if (ok) "✓" else "✗")
-                                                            append(" ").append(url).append("\n")
-                                                            append("   ").append(if (ok) "${ms}ms (HTTP $code)" else "HTTP $code / fail")
-                                                            append("\n")
-                                                        }
-                                                    }
-                                                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                                                }
-                                            }
-                                        )
-                                        DropdownMenuItem(
-                                            text = { Text("Forget Last Mirror") },
-                                            leadingIcon = {
-                                                Icon(
-                                                    Icons.Default.Clear,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                            },
-                                            onClick = {
-                                                showMenu = false
-                                                MirrorRegistry.clear(base)
-                                                Toast.makeText(context, "Forgot last mirror for ${r.name}", Toast.LENGTH_SHORT).show()
-                                            }
-                                        )
-                                    }
-                                }
-
-                                Spacer(Modifier.width(8.dp))
-
-                                // Enable/disable switch
-                                Switch(
-                                    checked = r.enabled,
-                                    onCheckedChange = {
-                                        scope.launch { vm.toggleRepository(r.url) }
-                                    }
-                                )
-                            }
+                RepoConfigCard(
+                    repo = repo,
+                    config = config,
+                    onConfigChange = { newCfg ->
+                        scope.launch {
+                            AppGraph.db.repoConfigDao().upsert(newCfg)
+                            vm.reloadConfigs()
                         }
-
-                        Spacer(Modifier.height(8.dp))
-
-                        // Mirror policy chips
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            FilterChip(
-                                selected = cfgState.rotateMirrors,
-                                onClick = { persist(cfgState.copy(rotateMirrors = !cfgState.rotateMirrors)) },
-                                label = { Text("Rotate mirrors") }
-                            )
-                            FilterChip(
-                                selected = cfgState.includeOnion,
-                                onClick = { persist(cfgState.copy(includeOnion = !cfgState.includeOnion)) },
-                                label = { Text("Use onion") }
-                            )
-                        }
-
-                        Spacer(Modifier.height(8.dp))
-
-                        // Mirror strategy dropdown
-                        var openStrategy by remember { mutableStateOf(false) }
-                        val strategies = listOf("StickyLastGood", "RoundRobin", "CanonicalFirst")
-                        val strategyIdx = strategies.indexOf(cfgState.strategy).coerceAtLeast(0)
-
-                        ExposedDropdownMenuBox(
-                            expanded = openStrategy,
-                            onExpandedChange = { openStrategy = !openStrategy }
-                        ) {
-                            val anchorModifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                                .fillMaxWidth()
-                                .focusable()
-                                .semantics { this.role = Role.Button }
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) { openStrategy = !openStrategy }
-                                .onPreviewKeyEvent { ev ->
-                                    if (ev.type == KeyEventType.KeyDown &&
-                                        (ev.key == Key.Enter || ev.key == Key.NumPadEnter || ev.key == Key.DirectionDown)
-                                    ) { openStrategy = !openStrategy; true } else false
-                                }
-
-                            OutlinedTextField(
-                                value = strategies[strategyIdx],
-                                onValueChange = {},
-                                readOnly = true,
-                                label = { Text(stringResource(id = R.string.mirror_strategy)) },
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = openStrategy) },
-                                modifier = anchorModifier
-                            )
-                            ExposedDropdownMenu(expanded = openStrategy, onDismissRequest = { openStrategy = false }) {
-                                strategies.forEach { s ->
-                                    DropdownMenuItem(
-                                        text = { Text(s) },
-                                        onClick = {
-                                            openStrategy = false
-                                            persist(cfgState.copy(strategy = s))
-                                        }
-                                    )
+                    },
+                    onToggle = { vm.toggleRepository(repo.url) },
+                    onTestMirrors = {
+                        scope.launch {
+                            val results = testRepoMirrors(base)
+                            val message = buildString {
+                                results.forEach { (url, ok, code, ms) ->
+                                    append(if (ok) "✓" else "✗")
+                                    append(" ").append(url).append("\n")
+                                    append("   ")
+                                    append(if (ok) "${ms}ms (HTTP $code)" else "HTTP $code / fail")
+                                    append("\n")
                                 }
                             }
+                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                         }
-
-                        Spacer(Modifier.height(12.dp))
-
-                        // Trust options
-                        Text(stringResource(id = R.string.trust), style = typography.labelLarge)
-                        Spacer(Modifier.height(6.dp))
-
-                        var openTrust by remember { mutableStateOf(false) }
-                        val trustModes = listOf("HttpsOnly", "Pinned", "CustomCA")
-                        val trustIdx = trustModes.indexOf(cfgState.trustMode).coerceAtLeast(0)
-
-                        ExposedDropdownMenuBox(
-                            expanded = openTrust,
-                            onExpandedChange = { openTrust = !openTrust }
-                        ) {
-                            val anchorModifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                                .fillMaxWidth()
-                                .focusable()
-                                .semantics { this.role = Role.Button }
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) { openTrust = !openTrust }
-                                .onPreviewKeyEvent { ev ->
-                                    if (ev.type == KeyEventType.KeyDown &&
-                                        (ev.key == Key.Enter || ev.key == Key.NumPadEnter || ev.key == Key.DirectionDown)
-                                    ) { openTrust = !openTrust; true } else false
-                                }
-
-                            OutlinedTextField(
-                                value = trustModes[trustIdx],
-                                onValueChange = {},
-                                readOnly = true,
-                                label = { Text(stringResource(id = R.string.trust_mode)) },
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = openTrust) },
-                                modifier = anchorModifier
-                            )
-                            ExposedDropdownMenu(expanded = openTrust, onDismissRequest = { openTrust = false }) {
-                                trustModes.forEach { s ->
-                                    DropdownMenuItem(
-                                        text = { Text(s) },
-                                        onClick = {
-                                            openTrust = false
-                                            persist(cfgState.copy(trustMode = s))
-                                        }
-                                    )
-                                }
-                            }
-                        }
-
-                        if (cfgState.trustMode == "Pinned") {
-                            Spacer(Modifier.height(8.dp))
-                            OutlinedTextField(
-                                value = cfgState.pins,
-                                onValueChange = { persist(cfgState.copy(pins = it)) },
-                                label = { Text("Pins (sha256/BASE64, comma separated)") },
-                                singleLine = false,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-
-                        if (cfgState.trustMode == "CustomCA") {
-                            Spacer(Modifier.height(8.dp))
-                            OutlinedTextField(
-                                value = cfgState.caPem,
-                                onValueChange = { persist(cfgState.copy(caPem = it)) },
-                                label = { Text("Custom CA PEM") },
-                                singleLine = false,
-                                minLines = 4,
-                                maxLines = 12,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                    },
+                    onForgetMirror = {
+                        MirrorRegistry.clear(base)
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.forgot_mirror, repo.name),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
-                }
+                )
             }
 
-            // Actions under the list
+            // Repository actions
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    var showAdd by remember { mutableStateOf(false) }
                     Button(
-                        onClick = { showAdd = true },
+                        onClick = { showAddRepo = true },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Add Repository")
+                        Icon(Icons.Default.Add, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
+                        Text(stringResource(R.string.add_repository))
                     }
+
                     OutlinedButton(
                         onClick = { showResetConfirm = true },
                         modifier = Modifier.weight(1f),
@@ -482,29 +332,21 @@ fun SettingsScreen(vm: SettingsViewModel) {
                             contentColor = colorScheme.error
                         )
                     ) {
-                        Text("Reset to defaults")
-                    }
-                    if (showAdd) {
-                        AddRepoDialog(
-                            onDismiss = { showAdd = false },
-                            onAdd = { name, url ->
-                                scope.launch {
-                                    vm.addRepository(name, url)
-                                    AppGraph.mirrorPolicyProvider.ensureDefault(url.trimEnd('/'))
-                                }
-                                showAdd = false
-                            }
-                        )
+                        Icon(Icons.Default.RestartAlt, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
+                        Text(stringResource(R.string.reset_to_defaults))
                     }
                 }
             }
         }
     }
 
+    // Dialogs
     if (showDropdown && currentProp != null && currentAnn != null) {
         val prop = currentProp!!
         val ann = currentAnn!!
         val idx = prop.get(settings) as? Int ?: 0
+
         DropdownSettingDialog(
             title = ann.title,
             options = ann.options.toList(),
@@ -525,6 +367,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
             is Float -> v
             else -> 0f
         }
+
         SliderSettingDialog(
             title = ann.title,
             currentValue = cur,
@@ -542,11 +385,24 @@ fun SettingsScreen(vm: SettingsViewModel) {
         )
     }
 
+    if (showAddRepo) {
+        AddRepoDialog(
+            onDismiss = { showAddRepo = false },
+            onAdd = { name, url ->
+                scope.launch {
+                    vm.addRepository(name, url)
+                    AppGraph.mirrorPolicyProvider.ensureDefault(url.trimEnd('/'))
+                }
+                showAddRepo = false
+            }
+        )
+    }
+
     if (showResetConfirm) {
         ConfirmationDialog(
-            title = "Reset repositories",
-            message = "This will remove all custom repositories and restore the default list. Continue?",
-            confirmText = "Reset",
+            title = stringResource(R.string.reset_repositories),
+            message = stringResource(R.string.reset_repositories_confirm),
+            confirmText = stringResource(R.string.reset),
             dismissText = stringResource(R.string.action_cancel),
             isDangerous = true,
             onConfirm = {
@@ -559,24 +415,272 @@ fun SettingsScreen(vm: SettingsViewModel) {
 }
 
 @Composable
-private fun AddRepoDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
+private fun RepoConfigCard(
+    repo: RepositoryInfo,
+    config: RepoConfig,
+    onConfigChange: (RepoConfig) -> Unit,
+    onToggle: () -> Unit,
+    onTestMirrors: () -> Unit,
+    onForgetMirror: () -> Unit
+) {
+    var showMenu by remember { mutableStateOf(false) }
+    var openStrategy by remember { mutableStateOf(false) }
+    var openTrust by remember { mutableStateOf(false) }
+
+    Surface(
+        tonalElevation = 1.dp,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(14.dp)
+        ) {
+            // Header with name and switch
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(repo.name, style = typography.bodyLarge)
+                    Text(
+                        repo.url,
+                        style = typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Menu button
+                    Box {
+                        IconButton(
+                            onClick = { showMenu = true },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.MoreVert,
+                                contentDescription = stringResource(R.string.more_options_for, repo.name),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.test_ping)) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Speed,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                },
+                                onClick = {
+                                    showMenu = false
+                                    onTestMirrors()
+                                }
+                            )
+
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.forget_last_mirror)) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Clear,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                },
+                                onClick = {
+                                    showMenu = false
+                                    onForgetMirror()
+                                }
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    // Enable/disable switch
+                    Switch(
+                        checked = repo.enabled,
+                        onCheckedChange = { onToggle() }
+                    )
+                }
+            }
+
+            if (repo.enabled) {
+                Spacer(Modifier.height(8.dp))
+
+                // Mirror policy chips
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    FilterChip(
+                        selected = config.rotateMirrors,
+                        onClick = {
+                            onConfigChange(config.copy(rotateMirrors = !config.rotateMirrors))
+                        },
+                        label = { Text(stringResource(R.string.rotate_mirrors)) }
+                    )
+
+                    FilterChip(
+                        selected = config.includeOnion,
+                        onClick = {
+                            onConfigChange(config.copy(includeOnion = !config.includeOnion))
+                        },
+                        label = { Text(stringResource(R.string.use_onion)) }
+                    )
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // Mirror strategy dropdown
+                val strategies = listOf("StickyLastGood", "RoundRobin", "CanonicalFirst")
+                val strategyIdx = strategies.indexOf(config.strategy).coerceAtLeast(0)
+
+                ExposedDropdownMenuBox(
+                    expanded = openStrategy,
+                    onExpandedChange = { openStrategy = !openStrategy }
+                ) {
+                    OutlinedTextField(
+                        value = strategies[strategyIdx],
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.mirror_strategy)) },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = openStrategy)
+                        },
+                        modifier = Modifier
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                            .fillMaxWidth()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = openStrategy,
+                        onDismissRequest = { openStrategy = false }
+                    ) {
+                        strategies.forEach { s ->
+                            DropdownMenuItem(
+                                text = { Text(s) },
+                                onClick = {
+                                    openStrategy = false
+                                    onConfigChange(config.copy(strategy = s))
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                // Trust options
+                Text(
+                    stringResource(R.string.trust),
+                    style = typography.labelLarge
+                )
+
+                Spacer(Modifier.height(6.dp))
+
+                val trustModes = listOf("HttpsOnly", "Pinned", "CustomCA")
+                val trustIdx = trustModes.indexOf(config.trustMode).coerceAtLeast(0)
+
+                ExposedDropdownMenuBox(
+                    expanded = openTrust,
+                    onExpandedChange = { openTrust = !openTrust }
+                ) {
+                    OutlinedTextField(
+                        value = trustModes[trustIdx],
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.trust_mode)) },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = openTrust)
+                        },
+                        modifier = Modifier
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                            .fillMaxWidth()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = openTrust,
+                        onDismissRequest = { openTrust = false }
+                    ) {
+                        trustModes.forEach { s ->
+                            DropdownMenuItem(
+                                text = { Text(s) },
+                                onClick = {
+                                    openTrust = false
+                                    onConfigChange(config.copy(trustMode = s))
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Additional fields based on trust mode
+                when (config.trustMode) {
+                    "Pinned" -> {
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = config.pins,
+                            onValueChange = {
+                                onConfigChange(config.copy(pins = it))
+                            },
+                            label = { Text(stringResource(R.string.pins_label)) },
+                            placeholder = { Text(stringResource(R.string.pins_placeholder)) },
+                            singleLine = false,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    "CustomCA" -> {
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = config.caPem,
+                            onValueChange = {
+                                onConfigChange(config.copy(caPem = it))
+                            },
+                            label = { Text(stringResource(R.string.custom_ca_pem)) },
+                            singleLine = false,
+                            minLines = 4,
+                            maxLines = 12,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddRepoDialog(
+    onDismiss: () -> Unit,
+    onAdd: (String, String) -> Unit
+) {
     var name by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
     val canAdd = url.isNotBlank()
 
     FlickyDialog(
         onDismissRequest = onDismiss,
-        title = stringResource(id = R.string.add_repository), // add to strings.xml
+        title = stringResource(R.string.add_repository),
         confirmButton = {
             TextButton(
-                onClick = { if (canAdd) onAdd(name.ifBlank { url }, url) },
+                onClick = {
+                    if (canAdd) onAdd(name.ifBlank { url }, url)
+                },
                 enabled = canAdd,
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = colorScheme.primary,
                     disabledContentColor = colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                 )
             ) {
-                Text(stringResource(id = R.string.action_add))
+                Text(stringResource(R.string.action_add))
             }
         },
         dismissButton = {
@@ -585,29 +689,34 @@ private fun AddRepoDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = colorScheme.onSurfaceVariant
                 )
-            ) { Text(stringResource(R.string.action_cancel)) }
+            ) {
+                Text(stringResource(R.string.action_cancel))
+            }
         }
     ) {
         Column {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text(stringResource(id = R.string.name)) },
+                label = { Text(stringResource(R.string.name)) },
+                placeholder = { Text(stringResource(R.string.optional)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
+
             Spacer(Modifier.height(8.dp))
+
             OutlinedTextField(
                 value = url,
                 onValueChange = { url = it },
-                label = { Text(stringResource(id = R.string.url)) },
+                label = { Text(stringResource(R.string.url)) },
+                placeholder = { Text("https://example.com/fdroid/repo") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
         }
     }
 }
-
 
 private suspend fun testRepoMirrors(base: String): List<ProbeResult> = withContext(Dispatchers.IO) {
     val policy = AppGraph.mirrorPolicyProvider.policyFor(base)
@@ -631,7 +740,8 @@ private suspend fun testRepoMirrors(base: String): List<ProbeResult> = withConte
             .build()
     }
 
-    fun headV2(urlBase: String): ProbeResult {
+    fun probe(urlBase: String): ProbeResult {
+        // Try HEAD on index-v2.json first
         val url = "$urlBase/index-v2.json"
         var ok = false
         var code = -1
@@ -639,45 +749,49 @@ private suspend fun testRepoMirrors(base: String): List<ProbeResult> = withConte
             runCatching {
                 runBlocking {
                     withTimeout(5000) {
-                        val req = Request.Builder().url(url).head().build()
-                        client.newCall(req).execute().use { resp ->
-                            code = resp.code
-                            ok = resp.isSuccessful || resp.code in 200..399 || resp.code == 405 || resp.code == 501
-                        }
-                    }
-                }
-            }
-        }
-        return ProbeResult(urlBase, ok, code, elapsed)
-    }
-
-    fun rangeV1(urlBase: String): ProbeResult {
-        val url = "$urlBase/index-v1.jar"
-        var ok = false
-        var code = -1
-        val elapsed = measureTimeMillis {
-            runCatching {
-                runBlocking {
-                    withTimeout(5000) {
-                        val req = Request.Builder().url(url)
-                            .get()
-                            .header("Range", "bytes=0-0")
+                        val req = Request.Builder()
+                            .url(url)
+                            .head()
                             .build()
                         client.newCall(req).execute().use { resp ->
                             code = resp.code
-                            ok = resp.isSuccessful || resp.code in 200..399 || resp.code == 206
+                            ok = resp.isSuccessful ||
+                                    resp.code in 200..399 ||
+                                    resp.code == 405 ||
+                                    resp.code == 501
                         }
                     }
                 }
             }
         }
+
+        // If HEAD failed, try GET with Range header on v1
+        if (!ok && code != 200) {
+            val v1Url = "$urlBase/index-v1.jar"
+            val v1Elapsed = measureTimeMillis {
+                runCatching {
+                    runBlocking {
+                        withTimeout(5000) {
+                            val req = Request.Builder()
+                                .url(v1Url)
+                                .get()
+                                .header("Range", "bytes=0-0")
+                                .build()
+                            client.newCall(req).execute().use { resp ->
+                                code = resp.code
+                                ok = resp.isSuccessful ||
+                                        resp.code in 200..399 ||
+                                        resp.code == 206
+                            }
+                        }
+                    }
+                }
+            }
+            return ProbeResult(urlBase, ok, code, v1Elapsed)
+        }
+
         return ProbeResult(urlBase, ok, code, elapsed)
     }
 
-    val out = mutableListOf<ProbeResult>()
-    for (cand in candidates) {
-        val h = headV2(cand)
-        out += if (h.ok) h else rangeV1(cand)
-    }
-    out
+    candidates.map { cand -> probe(cand) }
 }

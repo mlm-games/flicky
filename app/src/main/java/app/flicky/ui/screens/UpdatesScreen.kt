@@ -287,8 +287,7 @@ private fun UpdateCard(
 
     ElevatedCard(
         modifier = Modifier
-            .fillMaxWidth()
-            .cardAsFocusGroup(),
+            .fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(
             containerColor = containerColor,
             contentColor = colorScheme.onSurface

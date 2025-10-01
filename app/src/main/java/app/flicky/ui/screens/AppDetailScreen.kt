@@ -794,7 +794,7 @@ private fun PreferredSourceSection(
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.auto)) },
                 onClick = {
-                    UpdatesPreferences.setPreferredRepo(pkg, null, lock = false)
+                    UpdatesPreferences.setPreferredRepo(pkg, null, lock = true)
                     showMenu = false
                 }
             )
@@ -802,7 +802,7 @@ private fun PreferredSourceSection(
                 DropdownMenuItem(
                     text = { Text(name) },
                     onClick = {
-                        UpdatesPreferences.setPreferredRepo(pkg, url, lock = true)
+                        UpdatesPreferences.setPreferredRepo(pkg, url, lock = false)
                         showMenu = false
                     }
                 )

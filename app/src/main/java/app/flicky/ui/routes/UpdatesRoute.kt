@@ -13,7 +13,6 @@ import app.flicky.viewmodel.UpdatesViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
-import java.util.concurrent.atomic.AtomicReference
 
 interface UpdatesActions {
     fun updateAll()
@@ -42,75 +41,71 @@ fun UpdatesRoute(
     val installerTasks by installer.tasks.collectAsState(initial = emptyMap())
 
     var isBatchUpdating by remember { mutableStateOf(false) }
-    val batchUpdateJob = remember { AtomicReference<Job?>(null) }
+    val appsInBatch = remember { mutableStateOf<List<FDroidApp>>(emptyList()) }
+    var batchUpdateJob by remember { mutableStateOf<Job?>(null) }
 
-    val batchProgress by remember(installerTasks, ui.updates, isBatchUpdating) {
+
+    val batchProgress by remember(installerTasks, appsInBatch.value, isBatchUpdating) {
         derivedStateOf {
-            if (!isBatchUpdating) 0f
-            else {
-                val total = ui.updates.size
-                if (total == 0) return@derivedStateOf 0f
-
-                val completed = ui.updates.count { app ->
-                    val stage = installerTasks[app.packageName]
-                    stage is TaskStage.Finished
-                }
-
-                val inProgress = ui.updates.sumOf { app ->
-                    when (val stage = installerTasks[app.packageName]) {
-                        is TaskStage.Downloading -> stage.progress * 0.33
-                        is TaskStage.Verifying -> 0.33 + 0.33
-                        is TaskStage.Installing -> 0.66 + stage.progress * 0.34
-                        is TaskStage.Finished -> 1
-                        else -> 0
-                    }.toDouble()
-                }.toFloat()
-
-                (inProgress / total).coerceIn(0f, 1f)
+            if (!isBatchUpdating || appsInBatch.value.isEmpty()) {
+                return@derivedStateOf 0f
             }
+
+            val total = appsInBatch.value.size.toFloat()
+            if (total == 0f) return@derivedStateOf 0f
+
+            // Calculate progress based on the STABLE appsInBatch list
+            val inProgressSum = appsInBatch.value.sumOf { app ->
+                val stage = installerTasks[app.packageName]
+                when {
+                    stage is TaskStage.Downloading -> stage.progress * 0.33
+                    stage is TaskStage.Verifying -> 0.33 + 0.33
+                    stage is TaskStage.Installing -> 0.66 + stage.progress * 0.34
+                    stage is TaskStage.Finished && stage.success -> 1.0 // Only count successful as 100%
+                    else -> 0.0
+                }
+            }.toFloat()
+
+            (inProgressSum / total).coerceIn(0f, 1f)
         }
     }
 
-    val actions = remember(vm, installer) {
+
+    val actions = remember(vm, installer, isBatchUpdating) {
         object : UpdatesActions {
             override fun updateAll() {
                 if (isBatchUpdating) return
+
+                val updatesToRun = ui.updates.toList()
+                if (updatesToRun.isEmpty()) return
+
+                appsInBatch.value = updatesToRun
                 isBatchUpdating = true
 
-                val job = scope.launch {
-                    val updates = ui.updates.toList()
-                    if (updates.isEmpty()) {
-                        isBatchUpdating = false
-                        return@launch
-                    }
-
-                    val queue = Channel<FDroidApp>(updates.size)
-                    updates.forEach { queue.send(it) }
+                batchUpdateJob = scope.launch {
+                    val queue = Channel<FDroidApp>(updatesToRun.size)
+                    updatesToRun.forEach { queue.send(it) }
                     queue.close()
 
                     try {
                         // Process 3 concurrent installations
                         coroutineScope {
-                            repeat(minOf(3, updates.size)) { workerId ->
+                            repeat(minOf(3, updatesToRun.size)) { workerId ->
                                 launch {
                                     for (app in queue) {
                                         if (!isActive) break
-
                                         try {
                                             Log.d("UpdatesRoute", "Worker $workerId: Installing ${app.packageName}")
                                             installer.install(app)
-
-                                            // Wait for completion before next
-                                            withTimeoutOrNull(300_000) { // 5 minute timeout per app
+                                            // Wait for completion before starting the next one in this worker
+                                            withTimeoutOrNull(300_000L) {
                                                 installer.tasks.first { tasks ->
                                                     val stage = tasks[app.packageName]
-                                                    stage is TaskStage.Finished ||
-                                                            stage is TaskStage.Cancelled ||
-                                                            stage == null
+                                                    stage is TaskStage.Finished || stage is TaskStage.Cancelled
                                                 }
                                             }
                                         } catch (e: CancellationException) {
-                                            throw e
+                                            throw e // Re-throw to propagate cancellation
                                         } catch (e: Exception) {
                                             Log.e("UpdatesRoute", "Failed to update ${app.packageName}", e)
                                         }
@@ -119,11 +114,13 @@ fun UpdatesRoute(
                             }
                         }
                     } finally {
-                        isBatchUpdating = false
-                        batchUpdateJob.set(null)
+                        withContext(NonCancellable) {
+                            isBatchUpdating = false
+                            appsInBatch.value = emptyList()
+                            batchUpdateJob = null
+                        }
                     }
                 }
-                batchUpdateJob.set(job)
             }
 
             override fun updateOne(app: FDroidApp) {
@@ -138,36 +135,32 @@ fun UpdatesRoute(
 
             override fun openDetails(app: FDroidApp) = onOpenDetails(app.packageName)
 
-            override fun ignoreThisVersion(app: FDroidApp) {
-                vm.ignoreThisVersion(app.packageName, app.versionCode.toLong())
-            }
+            override fun ignoreThisVersion(app: FDroidApp) = vm.ignoreThisVersion(app)
 
-            override fun ignoreAll(app: FDroidApp) {
-                vm.ignoreAllUpdates(app.packageName)
-            }
+            override fun ignoreAll(app: FDroidApp) = vm.ignoreAllUpdates(app)
 
-            override fun stopIgnoring(app: FDroidApp) {
-                vm.stopIgnoring(app.packageName)
-            }
+            override fun stopIgnoring(app: FDroidApp) = vm.stopIgnoring(app)
 
             override fun cancelBatch() {
-                batchUpdateJob.get()?.cancel()
+                batchUpdateJob?.cancel()
+                batchUpdateJob = null
                 isBatchUpdating = false
 
-                // Cancel all ongoing installations
-                ui.updates.forEach { app ->
+                // Cancel all ongoing installations from this batch
+                appsInBatch.value.forEach { app ->
                     val stage = installerTasks[app.packageName]
                     if (stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled) {
                         installer.cancel(app.packageName)
                     }
                 }
+                appsInBatch.value = emptyList()
             }
         }
     }
 
     DisposableEffect(Unit) {
         onDispose {
-            batchUpdateJob.get()?.cancel()
+            batchUpdateJob?.cancel()
         }
     }
 

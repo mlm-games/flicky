@@ -7,6 +7,7 @@ import androidx.core.content.edit
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 data class UpdatesPreference(
     val ignoreUpdates: Boolean = false,
@@ -62,4 +63,31 @@ object UpdatesPreferences {
         prefs.registerOnSharedPreferenceChangeListener(listener)
         awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
+
+    fun observeAll(): Flow<Map<String, UpdatesPreference>> = callbackFlow {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, _ ->
+            val allPrefs = sharedPreferences.all.mapNotNull { (key, value) ->
+                (value as? String)?.let { json ->
+                    try {
+                        val obj = JSONObject(json)
+                        key to UpdatesPreference(
+                            ignoreUpdates = obj.optBoolean("ignoreUpdates", false),
+                            ignoreVersionCode = obj.optLong("ignoreVersionCode", 0L),
+                            preferredRepoUrl = obj.optString("preferredRepoUrl", "")
+                                .takeIf { it.isNotBlank() },
+                            lockToRepo = obj.optBoolean("lockToRepo", true)
+                        )
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+            }.toMap()
+            trySend(allPrefs)
+        }
+
+        listener.onSharedPreferenceChanged(prefs, null)
+
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }.distinctUntilChanged()
 }

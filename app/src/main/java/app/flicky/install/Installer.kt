@@ -238,28 +238,29 @@ class Installer(
             return@withContext false
         }
 
-
-        val ok = when (mode) {
-            0 -> { emitStage(req.packageName, TaskStage.Installing(0f)); installSystem(file, req.packageName) }
+        val result = when (mode) {
+            0 -> { emitStage(req.packageName, TaskStage.Installing(0f)); InstallSessionResult(installSystem(file, req.packageName)) }
             1 -> installSessionFromFile(file, req.packageName, req.sha256)
-            2 -> installRootStream(file, req.packageName)
-            3 -> installShizukuStream(file, req.packageName)
-            else -> { emitStage(req.packageName, TaskStage.Installing(0f)); installSystem(file, req.packageName) }
+            2 -> InstallSessionResult(installRootStream(file, req.packageName))
+            3 -> InstallSessionResult(installShizukuStream(file, req.packageName))
+            else -> { emitStage(req.packageName, TaskStage.Installing(0f)); InstallSessionResult(installSystem(file, req.packageName)) }
         }
 
-        val cancelledNow = isCancelled(req.packageName)
-        if (cancelledNow) {
+        if (isCancelled(req.packageName)) {
+            emitStage(req.packageName, TaskStage.Cancelled)
+        } else if (result.wasCancelledByUser) {
             emitStage(req.packageName, TaskStage.Cancelled)
         } else {
-            emitStage(req.packageName, TaskStage.Finished(ok))
+            emitStage(req.packageName, TaskStage.Finished(result.success))
         }
-        if (showDebug) DebugLog.log("Installer", "Install ${if (ok) "succeeded" else "failed"} for ${req.packageName}")
+
+        if (showDebug) DebugLog.log("Installer", "Install ${if (result.success) "succeeded" else "failed"} for ${req.packageName} (cancelled=${result.wasCancelledByUser})")
 
         if (!settings.settingsFlow.first().keepCache && !existedBefore) {
             scheduleCleanup(file)
         }
         clearCancel(req.packageName)
-        return@withContext ok
+        return@withContext result.success && !result.wasCancelledByUser
     }
 
     private data class ResolvedApk(
@@ -706,7 +707,7 @@ class Installer(
         file: File,
         packageName: String,
         expectedSha256: String = "",
-    ): Boolean {
+    ): InstallSessionResult {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !context.packageManager.canRequestPackageInstalls()
         ) {
@@ -714,9 +715,10 @@ class Installer(
                 data = "package:${context.packageName}".toUri()
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            context.startActivity(i); return false
+            context.startActivity(i)
+            return InstallSessionResult(success = false)
         }
-        if (expectedSha256.isNotBlank() && !verifySha256File(file, expectedSha256)) return false
+        if (expectedSha256.isNotBlank() && !verifySha256File(file, expectedSha256)) return InstallSessionResult(success = false) // <-- Return new type
 
         val pm = context.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
@@ -735,7 +737,7 @@ class Installer(
                         runCatching { out.flush() }
                         session.abandon()
                         emitStage(packageName, TaskStage.Cancelled)
-                        return false
+                        return InstallSessionResult(success = false, wasCancelledByUser = true) // <-- Return new type
                     }
                     out.write(buf, 0, r)
                     written += r
@@ -757,7 +759,12 @@ class Installer(
         val pending = PendingIntent.getBroadcast(context, sessionId, intent, pendingFlags)
         session.commit(pending.intentSender); session.close()
         val status = try { withTimeout(180_000) { result.await() } } finally { waitJob.cancel() }
-        return status == PackageInstaller.STATUS_SUCCESS
+
+        return when (status) {
+            PackageInstaller.STATUS_SUCCESS -> InstallSessionResult(success = true)
+            PackageInstaller.STATUS_FAILURE_ABORTED -> InstallSessionResult(success = false, wasCancelledByUser = true)
+            else -> InstallSessionResult(success = false)
+        }
     }
 
     private suspend fun installRootStream(file: File, packageName: String): Boolean {

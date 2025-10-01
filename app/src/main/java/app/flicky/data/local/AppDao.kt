@@ -51,6 +51,9 @@ interface AppDao {
     @Query("SELECT * FROM app_variants WHERE packageName = :pkg ORDER BY repositoryName, versionCode DESC")
     suspend fun variantsFor(pkg: String): List<AppVariant>
 
+    @Query("SELECT * FROM app_variants WHERE packageName IN (:packageNames)")
+    fun variantsForPackages(packageNames: List<String>): List<AppVariant>
+
     @Query("DELETE FROM apps")
     suspend fun clear()
 

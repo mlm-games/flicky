@@ -5,11 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.flicky.AppGraph
 import app.flicky.R
+import app.flicky.data.local.RepoConfig
 import app.flicky.data.model.RepositoryInfo
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.SettingsRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
@@ -21,6 +24,30 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
     private val _events = MutableSharedFlow<UiEvent>()
     val events: SharedFlow<UiEvent> = _events.asSharedFlow()
+
+    private val _configsVersion = MutableStateFlow(0)
+
+    fun reloadConfigs() {
+        _configsVersion.value++
+    }
+
+    val repositoriesWithConfigs: StateFlow<List<Pair<RepositoryInfo, RepoConfig>>> =
+        combine(
+            repo.repositoriesFlow,
+            _configsVersion
+        ) { repos, _ ->
+            withContext(Dispatchers.IO) {
+                val dao = AppGraph.db.repoConfigDao()
+                repos.map { r ->
+                    val base = r.url.trimEnd('/')
+                    val config = dao.get(base) ?: RepoConfig(
+                        baseUrl = base,
+                        enabled = r.enabled
+                    )
+                    r to config
+                }
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     fun updateSetting(propertyName: String, value: Any) = viewModelScope.launch {
         repo.updateSetting(propertyName, value)
