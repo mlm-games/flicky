@@ -1,49 +1,26 @@
 package app.flicky.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.flicky.R
 import app.flicky.data.external.UpdatesPreference
@@ -61,32 +38,77 @@ import app.flicky.viewmodel.UpdatesUi
 fun UpdatesScreen(
     ui: UpdatesUi,
     actions: UpdatesActions,
-    installerTasks: Map<String, TaskStage>
+    installerTasks: Map<String, TaskStage>,
+    isBatchUpdating: Boolean = false,
+    batchProgress: Float = 0f
 ) {
     val cfg = LocalConfiguration.current
-    val gridCells = remember(cfg.screenWidthDp) { GridCells.Adaptive(minSize = 320.dp) }
+    val gridCells = remember(cfg.screenWidthDp) {
+        GridCells.Adaptive(minSize = 320.dp)
+    }
     val ctx = LocalContext.current
     val isTV = remember { DeviceUtils.isTV(ctx.packageManager) }
 
     val suppressed = ui.suppressed
-
-    var showIgnored by remember { mutableStateOf(false) }
+    var showIgnored by rememberSaveable { mutableStateOf(false) }
+    var showInstalled by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(suppressed) {
         if (suppressed.isEmpty() && showIgnored) showIgnored = false
     }
 
+    val errorCount = remember(installerTasks) {
+        installerTasks.count { (_, stage) ->
+            stage is TaskStage.Finished && !stage.success
+        }
+    }
+    var dismissedErrors by remember { mutableStateOf(false) }
 
     MyScreenScaffold(
-        // Hiding for space
-        title = if (suppressed.isNotEmpty() && ui.updates.isNotEmpty() && !isTV) "" else stringResource(R.string.nav_updates),
+        title = when {
+            suppressed.isNotEmpty() && ui.updates.isNotEmpty() && !isTV -> ""
+            else -> stringResource(R.string.nav_updates)
+        },
         actions = {
-            if (ui.updates.isNotEmpty()) {
+            if (isBatchUpdating) {
+                // Show batch progress
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(end = 8.dp)
+                ) {
+                    CircularProgressIndicator(
+                        progress = { batchProgress },
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                        color = colorScheme.primary
+                    )
+                    Text(
+                        stringResource(
+                            R.string.updating_count,
+                            (batchProgress * ui.updates.size).toInt(),
+                            ui.updates.size
+                        ),
+                        style = typography.bodyMedium
+                    )
+                    TextButton(
+                        onClick = { actions.cancelBatch() },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = colorScheme.error
+                        )
+                    ) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            } else if (ui.updates.isNotEmpty()) {
                 Button(
                     onClick = actions::updateAll,
                     modifier = Modifier.padding(end = 8.dp)
-                ) { Text(stringResource(R.string.update_all, ui.updates.size)) }
+                ) {
+                    Text(stringResource(R.string.update_all, ui.updates.size))
+                }
             }
+
             AnimatedVisibility(visible = suppressed.isNotEmpty()) {
                 OutlinedButton(onClick = { showIgnored = !showIgnored }) {
                     Text(
@@ -98,7 +120,6 @@ fun UpdatesScreen(
                 }
             }
         }
-
     ) {
         LazyVerticalGrid(
             columns = gridCells,
@@ -107,21 +128,81 @@ fun UpdatesScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize()
         ) {
+            if (errorCount > 0 && !dismissedErrors) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    ErrorBanner(
+                        message = stringResource(R.string.installation_errors, errorCount),
+                        onDismiss = { dismissedErrors = true }
+                    )
+                }
+            }
+
             if (ui.updates.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     EmptyUpdatesCard()
                 }
             } else {
-                items(ui.updates, key = { "update_${it.packageName}" }) { app ->
-                    UpdateCard(
-                        app = app,
-                        stage = installerTasks[app.packageName],
-                        installedVersionName = ui.installedVersionsName[app.packageName],
-                        installedVersionCode = ui.installedVersionsCode[app.packageName],
-                        actions = actions,
-                        pref = ui.ignoredPrefs[app.packageName],
-                        isTV = isTV
-                    )
+                val activeUpdates = ui.updates.filter { app ->
+                    val stage = installerTasks[app.packageName]
+                    stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled
+                }
+
+                if (activeUpdates.isNotEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Text(
+                            stringResource(R.string.updating),
+                            style = typography.titleSmall,
+                            color = colorScheme.primary,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
+
+                    items(activeUpdates, key = { "active_${it.packageName}" }) { app ->
+                        UpdateCard(
+                            app = app,
+                            stage = installerTasks[app.packageName],
+                            installedVersionName = ui.installedVersionsName[app.packageName],
+                            installedVersionCode = ui.installedVersionsCode[app.packageName],
+                            actions = actions,
+                            pref = ui.ignoredPrefs[app.packageName],
+                            isTV = isTV,
+                            isActive = true
+                        )
+                    }
+                }
+
+                val pendingUpdates = ui.updates.filter { app ->
+                    val stage = installerTasks[app.packageName]
+                    stage == null || stage is TaskStage.Finished || stage is TaskStage.Cancelled
+                }
+
+                if (pendingUpdates.isNotEmpty()) {
+                    if (activeUpdates.isNotEmpty()) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Spacer(Modifier.height(8.dp))
+                        }
+                    }
+
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Text(
+                            stringResource(R.string.available_updates),
+                            style = typography.titleSmall,
+                            color = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
+
+                    items(pendingUpdates, key = { "update_${it.packageName}" }) { app ->
+                        UpdateCard(
+                            app = app,
+                            stage = installerTasks[app.packageName],
+                            installedVersionName = ui.installedVersionsName[app.packageName],
+                            installedVersionCode = ui.installedVersionsCode[app.packageName],
+                            actions = actions,
+                            pref = ui.ignoredPrefs[app.packageName],
+                            isTV = isTV
+                        )
+                    }
                 }
             }
 
@@ -143,7 +224,8 @@ fun UpdatesScreen(
                         installedVersionCode = ui.installedVersionsCode[app.packageName],
                         actions = actions,
                         pref = ui.ignoredPrefs[app.packageName],
-                        isTV = isTV
+                        isTV = isTV,
+                        isIgnored = true
                     )
                 }
             }
@@ -151,20 +233,34 @@ fun UpdatesScreen(
             if (ui.installed.isNotEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Spacer(Modifier.height(8.dp))
-                    Text(
-                        stringResource(R.string.installed_apps),
-                        style = typography.titleMedium,
-                        color = colorScheme.onSurface,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(onClick = { showInstalled = !showInstalled }) {
+                            Icon(
+                                if (showInstalled) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = null
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                stringResource(R.string.installed_apps, ui.installed.size),
+                                style = typography.titleMedium,
+                                color = colorScheme.onSurface
+                            )
+                        }
+                    }
                 }
-                items(ui.installed, key = { "installed_${it.packageName}" }) { app ->
-                    InstalledCard(
-                        app = app,
-                        installedVersionName = ui.installedVersionsName[app.packageName],
-                        installedVersionCode = ui.installedVersionsCode[app.packageName],
-                        onOpenDetails = { actions.openDetails(app) }
-                    )
+
+                if (showInstalled) {
+                    items(ui.installed, key = { "installed_${it.packageName}" }) { app ->
+                        InstalledCard(
+                            app = app,
+                            installedVersionName = ui.installedVersionsName[app.packageName],
+                            installedVersionCode = ui.installedVersionsCode[app.packageName],
+                            onOpenDetails = { actions.openDetails(app) }
+                        )
+                    }
                 }
             }
         }
@@ -179,19 +275,34 @@ private fun UpdateCard(
     installedVersionCode: Long?,
     actions: UpdatesActions,
     pref: UpdatesPreference?,
-    isTV: Boolean
+    isTV: Boolean,
+    isActive: Boolean = false,
+    isIgnored: Boolean = false
 ) {
+    val containerColor = when {
+        isActive -> colorScheme.primaryContainer.copy(alpha = 0.3f)
+        isIgnored -> colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        else -> colorScheme.surface
+    }
+
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth().cardAsFocusGroup(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .cardAsFocusGroup(),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = colorScheme.surface,
+            containerColor = containerColor,
             contentColor = colorScheme.onSurface
         )
     ) {
         Column(Modifier.padding(12.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Column(
-                    modifier = Modifier.weight(1f).clickable { actions.openDetails(app) }
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { actions.openDetails(app) }
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         AppIcon(app.name, app.iconUrl)
@@ -204,19 +315,50 @@ private fun UpdateCard(
                                 newLabel = app.version,
                                 summary = app.summary
                             )
+
+                            // Show preferred repo if set
+                            if (pref?.preferredRepoUrl != null && !isIgnored) {
+                                Spacer(Modifier.height(4.dp))
+                                AssistChip(
+                                    onClick = {},
+                                    label = {
+                                        Text(
+                                            app.repository,
+                                            style = typography.labelSmall
+                                        )
+                                    },
+                                    modifier = Modifier.height(24.dp)
+                                )
+                            }
                         }
                     }
                 }
-                IgnoreMenu(
-                    pref = pref,
-                    currentVersionCode = app.versionCode.toLong(),
-                    onIgnoreThisVersion = { actions.ignoreThisVersion(app) },
-                    onIgnoreAll = { actions.ignoreAll(app) },
-                    onStopIgnoring = { actions.stopIgnoring(app) },
-                    isTV = isTV
-                )
+
+                if (!isIgnored) {
+                    IgnoreMenu(
+                        pref = pref,
+                        currentVersionCode = app.versionCode.toLong(),
+                        onIgnoreThisVersion = { actions.ignoreThisVersion(app) },
+                        onIgnoreAll = { actions.ignoreAll(app) },
+                        onStopIgnoring = { actions.stopIgnoring(app) },
+                        isTV = isTV
+                    )
+                } else {
+                    IconButton(
+                        onClick = { actions.stopIgnoring(app) },
+                        modifier = Modifier.focusProperties { canFocus = true }
+                    ) {
+                        Icon(
+                            Icons.Default.Restore,
+                            contentDescription = stringResource(R.string.stop_ignoring),
+                            tint = colorScheme.primary
+                        )
+                    }
+                }
             }
+
             Spacer(Modifier.height(8.dp))
+
             if (stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled) {
                 val progress = when (stage) {
                     is TaskStage.Downloading -> stage.progress
@@ -227,34 +369,47 @@ private fun UpdateCard(
 
                 LinearProgressIndicator(
                     progress = { progress },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
                     color = colorScheme.primary,
                     trackColor = colorScheme.surfaceVariant
                 )
+
                 Spacer(Modifier.height(4.dp))
+
                 val label = when (stage) {
                     is TaskStage.Downloading -> "Downloading ${(progress * 100).toInt()}%"
-                    is TaskStage.Verifying   -> "Verifying"
-                    is TaskStage.Installing  -> "Installing ${(progress * 100).toInt()}%"
-                    is TaskStage.Finished    -> if (stage.success) "Completed" else "Failed"
-                    is TaskStage.Cancelled   -> "Cancelled"
+                    is TaskStage.Verifying -> "Verifying"
+                    is TaskStage.Installing -> "Installing ${(progress * 100).toInt()}%"
+                    is TaskStage.Finished -> if (stage.success) "Completed" else "Failed"
+                    is TaskStage.Cancelled -> "Cancelled"
                     else -> ""
                 }
-                Text(label, style = typography.labelSmall, color = colorScheme.onSurfaceVariant)
-            } else {
+
+                Text(
+                    label,
+                    style = typography.labelSmall,
+                    color = colorScheme.onSurfaceVariant
+                )
+            } else if (!isIgnored) {
                 Button(
                     onClick = { actions.updateOne(app) },
-                    modifier = Modifier.fillMaxWidth().focusable(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusProperties { canFocus = true },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorScheme.primary,
                         contentColor = colorScheme.onPrimary
-                    )
-                ) { Text(stringResource(R.string.action_update)) }
+                    ),
+                    enabled = stage !is TaskStage.Finished || !stage.success
+                ) {
+                    Text(stringResource(R.string.action_update))
+                }
             }
         }
     }
 }
-
 
 @Composable
 private fun InstalledCard(
@@ -271,7 +426,10 @@ private fun InstalledCard(
         )
     ) {
         Row(
-            Modifier.fillMaxWidth().padding(12.dp).clickable { onOpenDetails() },
+            Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+                .clickable { onOpenDetails() },
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             AppIcon(app.name, app.iconUrl)
@@ -305,33 +463,49 @@ private fun IgnoreMenu(
     isTV: Boolean
 ) {
     var open by remember { mutableStateOf(false) }
+
     Box {
         IconButton(
             onClick = { open = true },
-            modifier = Modifier.focusable()
+            modifier = Modifier
+                .focusProperties { canFocus = true }
+                .semantics { role = Role.Button }
         ) {
             Icon(
                 imageVector = Icons.Default.MoreVert,
                 contentDescription = stringResource(R.string.more_options)
             )
         }
-        val isEffectivelyIgnored =
-            pref?.ignoreUpdates == true || ((pref?.ignoreVersionCode ?: 0L) >= currentVersionCode)
 
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        val isEffectivelyIgnored = pref?.ignoreUpdates == true ||
+                ((pref?.ignoreVersionCode ?: 0L) >= currentVersionCode)
+
+        DropdownMenu(
+            expanded = open,
+            onDismissRequest = { open = false }
+        ) {
             if (isEffectivelyIgnored) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.stop_ignoring)) },
-                    onClick = { open = false; onStopIgnoring() }
+                    onClick = {
+                        open = false
+                        onStopIgnoring()
+                    }
                 )
             } else {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.ignore_this_version)) },
-                    onClick = { open = false; onIgnoreThisVersion() }
+                    onClick = {
+                        open = false
+                        onIgnoreThisVersion()
+                    }
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.ignore_all_updates)) },
-                    onClick = { open = false; onIgnoreAll() }
+                    onClick = {
+                        open = false
+                        onIgnoreAll()
+                    }
                 )
             }
         }
@@ -342,17 +516,72 @@ private fun IgnoreMenu(
 private fun EmptyUpdatesCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surfaceVariant
+        )
     ) {
         Box(
-            modifier = Modifier.fillMaxWidth().padding(32.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                stringResource(R.string.no_updates),
-                style = typography.bodyLarge,
-                color = colorScheme.onSurfaceVariant
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = colorScheme.primary
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    stringResource(R.string.no_updates),
+                    style = typography.bodyLarge,
+                    color = colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ErrorBanner(
+    message: String,
+    onDismiss: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.errorContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.Error,
+                contentDescription = null,
+                tint = colorScheme.onErrorContainer
             )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                message,
+                modifier = Modifier.weight(1f),
+                style = typography.bodyMedium,
+                color = colorScheme.onErrorContainer
+            )
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = stringResource(R.string.dismiss),
+                    tint = colorScheme.onErrorContainer
+                )
+            }
         }
     }
 }

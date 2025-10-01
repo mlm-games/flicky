@@ -20,4 +20,9 @@
     <string name="locked_to_repo">Locked to Repo</string>
     <string name="unlocked_repo">Unlocked</string>
     <string name="lock_to_repo">Lock to Repo</string>
+    <string name="updating_count">Updating %d apps</string>
+    <string name="installation_errors">%i installation error(s)</string>
+    <string name="available_updates">Available Updates</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="search">Search</string>
 </resources>
