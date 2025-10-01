@@ -1,1 +1,0 @@
-- Do not expose intent for install reciever

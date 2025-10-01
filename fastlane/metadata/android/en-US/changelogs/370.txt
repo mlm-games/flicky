@@ -1,1 +1,0 @@
-- Clear cache properly on force sync

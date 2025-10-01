@@ -1,1 +1,0 @@
-- Remove unused firebase lib and downgrade gradle for fdroid compat

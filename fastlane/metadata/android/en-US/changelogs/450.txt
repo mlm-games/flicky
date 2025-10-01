@@ -1,3 +1,0 @@
-- Make install progress persist across screens
-- Use install progress from tasks for app detail screen
-- Show ignored button displays while hiding updates screen title (for mobile spacing)

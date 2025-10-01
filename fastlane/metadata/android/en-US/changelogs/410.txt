@@ -1,1 +1,0 @@
-- Fix install progress not being reflected

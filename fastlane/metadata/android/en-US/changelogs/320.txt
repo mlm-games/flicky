@@ -1,5 +1,0 @@
-- Bump maj ver
-- add shizuku and root install options
-- Show version name on updates screen while updating
-- Add few common repos like neo-store and droidify
-- Update README.md for izzy link
