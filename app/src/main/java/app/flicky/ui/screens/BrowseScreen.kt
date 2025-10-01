@@ -707,9 +707,9 @@ private fun AppListRow(app: FDroidApp, onClick: () -> Unit, onLongClick: () -> U
             AppIcon(app.name, app.iconUrl, size = 56.dp)
             Column(Modifier.weight(1f)) {
                 val installedRepo = AppGraph.installedRepo
-                val installedVc = remember { mutableStateOf<Long?>(null) }
-                LaunchedEffect(app.packageName) { installedVc.value = installedRepo.getVersionCode(app.packageName) }
-                val installedLabel = installedVc.value?.let { "v$it" }
+                val installedVn = remember { mutableStateOf<String?>(null) }
+                LaunchedEffect(app.packageName) { installedVn.value = installedRepo.getVersionName(app.packageName) }
+                val installedLabel = installedVn.value?.let { if (!it.startsWith("v")) "v$it" else it }
                 AppTexts(
                     name = app.name,
                     installedLabel = installedLabel,

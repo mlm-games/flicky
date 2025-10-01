@@ -49,6 +49,14 @@ class InstalledAppsRepository(private val context: Context) {
         } catch (_: Exception) { null }
     }
 
+    fun getVersionName(packageName: String): String? {
+        return try {
+            val pm = context.packageManager
+            val pi = pm.getPackageInfo(packageName, 0)
+            pi.versionName
+        } catch (_: Exception) { null }
+    }
+
     fun isInstalled(packageName: String): Boolean = getVersionCode(packageName) != null
 
     /**
