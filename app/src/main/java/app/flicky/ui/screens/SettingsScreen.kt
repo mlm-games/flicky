@@ -1,6 +1,8 @@
 package app.flicky.ui.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -423,9 +425,16 @@ private fun RepoConfigCard(
     onTestMirrors: () -> Unit,
     onForgetMirror: () -> Unit
 ) {
+    var localConfig by remember(config) { mutableStateOf(config) }
+
     var showMenu by remember { mutableStateOf(false) }
     var openStrategy by remember { mutableStateOf(false) }
     var openTrust by remember { mutableStateOf(false) }
+
+    val updateConfig: (RepoConfig) -> Unit = { newConfig -> // HACK: For instant ui updates (perf. cost)
+        localConfig = newConfig
+        onConfigChange(newConfig)
+    }
 
     Surface(
         tonalElevation = 1.dp,
@@ -514,23 +523,22 @@ private fun RepoConfigCard(
             if (repo.enabled) {
                 Spacer(Modifier.height(8.dp))
 
-                // Mirror policy chips
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     FilterChip(
-                        selected = config.rotateMirrors,
+                        selected = localConfig.rotateMirrors,
                         onClick = {
-                            onConfigChange(config.copy(rotateMirrors = !config.rotateMirrors))
+                            updateConfig(localConfig.copy(rotateMirrors = !localConfig.rotateMirrors))
                         },
                         label = { Text(stringResource(R.string.rotate_mirrors)) }
                     )
 
                     FilterChip(
-                        selected = config.includeOnion,
+                        selected = localConfig.includeOnion,
                         onClick = {
-                            onConfigChange(config.copy(includeOnion = !config.includeOnion))
+                            updateConfig(localConfig.copy(includeOnion = !localConfig.includeOnion))
                         },
                         label = { Text(stringResource(R.string.use_onion)) }
                     )
@@ -540,11 +548,11 @@ private fun RepoConfigCard(
 
                 // Mirror strategy dropdown
                 val strategies = listOf("StickyLastGood", "RoundRobin", "CanonicalFirst")
-                val strategyIdx = strategies.indexOf(config.strategy).coerceAtLeast(0)
+                val strategyIdx = strategies.indexOf(localConfig.strategy).coerceAtLeast(0)
 
                 ExposedDropdownMenuBox(
                     expanded = openStrategy,
-                    onExpandedChange = { openStrategy = !openStrategy }
+                    onExpandedChange = { openStrategy = !openStrategy },
                 ) {
                     OutlinedTextField(
                         value = strategies[strategyIdx],
@@ -557,6 +565,9 @@ private fun RepoConfigCard(
                         modifier = Modifier
                             .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
                             .fillMaxWidth()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                            ) { openStrategy = !openStrategy }
                     )
 
                     ExposedDropdownMenu(
@@ -568,7 +579,7 @@ private fun RepoConfigCard(
                                 text = { Text(s) },
                                 onClick = {
                                     openStrategy = false
-                                    onConfigChange(config.copy(strategy = s))
+                                    updateConfig(localConfig.copy(strategy = s))
                                 }
                             )
                         }
@@ -586,7 +597,7 @@ private fun RepoConfigCard(
                 Spacer(Modifier.height(6.dp))
 
                 val trustModes = listOf("HttpsOnly", "Pinned", "CustomCA")
-                val trustIdx = trustModes.indexOf(config.trustMode).coerceAtLeast(0)
+                val trustIdx = trustModes.indexOf(localConfig.trustMode).coerceAtLeast(0)
 
                 ExposedDropdownMenuBox(
                     expanded = openTrust,
@@ -603,6 +614,9 @@ private fun RepoConfigCard(
                         modifier = Modifier
                             .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
                             .fillMaxWidth()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                            ) { openTrust = !openTrust }
                     )
 
                     ExposedDropdownMenu(
@@ -614,7 +628,7 @@ private fun RepoConfigCard(
                                 text = { Text(s) },
                                 onClick = {
                                     openTrust = false
-                                    onConfigChange(config.copy(trustMode = s))
+                                    updateConfig(config.copy(trustMode = s))
                                 }
                             )
                         }
