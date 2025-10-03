@@ -737,7 +737,7 @@ class Installer(
                         runCatching { out.flush() }
                         session.abandon()
                         emitStage(packageName, TaskStage.Cancelled)
-                        return InstallSessionResult(success = false, wasCancelledByUser = true) // <-- Return new type
+                        return InstallSessionResult(success = false, wasCancelledByUser = true)
                     }
                     out.write(buf, 0, r)
                     written += r
@@ -752,12 +752,24 @@ class Installer(
             val (_, status) = SessionInstallBus.events.first { it.first == sessionId }
             result.complete(status)
         }
+
         val intent = Intent(context, InstallResultReceiver::class.java)
         val pendingFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
         else PendingIntent.FLAG_UPDATE_CURRENT
+
         val pending = PendingIntent.getBroadcast(context, sessionId, intent, pendingFlags)
-        session.commit(pending.intentSender); session.close()
+
+        try {
+            session.commit(pending.intentSender)
+            session.close()
+        } catch (e: Exception) {
+            DebugLog.log("Installer", "Session commit() unexpected error: ${e.message}")
+            runCatching { session.abandon() }
+            waitJob.cancel()
+            return InstallSessionResult(success = false)
+        }
+
         val status = try { withTimeout(180_000) { result.await() } } finally { waitJob.cancel() }
 
         return when (status) {
