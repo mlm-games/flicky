@@ -1,3 +1,13 @@
+## v3.5.1
+
+- use mutable pending intent (session installer A14+ err) to try fixing #32
+- prev. commit fixes, ui and perf. improvements for settings (reduce recomp calls)
+- Better batch updates handling
+- List shows vername instead of vercode
+- delete old files
+- Update short_description.txt
+
+
 ## v3.4.7
 
 - Add preference options for individual apps (#30)
