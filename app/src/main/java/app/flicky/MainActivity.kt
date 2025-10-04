@@ -93,7 +93,7 @@ class MainActivity : ComponentActivity() {
             val selectedIndex = when {
                 currentRoute.startsWith("detail/") -> 0
                 currentRoute == Routes.Browse -> 0
-                currentRoute == Routes.Categories -> 1
+                currentRoute.startsWith("categories") -> 1
                 currentRoute == Routes.Updates -> 2
                 currentRoute == Routes.Settings -> 3
                 else -> 0
