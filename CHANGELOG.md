@@ -1,3 +1,8 @@
+## v3.5.4
+
+- #34 Use %d instead of %i
+
+
 ## v3.5.3
 
 - [chore] weird aab compile err
