@@ -567,6 +567,7 @@ private fun RepoConfigCard(
                             .fillMaxWidth()
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
+                                indication = null
                             ) { openStrategy = !openStrategy }
                     )
 
@@ -616,6 +617,7 @@ private fun RepoConfigCard(
                             .fillMaxWidth()
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
+                                indication = null
                             ) { openTrust = !openTrust }
                     )
 
