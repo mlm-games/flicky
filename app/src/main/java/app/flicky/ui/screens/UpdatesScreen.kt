@@ -83,14 +83,14 @@ fun UpdatesScreen(
                         strokeWidth = 2.dp,
                         color = colorScheme.primary
                     )
-                    Text(
-                        stringResource(
-                            R.string.updating_count,
-                            (batchProgress * ui.updates.size).toInt(),
-                            ui.updates.size
-                        ),
-                        style = typography.bodyMedium
-                    )
+//                    Text(
+//                        stringResource(
+//                            R.string.updating_count,
+//                            (batchProgress * ui.updates.size).toInt(),
+//                            ui.updates.size
+//                        ),
+//                        style = typography.bodyMedium
+//                    )
                     TextButton(
                         onClick = { actions.cancelBatch() },
                         colors = ButtonDefaults.textButtonColors(
