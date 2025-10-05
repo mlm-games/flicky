@@ -1,3 +1,10 @@
+## v3.5.2
+
+- Hide updating count
+- Fix BottomBar not staying on categories
+- Update UI for settings screen options instantly
+
+
 ## v3.5.1
 
 - use mutable pending intent (session installer A14+ err) to try fixing #32
