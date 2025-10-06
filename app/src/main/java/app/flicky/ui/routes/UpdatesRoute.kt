@@ -50,26 +50,22 @@ fun UpdatesRoute(
             if (!isBatchUpdating || appsInBatch.value.isEmpty()) {
                 return@derivedStateOf 0f
             }
-
             val total = appsInBatch.value.size.toFloat()
             if (total == 0f) return@derivedStateOf 0f
 
-            // Calculate progress based on the STABLE appsInBatch list
             val inProgressSum = appsInBatch.value.sumOf { app ->
                 val stage = installerTasks[app.packageName]
                 when {
                     stage is TaskStage.Downloading -> stage.progress * 0.33
                     stage is TaskStage.Verifying -> 0.33 + 0.33
                     stage is TaskStage.Installing -> 0.66 + stage.progress * 0.34
-                    stage is TaskStage.Finished && stage.success -> 1.0 // Only count successful as 100%
+                    stage is TaskStage.Finished && stage.success -> 1.0
                     else -> 0.0
                 }
             }.toFloat()
-
             (inProgressSum / total).coerceIn(0f, 1f)
         }
     }
-
 
     val actions = remember(vm, installer, isBatchUpdating) {
         object : UpdatesActions {
@@ -83,14 +79,20 @@ fun UpdatesRoute(
                 isBatchUpdating = true
 
                 batchUpdateJob = scope.launch {
-                    val queue = Channel<FDroidApp>(updatesToRun.size)
-                    updatesToRun.forEach { queue.send(it) }
+                    val installerMode = runCatching { AppGraph.settings.settingsFlow.first().installerMode }.getOrDefault(0)
+                    val parallelism = when (installerMode) {
+                        2, 3 -> 1
+                        else -> 3 // Certain roms might have problems with parallel root installs
+                    }
+                    Log.d("UpdatesRoute", "Starting batch update with parallelism: $parallelism")
+
+                    val queue = Channel<FDroidApp>(Channel.UNLIMITED)
+                    updatesToRun.forEach { queue.trySend(it) }
                     queue.close()
 
                     try {
-                        // Process 3 concurrent installations
                         coroutineScope {
-                            repeat(minOf(3, updatesToRun.size)) { workerId ->
+                            repeat(minOf(parallelism, updatesToRun.size)) { workerId ->
                                 launch {
                                     for (app in queue) {
                                         if (!isActive) break
@@ -101,11 +103,11 @@ fun UpdatesRoute(
                                             withTimeoutOrNull(300_000L) {
                                                 installer.tasks.first { tasks ->
                                                     val stage = tasks[app.packageName]
-                                                    stage is TaskStage.Finished || stage is TaskStage.Cancelled
+                                                    stage is TaskStage.Finished || stage is TaskStage.Cancelled || stage == null
                                                 }
                                             }
                                         } catch (e: CancellationException) {
-                                            throw e // Re-throw to propagate cancellation
+                                            throw e
                                         } catch (e: Exception) {
                                             Log.e("UpdatesRoute", "Failed to update ${app.packageName}", e)
                                         }
@@ -146,7 +148,6 @@ fun UpdatesRoute(
                 batchUpdateJob = null
                 isBatchUpdating = false
 
-                // Cancel all ongoing installations from this batch
                 appsInBatch.value.forEach { app ->
                     val stage = installerTasks[app.packageName]
                     if (stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled) {
