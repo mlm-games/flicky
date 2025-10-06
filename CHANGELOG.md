@@ -1,3 +1,8 @@
+## v3.5.6
+
+- A trial for #34
+
+
 ## v3.5.5
 
 - Make root/shiziku installs sequential
