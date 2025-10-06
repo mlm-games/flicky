@@ -1,0 +1,2 @@
+- Make root/shiziku installs sequential
+- Improve browse screen colors, try showing stderr logs?

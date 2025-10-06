@@ -1,3 +1,9 @@
+## v3.5.5
+
+- Make root/shiziku installs sequential
+- Improve browse screen colors, try showing stderr logs?
+
+
 ## v3.5.4
 
 - #34 Use %d instead of %i
