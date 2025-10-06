@@ -156,4 +156,5 @@
     <string name="dismiss">Dismiss</string>
     <string name="search">Search</string>
     <string name="more_options_for">More Options Dropdown</string>
+    <string name="install_from">Install from</string>
 </resources>

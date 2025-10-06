@@ -47,8 +47,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
@@ -105,6 +103,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
 @Composable
 fun BrowseScreen(
     apps: LazyPagingItems<FDroidApp>,
@@ -164,7 +163,7 @@ fun BrowseScreen(
             Column {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = colorScheme.surface,
+                    color = MaterialTheme.colorScheme.surface,
                     tonalElevation = 3.dp
                 ) {
                     Row(
@@ -185,7 +184,7 @@ fun BrowseScreen(
 
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                 ) {
                     Row(
                         modifier = Modifier
@@ -263,12 +262,17 @@ fun BrowseScreen(
 
                 val status = syncStatusRes?.asString()
                 if (isSyncing) {
-                    LinearProgressIndicator(progress = { animatedProgress }, modifier = Modifier.fillMaxWidth().height(4.dp))
+                    LinearProgressIndicator(
+                        progress = { animatedProgress },
+                        modifier = Modifier.fillMaxWidth().height(4.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
                     if (!status.isNullOrBlank()) {
                         Text(
                             text = status,
-                            style = typography.labelSmall,
-                            color = colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                         )
                     }
@@ -286,15 +290,19 @@ fun BrowseScreen(
                     Icon(
                         Icons.Default.SearchOff, contentDescription = null,
                         modifier = Modifier.size(64.dp),
-                        tint = colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     )
                     Spacer(Modifier.height(16.dp))
-                    Text(stringResource(R.string.no_apps_found), style = typography.titleLarge, color = colorScheme.onSurfaceVariant)
+                    Text(
+                        stringResource(R.string.no_apps_found),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     if (query.isNotEmpty()) {
                         Text(
                             stringResource(R.string.try_different_search),
-                            style = typography.bodyMedium,
-                            color = colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -327,7 +335,6 @@ fun BrowseScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
-//                        beyondBoundsItemCount = columns * 2
                     ) {
                         items(
                             count = apps.itemCount,
@@ -427,7 +434,6 @@ private fun InstallFromDialog(
     onInstall: (AppVariant) -> Unit,
     onCancelInstall: (String) -> Unit
 ) {
-    // Track active task for this package and progress for feedback
     val stage = installerTasks[app.packageName]
     val isWorking = stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled
     val progress = when (stage) {
@@ -436,19 +442,21 @@ private fun InstallFromDialog(
         is TaskStage.Installing -> (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f)
         else -> 0f
     }
-    // Auto-dismiss when finished successfully
+
     LaunchedEffect(stage) {
         if (stage is TaskStage.Finished && stage.success) onDismiss()
     }
 
     FlickyDialog(
         onDismissRequest = { if (!isWorking) onDismiss() },
-        title = "Install from…",
+        title = stringResource(R.string.install_from),
         confirmButton = {
             TextButton(
                 onClick = { if (!isWorking) onDismiss() },
                 enabled = !isWorking,
-                colors = ButtonDefaults.textButtonColors(contentColor = colorScheme.primary)
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
             ) { Text(stringResource(R.string.action_close)) }
         }
     ) {
@@ -456,11 +464,10 @@ private fun InstallFromDialog(
             if (variants.isEmpty()) {
                 Text(
                     text = stringResource(R.string.no_variants_found),
-                    style = typography.bodyMedium,
-                    color = colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
-                // TV-friendly: big focusable rows with clear buttons
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -476,7 +483,7 @@ private fun InstallFromDialog(
                                 .semantics { role = Role.Button }
                                 .clickable(enabled = compat && !isWorking) { onInstall(v) },
                             shape = MaterialTheme.shapes.medium,
-                            color = colorScheme.surface,
+                            color = MaterialTheme.colorScheme.surface,
                             tonalElevation = 1.dp
                         ) {
                             Row(
@@ -487,17 +494,21 @@ private fun InstallFromDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(Modifier.weight(1f)) {
-                                    Text(v.repositoryName, style = typography.bodyMedium, color = colorScheme.onSurface)
+                                    Text(
+                                        v.repositoryName,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
                                     Text(
                                         "v${v.versionName} (${v.versionCode}) • ${formatBytes(v.size)}",
-                                        style = typography.bodySmall,
-                                        color = colorScheme.onSurfaceVariant
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     if (!compat) {
                                         Text(
                                             text = stringResource(id = R.string.incompatible),
-                                            style = typography.labelSmall,
-                                            color = colorScheme.error
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.error
                                         )
                                     }
                                 }
@@ -505,8 +516,8 @@ private fun InstallFromDialog(
                                     onClick = { onInstall(v) },
                                     enabled = compat && !isWorking,
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = colorScheme.primary,
-                                        contentColor = colorScheme.onPrimary
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
                                     )
                                 ) { Text(stringResource(R.string.action_install)) }
                             }
@@ -520,8 +531,8 @@ private fun InstallFromDialog(
                 LinearProgressIndicator(
                     progress = { progress },
                     modifier = Modifier.fillMaxWidth(),
-                    color = colorScheme.primary,
-                    trackColor = colorScheme.surfaceVariant
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
                 Spacer(Modifier.height(4.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -532,13 +543,13 @@ private fun InstallFromDialog(
                             is TaskStage.Installing -> stringResource(R.string.installing)
                             else -> ""
                         },
-                        style = typography.labelSmall,
-                        color = colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     TextButton(
                         onClick = { onCancelInstall(app.packageName) },
                         colors = ButtonDefaults.textButtonColors(
-                            contentColor = colorScheme.error
+                            contentColor = MaterialTheme.colorScheme.error
                         )
                     ) { Text(stringResource(R.string.action_cancel)) }
                 }
@@ -557,7 +568,12 @@ private fun SortDialog(
         onDismissRequest = onDismiss,
         title = stringResource(R.string.sort_by),
         confirmButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
                 Text(stringResource(R.string.action_close))
             }
         }
@@ -581,15 +597,15 @@ private fun SortDialog(
                         selected = currentSort == option,
                         onClick = { onSortSelected(option) },
                         colors = RadioButtonDefaults.colors(
-                            selectedColor = colorScheme.primary,
-                            unselectedColor = colorScheme.onSurfaceVariant
+                            selectedColor = MaterialTheme.colorScheme.primary,
+                            unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         optionText,
-                        style = typography.bodyLarge,
-                        color = colorScheme.onSurface
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -603,6 +619,7 @@ fun UiText.asString(): String {
         is UiText.StringResource -> stringResource(this.resId, *this.args.toTypedArray())
     }
 }
+
 @Composable
 private fun TvAwareDockedSearchBar(
     query: String,
@@ -625,10 +642,12 @@ private fun TvAwareDockedSearchBar(
             focusManager.clearFocus()
         }
     }
+
     val colors1 = SearchBarDefaults.colors(
-        colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        colorScheme.surfaceVariant.copy(alpha = 0.7f),
+        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        dividerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
     )
+
     DockedSearchBar(
         inputField = {
             SearchBarDefaults.InputField(
@@ -645,12 +664,27 @@ private fun TvAwareDockedSearchBar(
                 },
                 expanded = false,
                 onExpandedChange = onActiveChange,
-                placeholder = { Text(stringResource(R.string.search_hint)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                placeholder = {
+                    Text(
+                        stringResource(R.string.search_hint),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
                 trailingIcon = {
                     if (localQuery.isNotEmpty()) {
                         IconButton(onClick = { localQuery = ""; onImmediateChange("") }) {
-                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.action_clear))
+                            Icon(
+                                Icons.Default.Clear,
+                                contentDescription = stringResource(R.string.action_clear),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                     else {
@@ -661,12 +695,14 @@ private fun TvAwareDockedSearchBar(
                     }
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    unfocusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                    focusedBorderColor = colorScheme.primary,
-                    unfocusedBorderColor = colorScheme.surfaceVariant,
-                    focusedTextColor = colorScheme.onSurface,
-                    unfocusedTextColor = colorScheme.onSurface
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 modifier = Modifier.fillMaxWidth(1f)
             )
@@ -692,23 +728,30 @@ private fun TvAwareDockedSearchBar(
         content = { /* suggestions/history later? */ },
     )
 }
+
 @Composable
 private fun AppListRow(app: FDroidApp, onClick: () -> Unit, onLongClick: () -> Unit) {
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors(
-            containerColor = colorScheme.surface,
-            contentColor = colorScheme.onSurface
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
         ),
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
     ) {
-        Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             AppIcon(app.name, app.iconUrl, size = 56.dp)
             Column(Modifier.weight(1f)) {
                 val installedRepo = AppGraph.installedRepo
                 val installedVn = remember { mutableStateOf<String?>(null) }
-                LaunchedEffect(app.packageName) { installedVn.value = installedRepo.getVersionName(app.packageName) }
+                LaunchedEffect(app.packageName) {
+                    installedVn.value = installedRepo.getVersionName(app.packageName)
+                }
                 val installedLabel = installedVn.value?.let { if (!it.startsWith("v")) "v$it" else it }
                 AppTexts(
                     name = app.name,
@@ -719,8 +762,8 @@ private fun AppListRow(app: FDroidApp, onClick: () -> Unit, onLongClick: () -> U
             }
             Text(
                 text = app.category,
-                style = typography.labelSmall,
-                color = colorScheme.primary
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }

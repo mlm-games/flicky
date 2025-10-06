@@ -3,19 +3,18 @@ package app.flicky.install
 import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import app.flicky.AppGraph
 import app.flicky.R
+import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.local.AppVariant
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.model.FDroidApp
@@ -27,36 +26,24 @@ import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.VariantSelector
 import app.flicky.helper.DebugLog
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import rikka.shizuku.Shizuku
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.OutputStream
+import java.io.*
 import java.lang.reflect.Method
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import javax.net.ssl.SSLHandshakeException
 import kotlin.coroutines.resume
+
+private data class InstallSessionResult(val success: Boolean, val wasCancelledByUser: Boolean = false)
 
 class Installer(
     private val context: Context,
@@ -103,8 +90,6 @@ class Installer(
 
     fun cancel(packageName: String) {
         cancelFlags[packageName] = true
-
-        // Cancel downloads
         activeDownloads.entries
             .filter { it.key.startsWith("$packageName-") }
             .toList()
@@ -112,19 +97,10 @@ class Installer(
                 dm.remove(id)
                 activeDownloads.remove(key)
             }
-
-        // Cancel any active OkHttp call
         activeCalls.remove(packageName)?.cancel()
-
-        // Kill any active root/shizuku process with proper cleanup
         activeProcs.remove(packageName)?.let { process ->
-            runCatching {
-                process.destroyForciblyCompat()
-                // Don't wait here as it might block
-            }
+            runCatching { process.destroyForciblyCompat() }
         }
-
-        // Best effort: remove partial files
         scope.launch(Dispatchers.IO) {
             getBaseCacheDir().listFiles()?.forEach { f ->
                 if (f.name.startsWith("$packageName-")) {
@@ -132,8 +108,6 @@ class Installer(
                 }
             }
         }
-
-        // Notify UI
         emitStage(packageName, TaskStage.Cancelled)
     }
 
@@ -144,21 +118,41 @@ class Installer(
     }
 
     suspend fun install(app: FDroidApp): Boolean {
-        val pref = PreferredRepo.fromIndex(settings.settingsFlow.first().preferredRepo)
-        val variants = runCatching { AppGraph.db.appDao().variantsFor(app.packageName) }
-            .getOrElse { emptyList() }
-        val chosen = VariantSelector.pick(variants, pref)
-        val req = when {
-            chosen != null -> resolve(chosen)
-            else -> resolve(app)
-        } ?: return false
-
-        return installResolved(req)
+        return try {
+            val pref = PreferredRepo.fromIndex(settings.settingsFlow.first().preferredRepo)
+            val variants = runCatching { AppGraph.db.appDao().variantsFor(app.packageName) }.getOrElse { emptyList() }
+            val chosen = VariantSelector.pick(variants, pref)
+            val req = when {
+                chosen != null -> resolve(chosen)
+                else -> resolve(app)
+            } ?: return false
+            installResolved(req)
+        } catch (t: Throwable) {
+            Log.e("Installer", "Top-level install failed for ${app.packageName}", t)
+            emitStage(app.packageName, TaskStage.Finished(false))
+            false
+        }
     }
 
     suspend fun install(variant: AppVariant): Boolean {
-        val req = resolve(variant) ?: return false
-        return installResolved(req)
+        return try {
+            val req = resolve(variant) ?: return false
+            installResolved(req)
+        } catch (t: Throwable) {
+            Log.e("Installer", "Top-level variant install failed for ${variant.packageName}", t)
+            emitStage(variant.packageName, TaskStage.Finished(false))
+            false
+        }
+    }
+
+    private suspend fun logStream(tag: String, stream: InputStream) = withContext(Dispatchers.IO) {
+        BufferedReader(InputStreamReader(stream)).use { reader ->
+            var line: String? = reader.readLine()
+            while (line != null) {
+                DebugLog.log(tag, line)
+                line = reader.readLine()
+            }
+        }
     }
 
     private suspend fun executeWithProcess(
@@ -167,46 +161,46 @@ class Installer(
         pipeData: suspend (Process) -> Boolean
     ): Boolean = withContext(Dispatchers.IO) {
         var process: Process? = null
+        var stdoutJob: Job? = null
+        var stderrJob: Job? = null
 
         try {
             process = processBuilder()
-            if (process == null) return@withContext false
+            if (process == null) {
+                DebugLog.log("Installer", "Process creation failed for $packageName")
+                return@withContext false
+            }
 
             activeProcs[packageName] = process
 
-            // Execute the actual operation
-            val result = pipeData(process)
+            stdoutJob = launch { logStream("su-stdout", process.inputStream) }
+            stderrJob = launch { logStream("su-stderr", process.errorStream) }
 
-            // Wait for process completion with timeout
-            val exitCode = withTimeoutOrNull(30_000) {
-                process.waitFor()
+            val pipeOk = pipeData(process)
+            if (!pipeOk) {
+                DebugLog.log("Installer", "Pipe data failed for $packageName")
+                // Don't return early, wait for error logs
             }
 
-            return@withContext result && exitCode == 0
+            val exitCode = process.waitFor()
+            DebugLog.log("Installer", "Process for $packageName finished with exit code: $exitCode")
 
+            stdoutJob.join()
+            stderrJob.join()
+
+            return@withContext exitCode == 0
         } catch (e: Exception) {
-            DebugLog.log("Installer", "Process execution failed: ${e.message}")
+            DebugLog.log("Installer", "Process execution failed for $packageName: ${e.message}")
             false
         } finally {
-            // Ensure cleanup happens even if coroutine is cancelled
             withContext(NonCancellable) {
+                stdoutJob?.cancel()
+                stderrJob?.cancel()
                 activeProcs.remove(packageName)
-
-                // Force destroy if still running
-                process?.let {
-                    if (it.isAliveCompat()) {
-                        it.destroyForciblyCompat()
-                        // Wait a bit for process to terminate
-                        withTimeoutOrNull(1000) {
-                            it.waitFor()
-                        }
-                    }
-                }
+                process?.destroyForciblyCompat()
             }
         }
     }
-
-
 
     private suspend fun installResolved(req: ResolvedApk): Boolean = withContext(NonCancellable) {
         val mode = settings.settingsFlow.first().installerMode
@@ -229,7 +223,8 @@ class Installer(
         emitStage(req.packageName, TaskStage.Verifying)
         if (isCancelled(req.packageName)) {
             emitStage(req.packageName, TaskStage.Cancelled); clearCancel(req.packageName)
-            return@withContext false }
+            return@withContext false
+        }
         if (req.sha256.isNotBlank() && !verifySha256File(file, req.sha256)) {
             if (showDebug) DebugLog.log("Installer", "SHA256 mismatch for ${req.packageName}")
             file.delete()
@@ -239,11 +234,11 @@ class Installer(
         }
 
         val result = when (mode) {
-            0 -> { emitStage(req.packageName, TaskStage.Installing(0f)); InstallSessionResult(installSystem(file, req.packageName)) }
-            1 -> installSessionFromFile(file, req.packageName, req.sha256)
+            0 -> InstallSessionResult(installSystem(file, req.packageName))
+            1 -> InstallSessionResult(installSessionFromFile(file, req.packageName, req.sha256))
             2 -> InstallSessionResult(installRootStream(file, req.packageName))
             3 -> InstallSessionResult(installShizukuStream(file, req.packageName))
-            else -> { emitStage(req.packageName, TaskStage.Installing(0f)); InstallSessionResult(installSystem(file, req.packageName)) }
+            else -> InstallSessionResult(installSystem(file, req.packageName))
         }
 
         if (isCancelled(req.packageName)) {
@@ -299,7 +294,6 @@ class Installer(
     }
 
     private suspend fun resolveUrls(repoBase: String, apkPathOrUrl: String): List<String> {
-        // Absolute URLs: try repo base or any known mirror,
         if (apkPathOrUrl.startsWith("http://") || apkPathOrUrl.startsWith("https://")) {
             val abs = normalize(apkPathOrUrl)
             val policy = mirrorPolicies.policyFor(repoBase)
@@ -308,16 +302,12 @@ class Installer(
                 includeOnion = policy.includeOnion,
                 strategy = if (policy.rotateMirrors) policy.strategy else Strategy.StickyLastGood
             )
-
-            // downloadBase & mirror candidates
             val (dlBase, trustMode) = resolveDownloadBaseAndTrust(repoBase)
             val allBasesToMatch = (listOf(normalize(dlBase)) + basesRaw).distinct()
-
             val matchedBase = allBasesToMatch.firstOrNull { base ->
                 val prefix = if (abs.startsWith("$base/")) "$base/" else base
                 abs.startsWith(prefix)
             }
-
             if (matchedBase != null) {
                 val prefix = if (abs.startsWith("$matchedBase/")) "$matchedBase/" else matchedBase
                 val relPath = abs.removePrefix(prefix).trimStart('/')
@@ -331,11 +321,8 @@ class Installer(
                 }
                 return filteredBases.map { b -> "${normalize(b)}/$relPath" }
             }
-
             return listOf(abs)
         }
-
-        // relative path
         val policy = mirrorPolicies.policyFor(repoBase)
         val basesRaw = MirrorRegistry.candidates(
             base = repoBase,
@@ -395,7 +382,6 @@ class Installer(
         .retryOnConnectionFailure(true)
         .build()
 
-    // Main download: policy = if trust requires pin/CA, skip DM and stream directly; else DM first, stream fallback
     private suspend fun download(req: ResolvedApk): File? = withContext(Dispatchers.IO) {
         val out = cacheFileFor(req)
         if (out.exists()) return@withContext out
@@ -413,13 +399,11 @@ class Installer(
                 val client = try { httpClients.clientFor(req.repoBase) } catch (e: Exception) {
                     DebugLog.log("Downloader", "TLS client failed: ${e.message}")
                     if (failOnTrustErrors) return@withContext null
-                    // permissive fallback only if setting is OFF
                     defaultStreamingClient()
                 }
-                DebugLog.log("Downloader", "Pinned/CustomCA: streaming for $url (strict=${failOnTrustErrors})")
+                DebugLog.log("Downloader", "Pinned/CustomCA: streaming for $url (strict=$failOnTrustErrors)")
                 val ok = streamWithOkHttp(
-                    client = client,
-                    url = url, dest = out, userAgent = userAgent, referer = req.repoBase,
+                    client = client, url = url, dest = out, userAgent = userAgent, referer = req.repoBase,
                     expectedSize = req.size, packageName = req.packageName,
                 )
                 if (ok && out.exists()) {
@@ -431,8 +415,6 @@ class Installer(
                 }
             }
 
-
-            // Otherwise: try DownloadManager first
             val request = DownloadManager.Request(url.toUri())
                 .setTitle(req.title)
                 .setDescription(context.getString(R.string.settings_downloads))
@@ -443,8 +425,7 @@ class Installer(
                     addRequestHeader("User-Agent", userAgent)
                     addRequestHeader("Accept-Encoding", "gzip, deflate")
                     addRequestHeader("Referer", req.repoBase)
-                    // For external cache, write directly
-                    (context.externalCacheDir?.let { setDestinationUri(Uri.fromFile(out)) })
+                    context.externalCacheDir?.let { setDestinationUri(Uri.fromFile(out)) }
                 }
 
             DebugLog.log("Downloader", "Enqueue (DM) $url")
@@ -469,7 +450,6 @@ class Installer(
                 runCatching { if (out.exists()) out.delete() }
             }
 
-            // Fallback: direct streaming
             DebugLog.log("Downloader", "Fallback to streaming for $url")
             val client = try { httpClients.clientFor(req.repoBase) } catch (e: Exception) {
                 if (failOnTrustErrors) {
@@ -479,8 +459,7 @@ class Installer(
             }
             if (client != null) {
                 val ok = streamWithOkHttp(
-                    client = client,
-                    url = url, dest = out, userAgent = userAgent, referer = req.repoBase,
+                    client = client, url = url, dest = out, userAgent = userAgent, referer = req.repoBase,
                     expectedSize = req.size, packageName = req.packageName,
                 )
                 if (ok && out.exists()) {
@@ -494,16 +473,9 @@ class Installer(
         null
     }
 
-
-    // Direct streaming with resume + progress updates
     private fun streamWithOkHttp(
-        client: OkHttpClient,
-        url: String,
-        dest: File,
-        userAgent: String,
-        referer: String,
-        expectedSize: Long,
-        packageName: String,
+        client: OkHttpClient, url: String, dest: File, userAgent: String, referer: String,
+        expectedSize: Long, packageName: String,
     ): Boolean {
         return try {
             val already = if (dest.exists()) dest.length().coerceAtLeast(0L) else 0L
@@ -522,7 +494,6 @@ class Installer(
                 val isResume = already > 0
                 val isPartial = resp.code == 206
                 if (isResume && !isPartial) {
-                    // Server ignored Range. Restart from scratch.
                     if (dest.exists()) dest.delete()
                 }
                 if (!(resp.isSuccessful || isPartial)) {
@@ -619,7 +590,8 @@ class Installer(
                                     if (p != lastProgress) {
                                         if (isCancelled(packageName)) { dm.remove(id); return@withContext null }
                                         lastProgress = p
-                                        emitStage(packageName, TaskStage.Downloading(p.coerceIn(0f, 0.999f))) }
+                                        emitStage(packageName, TaskStage.Downloading(p.coerceIn(0f, 0.999f)))
+                                    }
                                 }
                             }
                             val waitingOnNetwork = reason == DownloadManager.PAUSED_WAITING_FOR_NETWORK ||
@@ -707,7 +679,7 @@ class Installer(
         file: File,
         packageName: String,
         expectedSha256: String = "",
-    ): InstallSessionResult {
+    ): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !context.packageManager.canRequestPackageInstalls()
         ) {
@@ -715,10 +687,9 @@ class Installer(
                 data = "package:${context.packageName}".toUri()
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            context.startActivity(i)
-            return InstallSessionResult(success = false)
+            context.startActivity(i); return false
         }
-        if (expectedSha256.isNotBlank() && !verifySha256File(file, expectedSha256)) return InstallSessionResult(success = false) // <-- Return new type
+        if (expectedSha256.isNotBlank() && !verifySha256File(file, expectedSha256)) return false
 
         val pm = context.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
@@ -737,7 +708,7 @@ class Installer(
                         runCatching { out.flush() }
                         session.abandon()
                         emitStage(packageName, TaskStage.Cancelled)
-                        return InstallSessionResult(success = false, wasCancelledByUser = true)
+                        return false
                     }
                     out.write(buf, 0, r)
                     written += r
@@ -767,21 +738,15 @@ class Installer(
             DebugLog.log("Installer", "Session commit() unexpected error: ${e.message}")
             runCatching { session.abandon() }
             waitJob.cancel()
-            return InstallSessionResult(success = false)
+            return false
         }
 
         val status = try { withTimeout(180_000) { result.await() } } finally { waitJob.cancel() }
-
-        return when (status) {
-            PackageInstaller.STATUS_SUCCESS -> InstallSessionResult(success = true)
-            PackageInstaller.STATUS_FAILURE_ABORTED -> InstallSessionResult(success = false, wasCancelledByUser = true)
-            else -> InstallSessionResult(success = false)
-        }
+        return status == PackageInstaller.STATUS_SUCCESS
     }
 
     private suspend fun installRootStream(file: File, packageName: String): Boolean {
         val size = file.length().coerceAtLeast(1L)
-
         return executeWithProcess(
             packageName = packageName,
             processBuilder = {
@@ -808,29 +773,23 @@ class Installer(
         )
     }
 
-
     private suspend fun installShizukuStream(file: File, packageName: String): Boolean {
         if (!Shizuku.pingBinder()) {
             DebugLog.log("Installer", "Shizuku not available")
             return false
         }
-
         if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
             if (!requestShizukuPermission()) {
                 DebugLog.log("Installer", "Shizuku permission denied")
                 return false
             }
         }
-
         val size = file.length().coerceAtLeast(1L)
-
         return executeWithProcess(
             packageName = packageName,
             processBuilder = {
                 try {
-                    shizukuNewProcess(
-                        arrayOf("cmd", "package", "install", "-r", "-S", size.toString())
-                    )
+                    shizukuNewProcess(arrayOf("cmd", "package", "install", "-r", "-S", size.toString()))
                 } catch (e: Exception) {
                     DebugLog.log("Installer", "Failed to start Shizuku process: ${e.message}")
                     null
@@ -917,15 +876,12 @@ private fun Process.destroyForciblyCompat() {
         this.destroyForcibly()
     } else {
         this.destroy()
-
-        // try to use reflection for better termination
         try {
             val pidField = this.javaClass.getDeclaredField("pid")
             pidField.isAccessible = true
             val pid = pidField.getInt(this)
             Runtime.getRuntime().exec("kill -9 $pid")
         } catch (e: Exception) {
-            // Fallback already done with destroy()
             DebugLog.log("Installer", "Force kill failed: ${e.message}")
         }
     }

@@ -36,5 +36,3 @@ class InstallResultReceiver : BroadcastReceiver() {
         }
     }
 }
-
-data class InstallSessionResult(val success: Boolean, val wasCancelledByUser: Boolean = false)
