@@ -14,7 +14,6 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import app.flicky.AppGraph
 import app.flicky.R
-import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.local.AppVariant
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.model.FDroidApp
@@ -51,6 +50,7 @@ class Installer(
     private val mirrorPolicies: MirrorPolicyProvider,
     private val httpClients: HttpClientProvider
 ) {
+    val ROOT_INSTALL_TAG: String = "Flicky-root"
     private val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val activeDownloads = ConcurrentHashMap<String, Long>()
@@ -236,7 +236,7 @@ class Installer(
         val result = when (mode) {
             0 -> InstallSessionResult(installSystem(file, req.packageName))
             1 -> InstallSessionResult(installSessionFromFile(file, req.packageName, req.sha256))
-            2 -> InstallSessionResult(installRootStream(file, req.packageName))
+            2 -> InstallSessionResult(installRootSession(file, req.packageName))
             3 -> InstallSessionResult(installShizukuStream(file, req.packageName))
             else -> InstallSessionResult(installSystem(file, req.packageName))
         }
@@ -745,32 +745,122 @@ class Installer(
         return status == PackageInstaller.STATUS_SUCCESS
     }
 
-    private suspend fun installRootStream(file: File, packageName: String): Boolean {
-        val size = file.length().coerceAtLeast(1L)
-        return executeWithProcess(
+    private suspend fun installRootSession(file: File, packageName: String): Boolean {
+        val createCommand = "/system/bin/pm install-create -r -d"
+        var sessionId: String? = null
+
+        val createSuccess = executeWithProcess(
             packageName = packageName,
-            processBuilder = {
-                try {
-                    Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd package install -r -S $size"))
-                } catch (e: Exception) {
-                    DebugLog.log("Installer", "Failed to start root process: ${e.message}")
-                    null
-                }
-            },
-            pipeData = { process ->
-                try {
-                    FileInputStream(file).use { fis ->
-                        process.outputStream.use { os ->
-                            pipeWithProgress(fis, os, size, packageName)
-                        }
-                    }
-                    true
-                } catch (e: Exception) {
-                    DebugLog.log("Installer", "Root install pipe failed: ${e.message}")
-                    false
+            command = createCommand,
+            onOutput = { line ->
+                if (line.contains("Success: created install session")) {
+                    sessionId = line.substringAfter("[").substringBefore("]")
                 }
             }
         )
+
+        if (!createSuccess || sessionId == null) {
+            Log.e(ROOT_INSTALL_TAG, "Failed to create root install session for $packageName. Check su-stderr logs for details.")
+            DebugLog.log("Installer", "Root session creation failed for $packageName.")
+            return false
+        }
+        DebugLog.log("Installer", "Root install session created: $sessionId")
+
+        val writeCommand = "/system/bin/pm install-write -S ${file.length()} $sessionId base.apk"
+        val writeSuccess = executeWithProcess(
+            packageName = packageName,
+            command = writeCommand,
+            pipeInput = { processOutputStream ->
+                file.inputStream().use { fileInputStream ->
+                    fileInputStream.copyTo(processOutputStream)
+                }
+            }
+        )
+
+        if (!writeSuccess) {
+            Log.e(ROOT_INSTALL_TAG, "Failed to write APK to session for $packageName. Aborting.")
+            DebugLog.log("Installer", "Root session write failed for $packageName.")
+            // Clean up by abandoning the session
+            executeWithProcess(packageName, "/system/bin/pm install-abandon $sessionId")
+            return false
+        }
+
+        val commitCommand = "/system/bin/pm install-commit $sessionId"
+        val commitSuccess = executeWithProcess(
+            packageName = packageName,
+            command = commitCommand
+        )
+
+        if (commitSuccess) {
+            DebugLog.log("Installer", "Root install for $packageName committed successfully.")
+        } else {
+            Log.e(ROOT_INSTALL_TAG, "Failed to commit root install session for $packageName.")
+            DebugLog.log("Installer", "Root session commit failed for $packageName.")
+        }
+
+        return commitSuccess
+    }
+
+
+    private suspend fun executeWithProcess(
+        packageName: String,
+        command: String,
+        pipeInput: (suspend (OutputStream) -> Unit)? = null,
+        onOutput: ((String) -> Unit)? = null
+    ): Boolean = withContext(Dispatchers.IO) {
+        var process: Process? = null
+        var stdoutJob: Job? = null
+        var stderrJob: Job? = null
+
+        try {
+            process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
+            activeProcs[packageName] = process
+
+            stdoutJob = launch {
+                process.inputStream.bufferedReader().useLines { lines ->
+                    lines.forEach { line ->
+                        Log.d("$ROOT_INSTALL_TAG-stdout", line)
+                        DebugLog.log("su-stdout", line)
+                        onOutput?.invoke(line)
+                    }
+                }
+            }
+
+            stderrJob = launch {
+                process.errorStream.bufferedReader().useLines { lines ->
+                    lines.forEach { line ->
+                        // Main log for debugging root issues
+                        Log.e("$ROOT_INSTALL_TAG-stderr", "[$packageName] $line")
+                        DebugLog.log("su-stderr", "[$packageName] $line")
+                    }
+                }
+            }
+
+            if (pipeInput != null) {
+                process.outputStream.use { pipeInput(it) }
+            }
+
+            val exitCode = process.waitFor()
+            DebugLog.log("Installer", "Process for '$command' finished with exit code: $exitCode")
+
+            stdoutJob.join()
+            stderrJob.join()
+
+            return@withContext exitCode == 0
+
+        } catch (e: Exception) {
+            // This will catch errors if "su" itself cannot be executed (e.g., permission denied)
+            Log.e(ROOT_INSTALL_TAG, "Process execution failed for command: '$command'", e)
+            DebugLog.log("Installer", "FATAL: Process execution failed for $packageName: ${e.message}")
+            return@withContext false
+        } finally {
+            withContext(NonCancellable) {
+                stdoutJob?.cancelAndJoin()
+                stderrJob?.cancelAndJoin()
+                activeProcs.remove(packageName)
+                process?.destroy()
+            }
+        }
     }
 
     private suspend fun installShizukuStream(file: File, packageName: String): Boolean {
