@@ -44,10 +44,8 @@
         <activity
             android:name=".MainActivity"
             android:configChanges="uiMode"
-            android:excludeFromRecents="true"
             android:exported="true"
             android:launchMode="singleTask"
-            android:taskAffinity=""
             android:windowSoftInputMode="stateAlwaysHidden"
             android:resumeWhilePausing="true">
             <intent-filter>
