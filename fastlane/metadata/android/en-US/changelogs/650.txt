@@ -1,0 +1,2 @@
+- revert few #34 related changes
+- Do not hide from recents

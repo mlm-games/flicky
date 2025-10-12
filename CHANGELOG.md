@@ -1,3 +1,9 @@
+## v3.5.7
+
+- revert few #34 related changes
+- Do not hide from recents
+
+
 ## v3.5.6
 
 - A trial for #34
