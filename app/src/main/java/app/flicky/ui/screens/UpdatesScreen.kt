@@ -291,7 +291,7 @@ private fun UpdateCard(
         colors = CardDefaults.elevatedCardColors(
             containerColor = containerColor,
             contentColor = colorScheme.onSurface
-        )
+        ),
     ) {
         Column(Modifier.padding(12.dp)) {
             Row(

@@ -81,12 +81,12 @@ fun UpdatesRoute(
                 batchUpdateJob = scope.launch {
                     val installerMode = runCatching { AppGraph.settings.settingsFlow.first().installerMode }.getOrDefault(0)
                     val parallelism = when (installerMode) {
-                        2, 3 -> 1
-                        else -> 3 // Certain roms might have problems with parallel root installs
+                        2, 3 -> 3 // Test
+                        else -> 10 // Certain roms might have problems with parallel root installs
                     }
                     Log.d("UpdatesRoute", "Starting batch update with parallelism: $parallelism")
 
-                    val queue = Channel<FDroidApp>(Channel.UNLIMITED)
+                    val queue = Channel<FDroidApp>(updatesToRun.size)
                     updatesToRun.forEach { queue.trySend(it) }
                     queue.close()
 
