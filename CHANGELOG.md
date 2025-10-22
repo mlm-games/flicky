@@ -1,3 +1,8 @@
+## v3.5.8
+
+- Improve description viewing for TVs (fix #35)
+
+
 ## v3.5.7
 
 - revert few #34 related changes
