@@ -22,14 +22,17 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.flicky.AppGraph
 import app.flicky.R
 import app.flicky.data.external.UpdatesPreference
 import app.flicky.data.model.FDroidApp
+import app.flicky.data.repository.AppSettings
 import app.flicky.helper.DeviceUtils
 import app.flicky.helper.cardAsFocusGroup
 import app.flicky.install.TaskStage
 import app.flicky.ui.components.AppIcon
 import app.flicky.ui.components.AppTexts
+import app.flicky.ui.components.DebugOverlay
 import app.flicky.ui.components.global.MyScreenScaffold
 import app.flicky.ui.routes.UpdatesActions
 import app.flicky.viewmodel.UpdatesUi
@@ -63,6 +66,18 @@ fun UpdatesScreen(
         }
     }
     var dismissedErrors by remember { mutableStateOf(false) }
+
+    val errMap by AppGraph.installer.errors.collectAsState(initial = emptyMap())
+    val failedPkgs = installerTasks.filterValues { s ->
+        s is TaskStage.Finished && !s.success
+    }.keys
+
+    val failedDetails = remember(errMap, failedPkgs, ui.updates, ui.suppressed) {
+        val nameByPkg = (ui.updates + ui.suppressed + ui.installed).associateBy({ it.packageName }, { it.name })
+        failedPkgs.mapNotNull { pkg ->
+            errMap[pkg]?.let { msg -> (nameByPkg[pkg] ?: pkg) to msg }
+        }
+    }
 
     MyScreenScaffold(
         title = when {
@@ -132,6 +147,7 @@ fun UpdatesScreen(
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     ErrorBanner(
                         message = stringResource(R.string.installation_errors, errorCount),
+                        details = failedDetails,
                         onDismiss = { dismissedErrors = true }
                     )
                 }
@@ -264,6 +280,11 @@ fun UpdatesScreen(
                 }
             }
         }
+    }
+
+    val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
+    Box(Modifier.fillMaxSize()) {
+        DebugOverlay(visible = settings.showDebugInfo)
     }
 }
 
@@ -548,38 +569,37 @@ private fun EmptyUpdatesCard() {
 @Composable
 private fun ErrorBanner(
     message: String,
+    details: List<Pair<String, String>> = emptyList(),
     onDismiss: () -> Unit
 ) {
+    var expanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = colorScheme.errorContainer
         )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                Icons.Default.Error,
-                contentDescription = null,
-                tint = colorScheme.onErrorContainer
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                message,
-                modifier = Modifier.weight(1f),
-                style = typography.bodyMedium,
-                color = colorScheme.onErrorContainer
-            )
-            IconButton(onClick = onDismiss) {
-                Icon(
-                    Icons.Default.Close,
-                    contentDescription = stringResource(R.string.dismiss),
-                    tint = colorScheme.onErrorContainer
-                )
+        Column(Modifier.fillMaxWidth().padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Error, contentDescription = null, tint = colorScheme.onErrorContainer)
+                Spacer(Modifier.width(8.dp))
+                Text(message, modifier = Modifier.weight(1f), style = typography.bodyMedium, color = colorScheme.onErrorContainer)
+                if (details.isNotEmpty()) {
+                    TextButton(onClick = { expanded = !expanded }) {
+                        Text(if (expanded) "Hide details" else "Show details")
+                    }
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.dismiss), tint = colorScheme.onErrorContainer)
+                }
+            }
+            if (expanded && details.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                details.forEach { (name, msg) ->
+                    Text("• $name: $msg", style = typography.labelSmall, color = colorScheme.onErrorContainer)
+                    Spacer(Modifier.height(4.dp))
+                }
             }
         }
     }

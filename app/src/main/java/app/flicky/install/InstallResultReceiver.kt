@@ -18,8 +18,7 @@ class InstallResultReceiver : BroadcastReceiver() {
             val confirm: Intent? = if (Build.VERSION.SDK_INT >= 33) {
                 intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
             } else {
-                @Suppress("DEPRECATION")
-                intent.getParcelableExtra(Intent.EXTRA_INTENT)
+                @Suppress("DEPRECATION") intent.getParcelableExtra(Intent.EXTRA_INTENT)
             }
             if (confirm != null) {
                 confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -32,7 +31,7 @@ class InstallResultReceiver : BroadcastReceiver() {
         val other = intent.getStringExtra(PackageInstaller.EXTRA_OTHER_PACKAGE_NAME)
 
         CoroutineScope(Dispatchers.Default).launch {
-            SessionInstallBus.publish(sessionId, status)
+            SessionInstallBus.publish(sessionId, status, msg, other)
         }
     }
 }

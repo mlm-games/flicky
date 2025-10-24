@@ -49,6 +49,14 @@ class AppDetailViewModel(
                     variants = variants.sortedByDescending { it.versionCode } // newest first
                 )
             }
+            viewModelScope.launch {
+                installer.errors.collect { map ->
+                    val msg = map[packageName]
+                    if (!msg.isNullOrBlank()) {
+                        _ui.update { it.copy(error = msg) }
+                    }
+                }
+            }
         }
         viewModelScope.launch {
             installer.tasks
@@ -93,7 +101,7 @@ class AppDetailViewModel(
                                 isInstalling = false,
                                 stage = stage,
                                 progress = if (stage.success) 1f else it.progress,
-                                error = if (stage.success) null else "Installation failed"
+                                error = if (stage.success) null else it.error
                             )
                         }
                         val newInstalled = installedRepo.getVersionCode(packageName)

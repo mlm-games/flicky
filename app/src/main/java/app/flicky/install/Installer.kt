@@ -73,6 +73,16 @@ class Installer(
         private const val STREAM_BUF = 64 * 1024
     }
 
+    private val _errors = MutableStateFlow<Map<String, String>>(emptyMap())
+    val errors: StateFlow<Map<String, String>> = _errors.asStateFlow()
+
+    private fun setError(pkg: String, msg: String) {
+        _errors.update { it + (pkg to msg) }
+    }
+    private fun clearError(pkg: String) {
+        _errors.update { it - pkg }
+    }
+
     init { cleanOldCache() }
 
     fun open(packageName: String) {
@@ -145,11 +155,16 @@ class Installer(
         }
     }
 
-    private suspend fun logStream(tag: String, stream: InputStream) = withContext(Dispatchers.IO) {
+    private suspend fun logStream(tag: String, pkg: String, stream: InputStream) = withContext(Dispatchers.IO) {
         BufferedReader(InputStreamReader(stream)).use { reader ->
             var line: String? = reader.readLine()
             while (line != null) {
                 DebugLog.log(tag, line)
+                val l = line.trim()
+                if (l.startsWith("Failure", ignoreCase = true) || l.contains("INSTALL_FAILED_", ignoreCase = true)) {
+                    val token = l.substringAfter('[').substringBefore(']').ifBlank { l }
+                    setError(pkg, friendlyPmFailureFromToken(token, l))
+                }
                 line = reader.readLine()
             }
         }
@@ -173,8 +188,8 @@ class Installer(
 
             activeProcs[packageName] = process
 
-            stdoutJob = launch { logStream("su-stdout", process.inputStream) }
-            stderrJob = launch { logStream("su-stderr", process.errorStream) }
+            stdoutJob = launch { logStream("su-stdout", packageName, process.inputStream) }
+            stderrJob = launch { logStream("su-stderr", packageName, process.errorStream) }
 
             val pipeOk = pipeData(process)
             if (!pipeOk) {
@@ -231,6 +246,23 @@ class Installer(
             emitStage(req.packageName, TaskStage.Finished(false))
             clearCancel(req.packageName)
             return@withContext false
+        }
+
+        val pm = context.packageManager
+        val installed = Signatures.installedCertDigests(pm, req.packageName)
+        val incoming = Signatures.archiveCertDigests(pm, file)
+
+        if (!Signatures.isReplaceAllowed(installed, incoming)) {
+            val msg = "Update blocked: the installed app is signed with a different key. " +
+                    "Android doesn’t allow updating across different signatures. " +
+                    "Uninstall the current app first to install this build (this will delete its data)."
+            DebugLog.log("Installer", "Signature mismatch for ${req.packageName}")
+            setError(req.packageName, msg)
+            emitStage(req.packageName, TaskStage.Finished(false))
+            clearCancel(req.packageName)
+            return@withContext false
+        } else {
+            clearError(req.packageName)
         }
 
         val result = when (mode) {
@@ -718,10 +750,10 @@ class Installer(
                 session.fsync(out)
             }
         }
-        val result = CompletableDeferred<Int>()
+        val result = CompletableDeferred<InstallEvent>()
         val waitJob = CoroutineScope(Dispatchers.Default).launch {
-            val (_, status) = SessionInstallBus.events.first { it.first == sessionId }
-            result.complete(status)
+            val evt = SessionInstallBus.events.first { it.sessionId == sessionId }
+            result.complete(evt)
         }
 
         val intent = Intent(context, InstallResultReceiver::class.java)
@@ -738,11 +770,18 @@ class Installer(
             DebugLog.log("Installer", "Session commit() unexpected error: ${e.message}")
             runCatching { session.abandon() }
             waitJob.cancel()
-            return false
         }
 
-        val status = try { withTimeout(180_000) { result.await() } } finally { waitJob.cancel() }
-        return status == PackageInstaller.STATUS_SUCCESS
+        val evt = try { withTimeout(180_000) { result.await() } } finally { waitJob.cancel() }
+
+        if (evt.status == PackageInstaller.STATUS_SUCCESS) {
+            clearError(packageName)
+            return true
+        } else {
+            val msg = friendlyFromPackageInstaller(evt.status, evt.message, evt.otherPackage)
+            setError(packageName, msg)
+            return false
+        }
     }
 
     private suspend fun installRootStream(file: File, packageName: String): Boolean {
@@ -885,4 +924,31 @@ private fun Process.destroyForciblyCompat() {
             DebugLog.log("Installer", "Force kill failed: ${e.message}")
         }
     }
+}
+
+private fun friendlyPmFailureFromToken(token: String, detail: String? = null): String {
+    val t = token.uppercase()
+    return when {
+        "INSTALL_FAILED_UPDATE_INCOMPATIBLE" in t || "SIGNATURE" in t && "MISMATCH" in t ->
+            "Update blocked: the installed app is signed with a different key. Uninstall the current app first (this will remove its data)."
+        "INSTALL_FAILED_VERSION_DOWNGRADE" in t || "DOWNGRADE" in t ->
+            "Update failed: a newer version is already installed."
+        "INSUFFICIENT_STORAGE" in t || "NO_SPACE" in t ->
+            "Installation failed: not enough storage space."
+        "INVALID_APK" in t || "PARSE" in t ->
+            "Installation failed: the APK is invalid or corrupted."
+        "CONFLICTING_PROVIDER" in t ->
+            "Installation failed: a conflicting content provider is already installed."
+        "DUPLICATE_PERMISSION" in t ->
+            "Installation failed: duplicate permission definition."
+        "ABORTED" in t || "CANCELLED" in t || "CANCELED" in t ->
+            "Installation cancelled."
+        else -> detail?.takeIf { it.isNotBlank() } ?: "Installation failed."
+    }
+}
+
+private fun friendlyFromPackageInstaller(status: Int, msg: String?, other: String?): String {
+    // Prefer explicit INSTALL_FAILED_* codes in msg if present
+    val token = msg?.substringAfter("[")?.substringBefore("]") ?: msg ?: ""
+    return friendlyPmFailureFromToken(token, msg)
 }

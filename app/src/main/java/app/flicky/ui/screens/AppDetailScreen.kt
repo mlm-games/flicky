@@ -75,13 +75,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
+import app.flicky.AppGraph
 import app.flicky.R
 import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
+import app.flicky.data.repository.AppSettings
 import app.flicky.helper.openUrl
 import app.flicky.helper.shareText
 import app.flicky.install.TaskStage
+import app.flicky.ui.components.DebugOverlay
 import app.flicky.ui.components.SmartExpandableText
 import coil.compose.AsyncImage
 import java.net.URLEncoder
@@ -152,6 +155,10 @@ fun AppDetailScreen(
                 MobileLayout(app, installedVersionCode, stage, onInstall, onInstallVariant, onOpen, onCancel,  onUninstall, error, onOpenCategory, variants)
             }
         }
+    }
+    val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
+    Box(Modifier.fillMaxSize()) {
+        DebugOverlay(visible = settings.showDebugInfo)
     }
 }
 
