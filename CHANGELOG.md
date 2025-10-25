@@ -1,3 +1,15 @@
+## v3.6.3
+
+- comment out gplay related code (for future updates)
+- Update README.md regarding GPlay
+- Add back install perm
+- DO NOT UPDATE - Remove request install packages permission to check if google's blind
+- Add the debug overlay for UI and fix #34
+- Add monochrome icon
+- Update README.md regarding gplay
+- Change default Play track to 'production'
+
+
 ## v3.6.2
 
 - DO NOT UPDATE - Remove request install packages permission to check if google's blind
