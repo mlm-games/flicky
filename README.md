@@ -17,7 +17,11 @@
 
 **Option 2**: Share through localsend (or send files to tv)
 
-> Google play has suspended my prod release for apparently not needing REQUEST_INSTALL_PACKAGES, when i had already uploaded a video regarding why it's needed... But it is been approved for production so maybe the appeal would be enough..
+> The app is also available on Google Play Store, but the install permission cannot be provided so you will have to click the download notification to download using download manager (or use adb/root).
+> 
+> According to Google: The REQUEST_INSTALL_PACKAGES permission allows an application to request the installation of app packages. To use this permission, your app’s core functionality must include: Sending or receiving app packages, AND Enabling user-initiated installation of app packages.
+> 
+> Since i cannot use the REQUEST_INSTALL_PACKAGES permission even though my app clearly follows the second category (and stores are allowed due to the 2024 lawsuit), I won't be updating the gplay build, since it is such a big QOL degrade and would prefer to keep the perm for the rest of the app's updates.
 
 ## FOSS apps for Android TVs (reference)
 - https://github.com/Generator/Awesome-Android-TV-FOSS-Apps
