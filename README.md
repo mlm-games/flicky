@@ -17,7 +17,7 @@
 
 **Option 2**: Share through localsend (or send files to tv)
 
-> The app is also available on Google Play Store, but the install permission cannot be provided so you will have to click the download notification to download using download manager (or use adb/root).
+> The app is (was available, got suspended now for "Violation of Device and Network Abuse policy", apps that cause users to download or install applications fron unknown sources outside of Google Play are prohibited, maybe alt app stores are not still allowed? Anyways can't proceed anymore) also available on Google Play Store, but the install permission cannot be provided so you will have to click the download notification to download using download manager (or use adb/root).
 > 
 > According to Google: The REQUEST_INSTALL_PACKAGES permission allows an application to request the installation of app packages. To use this permission, your app’s core functionality must include: Sending or receiving app packages, AND Enabling user-initiated installation of app packages.
 > 
