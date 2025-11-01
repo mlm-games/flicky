@@ -1,3 +1,9 @@
+## v3.6.4
+
+- [chore] Update README.md
+- Update README.md
+
+
 ## v3.6.3
 
 - comment out gplay related code (for future updates)
