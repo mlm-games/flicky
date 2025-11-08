@@ -42,7 +42,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -213,23 +212,20 @@ fun BrowseScreen(
 
                         Spacer(Modifier.weight(1f))
 
-                        FilledTonalButton(
+                        IconButton(
                             onClick = onSyncClick,
                             enabled = !isSyncing
                         ) {
                             if (isSyncing) {
-                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                                Spacer(Modifier.width(8.dp))
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_sync))
                             }
-                            Text(if (isSyncing) stringResource(R.string.syncing) else stringResource(R.string.action_sync))
                         }
 
                         Box {
                             IconButton(onClick = { menuOpen = true }) {
-                                Icon(
-                                    Icons.Default.MoreVert,
-                                    contentDescription = stringResource(R.string.more_options)
-                                )
+                                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
                             }
                             DropdownMenu(
                                 expanded = menuOpen,
@@ -241,9 +237,7 @@ fun BrowseScreen(
                                         menuOpen = false
                                         onForceSyncClick()
                                     },
-                                    leadingIcon = {
-                                        Icon(Icons.Default.Refresh, contentDescription = null)
-                                    }
+                                    leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null) }
                                 )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.clear_all_apps)) },
@@ -251,9 +245,7 @@ fun BrowseScreen(
                                         menuOpen = false
                                         onClearAppsClick()
                                     },
-                                    leadingIcon = {
-                                        Icon(Icons.Default.ClearAll, contentDescription = null)
-                                    }
+                                    leadingIcon = { Icon(Icons.Default.ClearAll, contentDescription = null) }
                                 )
                             }
                         }
