@@ -269,12 +269,8 @@ class FDroidApi(
             MirrorRegistry.register(base, listOf(base) + mirrors, primaryUrl)
             runCatching { AppGraph.mirrorPolicyProvider.ensureDefault(base) }
 
-            val name = nameLocalized?.get("en-US")
-                ?: nameLocalized?.values?.firstOrNull()
-                ?: ""
-            val desc = descLocalized?.get("en-US")
-                ?: descLocalized?.values?.firstOrNull()
-                ?: ""
+            val name = pickLocalized(nameLocalized) ?: ""
+            val desc = pickLocalized(descLocalized) ?: ""
             runCatching {
                 val entity = RepositoryEntity(
                     baseUrl = base,
@@ -901,8 +897,7 @@ class FDroidApi(
 
         val resolvedIconUrl = when {
             meta.icon != null -> {
-                val iconName = meta.icon["en-US"]?.name
-                    ?: meta.icon.entries.firstOrNull()?.value?.name
+                val iconName = pickLocalizedObj(meta.icon)?.name
                 when {
                     iconName.isNullOrBlank() -> "$baseUrl/icons/$packageName.png"
                     iconName.startsWith("http") -> iconName
@@ -924,9 +919,9 @@ class FDroidApi(
 
         return FDroidApp(
             packageName = packageName,
-            name = meta.name?.get("en-US") ?: meta.name?.values?.firstOrNull() ?: packageName,
-            summary = meta.summary?.get("en-US") ?: meta.summary?.values?.firstOrNull() ?: "",
-            description = meta.description?.get("en-US") ?: meta.description?.values?.firstOrNull() ?: "",
+            name = pickLocalized(meta.name) ?: packageName,
+            summary = pickLocalized(meta.summary) ?: "",
+            description = pickLocalized(meta.description) ?: "",
             iconUrl = resolvedIconUrl,
             version = bestVersion.versionName,
             versionCode = bestVersion.versionCode,
@@ -1105,7 +1100,8 @@ class FDroidApi(
                     description = (description ?: mutableMapOf()).apply { putAll(loc.descriptions) }
                     icon = (icon ?: mutableMapOf()).apply { putAll(loc.icons) }
                     if (screenshots.isNullOrEmpty()) {
-                        screenshots = loc.screenshots["en-US"] ?: loc.screenshots.values.firstOrNull { it.isNotEmpty() }
+                        val preferred = localeTags.firstNotNullOfOrNull { loc.screenshots[it] }
+                        screenshots = preferred ?: loc.screenshots.values.firstOrNull { it.isNotEmpty() }
                     }
                 }
                 else -> reader.skipValue()
@@ -1224,5 +1220,37 @@ class FDroidApi(
         }
         reader.endObject()
         return list
+    }
+
+    private val localeTags: List<String> = run {
+        val ls =
+            context.resources.configuration.locales
+        val tags = mutableListOf<String>()
+        for (i in 0 until ls.size()) {
+            val l = ls[i]
+            val lang = l.language
+            val country = l.country
+            val script = l.script
+            if (lang.isNotBlank() && country.isNotBlank() && script.isNotBlank()) {
+                tags += "$lang-$script-$country"
+            }
+            if (lang.isNotBlank() && country.isNotBlank()) tags += "$lang-$country"
+            if (lang.isNotBlank() && script.isNotBlank()) tags += "$lang-$script"
+            if (lang.isNotBlank()) tags += lang
+        }
+        // Fall back to en-US then any
+        tags + listOf("en-US", "en")
+    }
+
+    private fun pickLocalized(map: Map<String, String>?): String? {
+        if (map == null || map.isEmpty()) return null
+        for (t in localeTags) map[t]?.let { return it }
+        return map.values.firstOrNull()
+    }
+
+    private fun <T> pickLocalizedObj(map: Map<String, T>?): T? {
+        if (map == null || map.isEmpty()) return null
+        for (t in localeTags) map[t]?.let { return it }
+        return map.values.firstOrNull()
     }
 }
