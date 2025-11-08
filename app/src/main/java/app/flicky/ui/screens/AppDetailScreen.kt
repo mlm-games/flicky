@@ -193,7 +193,7 @@ private fun DesktopLayout(
                 item { ChipsSection(app, installedVersionCode, onOpenCategory) }
                 item { DetailsSection(app) }
                 if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
-                if (app.website.isNotBlank() || app.sourceCode.isNotBlank()) item { LinksSection(app) }
+                 item { LinksSection(app) }
             }
         }
 
@@ -252,12 +252,16 @@ private fun MobileLayout(
             }
         }
         item { ChipsSection(app, installedVersionCode, onOpenCategory) }
+        if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
+        item { LinksSection(app) }
+        item { DetailsSection(app) }
         item { RightPaneContent(
             app = app,
             variants = variants,
             installedVersionCode = installedVersionCode,
             onInstallVariant = onInstallVariant
         ) }
+
     }
 }
 
@@ -454,7 +458,6 @@ private fun ChipsSection(
     installedVersionCode: Long?,
     onOpenCategory: (String) -> Unit
 ) {
-    val ctx = LocalContext.current
     Column {
         SectionTitle(stringResource(R.string.info))
         FlowRow(
@@ -462,37 +465,8 @@ private fun ChipsSection(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ElevatedAssistChip(onClick = {}, label = { Text(if (app.version.startsWith("v", ignoreCase = true)) app.version else "v${app.version}") })
+            ElevatedAssistChip(onClick = {}, label = { Text(if (app.version.startsWith("v", true)) app.version else "v${app.version}") })
             ElevatedAssistChip(onClick = {}, label = { Text(formatBytes(app.size)) })
-
-            if (app.license.isNotBlank()) {
-                AssistChip(
-                    onClick = { openUrl(ctx, resolveLicenseLink(app.license)) },
-                    label = { Text(app.license) }
-                )
-            }
-
-            AssistChip(onClick = { /* maybe later */ }, label = { Text(app.repository) })
-            if (app.category.isNotBlank()) {
-                AssistChip(onClick = { onOpenCategory(app.category) }, label = { Text(app.category) })
-            }
-
-            AssistChip(
-                onClick = { openUrl(ctx, exodusReportUrl(app.packageName)) },
-                label = { Text(stringResource(R.string.exodus_privacy)) }
-            )
-
-            AssistChip(
-                onClick = {
-                    if (installedVersionCode != null) {
-                        openAppSettings(ctx, app.packageName)
-                    } else {
-//                        openUrl(ctx, exodusReportUrl(app.packageName))
-                        Toast.makeText(ctx, R.string.app_not_installed, Toast.LENGTH_SHORT).show()
-                    }
-                },
-                label = { Text(stringResource(R.string.permissions)) }
-            )
         }
     }
 }
@@ -523,11 +497,35 @@ private fun LinksSection(app: FDroidApp) {
     Column {
         SectionTitle(stringResource(R.string.links))
         Spacer(Modifier.height(4.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (app.website.isNotBlank()) AssistChip(onClick = { openUrl(ctx, app.website) }, label = { Text(stringResource(R.string.website)) })
-            if (app.sourceCode.isNotBlank()) AssistChip(onClick = { openUrl(ctx, app.sourceCode) }, label = { Text(stringResource(R.string.source_code)) })
-            if (app.repositoryUrl.isNotBlank()) AssistChip(onClick = { openUrl(ctx, app.repositoryUrl) }, label = { Text(stringResource(R.string.repository_url)) })
-
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (app.website.isNotBlank()) AssistChip(
+                onClick = { openUrl(ctx, app.website) },
+                label = { Text(stringResource(R.string.website)) })
+            if (app.sourceCode.isNotBlank()) AssistChip(
+                onClick = { openUrl(ctx, app.sourceCode) },
+                label = { Text(stringResource(R.string.source_code)) })
+            if (app.repositoryUrl.isNotBlank()) AssistChip(onClick = {
+                openUrl(
+                    ctx,
+                    app.repositoryUrl
+                )
+            }, label = { Text(stringResource(R.string.repository_url)) })
+            if (app.license.isNotBlank()) AssistChip(onClick = {
+                openUrl(
+                    ctx,
+                    resolveLicenseLink(app.license)
+                )
+            }, label = { Text(stringResource(R.string.license)) })
+            AssistChip(
+                onClick = { openAppSettings(ctx, app.packageName) },
+                label = { Text(stringResource(R.string.permissions)) })
+            AssistChip(
+                onClick = { openUrl(ctx, exodusReportUrl(app.packageName)) },
+                label = { Text(stringResource(R.string.exodus_privacy)) })
         }
     }
 }
