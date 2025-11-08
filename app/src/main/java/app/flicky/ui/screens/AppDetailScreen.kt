@@ -86,6 +86,7 @@ import app.flicky.helper.shareText
 import app.flicky.install.TaskStage
 import app.flicky.ui.components.DebugOverlay
 import app.flicky.ui.components.SmartExpandableText
+import app.flicky.ui.components.global.MyScreenScaffold
 import coil.compose.AsyncImage
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
@@ -112,41 +113,31 @@ fun AppDetailScreen(
     val cfg = LocalConfiguration.current
     val isWide = cfg.screenWidthDp >= 900
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(app.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colorScheme.surface,
-                    titleContentColor = colorScheme.onSurface
-                ),
-                actions = {
-                    val ctx = LocalContext.current
-                    val packageNameLabel = stringResource(R.string.share_subject_package, app.packageName)
-                    val sourceLabel = stringResource(R.string.share_subject_source, app.repository)
+    MyScreenScaffold(
+        title = app.name,
+        actions = {
+            val ctx = LocalContext.current
+            val packageNameLabel = stringResource(R.string.share_subject_package, app.packageName)
+            val sourceLabel = stringResource(R.string.share_subject_source, app.repository)
 
-                    IconButton(onClick = {
-                        val shareTextContent = buildString {
-                            append(app.name).append("\n")
-                            append(packageNameLabel).append("\n")
-                            if (app.website.isNotBlank()) append(app.website).append("\n")
-                            append(sourceLabel)
-                        }
-                        shareText(ctx, shareTextContent)
-                    }) {
-                        Icon(
-                            painterResource(android.R.drawable.ic_menu_share),
-                            contentDescription = stringResource(R.string.action_share)
-                        )
-                    }
-                },
-            )
-        }
+            IconButton(onClick = {
+                val shareTextContent = buildString {
+                    append(app.name).append("\n")
+                    append(packageNameLabel).append("\n")
+                    if (app.website.isNotBlank()) append(app.website).append("\n")
+                    append(sourceLabel)
+                }
+                shareText(ctx, shareTextContent)
+            }) {
+                Icon(
+                    painterResource(android.R.drawable.ic_menu_share),
+                    contentDescription = stringResource(R.string.action_share)
+                )
+            }
+        },
     ) { paddingValues ->
         Surface(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            modifier = Modifier.fillMaxSize(),
             color = colorScheme.background
         ) {
             if (isWide) {

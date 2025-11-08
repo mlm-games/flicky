@@ -25,6 +25,7 @@ import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppSettings
 import app.flicky.ui.components.AdaptiveAppCard
 import app.flicky.R
+import app.flicky.ui.components.global.MyScreenScaffold
 
 
 @Composable
@@ -51,32 +52,12 @@ fun CategoriesScreen(
     val gridCells = remember(cfg.screenWidthDp) { GridCells.Adaptive(minSize = 220.dp) }
     val animatedProgress by animateFloatAsState(progress, label = "categories_sync_progress")
 
-    Scaffold(
-        topBar = {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = colorScheme.surface,
-                tonalElevation = 3.dp
-            ) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            stringResource(R.string.nav_categories),
-                            color = colorScheme.onSurface
-                        )
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = colorScheme.surface,
-                        titleContentColor = colorScheme.onSurface
-                    )
-                )
-            }
-        }
+    MyScreenScaffold(
+        title = stringResource(R.string.nav_categories),
     ) { paddingValues ->
         Surface(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+                .fillMaxSize(),
             color = colorScheme.background
         ) {
             LazyVerticalGrid(

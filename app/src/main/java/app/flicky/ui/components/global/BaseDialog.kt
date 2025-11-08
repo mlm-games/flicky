@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.WindowInsets
 
 
 @Composable
@@ -32,7 +33,8 @@ fun MyScreenScaffold(
                         containerColor = colorScheme.surface,
                         titleContentColor = colorScheme.onSurface
                     ),
-                    actions = actions
+                    actions = actions,
+                    windowInsets = WindowInsets()
                 )
             }
         }
