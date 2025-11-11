@@ -34,7 +34,7 @@ fun MyScreenScaffold(
                         titleContentColor = colorScheme.onSurface
                     ),
                     actions = actions,
-                    windowInsets = WindowInsets()
+                    windowInsets = WindowInsets(0)
                 )
             }
         }
