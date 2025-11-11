@@ -1,3 +1,14 @@
+## v3.7.1
+
+- Remove extra spacing near the top (#39)
+- Add translation handling for names and descriptions (need to resync after changing lang) (#37)
+- Seperate out clickable options to links section (#41)
+- Use an icon for sync instead of text (#38)
+- [chore] Update README.md
+- [chore] Update README.md
+- Update README.md
+
+
 ## v3.6.4
 
 - [chore] Update README.md
