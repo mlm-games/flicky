@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -265,15 +266,14 @@ private fun RightPaneContent(
     onInstallVariant: (AppVariant) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (app.summary.isNotBlank()) {
-            SectionTitle(stringResource(R.string.overview))
-            Text(app.summary, style = typography.bodyMedium, color = colorScheme.onBackground)
-        }
         if (app.whatsNew.isNotBlank()) {
             SectionTitle(stringResource(R.string.whats_new))
             SmartExpandableText(text = app.whatsNew, rich = true, collapsedMaxLines = 8)
         }
-
+        if (app.summary.isNotBlank()) {
+            SectionTitle(stringResource(R.string.overview))
+            Text(app.summary, style = typography.bodyMedium, color = colorScheme.onBackground)
+        }
         if (app.screenshots.isNotEmpty()) {
             ScreenshotsSection(app.screenshots)
         }
@@ -535,7 +535,8 @@ private fun ScreenshotsSection(urls: List<String>) {
                     model = url,
                     contentDescription = null,
                     modifier = Modifier
-                        .size(260.dp)
+                        .widthIn(max = 200.dp)
+                        .heightIn(max = 400.dp)
                         .clickable {
                             startIndex = index
                             showViewer = true
