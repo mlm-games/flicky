@@ -125,7 +125,6 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
         buildConfig = true
         compose = true
     }
@@ -199,8 +198,6 @@ dependencies {
     implementation(libs.androidx.datastore.preferences.core)
     implementation(libs.material.icons.extended)
 
-    implementation(libs.androidx.tv.material)
-    implementation(libs.androidx.tv.foundation)
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)
     implementation(libs.ktor.client.android)
