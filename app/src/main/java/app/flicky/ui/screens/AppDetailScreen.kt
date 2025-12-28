@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
@@ -377,7 +378,7 @@ private fun AppHeader(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = onCancel, Modifier.fillMaxWidth()) {
                     Icon(
-                        painterResource(id = R.drawable.ic_close),
+                        Icons.Default.Close,
                         contentDescription = stringResource(R.string.action_cancel)
                     )
                     Spacer(Modifier.width(6.dp))

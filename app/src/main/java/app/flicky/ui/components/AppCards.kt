@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Text
@@ -28,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -68,39 +70,61 @@ fun MobileAppCard(
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {}
 ) {
+    val shape = MaterialTheme.shapes.medium
+
     ElevatedCard(
+        shape = shape,
         colors = CardDefaults.elevatedCardColors(
             containerColor = colorScheme.surface,
             contentColor = colorScheme.onSurface
         ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick) // instead of onClick param
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column(Modifier.padding(12.dp)) {
-            val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
-            if (settings.showAppIcons) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(app.iconUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = app.name,
-                    placeholder = painterResource(R.drawable.ic_app_placeholder),
-                    error = painterResource(R.drawable.ic_app_placeholder),
-                    modifier = Modifier.fillMaxWidth().height(140.dp)
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+        ) {
+            Column(Modifier.padding(12.dp)) {
+                val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
+                if (settings.showAppIcons) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(app.iconUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = app.name,
+                        placeholder = painterResource(R.drawable.ic_app_placeholder),
+                        error = painterResource(R.drawable.ic_app_placeholder),
+                        modifier = Modifier.fillMaxWidth().height(140.dp)
+                    )
+                } else {
+                    Box(Modifier.fillMaxWidth().height(140.dp))
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    app.name,
+                    style = typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-            } else {
-                Box(Modifier.fillMaxWidth().height(140.dp))
-            }
-            Spacer(Modifier.height(8.dp))
-            Text(app.name, style = typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(app.summary, style = typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(4.dp))
-            Row {
-                Text(text = app.category, style = typography.labelSmall, color = colorScheme.primary)
-                Spacer(Modifier.weight(1f))
-                Text(text = "v${app.version}", style = typography.labelSmall)
+                Text(
+                    app.summary,
+                    style = typography.bodySmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(4.dp))
+                Row {
+                    Text(
+                        text = app.category,
+                        style = typography.labelSmall,
+                        color = colorScheme.primary
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Text(text = "v${app.version}", style = typography.labelSmall)
+                }
             }
         }
     }
@@ -114,47 +138,59 @@ fun TVAppCard(
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {}
 ) {
+    val shape = RoundedCornerShape(16.dp)
     val (focused, setFocused) = rememberDebouncedFocusState()
-    val scale by animateFloatAsState(
-        targetValue = if (focused) 1.05f else 1f,
-        animationSpec = TvFocusConfig.tvFocusAnimationSpec,
-        label = "tv_card_scale"
-    )
+
     val colors = colorScheme
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(autofocus) { if (autofocus) focusRequester.requestFocus() }
 
     ElevatedCard(
-        shape = RoundedCornerShape(16.dp),
+        shape = shape,
         modifier = Modifier
-            .scale(scale)
-            .focusRequester(focusRequester)
+            .scale(if (focused) 1.05f else 1f)
+            .focusRequester(remember { FocusRequester() })
             .onFocusChanged { setFocused(it.isFocused) }
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            .fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = if (focused) colors.primaryContainer else colors.surface,
-            contentColor = if (focused) colors.onPrimaryContainer else colors.onSurface
+            containerColor = if (focused) colorScheme.primaryContainer else colorScheme.surface,
+            contentColor = if (focused) colorScheme.onPrimaryContainer else colorScheme.onSurface
         )
     ) {
-    Column(Modifier.padding(16.dp)) {
-            val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
-            if (settings.showAppIcons) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(app.iconUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = app.name,
-                    placeholder = painterResource(R.drawable.ic_app_placeholder),
-                    error = painterResource(R.drawable.ic_app_placeholder),
-                    modifier = Modifier.fillMaxWidth().height(140.dp)
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
+                if (settings.showAppIcons) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(app.iconUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = app.name,
+                        placeholder = painterResource(R.drawable.ic_app_placeholder),
+                        error = painterResource(R.drawable.ic_app_placeholder),
+                        modifier = Modifier.fillMaxWidth().height(140.dp)
+                    )
+                } else {
+                    Box(Modifier.fillMaxWidth().height(140.dp))
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    app.name,
+                    style = typography.titleSmall,
+                    maxLines = 1,
+                    color = if (focused) colors.onPrimaryContainer else colors.onSurface
                 )
-            } else {
-                Box(Modifier.fillMaxWidth().height(140.dp))
+                Text(
+                    app.summary,
+                    style = typography.bodySmall,
+                    maxLines = 2,
+                    color = if (focused) colors.onPrimaryContainer.copy(alpha = 0.8f) else colors.onSurfaceVariant
+                )
             }
-            Spacer(Modifier.height(8.dp))
-            Text(app.name, style = typography.titleSmall, maxLines = 1, color = if (focused) colors.onPrimaryContainer else colors.onSurface)
-            Text(app.summary, style = typography.bodySmall, maxLines = 2, color = if (focused) colors.onPrimaryContainer.copy(alpha = 0.8f) else colors.onSurfaceVariant)
         }
     }
 }
