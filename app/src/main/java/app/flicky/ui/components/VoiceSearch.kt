@@ -13,10 +13,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import app.flicky.R
+import app.flicky.ui.components.snackbar.SnackbarManager
+import org.koin.compose.koinInject
 
 @Composable
 fun VoiceSearchButton(onResult: (String) -> Unit) {
     val context = LocalContext.current
+
+    val snackbarManager: SnackbarManager = koinInject()
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { res ->
@@ -40,7 +45,7 @@ fun VoiceSearchButton(onResult: (String) -> Unit) {
         if (intent.resolveActivity(pm) != null) {
             launcher.launch(intent)
         } else {
-            Toast.makeText(context, voiceSearchUnavailableMsg, Toast.LENGTH_SHORT).show()
+            snackbarManager.show(voiceSearchUnavailableMsg)
         }
     }) {
         Icon(Icons.Default.Mic, contentDescription = stringResource(R.string.voice_search))

@@ -86,7 +86,9 @@ import app.flicky.install.TaskStage
 import app.flicky.ui.components.DebugOverlay
 import app.flicky.ui.components.SmartExpandableText
 import app.flicky.ui.components.global.MyScreenScaffold
+import app.flicky.ui.components.snackbar.SnackbarManager
 import coil.compose.AsyncImage
+import org.koin.compose.koinInject
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -652,6 +654,8 @@ private fun VersionsSection(
     val ctx = LocalContext.current
     val clipboard = LocalClipboard.current
 
+    val snackbarManager : SnackbarManager = koinInject()
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         variants.forEach { v ->
             val installed = installedVersionCode?.let { v.versionCode.toLong() == it } == true
@@ -714,7 +718,7 @@ private fun VersionsSection(
                                     },
                                     onClick = {
                                         clipboard.nativeClipboard.text = (AnnotatedString(v.apkUrl))
-                                        Toast.makeText(ctx, "URL copied to clipboard", Toast.LENGTH_SHORT).show()
+                                        snackbarManager.show( "URL copied to clipboard")
                                         showMenu = false
                                     }
                                 )

@@ -1,5 +1,6 @@
 package app.flicky.ui.components.snackbar
 
+import androidx.compose.material3.SnackbarDuration
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -17,7 +18,7 @@ class SnackbarManager {
         message: String,
         actionLabel: String? = null,
         withDismissAction: Boolean = false,
-        duration: androidx.compose.material3.SnackbarDuration = androidx.compose.material3.SnackbarDuration.Short,
+        duration: SnackbarDuration = SnackbarDuration.Short,
         onAction: (suspend () -> Unit)? = null,
     ) {
         _events.tryEmit(
