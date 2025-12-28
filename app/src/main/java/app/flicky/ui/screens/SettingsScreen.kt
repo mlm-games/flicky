@@ -95,7 +95,6 @@ import org.koin.compose.koinInject
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
-import kotlin.reflect.full.findAnnotation
 import kotlin.system.measureTimeMillis
 
 @Composable
@@ -149,9 +148,12 @@ fun SettingsScreen(vm: SettingsViewModel) {
     }
 
     fun categoryTitle(cat: KClass<*>): String {
-        val ann = cat.findAnnotation<CategoryDefinition>()
-        val res = ann?.titleRes ?: 0
-        return if (res != 0) context.getString(res) else (cat.simpleName ?: "Settings")
+        val resId = schema.fields
+            .firstOrNull { it.meta?.category == cat }
+            ?.meta?.titleRes
+            ?.takeIf { it != 0 }
+
+        return resId?.let { context.getString(it) } ?: (cat.simpleName ?: "Settings")
     }
 
     MyScreenScaffold(
