@@ -101,6 +101,10 @@ android {
     }
 }
 
+apkDist {
+    artifactNamePrefix = "flicky"
+}
+
 // Configure all tasks that are instances of AbstractArchiveTask
 tasks.withType<AbstractArchiveTask>().configureEach {
     isPreserveFileTimestamps = false
