@@ -1,60 +1,119 @@
 package app.flicky.navigation
 
+import android.app.Activity
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
-import java.net.URLEncoder
-
-@Suppress("ConstPropertyName")
-object Routes {
-    const val Browse = "browse"
-    const val Categories = "categories"
-    const val Updates = "updates"
-    const val Settings = "settings"
-    const val Detail = "detail/{pkg}"
-    fun detail(pkg: String) = "detail/$pkg"
-
-    fun categories(selected: String? = null): String =
-            if (selected.isNullOrBlank()) Categories else "categories?selected=${URLEncoder.encode(selected, "UTF-8")}"
-}
+import kotlinx.serialization.Serializable
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
+import androidx.paging.compose.collectAsLazyPagingItems
+import app.flicky.ui.routes.AppDetailRoute
+import app.flicky.ui.routes.UpdatesRoute
+import app.flicky.ui.screens.BrowseScreen
+import app.flicky.ui.screens.CategoriesScreen
+import app.flicky.ui.screens.SettingsScreen
+import app.flicky.viewmodel.BrowseViewModel
+import app.flicky.viewmodel.SettingsViewModel
 
 @Composable
-fun FlickyNavHost(
-    navController: NavHostController,
-    browseContent: @Composable () -> Unit,
-    categoriesContent: @Composable (String?) -> Unit,
-    updatesContent: @Composable () -> Unit,
-    settingsContent: @Composable () -> Unit,
-    detailContent: @Composable (String) -> Unit
+fun Nav3Host(
+    backStack: NavBackStack<NavKey>,
+    browseViewModel: BrowseViewModel,
+    settingsViewModel: SettingsViewModel,
 ) {
-    NavHost(navController, startDestination = Routes.Browse) {
-        composable(Routes.Browse) { browseContent() }
-        composable(Routes.Categories) { categoriesContent("All") }
-        composable(Routes.Updates) { updatesContent() }
-        composable(Routes.Settings) { settingsContent() }
-        composable(
-            Routes.Detail,
-            arguments = listOf(navArgument("pkg") { type = NavType.StringType })
-        ) { backStack ->
-            val pkg = backStack.arguments?.getString("pkg") ?: ""
-            detailContent(pkg)
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+    NavDisplay(
+        backStack = backStack,
+        onBack = {
+            if (backStack.size > 1) {
+                backStack.removeAt(backStack.lastIndex)
+            } else {
+                activity?.finish()
+            }
+        },
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator(),
+        ),
+        entryProvider = entryProvider {
+            entry<FlickyDestination.Browse> {
+                val query = browseViewModel.query.collectAsStateWithLifecycle().value
+                val sort = browseViewModel.sort.collectAsStateWithLifecycle().value
+                val browseUi = browseViewModel.uiState.collectAsStateWithLifecycle().value
+
+                BrowseScreen(
+                    apps = browseViewModel.pagedApps.collectAsLazyPagingItems(),
+                    query = query,
+                    sort = sort,
+                    onSortChange = browseViewModel::setSort,
+                    onSearchChange = browseViewModel::setQuery,
+                    onAppClick = { app -> backStack.add(FlickyDestination.Detail(app.packageName)) },
+                    onSyncClick = browseViewModel::syncRepos,
+                    onForceSyncClick = browseViewModel::forceSyncRepos,
+                    onClearAppsClick = browseViewModel::clearAllApps,
+                    isSyncing = browseUi.isSyncing,
+                    progress = browseUi.progress,
+                    errorMessage = browseUi.errorMessage,
+                    onDismissError = browseViewModel::clearError,
+                    syncStatusRes = browseUi.statusTextRes,
+                    isTv = app.flicky.helper.DeviceUtils.isTV((context).packageManager),
+                )
+            }
+
+            entry<FlickyDestination.Categories> { args ->
+                val browseUi = browseViewModel.uiState.collectAsStateWithLifecycle().value
+                CategoriesScreen(
+                    isSyncing = browseUi.isSyncing,
+                    progress = browseUi.progress,
+                    initialCategory = args.selected ?: "All",
+                    onAppClick = { app -> backStack.add(FlickyDestination.Detail(app.packageName)) },
+                )
+            }
+
+            entry<FlickyDestination.Updates> {
+                UpdatesRoute(
+                    onOpenDetails = { pkg -> backStack.add(FlickyDestination.Detail(pkg)) }
+                )
+            }
+
+            entry<FlickyDestination.Settings> {
+                SettingsScreen(vm = settingsViewModel)
+            }
+
+            entry<FlickyDestination.Detail> { args ->
+                AppDetailRoute(
+                    pkg = args.pkg,
+                    onOpenCategory = { cat ->
+                        backStack.add(FlickyDestination.Categories(selected = cat))
+                    }
+                )
+            }
         }
-        composable(
-            route = "categories?selected={selected}",
-            arguments = listOf(
-                navArgument("selected") {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                }
-            )
-        ) { backStackEntry ->
-            val selected = backStackEntry.arguments?.getString("selected")
-            // Pass it down to your Categories screen/content
-            categoriesContent(selected)
-        }
-    }
+    )
+}
+
+@Serializable
+sealed interface FlickyDestination : NavKey {
+
+    @Serializable
+    data object Browse : FlickyDestination
+
+    @Serializable
+    data class Categories(val selected: String? = "All") : FlickyDestination
+
+    @Serializable
+    data object Updates : FlickyDestination
+
+    @Serializable
+    data object Settings : FlickyDestination
+
+    @Serializable
+    data class Detail(val pkg: String) : FlickyDestination
 }

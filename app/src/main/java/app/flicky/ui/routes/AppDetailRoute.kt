@@ -1,29 +1,21 @@
 package app.flicky.ui.routes
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import app.flicky.AppGraph
-import app.flicky.helper.viewModelFactory
 import app.flicky.viewmodel.AppDetailViewModel
 import app.flicky.ui.screens.AppDetailScreen
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun AppDetailRoute(
     pkg: String,
     onOpenCategory: (String) -> Unit,
-    vm: AppDetailViewModel = viewModel(factory = viewModelFactory {
-        AppDetailViewModel(
-            dao = AppGraph.db.appDao(),
-            installedRepo = AppGraph.installedRepo,
-            installer = AppGraph.installer,
-            packageName = pkg,
-            settings = AppGraph.settings
-        )
-    })
+    vm: AppDetailViewModel = koinViewModel(parameters = { parametersOf(pkg) })
 ) {
-    val ui by vm.ui.collectAsStateWithLifecycle()
+    val ui = vm.ui.collectAsStateWithLifecycle().value
     val app = ui.app ?: return
+
     AppDetailScreen(
         app = app,
         installedVersionCode = ui.installedVersionCode,

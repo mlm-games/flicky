@@ -1,8 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.android.build.gradle.internal.api.ApkVariantOutputImpl
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 
 plugins {
     alias(libs.plugins.android.application)
@@ -10,11 +7,12 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.apk.dist)
 }
 
 kotlin {
+    jvmToolchain(17)
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
         optIn.set(listOf(
             "androidx.compose.material3.ExperimentalMaterial3Api",
             "androidx.compose.foundation.ExperimentalFoundationApi",
@@ -25,11 +23,6 @@ kotlin {
 
 android {
     compileSdk = 36
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
 
     defaultConfig {
         applicationId = "app.flicky"
@@ -61,35 +54,6 @@ android {
                 }
             }
             isUniversalApk = includeUniversalApk && enableApkSplits
-        }
-    }
-
-    applicationVariants.all {
-        val buildingApk = gradle.startParameter.taskNames.any { it.contains("assemble", ignoreCase = true) }
-        if (!buildingApk) return@all
-
-        val variant = this
-        outputs.all {
-            if (this is ApkVariantOutputImpl) {
-                val abiName = filters.find { it.filterType == "ABI" }?.identifier
-                val base = variant.versionCode
-
-                if (abiName != null) {
-                    // Split APKs get stable per-ABI version codes and names
-                    val abiVersionCode = when (abiName) {
-                        "x86" -> base - 3
-                        "x86_64" -> base - 2
-                        "armeabi-v7a" -> base - 1
-                        "arm64-v8a" -> base
-                        else -> base
-                    }
-                    versionCodeOverride = abiVersionCode
-                    outputFileName = "flicky-${variant.versionName}-${abiName}.apk"
-                } else {
-                    versionCodeOverride = base + 1
-                    outputFileName = "flicky-${variant.versionName}-universal.apk"
-                }
-            }
         }
     }
 
@@ -164,7 +128,6 @@ dependencies {
     implementation(libs.androidx.room.paging)
 
     // Android lifecycle
-    implementation(libs.lifecycle.extensions)
     implementation(libs.lifecycle.viewmodel.ktx)
 
     // Navigation
@@ -180,7 +143,6 @@ dependencies {
 
     implementation(libs.androidx.runtime)
     implementation(libs.okhttp)
-
 
     //Material dependencies
     implementation(libs.material)
@@ -208,6 +170,22 @@ dependencies {
     // Shizuku
     implementation(libs.api)
     implementation(libs.provider)
+
+    implementation(libs.kmp.settings.core)
+    implementation(libs.kmp.settings.ui.compose)
+    ksp(libs.kmp.settings.ksp)
+
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.annotations)
+    ksp(libs.koin.ksp.compiler)
+
+
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+
 
     // Testing
 //    androidTestImplementation(libs.androidx.ui.test.junit4)

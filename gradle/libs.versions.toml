@@ -34,6 +34,14 @@ constraintlayoutComposeAndroid = "1.1.1"
 androidbrowserhelper = "2.6.2"
 datastorePreferencesCore = "1.1.7"
 uiText = "1.9.0"
+apkDist = "0.5.2"
+ksp = "2.3.0"
+composeBom = "2025.12.01"
+kmpSettingsCore = "0.2.2"
+
+koinBom = "4.1.1"
+navigation3Runtime = "1.0.0"
+koin-annotations = "2.3.1"
 
 [libraries]
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -83,10 +91,29 @@ androidbrowserhelper = { group = "com.google.androidbrowserhelper", name = "andr
 androidx-datastore-preferences-core = { group = "androidx.datastore", name = "datastore-preferences-core", version.ref = "datastorePreferencesCore" }
 androidx-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
 
+
+kmp-settings-core = { module = "io.github.mlm-games:kmp-settings-core", version.ref = "kmpSettingsCore" }
+kmp-settings-ksp = { module = "io.github.mlm-games:kmp-settings-ksp", version.ref = "kmpSettingsCore" }
+kmp-settings-ui-compose = { module = "io.github.mlm-games:kmp-settings-ui-compose", version.ref = "kmpSettingsCore" }
+koin-android = { module = "io.insert-koin:koin-android" }
+koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose" }
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koinBom" }
+
+koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "koin-annotations" }
+koin-ksp-compiler = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koin-annotations" }
+
+
+androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3Runtime" }
+androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3Runtime" }
+
+androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelCompose" }
+
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-ksp = { id = "com.google.devtools.ksp", version.ref = "kotlin-ksp" }
+apk-dist = { id = "io.github.mlm-games.apk-dist", version.ref = "apkDist" }
 

@@ -2,10 +2,8 @@ package app.flicky.ui.routes
 
 import android.util.Log
 import androidx.compose.runtime.*
-import androidx.lifecycle.viewmodel.compose.viewModel
 import app.flicky.AppGraph
 import app.flicky.data.model.FDroidApp
-import app.flicky.helper.viewModelFactory
 import app.flicky.install.Installer
 import app.flicky.install.TaskStage
 import app.flicky.ui.screens.UpdatesScreen
@@ -13,6 +11,7 @@ import app.flicky.viewmodel.UpdatesViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
+import org.koin.androidx.compose.koinViewModel
 
 interface UpdatesActions {
     fun updateAll()
@@ -26,13 +25,7 @@ interface UpdatesActions {
 
 @Composable
 fun UpdatesRoute(
-    vm: UpdatesViewModel = viewModel(factory = viewModelFactory {
-        UpdatesViewModel(
-            AppGraph.appRepo,
-            AppGraph.installedRepo,
-            AppGraph.installer
-        )
-    }),
+    vm: UpdatesViewModel = koinViewModel(),
     installer: Installer = AppGraph.installer,
     onOpenDetails: (String) -> Unit
 ) {
@@ -54,12 +47,11 @@ fun UpdatesRoute(
             if (total == 0f) return@derivedStateOf 0f
 
             val inProgressSum = appsInBatch.value.sumOf { app ->
-                val stage = installerTasks[app.packageName]
-                when {
-                    stage is TaskStage.Downloading -> stage.progress * 0.33
-                    stage is TaskStage.Verifying -> 0.33 + 0.33
-                    stage is TaskStage.Installing -> 0.66 + stage.progress * 0.34
-                    stage is TaskStage.Finished && stage.success -> 1.0
+                when (val stage = installerTasks[app.packageName]) {
+                    is TaskStage.Downloading -> stage.progress * 0.33
+                    is TaskStage.Verifying -> 0.33 + 0.33
+                    is TaskStage.Installing -> 0.66 + stage.progress * 0.34
+                    is TaskStage.Finished if stage.success -> 1.0
                     else -> 0.0
                 }
             }.toFloat()

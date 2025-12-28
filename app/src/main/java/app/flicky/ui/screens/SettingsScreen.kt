@@ -1,6 +1,5 @@
 package app.flicky.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -24,12 +23,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
@@ -38,7 +37,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -66,20 +64,26 @@ import app.flicky.data.local.RepoConfig
 import app.flicky.data.model.RepositoryInfo
 import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.repository.AppSettings
-import app.flicky.data.repository.Setting
-import app.flicky.data.repository.SettingCategory
-import app.flicky.data.repository.SettingType
-import app.flicky.data.repository.SettingsManager
+import app.flicky.data.repository.AppSettingsSchema
 import app.flicky.ui.components.global.ConfirmationDialog
 import app.flicky.ui.components.global.DropdownSettingDialog
 import app.flicky.ui.components.global.FlickyDialog
+import app.flicky.ui.components.global.InputDialog
 import app.flicky.ui.components.global.MyScreenScaffold
 import app.flicky.ui.components.global.SettingsAction
 import app.flicky.ui.components.global.SettingsItem
 import app.flicky.ui.components.global.SettingsSection
 import app.flicky.ui.components.global.SettingsToggle
 import app.flicky.ui.components.global.SliderSettingDialog
+import app.flicky.ui.components.snackbar.SnackbarManager
 import app.flicky.viewmodel.SettingsViewModel
+import io.github.mlmgames.settings.core.SettingField
+import io.github.mlmgames.settings.core.annotations.CategoryDefinition
+import io.github.mlmgames.settings.core.types.Button
+import io.github.mlmgames.settings.core.types.Dropdown
+import io.github.mlmgames.settings.core.types.Slider
+import io.github.mlmgames.settings.core.types.TextInput
+import io.github.mlmgames.settings.core.types.Toggle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -87,45 +91,37 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.koin.compose.koinInject
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import kotlin.reflect.KProperty1
+import kotlin.reflect.KClass
+import kotlin.reflect.full.findAnnotation
 import kotlin.system.measureTimeMillis
-
-private data class ProbeResult(
-    val url: String,
-    val ok: Boolean,
-    val code: Int,
-    val ms: Long
-)
 
 @Composable
 fun SettingsScreen(vm: SettingsViewModel) {
     val settings by vm.settings.collectAsState()
     val repos by vm.repositories.collectAsState()
-    val manager = remember { SettingsManager() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val schema = remember { AppSettingsSchema }
+
+    val snackbarManager : SnackbarManager = koinInject()
 
     var showDropdown by remember { mutableStateOf(false) }
     var showSlider by remember { mutableStateOf(false) }
-    var currentProp by remember { mutableStateOf<KProperty1<AppSettings, *>?>(null) }
-    var currentAnn by remember { mutableStateOf<Setting?>(null) }
+    var showTextInput by remember { mutableStateOf(false) }
+
+    var currentField by remember { mutableStateOf<SettingField<AppSettings, *>?>(null) }
+
     var showResetConfirm by remember { mutableStateOf(false) }
     var showAddRepo by remember { mutableStateOf(false) }
 
-    val grouped = remember { manager.getByCategory() }
     val cfg = LocalConfiguration.current
-
     val isTablet = cfg.screenWidthDp >= 600
-    val gridCells = if (isTablet) {
-        GridCells.Adaptive(minSize = 400.dp)
-    } else {
-        GridCells.Fixed(1)
-    }
+    val gridCells = if (isTablet) GridCells.Adaptive(minSize = 400.dp) else GridCells.Fixed(1)
 
-    val context = LocalContext.current
-
-    // Load all repo configs at once
     val repoConfigs by produceState(
         initialValue = emptyMap(),
         key1 = repos
@@ -134,10 +130,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
             val dao = AppGraph.db.repoConfigDao()
             repos.associate { repo ->
                 val base = repo.url.trimEnd('/')
-                base to (dao.get(base) ?: RepoConfig(
-                    baseUrl = base,
-                    enabled = repo.enabled
-                ))
+                base to (dao.get(base) ?: RepoConfig(baseUrl = base, enabled = repo.enabled))
             }
         }
     }
@@ -146,26 +139,24 @@ fun SettingsScreen(vm: SettingsViewModel) {
         vm.events.collect { event ->
             when (event) {
                 is SettingsViewModel.UiEvent.Toast -> {
-                    Toast.makeText(
-                        context,
-                        context.getString(event.messageResId),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    snackbarManager.show(context.getString(event.messageResId),)
                 }
                 is SettingsViewModel.UiEvent.RequestExport -> {
-                    // TODO: Implement settings export
+                    // TODO: implement export
                 }
             }
         }
     }
 
+    fun categoryTitle(cat: KClass<*>): String {
+        val ann = cat.findAnnotation<CategoryDefinition>()
+        val res = ann?.titleRes ?: 0
+        return if (res != 0) context.getString(res) else (cat.simpleName ?: "Settings")
+    }
+
     MyScreenScaffold(
         title = stringResource(R.string.nav_settings),
-        actions = {
-//            IconButton(onClick = { /* TODO: Search settings */ }) {
-//                Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
-//            }
-        }
+        actions = {}
     ) {
         LazyVerticalGrid(
             columns = gridCells,
@@ -174,107 +165,131 @@ fun SettingsScreen(vm: SettingsViewModel) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize()
         ) {
-            // Settings by category
-            for (category in SettingCategory.entries) {
-                val itemsForCat = grouped[category] ?: emptyList()
-                if (itemsForCat.isEmpty()) continue
 
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    SettingsSection(
-                        title = when (category) {
-                            SettingCategory.APPEARANCE -> stringResource(R.string.category_appearance)
-                            SettingCategory.GENERAL -> stringResource(R.string.category_general)
-                            SettingCategory.DOWNLOADS -> stringResource(R.string.category_downloads)
-                            SettingCategory.FILTERS -> stringResource(R.string.category_filters)
-                            SettingCategory.SYNC -> stringResource(R.string.category_sync)
-                            SettingCategory.PROXY -> stringResource(R.string.category_proxy)
-                            SettingCategory.OTHER -> stringResource(R.string.category_other)
-                        }
-                    ) {
-                        // Content is added as items below
-                    }
-                }
+            // Settings cards by category (schema-driven)
+            val categories = schema.orderedCategories()
+            val grouped = schema.groupedByCategory()
 
-                items(itemsForCat, key = { it.first.name }) { (prop, ann) ->
-                    val enabled = manager.isEnabled(settings, prop, ann)
+            items(
+                items = categories,
+                key = { it.qualifiedName ?: it.simpleName ?: "cat" }
+            ) { cat ->
+                val fields = grouped[cat].orEmpty()
+                if (fields.isEmpty()) return@items
 
-                    when (ann.type) {
-                        SettingType.TOGGLE -> {
-                            val value = prop.get(settings) as? Boolean ?: false
-                            SettingsToggle(
-                                title = ann.title,
-                                description = ann.description.takeIf { it.isNotBlank() },
-                                isChecked = value,
-                                enabled = enabled,
-                                onCheckedChange = { vm.updateSetting(prop.name, it) }
-                            )
-                        }
+                SettingsSection(title = categoryTitle(cat)) {
+                    fields.forEach { field ->
+                        val meta = field.meta ?: return@forEach
+                        val enabled = schema.isEnabled(settings, field)
 
-                        SettingType.DROPDOWN -> {
-                            val idx = prop.get(settings) as? Int ?: 0
-                            val options = ann.options.toList()
-                            SettingsItem(
-                                title = ann.title,
-                                subtitle = options.getOrNull(idx) ?: stringResource(R.string.unknown),
-                                description = ann.description.takeIf { it.isNotBlank() },
-                                enabled = enabled,
-                                onClick = {
-                                    currentProp = prop
-                                    currentAnn = ann
-                                    showDropdown = true
-                                }
-                            )
-                        }
-
-                        SettingType.SLIDER -> {
-                            val valueText = when (val v = prop.get(settings)) {
-                                is Int -> v.toString()
-                                is Float -> String.format(Locale.getDefault(), "%.1f", v)
-                                else -> ""
+                        when (meta.type) {
+                            Toggle::class -> {
+                                val v = (field.get(settings) as? Boolean) ?: false
+                                SettingsToggle(
+                                    title = meta.title,
+                                    description = meta.description.takeIf { it.isNotBlank() },
+                                    isChecked = v,
+                                    enabled = enabled,
+                                    onCheckedChange = { vm.updateSetting(field.name, it) }
+                                )
                             }
-                            SettingsItem(
-                                title = ann.title,
-                                subtitle = valueText,
-                                description = ann.description.takeIf { it.isNotBlank() },
-                                enabled = enabled,
-                                onClick = {
-                                    currentProp = prop
-                                    currentAnn = ann
-                                    showSlider = true
-                                }
-                            )
-                        }
 
-                        SettingType.BUTTON -> {
-                            SettingsAction(
-                                title = ann.title,
-                                description = ann.description.takeIf { it.isNotBlank() },
-                                buttonText = stringResource(R.string.run),
-                                enabled = enabled,
-                                onClick = { vm.performAction(prop.name) }
-                            )
+                            Dropdown::class -> {
+                                val idx = (field.get(settings) as? Int) ?: 0
+                                val options = meta.options
+                                SettingsItem(
+                                    title = meta.title,
+                                    subtitle = options.getOrNull(idx) ?: stringResource(R.string.unknown),
+                                    description = meta.description.takeIf { it.isNotBlank() },
+                                    enabled = enabled,
+                                    onClick = {
+                                        currentField = field
+                                        showDropdown = true
+                                    }
+                                )
+                            }
+
+                            Slider::class -> {
+                                val subtitle = when (val v = field.get(settings)) {
+                                    is Int -> v.toString()
+                                    is Float -> String.format(Locale.getDefault(), "%.1f", v)
+                                    is Double -> String.format(Locale.getDefault(), "%.1f", v)
+                                    is Long -> v.toString()
+                                    else -> ""
+                                }
+                                SettingsItem(
+                                    title = meta.title,
+                                    subtitle = subtitle,
+                                    description = meta.description.takeIf { it.isNotBlank() },
+                                    enabled = enabled,
+                                    onClick = {
+                                        currentField = field
+                                        showSlider = true
+                                    }
+                                )
+                            }
+
+                            TextInput::class -> {
+                                val cur = (field.get(settings) as? String).orEmpty()
+                                SettingsItem(
+                                    title = meta.title,
+                                    subtitle = cur.ifBlank { stringResource(R.string.optional) },
+                                    description = meta.description.takeIf { it.isNotBlank() },
+                                    enabled = enabled,
+                                    onClick = {
+                                        currentField = field
+                                        showTextInput = true
+                                    }
+                                )
+                            }
+
+                            Button::class -> {
+                                SettingsAction(
+                                    title = meta.title,
+                                    description = meta.description.takeIf { it.isNotBlank() },
+                                    buttonText = stringResource(R.string.run),
+                                    enabled = enabled,
+                                    onClick = {
+                                        vm.performAction(field.name)
+
+                                        // Only do this if the field type is Long.
+                                        val current = field.get(settings)
+                                        if (current is Long) {
+                                            vm.updateSetting(field.name, System.currentTimeMillis())
+                                        }
+                                    }
+                                )
+                            }
+
+                            else -> {
+                                // unsupported type
+                                SettingsItem(
+                                    title = meta.title,
+                                    subtitle = stringResource(R.string.unknown),
+                                    description = meta.description.takeIf { it.isNotBlank() },
+                                    enabled = false,
+                                    onClick = {}
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // Repositories section
-            item(span = { GridItemSpan(maxLineSpan) }) {
+            // Repositories section header (unchanged)
+            item(key = "repos_header") {
                 Text(
                     text = stringResource(R.string.repositories),
                     style = typography.titleMedium,
                     color = colorScheme.primary,
-                    modifier = Modifier.padding(start = 4.dp, top = 12.dp, bottom = 4.dp)
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
-            // Repository cards
+            // Repository cards (unchanged)
             items(repos, key = { it.url }) { repo ->
                 val base = repo.url.trimEnd('/')
-                val config = repoConfigs[base] ?: RepoConfig(
-                    baseUrl = base,
-                    enabled = repo.enabled
-                )
+                val config = repoConfigs[base] ?: RepoConfig(baseUrl = base, enabled = repo.enabled)
 
                 RepoConfigCard(
                     repo = repo,
@@ -298,22 +313,17 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                     append("\n")
                                 }
                             }
-                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                            snackbarManager.show(message)
                         }
                     },
                     onForgetMirror = {
                         MirrorRegistry.clear(base)
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.forgot_mirror, repo.name),
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        snackbarManager.show(context.getString(R.string.forgot_mirror, repo.name))
                     }
                 )
             }
 
-            // Repository actions
-            item(span = { GridItemSpan(maxLineSpan) }) {
+            item(key = "repo_actions") {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -330,9 +340,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                     OutlinedButton(
                         onClick = { showResetConfirm = true },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = colorScheme.error
-                        )
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colorScheme.error)
                     ) {
                         Icon(Icons.Default.RestartAlt, contentDescription = null)
                         Spacer(Modifier.width(4.dp))
@@ -343,48 +351,77 @@ fun SettingsScreen(vm: SettingsViewModel) {
         }
     }
 
-    // Dialogs
-    if (showDropdown && currentProp != null && currentAnn != null) {
-        val prop = currentProp!!
-        val ann = currentAnn!!
-        val idx = prop.get(settings) as? Int ?: 0
-
-        DropdownSettingDialog(
-            title = ann.title,
-            options = ann.options.toList(),
-            selectedIndex = idx,
-            onDismiss = { showDropdown = false },
-            onOptionSelected = { i ->
-                vm.updateSetting(prop.name, i)
-                showDropdown = false
-            }
-        )
+    if (showDropdown) {
+        val field = currentField
+        val meta = field?.meta
+        if (field != null && meta != null) {
+            val idx = (field.get(settings) as? Int) ?: 0
+            DropdownSettingDialog(
+                title = meta.title,
+                options = meta.options,
+                selectedIndex = idx,
+                onDismiss = { showDropdown = false },
+                onOptionSelected = { i ->
+                    vm.updateSetting(field.name, i)
+                    showDropdown = false
+                }
+            )
+        }
     }
 
-    if (showSlider && currentProp != null && currentAnn != null) {
-        val prop = currentProp!!
-        val ann = currentAnn!!
-        val cur = when (val v = prop.get(settings)) {
-            is Int -> v.toFloat()
-            is Float -> v
-            else -> 0f
-        }
-
-        SliderSettingDialog(
-            title = ann.title,
-            currentValue = cur,
-            min = ann.min,
-            max = ann.max,
-            step = ann.step,
-            onDismiss = { showSlider = false },
-            onValueSelected = { value ->
-                when (prop.returnType.classifier) {
-                    Int::class -> vm.updateSetting(prop.name, value.toInt())
-                    Float::class -> vm.updateSetting(prop.name, value)
-                }
-                showSlider = false
+    if (showSlider) {
+        val field = currentField
+        val meta = field?.meta
+        if (field != null && meta != null) {
+            val cur = when (val v = field.get(settings)) {
+                is Int -> v.toFloat()
+                is Float -> v
+                is Double -> v.toFloat()
+                is Long -> v.toFloat()
+                else -> 0f
             }
-        )
+
+            SliderSettingDialog(
+                title = meta.title,
+                currentValue = cur,
+                min = meta.min,
+                max = meta.max,
+                step = meta.step,
+                onDismiss = { showSlider = false },
+                onValueSelected = { value ->
+                    when (field.get(settings)) {
+                        is Int -> vm.updateSetting(field.name, value.toInt())
+                        is Float -> vm.updateSetting(field.name, value)
+                        is Double -> vm.updateSetting(field.name, value.toDouble())
+                        is Long -> vm.updateSetting(field.name, value.toLong())
+                    }
+                    showSlider = false
+                }
+            )
+        }
+    }
+
+    if (showTextInput) {
+        val field = currentField
+        val meta = field?.meta
+        if (field != null && meta != null) {
+            val current = (field.get(settings) as? String).orEmpty()
+
+            InputDialog(
+                title = meta.title,
+                label = meta.title,
+                value = current,
+                placeholder = "",
+                confirmText = stringResource(R.string.action_confirm),
+                dismissText = stringResource(R.string.action_cancel),
+                onConfirm = { newValue ->
+                    vm.updateSetting(field.name, newValue)
+                    showTextInput = false
+                },
+                onDismiss = { showTextInput = false },
+                validator = { true }
+            )
+        }
     }
 
     if (showAddRepo) {
@@ -552,28 +589,23 @@ private fun RepoConfigCard(
 
                 ExposedDropdownMenuBox(
                     expanded = openStrategy,
-                    onExpandedChange = { openStrategy = !openStrategy },
+                    onExpandedChange = { openStrategy = it },
                 ) {
                     OutlinedTextField(
                         value = strategies[strategyIdx],
                         onValueChange = {},
                         readOnly = true,
+                        singleLine = true,
                         label = { Text(stringResource(R.string.mirror_strategy)) },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = openStrategy)
-                        },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = openStrategy) },
                         modifier = Modifier
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
                             .fillMaxWidth()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) { openStrategy = !openStrategy }
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                     )
 
                     ExposedDropdownMenu(
                         expanded = openStrategy,
-                        onDismissRequest = { openStrategy = false }
+                        onDismissRequest = { openStrategy = false },
                     ) {
                         strategies.forEach { s ->
                             DropdownMenuItem(
@@ -608,17 +640,14 @@ private fun RepoConfigCard(
                         value = trustModes[trustIdx],
                         onValueChange = {},
                         readOnly = true,
+                        singleLine = true,
                         label = { Text(stringResource(R.string.trust_mode)) },
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = openTrust)
                         },
                         modifier = Modifier
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
                             .fillMaxWidth()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) { openTrust = !openTrust }
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
                     )
 
                     ExposedDropdownMenu(
@@ -811,3 +840,10 @@ private suspend fun testRepoMirrors(base: String): List<ProbeResult> = withConte
 
     candidates.map { cand -> probe(cand) }
 }
+
+private data class ProbeResult(
+    val url: String,
+    val ok: Boolean,
+    val code: Int,
+    val ms: Long
+)
