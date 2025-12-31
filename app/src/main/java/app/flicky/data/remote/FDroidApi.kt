@@ -182,7 +182,7 @@ class FDroidApi(
         var totalApps = 0
         val batch = mutableListOf<FDroidApp>()
 
-        val body = resp.body ?: return@withContext
+        val body = resp.body
         InputStreamReader(body.byteStream(), Charsets.UTF_8).use { isr ->
             JsonReader(isr).use { reader ->
                 reader.beginObject()
@@ -341,7 +341,7 @@ class FDroidApi(
         includeIncompatible: Boolean,
         onVariant: (AppVariant) -> Unit
     ) {
-        val body = resp.body ?: return
+        val body = resp.body
         val zis = ZipInputStream(body.byteStream())
         try {
             var entry = zis.nextEntry
@@ -459,7 +459,7 @@ class FDroidApi(
                 "packages" -> {
                     // packages: { "pkg": [ {versionName, versionCode, apkName, ...}, ... ], ... }
                     reader.beginObject()
-                    var batch = mutableListOf<FDroidApp>()
+                    val batch = mutableListOf<FDroidApp>()
                     while (reader.hasNext()) {
                         val pkg = reader.nextName()
                         reader.beginArray()
@@ -808,7 +808,8 @@ class FDroidApi(
         val minSdkVersion: Int,
         val targetSdkVersion: Int,
         val nativecode: List<String> = emptyList(),
-        val whatsNew: String? = null
+        val whatsNew: String? = null,
+        val antiFeatures: List<String> = emptyList(),
     )
 
     @SuppressLint("CheckResult")
@@ -917,6 +918,8 @@ class FDroidApi(
             }
         }
 
+        val resolvedAnti = bestVersion.antiFeatures.takeIf { it.isNotEmpty() } ?: meta.antiFeatures
+
         return FDroidApp(
             packageName = packageName,
             name = pickLocalized(meta.name) ?: packageName,
@@ -935,7 +938,7 @@ class FDroidApi(
             added = meta.added,
             lastUpdated = meta.lastUpdated,
             screenshots = shotUrls,
-            antiFeatures = meta.antiFeatures,
+            antiFeatures = resolvedAnti,
             repository = repoName,
             repositoryUrl = baseUrl,
             sha256 = bestVersion.sha256,
@@ -963,6 +966,7 @@ class FDroidApi(
         var targetSdk = 1
         var nativecode = emptyList<String>()
         var whatsNew: String? = null
+        var antiFeatures: List<String> = emptyList()
 
         reader.beginObject()
         while (reader.hasNext()) {
@@ -1024,12 +1028,34 @@ class FDroidApi(
                         else -> { reader.skipValue(); null }
                     }
                 }
+                "antiFeatures" -> antiFeatures = parseAntiFeaturesKeys(reader)
                 else -> reader.skipValue()
             }
         }
         reader.endObject()
 
-        return Version(versionCode, versionName, file, size, sha256, minSdk, targetSdk, nativecode, whatsNew)
+        return Version(versionCode, versionName, file, size, sha256, minSdk, targetSdk, nativecode, whatsNew, antiFeatures)
+    }
+
+    private fun parseAntiFeaturesKeys(reader: JsonReader): List<String> {
+        val out = mutableListOf<String>()
+        when (reader.peek()) {
+            JsonToken.BEGIN_OBJECT -> {
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    val key = reader.nextName()
+                    out += key
+                    reader.skipValue()              // ignored LocalizedTextV2 (reasons), since most ppl might have already used other fdroid stores
+                }
+                reader.endObject()
+            }
+            JsonToken.BEGIN_ARRAY -> {
+                out += parseStringArray(reader)
+            }
+            JsonToken.STRING -> out += reader.nextString()
+            else -> reader.skipValue()
+        }
+        return out.distinct().sorted()
     }
 
     private fun parseLocalizedStrings(reader: JsonReader): Map<String, String> {

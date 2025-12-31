@@ -3,7 +3,6 @@ package app.flicky.ui.screens
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -136,7 +135,7 @@ fun AppDetailScreen(
                 )
             }
         },
-    ) { paddingValues ->
+    ) { _ ->
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = colorScheme.background
