@@ -1,3 +1,15 @@
+## v3.8.1
+
+- Replace few more toasts with snackbar
+- fix focus indicator clipping, and also the build
+- remove unused xml files and bump version
+- remove extra step in yml
+- My settings module + Koin + Nav3 + Snackbars
+- Use colorscheme colors for Mobile AppCards too
+- bump agp, and use gradle 9
+- disable jetifier, remove viewBinding build option
+
+
 ## v3.7.2
 
 - Dynamic size for screenshots (#40) and display "what's new" above "Overview"
