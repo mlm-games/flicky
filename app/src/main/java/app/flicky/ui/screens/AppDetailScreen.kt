@@ -325,11 +325,11 @@ private fun AppHeader(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    app.packageName,
-                    style = typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant
-                )
+//                Text(
+//                    app.packageName,
+//                    style = typography.bodySmall,
+//                    color = colorScheme.onSurfaceVariant
+//                )
                 if (app.author.isNotBlank()) {
                     Text(
                         app.author,

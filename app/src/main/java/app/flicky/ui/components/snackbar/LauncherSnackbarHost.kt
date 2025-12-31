@@ -7,7 +7,6 @@ import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.launch
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.rememberCoroutineScope
-import org.koin.compose.koinInject
 
 @Composable
 fun LauncherSnackbarHost(
@@ -33,6 +32,3 @@ fun LauncherSnackbarHost(
 
     SnackbarHost(hostState = hostState)
 }
-
-@Composable
-fun snackbar(): SnackbarManager = koinInject()
