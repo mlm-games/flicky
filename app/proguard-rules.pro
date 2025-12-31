@@ -31,11 +31,8 @@
 -keepattributes *Annotation*
 
  # Keep AppSettings reflection and its annotation
- -keep @interface app.flicky.data.repository.Setting
  -keep class app.flicky.data.repository.AppSettings { *; }
- -keepclassmembers class app.flicky.data.repository.AppSettings {
-     @app.flicky.data.repository.Setting <fields>;
- }
+ -keep class app.flicky.data.repository.*
 
  -keep,allowobfuscation,allowshrinking class app.flicky.data.model.**$$serializer { *; }
  -keepclassmembers class app.flicky.data.model.** {

@@ -1,7 +1,5 @@
 package app.flicky.ui.screens
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
@@ -138,7 +135,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
         vm.events.collect { event ->
             when (event) {
                 is SettingsViewModel.UiEvent.Toast -> {
-                    snackbarManager.show(context.getString(event.messageResId),)
+                    snackbarManager.show(context.getString(event.messageResId))
                 }
                 is SettingsViewModel.UiEvent.RequestExport -> {
                     // TODO: implement export
@@ -148,12 +145,12 @@ fun SettingsScreen(vm: SettingsViewModel) {
     }
 
     fun categoryTitle(cat: KClass<*>): String {
-        val resId = schema.fields
-            .firstOrNull { it.meta?.category == cat }
-            ?.meta?.titleRes
-            ?.takeIf { it != 0 }
+        val annotation = cat.java.getAnnotation(CategoryDefinition::class.java)
 
-        return resId?.let { context.getString(it) } ?: (cat.simpleName ?: "Settings")
+        if (annotation != null && annotation.titleRes != 0) {
+            return context.getString(annotation.titleRes)
+        }
+        return cat.simpleName ?: "Settings"
     }
 
     MyScreenScaffold(
