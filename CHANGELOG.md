@@ -1,3 +1,10 @@
+## v3.8.3
+
+- Fix CategoryDefinition classes being ignored
+- Anti-Features display properly now (need to clear cache for them to appear) (fix #45)
+- remove the extra packageName (fix #43)
+
+
 ## v3.8.2
 
 - Fix CategoryDefinition classes being ignored
