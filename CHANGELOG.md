@@ -1,3 +1,8 @@
+## v3.8.4
+
+- Add AppManager option (fix #46)
+
+
 ## v3.8.3
 
 - Fix CategoryDefinition classes being ignored
