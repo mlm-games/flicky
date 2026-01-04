@@ -14,7 +14,6 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import app.flicky.AppGraph
 import app.flicky.R
-import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.local.AppVariant
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.model.FDroidApp
@@ -270,6 +269,7 @@ class Installer(
             1 -> InstallSessionResult(installSessionFromFile(file, req.packageName, req.sha256))
             2 -> InstallSessionResult(installRootStream(file, req.packageName))
             3 -> InstallSessionResult(installShizukuStream(file, req.packageName))
+            4 -> InstallSessionResult(installAppManager(file, req.packageName))
             else -> InstallSessionResult(installSystem(file, req.packageName))
         }
 
@@ -675,6 +675,40 @@ class Installer(
         if (!launched) return false
 
         return awaitPackageInstall(packageName)
+    }
+
+    private suspend fun installAppManager(file: File, packageName: String): Boolean {
+        return try {
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+
+            val amIntent = Intent("io.github.muntashirakon.AppManager.action.INSTALL").apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                putExtra("io.github.muntashirakon.AppManager.extra.CLOSE_ON_COMPLETE", true)
+            }
+
+            if (context.packageManager.resolveActivity(amIntent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
+                context.startActivity(amIntent)
+            } else {
+                // Fallback to standard VIEW intent targeting App Manager
+                val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/vnd.android.package-archive")
+                    setPackage("io.github.muntashirakon.AppManager")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+
+                if (context.packageManager.resolveActivity(fallbackIntent, PackageManager.MATCH_DEFAULT_ONLY) == null) {
+                    setError(packageName, "App Manager is not installed")
+                    return false
+                }
+                context.startActivity(fallbackIntent)
+            }
+
+            awaitPackageInstall(packageName)
+        } catch (e: Exception) {
+            DebugLog.log("Installer", "App Manager install failed: ${e.message}")
+            false
+        }
     }
 
     private suspend fun awaitPackageInstall(

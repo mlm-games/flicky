@@ -98,7 +98,7 @@ data class AppSettings(
         description = "Method to use for installing apps",
         category = Downloads::class,
         type = Dropdown::class,
-        options = ["System", "Session", "Root", "Shizuku"]
+        options = ["System", "Session", "Root", "Shizuku", "App Manager"]
     )
     val installerMode: Int = 0,
 
