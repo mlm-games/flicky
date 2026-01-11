@@ -1,5 +1,11 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package app.flicky.ui.screens
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,13 +24,18 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -36,6 +47,9 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -48,6 +62,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,13 +70,13 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.flicky.AppGraph
 import app.flicky.R
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.model.RepositoryInfo
 import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.AppSettingsSchema
+import app.flicky.di.AppDependencies
 import app.flicky.ui.components.global.ConfirmationDialog
 import app.flicky.ui.components.global.DropdownSettingDialog
 import app.flicky.ui.components.global.FlickyDialog
@@ -76,6 +91,8 @@ import app.flicky.ui.components.snackbar.SnackbarManager
 import app.flicky.viewmodel.SettingsViewModel
 import io.github.mlmgames.settings.core.SettingField
 import io.github.mlmgames.settings.core.annotations.CategoryDefinition
+import io.github.mlmgames.settings.core.backup.ExportResult
+import io.github.mlmgames.settings.core.backup.ImportResult
 import io.github.mlmgames.settings.core.types.Button
 import io.github.mlmgames.settings.core.types.Dropdown
 import io.github.mlmgames.settings.core.types.Slider
@@ -89,6 +106,8 @@ import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.koin.compose.koinInject
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
@@ -102,17 +121,23 @@ fun SettingsScreen(vm: SettingsViewModel) {
     val context = LocalContext.current
 
     val schema = remember { AppSettingsSchema }
+    val snackbarManager: SnackbarManager = koinInject()
 
-    val snackbarManager : SnackbarManager = koinInject()
+    // Search state
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var isSearchActive by rememberSaveable { mutableStateOf(false) }
 
+    // Dialog states
     var showDropdown by remember { mutableStateOf(false) }
     var showSlider by remember { mutableStateOf(false) }
     var showTextInput by remember { mutableStateOf(false) }
-
     var currentField by remember { mutableStateOf<SettingField<AppSettings, *>?>(null) }
 
     var showResetConfirm by remember { mutableStateOf(false) }
     var showAddRepo by remember { mutableStateOf(false) }
+    var showImportDialog by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
+    var showMoreMenu by remember { mutableStateOf(false) }
 
     val cfg = LocalConfiguration.current
     val isTablet = cfg.screenWidthDp >= 600
@@ -123,10 +148,63 @@ fun SettingsScreen(vm: SettingsViewModel) {
         key1 = repos
     ) {
         value = withContext(Dispatchers.IO) {
-            val dao = AppGraph.db.repoConfigDao()
+            val dao = AppDependencies.db.repoConfigDao()
             repos.associate { repo ->
                 val base = repo.url.trimEnd('/')
                 base to (dao.get(base) ?: RepoConfig(baseUrl = base, enabled = repo.enabled))
+            }
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            scope.launch {
+                try {
+                    val json = context.contentResolver.openInputStream(it)?.bufferedReader()?.readText()
+                    if (json != null) {
+                        val result = vm.importSettings(json)
+                        when (result) {
+                            is ImportResult.Success -> {
+                                snackbarManager.show(
+                                    context.getString(R.string.import_success, result.appliedCount)
+                                )
+                            }
+                            is ImportResult.Error -> {
+                                snackbarManager.show(result.message)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    snackbarManager.show(context.getString(R.string.import_failed, e.message))
+                }
+            }
+        }
+    }
+
+    // File saver for export
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let {
+            scope.launch {
+                try {
+                    val result = vm.exportSettings()
+                    when (result) {
+                        is ExportResult.Success -> {
+                            context.contentResolver.openOutputStream(it)?.bufferedWriter()?.use { writer ->
+                                writer.write(result.json)
+                            }
+                            snackbarManager.show(context.getString(R.string.export_success))
+                        }
+                        is ExportResult.Error -> {
+                            snackbarManager.show(result.message)
+                        }
+                    }
+                } catch (e: Exception) {
+                    snackbarManager.show(context.getString(R.string.export_failed, e.message))
+                }
             }
         }
     }
@@ -138,7 +216,8 @@ fun SettingsScreen(vm: SettingsViewModel) {
                     snackbarManager.show(context.getString(event.messageResId))
                 }
                 is SettingsViewModel.UiEvent.RequestExport -> {
-                    // TODO: implement export
+                    val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                    exportLauncher.launch("flicky_settings_$timestamp.json")
                 }
             }
         }
@@ -146,16 +225,117 @@ fun SettingsScreen(vm: SettingsViewModel) {
 
     fun categoryTitle(cat: KClass<*>): String {
         val annotation = cat.java.getAnnotation(CategoryDefinition::class.java)
-
         if (annotation != null && annotation.titleRes != 0) {
             return context.getString(annotation.titleRes)
         }
         return cat.simpleName ?: "Settings"
     }
 
+    fun filterFields(fields: List<SettingField<AppSettings, *>>): List<SettingField<AppSettings, *>> {
+        if (searchQuery.isBlank()) return fields
+        val query = searchQuery.lowercase()
+        return fields.filter { field ->
+            val meta = field.meta ?: return@filter false
+            meta.title.lowercase().contains(query) ||
+                    meta.description.lowercase().contains(query) ||
+                    field.name.lowercase().contains(query)
+        }
+    }
+
     MyScreenScaffold(
-        title = stringResource(R.string.nav_settings),
-        actions = {}
+        title = if (isSearchActive) "" else stringResource(R.string.nav_settings),
+        actions = {
+            if (isSearchActive) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.search_settings),
+                            style = typography.bodyMedium
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = null,
+                            tint = colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            if (searchQuery.isNotEmpty()) {
+                                searchQuery = ""
+                            } else {
+                                isSearchActive = false
+                            }
+                        }) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = stringResource(R.string.action_close),
+                                tint = colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    singleLine = true,
+                    textStyle = typography.bodyMedium,
+//                    colors = OutlinedTextFieldDefaults.colors(
+//                        focusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.5f),
+//                        unfocusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.3f),
+//                        focusedBorderColor = colorScheme.primary,
+//                        unfocusedBorderColor = colorScheme.outline,
+//                        cursorColor = colorScheme.primary,
+//                        focusedTextColor = colorScheme.onSurface,
+//                        unfocusedTextColor = colorScheme.onSurface,
+//                        focusedPlaceholderColor = colorScheme.onSurfaceVariant,
+//                        unfocusedPlaceholderColor = colorScheme.onSurfaceVariant,
+//                        focusedLeadingIconColor = colorScheme.onSurfaceVariant,
+//                        unfocusedLeadingIconColor = colorScheme.onSurfaceVariant,
+//                    ),
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .padding(horizontal = 8.dp)
+                )
+            } else {
+                IconButton(onClick = { isSearchActive = true }) {
+                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
+                }
+
+                Box {
+                    IconButton(onClick = { showMoreMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
+                    }
+                    DropdownMenu(
+                        expanded = showMoreMenu,
+                        onDismissRequest = { showMoreMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.import_settings)) },
+                            leadingIcon = {
+                                Icon(Icons.Default.Download, contentDescription = null)
+                            },
+                            onClick = {
+                                showMoreMenu = false
+                                importLauncher.launch(arrayOf("application/json"))
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.export_settings)) },
+                            leadingIcon = {
+                                Icon(Icons.Default.Upload, contentDescription = null)
+                            },
+                            onClick = {
+                                showMoreMenu = false
+                                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                                exportLauncher.launch("flicky_settings_$timestamp.json")
+                            }
+                        )
+                    }
+                }
+            }
+        }
     ) {
         LazyVerticalGrid(
             columns = gridCells,
@@ -164,7 +344,6 @@ fun SettingsScreen(vm: SettingsViewModel) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize()
         ) {
-
             // Settings cards by category (schema-driven)
             val categories = schema.orderedCategories()
             val grouped = schema.groupedByCategory()
@@ -173,177 +352,182 @@ fun SettingsScreen(vm: SettingsViewModel) {
                 items = categories,
                 key = { it.qualifiedName ?: it.simpleName ?: "cat" }
             ) { cat ->
-                val fields = grouped[cat].orEmpty()
-                if (fields.isEmpty()) return@items
+                val allFields = grouped[cat].orEmpty()
+                val fields = filterFields(allFields)
 
-                SettingsSection(title = categoryTitle(cat)) {
-                    fields.forEach { field ->
-                        val meta = field.meta ?: return@forEach
-                        val enabled = schema.isEnabled(settings, field)
+                AnimatedVisibility(visible = fields.isNotEmpty()) {
+                    SettingsSection(title = categoryTitle(cat)) {
+                        fields.forEach { field ->
+                            val meta = field.meta ?: return@forEach
+                            val enabled = schema.isEnabled(settings, field)
 
-                        when (meta.type) {
-                            Toggle::class -> {
-                                val v = (field.get(settings) as? Boolean) ?: false
-                                SettingsToggle(
-                                    title = meta.title,
-                                    description = meta.description.takeIf { it.isNotBlank() },
-                                    isChecked = v,
-                                    enabled = enabled,
-                                    onCheckedChange = { vm.updateSetting(field.name, it) }
-                                )
-                            }
-
-                            Dropdown::class -> {
-                                val idx = (field.get(settings) as? Int) ?: 0
-                                val options = meta.options
-                                SettingsItem(
-                                    title = meta.title,
-                                    subtitle = options.getOrNull(idx) ?: stringResource(R.string.unknown),
-                                    description = meta.description.takeIf { it.isNotBlank() },
-                                    enabled = enabled,
-                                    onClick = {
-                                        currentField = field
-                                        showDropdown = true
-                                    }
-                                )
-                            }
-
-                            Slider::class -> {
-                                val subtitle = when (val v = field.get(settings)) {
-                                    is Int -> v.toString()
-                                    is Float -> String.format(Locale.getDefault(), "%.1f", v)
-                                    is Double -> String.format(Locale.getDefault(), "%.1f", v)
-                                    is Long -> v.toString()
-                                    else -> ""
+                            when (meta.type) {
+                                Toggle::class -> {
+                                    val v = (field.get(settings) as? Boolean) ?: false
+                                    SettingsToggle(
+                                        title = meta.title,
+                                        description = meta.description.takeIf { it.isNotBlank() },
+                                        isChecked = v,
+                                        enabled = enabled,
+                                        onCheckedChange = { vm.updateSetting(field.name, it) }
+                                    )
                                 }
-                                SettingsItem(
-                                    title = meta.title,
-                                    subtitle = subtitle,
-                                    description = meta.description.takeIf { it.isNotBlank() },
-                                    enabled = enabled,
-                                    onClick = {
-                                        currentField = field
-                                        showSlider = true
-                                    }
-                                )
-                            }
 
-                            TextInput::class -> {
-                                val cur = (field.get(settings) as? String).orEmpty()
-                                SettingsItem(
-                                    title = meta.title,
-                                    subtitle = cur.ifBlank { stringResource(R.string.optional) },
-                                    description = meta.description.takeIf { it.isNotBlank() },
-                                    enabled = enabled,
-                                    onClick = {
-                                        currentField = field
-                                        showTextInput = true
-                                    }
-                                )
-                            }
-
-                            Button::class -> {
-                                SettingsAction(
-                                    title = meta.title,
-                                    description = meta.description.takeIf { it.isNotBlank() },
-                                    buttonText = stringResource(R.string.run),
-                                    enabled = enabled,
-                                    onClick = {
-                                        vm.performAction(field.name)
-
-                                        // Only do this if the field type is Long.
-                                        val current = field.get(settings)
-                                        if (current is Long) {
-                                            vm.updateSetting(field.name, System.currentTimeMillis())
+                                Dropdown::class -> {
+                                    val idx = (field.get(settings) as? Int) ?: 0
+                                    val options = meta.options
+                                    SettingsItem(
+                                        title = meta.title,
+                                        subtitle = options.getOrNull(idx) ?: stringResource(R.string.unknown),
+                                        description = meta.description.takeIf { it.isNotBlank() },
+                                        enabled = enabled,
+                                        onClick = {
+                                            currentField = field
+                                            showDropdown = true
                                         }
-                                    }
-                                )
-                            }
+                                    )
+                                }
 
-                            else -> {
-                                // unsupported type
-                                SettingsItem(
-                                    title = meta.title,
-                                    subtitle = stringResource(R.string.unknown),
-                                    description = meta.description.takeIf { it.isNotBlank() },
-                                    enabled = false,
-                                    onClick = {}
-                                )
+                                Slider::class -> {
+                                    val subtitle = when (val v = field.get(settings)) {
+                                        is Int -> v.toString()
+                                        is Float -> String.format(Locale.getDefault(), "%.1f", v)
+                                        is Double -> String.format(Locale.getDefault(), "%.1f", v)
+                                        is Long -> v.toString()
+                                        else -> ""
+                                    }
+                                    SettingsItem(
+                                        title = meta.title,
+                                        subtitle = subtitle,
+                                        description = meta.description.takeIf { it.isNotBlank() },
+                                        enabled = enabled,
+                                        onClick = {
+                                            currentField = field
+                                            showSlider = true
+                                        }
+                                    )
+                                }
+
+                                TextInput::class -> {
+                                    val cur = (field.get(settings) as? String).orEmpty()
+                                    SettingsItem(
+                                        title = meta.title,
+                                        subtitle = cur.ifBlank { stringResource(R.string.optional) },
+                                        description = meta.description.takeIf { it.isNotBlank() },
+                                        enabled = enabled,
+                                        onClick = {
+                                            currentField = field
+                                            showTextInput = true
+                                        }
+                                    )
+                                }
+
+                                Button::class -> {
+                                    SettingsAction(
+                                        title = meta.title,
+                                        description = meta.description.takeIf { it.isNotBlank() },
+                                        buttonText = stringResource(R.string.run),
+                                        enabled = enabled,
+                                        onClick = {
+                                            vm.performAction(field.name)
+                                            val current = field.get(settings)
+                                            if (current is Long) {
+                                                vm.updateSetting(field.name, System.currentTimeMillis())
+                                            }
+                                        }
+                                    )
+                                }
+
+                                else -> {
+                                    SettingsItem(
+                                        title = meta.title,
+                                        subtitle = stringResource(R.string.unknown),
+                                        description = meta.description.takeIf { it.isNotBlank() },
+                                        enabled = false,
+                                        onClick = {}
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
 
-            // Repositories section header (unchanged)
-            item(key = "repos_header") {
-                Text(
-                    text = stringResource(R.string.repositories),
-                    style = typography.titleMedium,
-                    color = colorScheme.primary,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            // Only shows if not searching / if "repo" matches
+            val showRepos = searchQuery.isBlank() ||
+                    "repository".contains(searchQuery.lowercase()) ||
+                    "repo".contains(searchQuery.lowercase())
 
-            // Repository cards (unchanged)
-            items(repos, key = { it.url }) { repo ->
-                val base = repo.url.trimEnd('/')
-                val config = repoConfigs[base] ?: RepoConfig(baseUrl = base, enabled = repo.enabled)
+            if (showRepos) {
+                item(key = "repos_header") {
+                    Text(
+                        text = stringResource(R.string.repositories),
+                        style = typography.titleMedium,
+                        color = colorScheme.primary,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
-                RepoConfigCard(
-                    repo = repo,
-                    config = config,
-                    onConfigChange = { newCfg ->
-                        scope.launch {
-                            AppGraph.db.repoConfigDao().upsert(newCfg)
-                            vm.reloadConfigs()
-                        }
-                    },
-                    onToggle = { vm.toggleRepository(repo.url) },
-                    onTestMirrors = {
-                        scope.launch {
-                            val results = testRepoMirrors(base)
-                            val message = buildString {
-                                results.forEach { (url, ok, code, ms) ->
-                                    append(if (ok) "✓" else "✗")
-                                    append(" ").append(url).append("\n")
-                                    append("   ")
-                                    append(if (ok) "${ms}ms (HTTP $code)" else "HTTP $code / fail")
-                                    append("\n")
-                                }
+                // Repository cards
+                items(repos, key = { it.url }) { repo ->
+                    val base = repo.url.trimEnd('/')
+                    val config = repoConfigs[base] ?: RepoConfig(baseUrl = base, enabled = repo.enabled)
+
+                    RepoConfigCard(
+                        repo = repo,
+                        config = config,
+                        onConfigChange = { newCfg ->
+                            scope.launch {
+                                AppDependencies.db.repoConfigDao().upsert(newCfg)
+                                vm.reloadConfigs()
                             }
-                            snackbarManager.show(message)
+                        },
+                        onToggle = { vm.toggleRepository(repo.url) },
+                        onTestMirrors = {
+                            scope.launch {
+                                val results = testRepoMirrors(base)
+                                val message = buildString {
+                                    results.forEach { (url, ok, code, ms) ->
+                                        append(if (ok) "✓" else "✗")
+                                        append(" ").append(url).append("\n")
+                                        append(" ")
+                                        append(if (ok) "${ms}ms (HTTP $code)" else "HTTP $code / fail")
+                                        append("\n")
+                                    }
+                                }
+                                snackbarManager.show(message)
+                            }
+                        },
+                        onForgetMirror = {
+                            MirrorRegistry.clear(base)
+                            snackbarManager.show(context.getString(R.string.forgot_mirror, repo.name))
                         }
-                    },
-                    onForgetMirror = {
-                        MirrorRegistry.clear(base)
-                        snackbarManager.show(context.getString(R.string.forgot_mirror, repo.name))
-                    }
-                )
-            }
+                    )
+                }
 
-            item(key = "repo_actions") {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Button(
-                        onClick = { showAddRepo = true },
-                        modifier = Modifier.weight(1f)
+                item(key = "repo_actions") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.add_repository))
-                    }
+                        Button(
+                            onClick = { showAddRepo = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(Modifier.width(4.dp))
+                            Text(stringResource(R.string.add_repository))
+                        }
 
-                    OutlinedButton(
-                        onClick = { showResetConfirm = true },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colorScheme.error)
-                    ) {
-                        Icon(Icons.Default.RestartAlt, contentDescription = null)
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.reset_to_defaults))
+                        OutlinedButton(
+                            onClick = { showResetConfirm = true },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = colorScheme.error)
+                        ) {
+                            Icon(Icons.Default.RestartAlt, contentDescription = null)
+                            Spacer(Modifier.width(4.dp))
+                            Text(stringResource(R.string.reset_to_defaults))
+                        }
                     }
                 }
             }
@@ -429,7 +613,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
             onAdd = { name, url ->
                 scope.launch {
                     vm.addRepository(name, url)
-                    AppGraph.mirrorPolicyProvider.ensureDefault(url.trimEnd('/'))
+                    AppDependencies.mirrorPolicyProvider.ensureDefault(url.trimEnd('/'))
                 }
                 showAddRepo = false
             }
@@ -462,12 +646,11 @@ private fun RepoConfigCard(
     onForgetMirror: () -> Unit
 ) {
     var localConfig by remember(config) { mutableStateOf(config) }
-
     var showMenu by remember { mutableStateOf(false) }
     var openStrategy by remember { mutableStateOf(false) }
     var openTrust by remember { mutableStateOf(false) }
 
-    val updateConfig: (RepoConfig) -> Unit = { newConfig -> // HACK: For instant ui updates (perf. cost)
+    val updateConfig: (RepoConfig) -> Unit = { newConfig ->
         localConfig = newConfig
         onConfigChange(newConfig)
     }
@@ -497,7 +680,6 @@ private fun RepoConfigCard(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Menu button
                     Box {
                         IconButton(
                             onClick = { showMenu = true },
@@ -548,7 +730,6 @@ private fun RepoConfigCard(
 
                     Spacer(Modifier.width(8.dp))
 
-                    // Enable/disable switch
                     Switch(
                         checked = repo.enabled,
                         onCheckedChange = { onToggle() }
@@ -763,7 +944,7 @@ private fun AddRepoDialog(
 }
 
 private suspend fun testRepoMirrors(base: String): List<ProbeResult> = withContext(Dispatchers.IO) {
-    val policy = AppGraph.mirrorPolicyProvider.policyFor(base)
+    val policy = AppDependencies.mirrorPolicyProvider.policyFor(base)
     val candidates = MirrorRegistry.candidates(
         base = base,
         includeOnion = policy.includeOnion,
@@ -771,7 +952,7 @@ private suspend fun testRepoMirrors(base: String): List<ProbeResult> = withConte
     ).ifEmpty { listOf(base) }
 
     val client = try {
-        AppGraph.httpClients.clientFor(base).newBuilder()
+        AppDependencies.httpClients.clientFor(base).newBuilder()
             .callTimeout(5, TimeUnit.SECONDS)
             .connectTimeout(3, TimeUnit.SECONDS)
             .readTimeout(5, TimeUnit.SECONDS)
