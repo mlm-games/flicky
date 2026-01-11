@@ -13,6 +13,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.paging.compose.collectAsLazyPagingItems
 import app.flicky.ui.routes.AppDetailRoute
+import app.flicky.ui.routes.FavoritesRoute
 import app.flicky.ui.routes.UpdatesRoute
 import app.flicky.ui.screens.BrowseScreen
 import app.flicky.ui.screens.CategoriesScreen
@@ -95,6 +96,12 @@ fun Nav3Host(
                     }
                 )
             }
+
+            entry<FlickyDestination.Favorites> {
+                FavoritesRoute(
+                    onOpenDetails = { pkg -> backStack.add(FlickyDestination.Detail(pkg)) }
+                )
+            }
         }
     )
 }
@@ -116,4 +123,7 @@ sealed interface FlickyDestination : NavKey {
 
     @Serializable
     data class Detail(val pkg: String) : FlickyDestination
+
+    @Serializable
+    data object Favorites : FlickyDestination
 }

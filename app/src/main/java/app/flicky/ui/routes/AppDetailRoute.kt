@@ -28,5 +28,7 @@ fun AppDetailRoute(
         error = ui.error,
         onOpenCategory = onOpenCategory,
         variants = ui.variants,
+        isFavorite = ui.isFavorite,
+        onToggleFavorite = { vm.toggleFavorite() }
     )
 }

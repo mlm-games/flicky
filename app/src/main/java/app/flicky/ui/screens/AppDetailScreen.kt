@@ -27,6 +27,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.InstallDesktop
@@ -57,6 +59,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -73,12 +76,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
-import app.flicky.AppGraph
 import app.flicky.R
-import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.AppSettings
+import app.flicky.data.repository.AppUpdatePreference
+import app.flicky.data.repository.SettingsRepository
 import app.flicky.helper.openUrl
 import app.flicky.helper.shareText
 import app.flicky.install.TaskStage
@@ -87,6 +90,7 @@ import app.flicky.ui.components.SmartExpandableText
 import app.flicky.ui.components.global.MyScreenScaffold
 import app.flicky.ui.components.snackbar.SnackbarManager
 import coil.compose.AsyncImage
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
@@ -108,10 +112,13 @@ fun AppDetailScreen(
     onUninstall: () -> Unit,
     error: String?,
     onOpenCategory: (String) -> Unit,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
     variants: List<AppVariant>,
 ) {
     val cfg = LocalConfiguration.current
     val isWide = cfg.screenWidthDp >= 900
+    val settings: SettingsRepository = koinInject()
 
     MyScreenScaffold(
         title = app.name,
@@ -119,6 +126,16 @@ fun AppDetailScreen(
             val ctx = LocalContext.current
             val packageNameLabel = stringResource(R.string.share_subject_package, app.packageName)
             val sourceLabel = stringResource(R.string.share_subject_source, app.repository)
+
+            IconButton(onClick = onToggleFavorite) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = stringResource(
+                        if (isFavorite) R.string.remove_from_favorites else R.string.add_to_favorites
+                    ),
+                    tint = if (isFavorite) colorScheme.error else colorScheme.onSurface
+                )
+            }
 
             IconButton(onClick = {
                 val shareTextContent = buildString {
@@ -141,15 +158,42 @@ fun AppDetailScreen(
             color = colorScheme.background
         ) {
             if (isWide) {
-                DesktopLayout(app, installedVersionCode, stage, onInstall, onInstallVariant, onOpen, onCancel, onUninstall, error, onOpenCategory, variants)
+                DesktopLayout(
+                    app = app,
+                    installedVersionCode = installedVersionCode,
+                    stage = stage,
+                    onInstall = onInstall,
+                    onInstallVariant = onInstallVariant,
+                    onOpen = onOpen,
+                    onCancel = onCancel,
+                    onUninstall = onUninstall,
+                    error = error,
+                    onOpenCategory = onOpenCategory,
+                    variants = variants,
+                    settings = settings
+                )
             } else {
-                MobileLayout(app, installedVersionCode, stage, onInstall, onInstallVariant, onOpen, onCancel,  onUninstall, error, onOpenCategory, variants)
+                MobileLayout(
+                    app = app,
+                    installedVersionCode = installedVersionCode,
+                    stage = stage,
+                    onInstall = onInstall,
+                    onInstallVariant = onInstallVariant,
+                    onOpen = onOpen,
+                    onCancel = onCancel,
+                    onUninstall = onUninstall,
+                    error = error,
+                    onOpenCategory = onOpenCategory,
+                    variants = variants,
+                    settings = settings
+                )
             }
         }
     }
-    val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
+
+    val settingsState by settings.settingsFlow.collectAsState(initial = AppSettings())
     Box(Modifier.fillMaxSize()) {
-        DebugOverlay(visible = settings.showDebugInfo)
+        DebugOverlay(visible = settingsState.showDebugInfo)
     }
 }
 
@@ -166,6 +210,7 @@ private fun DesktopLayout(
     error: String?,
     onOpenCategory: (String) -> Unit,
     variants: List<AppVariant>,
+    settings: SettingsRepository,
 ) {
     Row(Modifier.fillMaxSize()) {
         Surface(
@@ -184,7 +229,7 @@ private fun DesktopLayout(
                 item { ChipsSection(app, installedVersionCode, onOpenCategory) }
                 item { DetailsSection(app) }
                 if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
-                 item { LinksSection(app) }
+                item { LinksSection(app) }
             }
         }
 
@@ -197,12 +242,15 @@ private fun DesktopLayout(
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { RightPaneContent(
-                app = app,
-                variants = variants,
-                installedVersionCode = installedVersionCode,
-                onInstallVariant = onInstallVariant,
-            ) }
+            item {
+                RightPaneContent(
+                    app = app,
+                    variants = variants,
+                    installedVersionCode = installedVersionCode,
+                    onInstallVariant = onInstallVariant,
+                    settings = settings
+                )
+            }
         }
     }
 }
@@ -220,6 +268,7 @@ private fun MobileLayout(
     error: String?,
     onOpenCategory: (String) -> Unit,
     variants: List<AppVariant>,
+    settings: SettingsRepository,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -234,7 +283,7 @@ private fun MobileLayout(
                     stage = stage,
                     onInstall = onInstall,
                     onOpen = onOpen,
-                    onCancel =  onCancel,
+                    onCancel = onCancel,
                     onUninstall = onUninstall,
                     error = error,
                     iconSize = 88.dp,
@@ -246,13 +295,15 @@ private fun MobileLayout(
         if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
         item { LinksSection(app) }
         item { DetailsSection(app) }
-        item { RightPaneContent(
-            app = app,
-            variants = variants,
-            installedVersionCode = installedVersionCode,
-            onInstallVariant = onInstallVariant
-        ) }
-
+        item {
+            RightPaneContent(
+                app = app,
+                variants = variants,
+                installedVersionCode = installedVersionCode,
+                onInstallVariant = onInstallVariant,
+                settings = settings
+            )
+        }
     }
 }
 
@@ -262,7 +313,8 @@ private fun RightPaneContent(
     app: FDroidApp,
     variants: List<AppVariant>,
     installedVersionCode: Long?,
-    onInstallVariant: (AppVariant) -> Unit
+    onInstallVariant: (AppVariant) -> Unit,
+    settings: SettingsRepository
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (app.whatsNew.isNotBlank()) {
@@ -284,11 +336,15 @@ private fun RightPaneContent(
         if (variants.isNotEmpty()) {
             SectionTitle(stringResource(id = R.string.versions))
             VersionsSection(
-                variants = variants.take(8), // last few
+                variants = variants.take(8),
                 installedVersionCode = installedVersionCode,
                 onInstallVariant = onInstallVariant
             )
-            PreferredSourceSection(app.packageName, variants)
+            PreferredSourceSection(
+                pkg = app.packageName,
+                variants = variants,
+                settings = settings
+            )
         }
     }
 }
@@ -324,11 +380,6 @@ private fun AppHeader(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-//                Text(
-//                    app.packageName,
-//                    style = typography.bodySmall,
-//                    color = colorScheme.onSurfaceVariant
-//                )
                 if (app.author.isNotBlank()) {
                     Text(
                         app.author,
@@ -342,9 +393,9 @@ private fun AppHeader(
 
         val progressValue = when (stage) {
             is TaskStage.Downloading -> stage.progress.coerceIn(0f, 0.999f)
-            is TaskStage.Verifying   -> 0.995f
-            is TaskStage.Installing  -> (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f)
-            else -> -1f // means no bar
+            is TaskStage.Verifying -> 0.995f
+            is TaskStage.Installing -> (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f)
+            else -> -1f
         }
         val showBar = stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled && progressValue >= 0f
 
@@ -375,59 +426,37 @@ private fun AppHeader(
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = onCancel, Modifier.fillMaxWidth()) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = stringResource(R.string.action_cancel)
-                    )
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_cancel))
                     Spacer(Modifier.width(6.dp))
                     Text(stringResource(R.string.action_cancel))
                 }
             }
         } else {
             if (installedVersionCode != null) {
-                val hasUpdate = app.versionCode > installedVersionCode // for readability
-//                val compact = LocalConfiguration.current.screenWidthDp < 360
+                val hasUpdate = app.versionCode > installedVersionCode
                 Row {
                     if (hasUpdate) {
                         FilledTonalButton(onClick = onInstall) {
-                            Icon( // Size issues
+                            Icon(
                                 imageVector = Icons.Outlined.KeyboardDoubleArrowUp,
-                                contentDescription = stringResource(R.string.action_update) //else null
+                                contentDescription = stringResource(R.string.action_update)
                             )
-//                            if (!compact) {
-//                                Spacer(Modifier.width(8.dp))
-//                                Text(stringResource(R.string.action_update))
-//                            }
                         }
                         Spacer(Modifier.width(8.dp))
                     }
 
                     Button(onClick = onOpen, modifier = Modifier.weight(1f)) {
-//                        Icon(
-//                            imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
-//                            contentDescription = if (compact) stringResource(R.string.action_open) else null
-//                        )
-//                        if (!compact) {
-//                            Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.action_open))
-//                        }
                     }
                     Spacer(Modifier.width(8.dp))
                     OutlinedButton(onClick = onUninstall, modifier = Modifier.weight(1f)) {
-//                        Icon(
-//                            imageVector = Icons.Outlined.DeleteOutline,
-//                            contentDescription = if (compact) stringResource(R.string.action_uninstall) else null
-//                        )
-//                        if (!compact) {
-//                            Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.action_uninstall))
-//                        }
                     }
                 }
             } else {
                 Button(onClick = onInstall, modifier = Modifier.fillMaxWidth()) {
                     Icon(
-                        imageVector = Icons.Outlined.InstallDesktop, //else Icons.Outlined.InstallMobile
+                        imageVector = Icons.Outlined.InstallDesktop,
                         contentDescription = stringResource(R.string.action_install)
                     )
                     Spacer(Modifier.width(8.dp))
@@ -455,7 +484,10 @@ private fun ChipsSection(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ElevatedAssistChip(onClick = {}, label = { Text(if (app.version.startsWith("v", true)) app.version else "v${app.version}") })
+            ElevatedAssistChip(
+                onClick = {},
+                label = { Text(if (app.version.startsWith("v", true)) app.version else "v${app.version}") }
+            )
             ElevatedAssistChip(onClick = {}, label = { Text(formatBytes(app.size)) })
         }
     }
@@ -494,28 +526,28 @@ private fun LinksSection(app: FDroidApp) {
         ) {
             if (app.website.isNotBlank()) AssistChip(
                 onClick = { openUrl(ctx, app.website) },
-                label = { Text(stringResource(R.string.website)) })
+                label = { Text(stringResource(R.string.website)) }
+            )
             if (app.sourceCode.isNotBlank()) AssistChip(
                 onClick = { openUrl(ctx, app.sourceCode) },
-                label = { Text(stringResource(R.string.source_code)) })
-            if (app.repositoryUrl.isNotBlank()) AssistChip(onClick = {
-                openUrl(
-                    ctx,
-                    app.repositoryUrl
-                )
-            }, label = { Text(stringResource(R.string.repository_url)) })
-            if (app.license.isNotBlank()) AssistChip(onClick = {
-                openUrl(
-                    ctx,
-                    resolveLicenseLink(app.license)
-                )
-            }, label = { Text(stringResource(R.string.license)) })
+                label = { Text(stringResource(R.string.source_code)) }
+            )
+            if (app.repositoryUrl.isNotBlank()) AssistChip(
+                onClick = { openUrl(ctx, app.repositoryUrl) },
+                label = { Text(stringResource(R.string.repository_url)) }
+            )
+            if (app.license.isNotBlank()) AssistChip(
+                onClick = { openUrl(ctx, resolveLicenseLink(app.license)) },
+                label = { Text(stringResource(R.string.license)) }
+            )
             AssistChip(
                 onClick = { openAppSettings(ctx, app.packageName) },
-                label = { Text(stringResource(R.string.permissions)) })
+                label = { Text(stringResource(R.string.permissions)) }
+            )
             AssistChip(
                 onClick = { openUrl(ctx, exodusReportUrl(app.packageName)) },
-                label = { Text(stringResource(R.string.exodus_privacy)) })
+                label = { Text(stringResource(R.string.exodus_privacy)) }
+            )
         }
     }
 }
@@ -547,7 +579,10 @@ private fun ScreenshotsSection(urls: List<String>) {
         }
     }
     if (showViewer) {
-        Dialog(onDismissRequest = { showViewer = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Dialog(
+            onDismissRequest = { showViewer = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
             Surface(modifier = Modifier.fillMaxSize(), color = colorScheme.background) {
                 FullscreenImageViewer(
                     images = urls,
@@ -616,8 +651,6 @@ private fun formatDate(epochMillis: Long): String {
 
 private fun resolveLicenseLink(raw: String): String {
     val id = raw.trim()
-
-    //  already a URL? (from fdroid index?) maybe in future
     if (id.startsWith("http://") || id.startsWith("https://")) return id
 
     val firstToken = id.split(" ", "OR", "AND", "/", "|", ",")
@@ -626,11 +659,9 @@ private fun resolveLicenseLink(raw: String): String {
         ?: id
 
     val spdxUrl = "https://spdx.org/licenses/$firstToken.html"
-
     val looksSpdx = firstToken.matches(Regex("^[A-Za-z0-9.+-]+$"))
     return if (looksSpdx) spdxUrl
-    else "https://www.duckduckgo.com/search?q=" +
-            URLEncoder.encode("$id license", "UTF-8")
+    else "https://www.duckduckgo.com/search?q=" + URLEncoder.encode("$id license", "UTF-8")
 }
 
 private fun exodusReportUrl(packageName: String) =
@@ -652,8 +683,7 @@ private fun VersionsSection(
 ) {
     val ctx = LocalContext.current
     val clipboard = LocalClipboard.current
-
-    val snackbarManager : SnackbarManager = koinInject()
+    val snackbarManager: SnackbarManager = koinInject()
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         variants.forEach { v ->
@@ -672,7 +702,6 @@ private fun VersionsSection(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Version info
                     Column(Modifier.weight(1f)) {
                         Text("v${v.versionName} (${v.versionCode})", style = typography.bodyLarge)
                         Text(
@@ -689,7 +718,6 @@ private fun VersionsSection(
                         }
                     }
 
-                    // Actions
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box {
                             IconButton(
@@ -716,8 +744,8 @@ private fun VersionsSection(
                                         )
                                     },
                                     onClick = {
-                                        clipboard.nativeClipboard.text = (AnnotatedString(v.apkUrl))
-                                        snackbarManager.show( "URL copied to clipboard")
+                                        clipboard.nativeClipboard.text = AnnotatedString(v.apkUrl)
+                                        snackbarManager.show("URL copied to clipboard")
                                         showMenu = false
                                     }
                                 )
@@ -758,11 +786,15 @@ private fun VersionsSection(
 @Composable
 private fun PreferredSourceSection(
     pkg: String,
-    variants: List<AppVariant>
+    variants: List<AppVariant>,
+    settings: SettingsRepository
 ) {
-    val pref by UpdatesPreferences.observe(pkg)
-        .collectAsState(initial = UpdatesPreferences[pkg])
+    val scope = rememberCoroutineScope()
+    val pref by settings.observeAppUpdatePreference(pkg)
+        .collectAsState(initial = AppUpdatePreference())
+
     var showMenu by remember { mutableStateOf(false) }
+
     val repos = variants
         .map { it.repositoryName to it.repositoryUrl.trim().trimEnd('/') }
         .distinct()
@@ -778,13 +810,17 @@ private fun PreferredSourceSection(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             AssistChip(
                 onClick = { showMenu = true },
-                label = {
-                    Text(pinnedLabel)
-                }
+                label = { Text(pinnedLabel) }
             )
             FilterChip(
                 selected = pref.lockToRepo,
-                onClick = { UpdatesPreferences[pkg] = pref.copy(lockToRepo = !pref.lockToRepo) },
+                onClick = {
+                    scope.launch {
+                        settings.updateAppUpdatePreference(pkg) {
+                            it.copy(lockToRepo = !it.lockToRepo)
+                        }
+                    }
+                },
                 label = { Text(stringResource(R.string.lock_to_repo)) }
             )
         }
@@ -792,7 +828,9 @@ private fun PreferredSourceSection(
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.auto)) },
                 onClick = {
-                    UpdatesPreferences.setPreferredRepo(pkg, null, lock = true)
+                    scope.launch {
+                        settings.setPreferredRepo(pkg, null, lock = true)
+                    }
                     showMenu = false
                 }
             )
@@ -800,7 +838,9 @@ private fun PreferredSourceSection(
                 DropdownMenuItem(
                     text = { Text(name) },
                     onClick = {
-                        UpdatesPreferences.setPreferredRepo(pkg, url, lock = false)
+                        scope.launch {
+                            settings.setPreferredRepo(pkg, url, lock = false)
+                        }
                         showMenu = false
                     }
                 )

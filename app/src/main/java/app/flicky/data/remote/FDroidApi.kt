@@ -11,6 +11,7 @@ import app.flicky.data.local.AppVariant
 import app.flicky.data.local.RepositoryEntity
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.RepositoryInfo
+import app.flicky.di.AppDependencies
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -68,7 +69,7 @@ class FDroidApi(
         onVariant: (AppVariant) -> Unit = {}
     ): FetchResult? = withContext(Dispatchers.IO) {
         val baseUrl = repo.url.trimEnd('/')
-        val strict = runCatching { AppGraph.settings.settingsFlow.first().failOnTrustErrors }
+        val strict = runCatching { AppDependencies.settings.settingsFlow.first().failOnTrustErrors }
             .getOrDefault(false)
         suspend fun client(): OkHttpClient {
             return try {
@@ -267,7 +268,7 @@ class FDroidApi(
         if (!address.isNullOrBlank()) {
             val base = address.trim().trimEnd('/')
             MirrorRegistry.register(base, listOf(base) + mirrors, primaryUrl)
-            runCatching { AppGraph.mirrorPolicyProvider.ensureDefault(base) }
+            runCatching { AppDependencies.mirrorPolicyProvider.ensureDefault(base) }
 
             val name = pickLocalized(nameLocalized) ?: ""
             val desc = pickLocalized(descLocalized) ?: ""
@@ -280,7 +281,7 @@ class FDroidApi(
                     timestamp = timestamp,
                     fingerprint = "" // v2 has no jar signer fingerprint
                 )
-                AppGraph.db.repositoryDao().upsert(entity)
+                AppDependencies.db.repositoryDao().upsert(entity)
             }
         }
     }
@@ -643,7 +644,7 @@ class FDroidApi(
         val base = address.trim().trimEnd('/')
         if (base.isNotBlank()) {
             MirrorRegistry.register(base, listOf(base) + mirrors)
-            runCatching { AppGraph.mirrorPolicyProvider.ensureDefault(base) }
+            runCatching { AppDependencies.mirrorPolicyProvider.ensureDefault(base) }
             runCatching {
                 val entity = RepositoryEntity(
                     baseUrl = base,
@@ -653,7 +654,7 @@ class FDroidApi(
                     timestamp = timestamp,
                     fingerprint = "" // v1 JAR signer not inspected here (kept minimal)
                 )
-                AppGraph.db.repositoryDao().upsert(entity)
+                AppDependencies.db.repositoryDao().upsert(entity)
             }
         }
     }

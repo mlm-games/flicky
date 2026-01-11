@@ -91,6 +91,7 @@ import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppSettings
+import app.flicky.di.AppDependencies
 import app.flicky.install.TaskStage
 import app.flicky.ui.components.AppIcon
 import app.flicky.ui.components.AppTexts
@@ -739,7 +740,7 @@ private fun AppListRow(app: FDroidApp, onClick: () -> Unit, onLongClick: () -> U
         ) {
             AppIcon(app.name, app.iconUrl, size = 56.dp)
             Column(Modifier.weight(1f)) {
-                val installedRepo = AppGraph.installedRepo
+                val installedRepo = AppDependencies.installedRepo
                 val installedVn = remember { mutableStateOf<String?>(null) }
                 LaunchedEffect(app.packageName) {
                     installedVn.value = installedRepo.getVersionName(app.packageName)

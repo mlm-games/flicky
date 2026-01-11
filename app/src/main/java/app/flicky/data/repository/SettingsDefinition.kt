@@ -11,10 +11,59 @@ import io.github.mlmgames.settings.core.types.Dropdown
 import io.github.mlmgames.settings.core.types.Slider
 import io.github.mlmgames.settings.core.types.TextInput
 import io.github.mlmgames.settings.core.types.Toggle
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
-@SchemaVersion(1)
+
+@Serializable
+data class AppUpdatePreference(
+    val ignoreUpdates: Boolean = false,
+    val ignoreVersionCode: Long = 0L,
+    val preferredRepoUrl: String? = null,
+    val lockToRepo: Boolean = true,
+)
+
+@Serializable
+data class AppUpdatePreferencesMap(
+    val prefs: Map<String, AppUpdatePreference> = emptyMap()
+) {
+    companion object {
+        private val json = Json {
+            ignoreUnknownKeys = true
+            encodeDefaults = true
+        }
+
+        fun fromJson(jsonString: String): AppUpdatePreferencesMap {
+            return if (jsonString.isBlank() || jsonString == "{}") {
+                AppUpdatePreferencesMap()
+            } else {
+                try {
+                    json.decodeFromString<AppUpdatePreferencesMap>(jsonString)
+                } catch (_: Exception) {
+                    AppUpdatePreferencesMap()
+                }
+            }
+        }
+
+        fun toJson(map: AppUpdatePreferencesMap): String {
+            return json.encodeToString(map)
+        }
+    }
+
+    operator fun get(packageName: String): AppUpdatePreference = prefs[packageName] ?: AppUpdatePreference()
+
+    fun with(packageName: String, pref: AppUpdatePreference): AppUpdatePreferencesMap {
+        return copy(prefs = prefs + (packageName to pref))
+    }
+
+    fun without(packageName: String): AppUpdatePreferencesMap {
+        return copy(prefs = prefs - packageName)
+    }
+}
+
+@SchemaVersion(2)
 data class AppSettings(
-    // Appearance
     @Setting(
         title = "Theme Mode",
         description = "Choose between light, dark, or system theme",
@@ -48,7 +97,6 @@ data class AppSettings(
     )
     val useListLayout: Boolean = false,
 
-    // General
     @Setting(
         title = "Default Sort",
         description = "How to sort apps by default",
@@ -58,7 +106,6 @@ data class AppSettings(
     )
     val defaultSort: Int = 1,
 
-    // Downloads
     @Setting(
         title = "Auto Update",
         description = "Automatically update apps in the background",
@@ -111,7 +158,6 @@ data class AppSettings(
     )
     val preferredRepo: Int = 0,
 
-    // Filters
     @Setting(
         title = "Hide Anti-Features",
         description = "Hide apps with anti-features",
@@ -128,7 +174,6 @@ data class AppSettings(
     )
     val showIncompatible: Boolean = false,
 
-    // Sync
     @Setting(
         title = "Differential Sync",
         description = "Only fetch changes since last sync",
@@ -148,7 +193,6 @@ data class AppSettings(
     )
     val failOnTrustErrors: Boolean = false,
 
-    // Proxy
     @Setting(
         title = "Use Proxy",
         description = "Route connections through a proxy",
@@ -188,7 +232,6 @@ data class AppSettings(
     )
     val proxyPort: Int = 9050,
 
-    // Other (actions)
     @Setting(
         title = "Clear Cache",
         description = "Clear all cached data and images",
@@ -197,9 +240,6 @@ data class AppSettings(
     )
     @NoReset
     val clearCache: Long = 0L,
-
-    @Persisted
-    val exportSettings: Boolean = false,
 
     @Setting(
         title = "Show Debug Info",
@@ -214,13 +254,16 @@ data class AppSettings(
     val lastSync: Long = 0L,
 
     @Persisted(key = "repo_headers_json")
-    val repoHeadersJson: String = "{}", // replaces REPO_HEADERS
+    val repoHeadersJson: String = "{}",
 
     @Persisted(key = "last_query")
     val lastQuery: String = "",
 
-    @Persisted
-    val importSettings: Boolean = false,
+    @Persisted(key = "favorite_packages")
+    val favoritePackages: Set<String> = emptySet(),
+
+    @Persisted(key = "app_update_prefs_json")
+    val appUpdatePrefsJson: String = "{}",
 )
 
 

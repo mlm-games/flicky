@@ -1,7 +1,7 @@
 package app.flicky.data.repository
 
-import android.content.Context
-import app.flicky.AppGraph
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import app.flicky.data.local.AppDao
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.local.RepoConfigDao
@@ -10,28 +10,45 @@ import app.flicky.data.local.RepositoryEntity
 import app.flicky.data.model.RepositoryInfo
 import app.flicky.data.remote.MirrorRegistry
 import io.github.mlmgames.settings.core.SettingsRepository as KmpSettingsRepository
-import io.github.mlmgames.settings.core.datastore.createSettingsDataStore
+import io.github.mlmgames.settings.core.backup.DeviceInfo
+import io.github.mlmgames.settings.core.backup.ExportResult
+import io.github.mlmgames.settings.core.backup.ImportResult
+import io.github.mlmgames.settings.core.backup.SettingsBackupManager
+import io.github.mlmgames.settings.core.backup.ValidationResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 class SettingsRepository(
-    context: Context,
+    private val dataStore: DataStore<Preferences>,
     private val repositoryDao: RepositoryDao,
     private val repoConfigDao: RepoConfigDao,
     private val appDao: AppDao,
 ) {
-    private val dataStore = createSettingsDataStore(context, name = "flicky.settings")
     private val repo = KmpSettingsRepository(dataStore, AppSettingsSchema)
+
+    private val backupManager = SettingsBackupManager(
+        dataStore = dataStore,
+        schema = AppSettingsSchema,
+        appId = "app.flicky",
+        schemaVersion = 2,
+        deviceInfoProvider = {
+            DeviceInfo(
+                platform = "Android",
+                osVersion = android.os.Build.VERSION.RELEASE,
+                appVersion = app.flicky.BuildConfig.VERSION_NAME,
+//                deviceModel = android.os.Build.MODEL,
+//                locale = Locale.getDefault().toLanguageTag()
+            )
+        }
+    )
 
     val settingsFlow: Flow<AppSettings> = repo.flow
 
-    /**
-     * Repositories from Room join of repositories + repo_config.
-     */
     val repositoriesFlow: Flow<List<RepositoryInfo>> =
         repositoryDao.observeWithConfig()
             .map { rows ->
@@ -59,10 +76,7 @@ class SettingsRepository(
         repo.update(update)
     }
 
-    // Room-backed repo operations (unchanged)
     suspend fun toggleRepository(url: String) {
-        AppGraph.syncManager.cancelCurrentSync()
-
         val base = normalizeUrl(url)
         val existing = repoConfigDao.get(base)
         val newEnabled = !(existing?.enabled ?: true)
@@ -127,6 +141,75 @@ class SettingsRepository(
             )
         }
     }
+
+    fun observeFavorites(): Flow<Set<String>> =
+        settingsFlow.map { it.favoritePackages }.distinctUntilChanged()
+
+    fun observeIsFavorite(packageName: String): Flow<Boolean> =
+        observeFavorites().map { it.contains(packageName) }
+
+    suspend fun isFavorite(packageName: String): Boolean =
+        settingsFlow.first().favoritePackages.contains(packageName)
+
+    suspend fun setFavorite(packageName: String, favorite: Boolean) {
+        repo.update { settings ->
+            val current = settings.favoritePackages.toMutableSet()
+            if (favorite) {
+                current.add(packageName)
+            } else {
+                current.remove(packageName)
+            }
+            settings.copy(favoritePackages = current)
+        }
+    }
+
+    suspend fun toggleFavorite(packageName: String): Boolean {
+        val isFav = isFavorite(packageName)
+        setFavorite(packageName, !isFav)
+        return !isFav
+    }
+
+    private fun parseUpdatePrefs(json: String): AppUpdatePreferencesMap =
+        AppUpdatePreferencesMap.fromJson(json)
+
+    fun observeAppUpdatePreferences(): Flow<AppUpdatePreferencesMap> =
+        settingsFlow.map { parseUpdatePrefs(it.appUpdatePrefsJson) }.distinctUntilChanged()
+
+    fun observeAppUpdatePreference(packageName: String): Flow<AppUpdatePreference> =
+        observeAppUpdatePreferences().map { it[packageName] }
+
+    suspend fun getAppUpdatePreference(packageName: String): AppUpdatePreference {
+        val json = settingsFlow.first().appUpdatePrefsJson
+        return parseUpdatePrefs(json)[packageName]
+    }
+
+    suspend fun setAppUpdatePreference(packageName: String, pref: AppUpdatePreference) {
+        repo.update { settings ->
+            val current = parseUpdatePrefs(settings.appUpdatePrefsJson)
+            val updated = current.with(packageName, pref)
+            settings.copy(appUpdatePrefsJson = AppUpdatePreferencesMap.toJson(updated))
+        }
+    }
+
+    suspend fun updateAppUpdatePreference(
+        packageName: String,
+        update: (AppUpdatePreference) -> AppUpdatePreference
+    ) {
+        val current = getAppUpdatePreference(packageName)
+        setAppUpdatePreference(packageName, update(current))
+    }
+
+    suspend fun setPreferredRepo(packageName: String, repoUrl: String?, lock: Boolean = true) {
+        updateAppUpdatePreference(packageName) {
+            it.copy(preferredRepoUrl = repoUrl, lockToRepo = lock)
+        }
+    }
+
+    suspend fun exportSettings(): ExportResult = backupManager.export()
+
+    suspend fun importSettings(json: String): ImportResult = backupManager.import(json)
+
+    suspend fun validateBackup(json: String): ValidationResult = backupManager.validate(json)
 
     suspend fun setLastSync(millis: Long) {
         repo.set("lastSync", millis)

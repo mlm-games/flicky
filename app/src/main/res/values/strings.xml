@@ -191,4 +191,19 @@
     <string name="install_from">Install from</string>
     <string name="show_less">Show less</string>
     <string name="license">License</string>
+    <string name="nav_favorites">Favourites</string>
+    <string name="no_favorites">No favourites yet!</string>
+    <string name="remove_from_favorites">Remove from favourites</string>
+    <string name="add_to_favorites">Add to Favourites</string>
+    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
+    <string name="remove_favorite">Remove Favourite</string>
+    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
+    <string name="remove">Remove</string>
+    <string name="import_success">Import Successful</string>
+    <string name="import_failed">Import failed!</string>
+    <string name="export_success">Export Successful</string>
+    <string name="export_failed">Export failed!</string>
+    <string name="search_settings">Search Settings</string>
+    <string name="import_settings">Import settings</string>
+    <string name="export_settings">Export settings</string>
 </resources>

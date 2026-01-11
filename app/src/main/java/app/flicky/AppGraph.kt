@@ -21,18 +21,18 @@ import app.flicky.data.repository.InstalledAppsRepository
 import app.flicky.data.repository.RepoHeadersStore
 import app.flicky.data.repository.RepositorySyncManager
 import app.flicky.data.repository.SettingsRepository
+import app.flicky.di.AppDependencies
 import app.flicky.install.Installer
-import coil.Coil
-import coil.annotation.ExperimentalCoilApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-object AppGraph {
+object AppGraph: KoinComponent {
     @Volatile
     private var INSTANCE: AppGraphInstance? = null
     private val LOCK = Any()
@@ -100,33 +100,16 @@ object AppGraph {
             }
         }
 
-        val settings = SettingsRepository(context.applicationContext, db.repositoryDao(), db.repoConfigDao(), db.appDao())
-        val mirrorPolicyProvider: MirrorPolicyProvider = DbMirrorPolicyProvider(db.repoConfigDao())
-        val httpClients: HttpClientProvider = DbHttpClientProvider(db.repoConfigDao())
-        val api = FDroidApi(context.applicationContext, httpClients)
-        val headersStore = RepoHeadersStore(settings)
-        val syncManager = RepositorySyncManager(api, db.appDao(), settings, headersStore)
-        val appRepo = AppRepository(db.appDao())
-        val installer = Installer(context.applicationContext, settings, mirrorPolicyProvider, httpClients)
-        val installedRepo = InstalledAppsRepository(context.applicationContext)
+        val settingsRepository : SettingsRepository by inject()
+
+        val settings = settingsRepository
     }
 
-    private fun getInstance(context: Context): AppGraphInstance {
-        return INSTANCE ?: synchronized(LOCK) {
-            INSTANCE ?: AppGraphInstance(context).also { INSTANCE = it }
-        }
-    }
 
-    val db: AppDatabase get() = getInstance(appContext).db
-    val settings: SettingsRepository get() = getInstance(appContext).settings
-    val api: FDroidApi get() = getInstance(appContext).api
-    val headersStore: RepoHeadersStore get() = getInstance(appContext).headersStore
-    val syncManager: RepositorySyncManager get() = getInstance(appContext).syncManager
-    val appRepo: AppRepository get() = getInstance(appContext).appRepo
-    val mirrorPolicyProvider: MirrorPolicyProvider get() = getInstance(appContext).mirrorPolicyProvider
-    val httpClients: HttpClientProvider get() = getInstance(appContext).httpClients
-    val installer: Installer get() = getInstance(appContext).installer
-    val installedRepo: InstalledAppsRepository get() = getInstance(appContext).installedRepo
+    val db: AppDatabase get() = AppDependencies.db
+    val settings: SettingsRepository get() = AppDependencies.settings
+    val httpClients: HttpClientProvider get() = AppDependencies.httpClients
+    val installer: Installer get() = AppDependencies.installer
 
     private lateinit var appContext: Context
 
@@ -137,28 +120,4 @@ object AppGraph {
         }
     }
 
-    @OptIn(ExperimentalCoilApi::class)
-    suspend fun clearAllCaches(context: Context = appContext) {
-        syncManager.cancelCurrentSync()
-
-        db.withTransaction {
-            db.appDao().clear()
-            db.appDao().clearVariants()
-            db.repositoryDao().clearAll()
-        }
-        headersStore.clear()
-
-        runCatching {
-            settings.repositoriesFlow.first().forEach { MirrorRegistry.clear(it.url) }
-        }
-
-        runCatching {
-            val loader = Coil.imageLoader(context)
-            loader.memoryCache?.clear()
-            loader.diskCache?.clear()
-        }
-
-        // APK download cache
-        runCatching { installer.clearDownloadCache() }
-    }
 }

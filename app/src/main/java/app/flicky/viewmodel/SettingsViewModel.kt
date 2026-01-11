@@ -3,12 +3,17 @@ package app.flicky.viewmodel
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.flicky.AppGraph
+import androidx.room.withTransaction
 import app.flicky.R
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.model.RepositoryInfo
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.SettingsRepository
+import app.flicky.di.AppDependencies
+import coil.Coil
+import coil.annotation.ExperimentalCoilApi
+import io.github.mlmgames.settings.core.backup.ExportResult
+import io.github.mlmgames.settings.core.backup.ImportResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -37,7 +42,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
             _configsVersion
         ) { repos, _ ->
             withContext(Dispatchers.IO) {
-                val dao = AppGraph.db.repoConfigDao()
+                val dao = AppDependencies.db.repoConfigDao()
                 repos.map { r ->
                     val base = r.url.trimEnd('/')
                     val config = dao.get(base) ?: RepoConfig(
@@ -53,17 +58,25 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
         repo.updateSetting(propertyName, value)
     }
 
-    fun toggleRepository(url: String) = viewModelScope.launch { repo.toggleRepository(url) }
-    fun addRepository(name: String, url: String) = viewModelScope.launch { repo.addRepository(name, url) }
-    fun deleteRepository(url: String) = viewModelScope.launch { repo.deleteRepository(url) }
+    fun toggleRepository(url: String) = viewModelScope.launch {
+        AppDependencies.syncManager.cancelCurrentSync()
+        repo.toggleRepository(url)
+    }
+
+    fun addRepository(name: String, url: String) = viewModelScope.launch {
+        repo.addRepository(name, url)
+    }
+
+    fun deleteRepository(url: String) = viewModelScope.launch {
+        repo.deleteRepository(url)
+    }
 
     fun performAction(propertyName: String) = viewModelScope.launch {
         when (propertyName) {
             "clearCache" -> {
-                AppGraph.clearAllCaches()
+                clearAllCaches()
                 _events.emit(UiEvent.Toast(R.string.cache_cleared))
-                // immediately resync fresh
-                runCatching { AppGraph.syncManager.syncAll(force = true) }
+                runCatching { AppDependencies.syncManager.syncAll(force = true) }
             }
             "exportSettings" -> _events.emit(UiEvent.RequestExport)
             else -> _events.emit(UiEvent.Toast(R.string.no_action_attached))
@@ -73,6 +86,36 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     fun resetRepositoriesToDefaults() = viewModelScope.launch {
         repo.resetRepositoriesToDefaults()
         _events.emit(UiEvent.Toast(R.string.repositories_reset))
+    }
+
+    suspend fun exportSettings(): ExportResult = repo.exportSettings()
+
+    suspend fun importSettings(json: String): ImportResult = repo.importSettings(json)
+
+    @OptIn(ExperimentalCoilApi::class)
+    private suspend fun clearAllCaches() = withContext(Dispatchers.IO) {
+        AppDependencies.syncManager.cancelCurrentSync()
+
+        AppDependencies.db.withTransaction {
+            AppDependencies.db.appDao().clear()
+            AppDependencies.db.appDao().clearVariants()
+            AppDependencies.db.repositoryDao().clearAll()
+        }
+        AppDependencies.headersStore.clear()
+
+        runCatching {
+            repo.repositoriesFlow.first().forEach {
+                app.flicky.data.remote.MirrorRegistry.clear(it.url)
+            }
+        }
+
+        runCatching {
+            val loader = Coil.imageLoader(AppDependencies.context)
+            loader.memoryCache?.clear()
+            loader.diskCache?.clear()
+        }
+
+        runCatching { AppDependencies.installer.clearDownloadCache() }
     }
 
     sealed class UiEvent {

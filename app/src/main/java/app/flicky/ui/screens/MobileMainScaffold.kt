@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shop
 import androidx.compose.material.icons.filled.Update
@@ -37,9 +38,10 @@ private data class NavItem(@param:StringRes val labelResId: Int, val icon: Image
 
 private val navItems = listOf(
     NavItem(R.string.nav_browse, Icons.Default.Explore, 0),
-    NavItem(R.string.nav_categories, Icons.Default.Category, 1),
-    NavItem(R.string.nav_updates, Icons.Default.Update, 2),
-    NavItem(R.string.nav_settings, Icons.Default.Settings, 3)
+    NavItem(R.string.nav_favorites, Icons.Default.Favorite, 1),
+    NavItem(R.string.nav_categories, Icons.Default.Category, 2),
+    NavItem(R.string.nav_updates, Icons.Default.Update, 3),
+    NavItem(R.string.nav_settings, Icons.Default.Settings, 4)
 )
 
 @SuppressLint("ConfigurationScreenWidthHeight")

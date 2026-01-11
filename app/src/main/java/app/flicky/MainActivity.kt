@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.rememberNavBackStack
 import app.flicky.data.repository.AppSettings
+import app.flicky.di.AppDependencies
 import app.flicky.navigation.FlickyDestination
 import app.flicky.navigation.Nav3Host
 import app.flicky.network.CoilCallFactory
@@ -37,7 +38,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         runCatching {
-            val callFactory = CoilCallFactory(AppGraph.httpClients)
+            val callFactory = CoilCallFactory(AppDependencies.httpClients)
             val loader = ImageLoader.Builder(applicationContext)
                 .callFactory(callFactory)
                 .crossfade(true)
@@ -52,7 +53,7 @@ class MainActivity : ComponentActivity() {
             val settingsState by settingsViewModel.settings.collectAsState(AppSettings())
 
             LaunchedEffect(settingsState.failOnTrustErrors) {
-                val callFactory = CoilCallFactory(AppGraph.httpClients, settingsState.failOnTrustErrors)
+                val callFactory = CoilCallFactory(AppDependencies.httpClients, settingsState.failOnTrustErrors)
                 val loader = ImageLoader.Builder(applicationContext)
                     .callFactory(callFactory)
                     .crossfade(true)
@@ -79,9 +80,10 @@ class MainActivity : ComponentActivity() {
                 return when (backStack.lastOrNull()) {
                     is FlickyDestination.Browse -> 0
                     is FlickyDestination.Detail -> 0
-                    is FlickyDestination.Categories -> 1
-                    is FlickyDestination.Updates -> 2
-                    is FlickyDestination.Settings -> 3
+                    is FlickyDestination.Favorites -> 1
+                    is FlickyDestination.Categories -> 2
+                    is FlickyDestination.Updates -> 3
+                    is FlickyDestination.Settings -> 4
                     else -> 0
                 }
             }
@@ -91,8 +93,9 @@ class MainActivity : ComponentActivity() {
 
                 val dest = when (index) {
                     0 -> FlickyDestination.Browse
-                    1 -> FlickyDestination.Categories("All")
-                    2 -> FlickyDestination.Updates
+                    1 -> FlickyDestination.Favorites
+                    2 -> FlickyDestination.Categories("All")
+                    3 -> FlickyDestination.Updates
                     else -> FlickyDestination.Settings
                 }
                 if (backStack.lastOrNull() != dest) {

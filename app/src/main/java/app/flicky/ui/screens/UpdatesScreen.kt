@@ -24,9 +24,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.flicky.AppGraph
 import app.flicky.R
-import app.flicky.data.external.UpdatesPreference
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.AppSettings
+import app.flicky.data.repository.AppUpdatePreference
 import app.flicky.helper.DeviceUtils
 import app.flicky.helper.cardAsFocusGroup
 import app.flicky.install.TaskStage
@@ -295,7 +295,7 @@ private fun UpdateCard(
     installedVersionName: String?,
     installedVersionCode: Long?,
     actions: UpdatesActions,
-    pref: UpdatesPreference?,
+    pref: AppUpdatePreference?,
     isTV: Boolean,
     isActive: Boolean = false,
     isIgnored: Boolean = false
@@ -475,7 +475,7 @@ private fun InstalledCard(
 
 @Composable
 private fun IgnoreMenu(
-    pref: UpdatesPreference?,
+    pref: AppUpdatePreference?,
     currentVersionCode: Long,
     onIgnoreThisVersion: () -> Unit,
     onIgnoreAll: () -> Unit,

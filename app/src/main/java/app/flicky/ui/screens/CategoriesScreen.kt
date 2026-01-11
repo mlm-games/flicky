@@ -25,6 +25,7 @@ import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppSettings
 import app.flicky.ui.components.AdaptiveAppCard
 import app.flicky.R
+import app.flicky.di.AppDependencies
 import app.flicky.ui.components.global.MyScreenScaffold
 
 
@@ -35,9 +36,9 @@ fun CategoriesScreen(
     progress: Float,
     initialCategory: String = "All"
 ) {
-    val categories by AppGraph.appRepo.categories().collectAsState(initial = emptyList())
+    val categories by AppDependencies.appRepo.categories().collectAsState(initial = emptyList())
     val settingsState by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
-    val apps by AppGraph.appRepo.appsFlow(
+    val apps by AppDependencies.appRepo.appsFlow(
         query = "",
         sort = SortOption.Updated,
         hideAnti = false,

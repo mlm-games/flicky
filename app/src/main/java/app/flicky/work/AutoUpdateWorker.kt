@@ -2,11 +2,12 @@ package app.flicky.work
 
 import android.content.Context
 import androidx.work.*
-import app.flicky.AppGraph
-import app.flicky.data.external.UpdatesPreferences
 import app.flicky.data.model.FDroidApp
+import app.flicky.data.repository.AppUpdatePreference
+import app.flicky.data.repository.AppUpdatePreferencesMap
 import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.VariantSelector
+import app.flicky.di.AppDependencies
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -19,36 +20,48 @@ class AutoUpdateWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            val settings = AppGraph.settings.settingsFlow.first()
-            if (!settings.autoUpdate) return@withContext Result.success()
+            val settings = AppDependencies.settings
+            val settingsState = settings.settingsFlow.first()
 
-            val installed = AppGraph.installedRepo.getInstalledDetailed()
+            if (!settingsState.autoUpdate) return@withContext Result.success()
+
+            val installedRepo = AppDependencies.installedRepo
+            val db = AppDependencies.db
+            val installer = AppDependencies.installer
+
+            val installed = installedRepo.getInstalledDetailed()
             val installedVc = installed.associate { it.packageName to it.versionCode }
-            val apps: List<FDroidApp> = AppGraph.db.appDao().observeAll().first()
+            val apps: List<FDroidApp> = db.appDao().observeAll().first()
+            val allPrefs = AppUpdatePreferencesMap.fromJson(settingsState.appUpdatePrefsJson).prefs
 
             val candidates = apps.filter { app ->
                 val cur = installedVc[app.packageName] ?: return@filter false
-                val latestCompat = AppGraph.db.appDao().maxCompatibleVersionCode(app.packageName)?.toLong() ?: 0L
+                val latestCompat = db.appDao().maxCompatibleVersionCode(app.packageName)?.toLong() ?: 0L
                 if (latestCompat <= cur) return@filter false
-                val pref = UpdatesPreferences[app.packageName]
+
+                val pref = allPrefs[app.packageName] ?: AppUpdatePreference()
                 !pref.ignoreUpdates && !(pref.ignoreVersionCode > 0 && latestCompat <= pref.ignoreVersionCode)
             }
 
             for (app in candidates) {
-                val pref = UpdatesPreferences[app.packageName]
-                val variants = AppGraph.db.appDao().variantsFor(app.packageName)
+                val pref = allPrefs[app.packageName] ?: AppUpdatePreference()
+                val variants = db.appDao().variantsFor(app.packageName)
                 val chosen = VariantSelector.pick(
-                    variants, PreferredRepo.Auto, pref.preferredRepoUrl, strict = pref.lockToRepo
+                    variants = variants,
+                    preferred = PreferredRepo.Auto,
+                    preferredRepoUrl = pref.preferredRepoUrl,
+                    strict = pref.lockToRepo
                 )
                 if (chosen != null) {
-                    AppGraph.installer.install(chosen)
+                    installer.install(chosen)
                 } else {
                     // Skip if locked and no variant matches; otherwise fallback
-                    if (!pref.lockToRepo) AppGraph.installer.install(app)
+                    if (!pref.lockToRepo) installer.install(app)
                 }
             }
             Result.success()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            android.util.Log.e("AutoUpdateWorker", "Auto update failed", e)
             Result.retry()
         }
     }
