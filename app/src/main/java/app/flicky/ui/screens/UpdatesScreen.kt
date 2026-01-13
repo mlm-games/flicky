@@ -502,6 +502,7 @@ private fun IgnoreMenu(
 
         DropdownMenu(
             expanded = open,
+            containerColor = colorScheme.background,
             onDismissRequest = { open = false }
         ) {
             if (isEffectivelyIgnored) {

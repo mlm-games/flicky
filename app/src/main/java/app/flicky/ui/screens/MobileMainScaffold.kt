@@ -38,10 +38,10 @@ private data class NavItem(@param:StringRes val labelResId: Int, val icon: Image
 
 private val navItems = listOf(
     NavItem(R.string.nav_browse, Icons.Default.Explore, 0),
-    NavItem(R.string.nav_favorites, Icons.Default.Favorite, 1),
-    NavItem(R.string.nav_categories, Icons.Default.Category, 2),
-    NavItem(R.string.nav_updates, Icons.Default.Update, 3),
-    NavItem(R.string.nav_settings, Icons.Default.Settings, 4)
+//    NavItem(R.string.nav_categories, Icons.Default.Category, 2),
+    NavItem(R.string.nav_updates, Icons.Default.Update, 1),
+    NavItem(R.string.nav_favorites, Icons.Default.Favorite, 2),
+    NavItem(R.string.nav_settings, Icons.Default.Settings, 3)
 )
 
 @SuppressLint("ConfigurationScreenWidthHeight")

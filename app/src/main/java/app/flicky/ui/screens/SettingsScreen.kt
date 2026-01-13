@@ -309,6 +309,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                     }
                     DropdownMenu(
                         expanded = showMoreMenu,
+                        containerColor = colorScheme.background,
                         onDismissRequest = { showMoreMenu = false }
                     ) {
                         DropdownMenuItem(
@@ -694,6 +695,7 @@ private fun RepoConfigCard(
 
                         DropdownMenu(
                             expanded = showMenu,
+                            containerColor = colorScheme.background,
                             onDismissRequest = { showMenu = false }
                         ) {
                             DropdownMenuItem(
@@ -785,6 +787,7 @@ private fun RepoConfigCard(
 
                     ExposedDropdownMenu(
                         expanded = openStrategy,
+                        containerColor = colorScheme.background,
                         onDismissRequest = { openStrategy = false },
                     ) {
                         strategies.forEach { s ->
@@ -832,6 +835,7 @@ private fun RepoConfigCard(
 
                     ExposedDropdownMenu(
                         expanded = openTrust,
+                        containerColor = colorScheme.background,
                         onDismissRequest = { openTrust = false }
                     ) {
                         trustModes.forEach { s ->

@@ -15,7 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.rememberNavBackStack
 import app.flicky.data.repository.AppSettings
 import app.flicky.di.AppDependencies
-import app.flicky.navigation.FlickyDestination
+import app.flicky.navigation.NavScreen
 import app.flicky.navigation.Nav3Host
 import app.flicky.network.CoilCallFactory
 import app.flicky.ui.components.snackbar.LauncherSnackbarHost
@@ -74,16 +74,15 @@ class MainActivity : ComponentActivity() {
             val themeMode = settingsState.themeMode
             val dynamicColors = settingsState.dynamicTheme
 
-            val backStack = rememberNavBackStack(FlickyDestination.Browse)
+            val backStack = rememberNavBackStack(NavScreen.Browse)
 
             fun selectedIndexForTop(): Int {
                 return when (backStack.lastOrNull()) {
-                    is FlickyDestination.Browse -> 0
-                    is FlickyDestination.Detail -> 0
-                    is FlickyDestination.Favorites -> 1
-                    is FlickyDestination.Categories -> 2
-                    is FlickyDestination.Updates -> 3
-                    is FlickyDestination.Settings -> 4
+                    is NavScreen.Browse -> 0
+                    is NavScreen.Detail -> 0
+                    is NavScreen.Updates -> 1
+                    is NavScreen.Favorites -> 2
+                    is NavScreen.Settings -> 3
                     else -> 0
                 }
             }
@@ -92,11 +91,10 @@ class MainActivity : ComponentActivity() {
                 while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
 
                 val dest = when (index) {
-                    0 -> FlickyDestination.Browse
-                    1 -> FlickyDestination.Favorites
-                    2 -> FlickyDestination.Categories("All")
-                    3 -> FlickyDestination.Updates
-                    else -> FlickyDestination.Settings
+                    0 -> NavScreen.Browse
+                    1 -> NavScreen.Updates
+                    2 -> NavScreen.Favorites
+                    else -> NavScreen.Settings
                 }
                 if (backStack.lastOrNull() != dest) {
                     backStack.add(dest)

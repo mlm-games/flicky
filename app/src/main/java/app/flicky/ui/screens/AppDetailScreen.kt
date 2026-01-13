@@ -47,6 +47,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedButton
@@ -732,6 +733,7 @@ private fun VersionsSection(
                             }
                             DropdownMenu(
                                 expanded = showMenu,
+                                containerColor = colorScheme.background,
                                 onDismissRequest = { showMenu = false }
                             ) {
                                 DropdownMenuItem(
@@ -824,7 +826,9 @@ private fun PreferredSourceSection(
                 label = { Text(stringResource(R.string.lock_to_repo)) }
             )
         }
-        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+        DropdownMenu(expanded = showMenu,
+            containerColor = colorScheme.background,
+            onDismissRequest = { showMenu = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.auto)) },
                 onClick = {

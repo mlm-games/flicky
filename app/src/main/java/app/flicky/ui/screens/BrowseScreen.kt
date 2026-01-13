@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.MoreVert
@@ -112,6 +113,7 @@ fun BrowseScreen(
     onSortChange: (SortOption) -> Unit,
     onSearchChange: (String) -> Unit,
     onAppClick: (FDroidApp) -> Unit,
+    onCategoriesClick: (String?) -> Unit,
     onSyncClick: () -> Unit,
     onForceSyncClick: () -> Unit,
     onClearAppsClick: () -> Unit,
@@ -230,6 +232,7 @@ fun BrowseScreen(
                             }
                             DropdownMenu(
                                 expanded = menuOpen,
+                                containerColor = MaterialTheme.colorScheme.background,
                                 onDismissRequest = { menuOpen = false }
                             ) {
                                 DropdownMenuItem(
@@ -247,6 +250,14 @@ fun BrowseScreen(
                                         onClearAppsClick()
                                     },
                                     leadingIcon = { Icon(Icons.Default.ClearAll, contentDescription = null) }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.nav_categories)) },
+                                    onClick = {
+                                        menuOpen = false
+                                        onCategoriesClick(null)
+                                    },
+                                    leadingIcon = { Icon(Icons.Default.Category, contentDescription = null) }
                                 )
                             }
                         }

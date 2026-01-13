@@ -51,10 +51,10 @@ fun TvNavigationSidebar(selected: Int, onSelect: (Int)->Unit) {
             Spacer(Modifier.height(24.dp))
 
             NavItem(stringResource(R.string.nav_browse), Icons.Default.Explore, selected == 0) { onSelect(0) }
-            NavItem(stringResource(R.string.nav_favorites), Icons.Default.Favorite, selected == 1) { onSelect(1) }
-            NavItem(stringResource(R.string.nav_categories), Icons.Default.Category, selected == 2) { onSelect(2) }
-            NavItem(stringResource(R.string.nav_updates), Icons.Default.Update, selected == 3) { onSelect(3) }
-            NavItem(stringResource(R.string.nav_settings), Icons.Default.Settings, selected == 4) { onSelect(4) }
+//            NavItem(stringResource(R.string.nav_categories), Icons.Default.Category, selected == 2) { onSelect(2) }
+            NavItem(stringResource(R.string.nav_updates), Icons.Default.Update, selected == 1) { onSelect(1) }
+            NavItem(stringResource(R.string.nav_favorites), Icons.Default.Favorite, selected == 2) { onSelect(2) }
+            NavItem(stringResource(R.string.nav_settings), Icons.Default.Settings, selected == 3) { onSelect(3) }
 
             Spacer(Modifier.weight(1f))
         }

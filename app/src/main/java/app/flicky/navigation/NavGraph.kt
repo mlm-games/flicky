@@ -44,7 +44,7 @@ fun Nav3Host(
             rememberViewModelStoreNavEntryDecorator(),
         ),
         entryProvider = entryProvider {
-            entry<FlickyDestination.Browse> {
+            entry<NavScreen.Browse> {
                 val query = browseViewModel.query.collectAsStateWithLifecycle().value
                 val sort = browseViewModel.sort.collectAsStateWithLifecycle().value
                 val browseUi = browseViewModel.uiState.collectAsStateWithLifecycle().value
@@ -55,7 +55,8 @@ fun Nav3Host(
                     sort = sort,
                     onSortChange = browseViewModel::setSort,
                     onSearchChange = browseViewModel::setQuery,
-                    onAppClick = { app -> backStack.add(FlickyDestination.Detail(app.packageName)) },
+                    onAppClick = { app -> backStack.add(NavScreen.Detail(app.packageName)) },
+                    onCategoriesClick = { backStack.add(NavScreen.Categories(it)) },
                     onSyncClick = browseViewModel::syncRepos,
                     onForceSyncClick = browseViewModel::forceSyncRepos,
                     onClearAppsClick = browseViewModel::clearAllApps,
@@ -68,38 +69,38 @@ fun Nav3Host(
                 )
             }
 
-            entry<FlickyDestination.Categories> { args ->
+            entry<NavScreen.Categories> { args ->
                 val browseUi = browseViewModel.uiState.collectAsStateWithLifecycle().value
                 CategoriesScreen(
                     isSyncing = browseUi.isSyncing,
                     progress = browseUi.progress,
                     initialCategory = args.selected ?: "All",
-                    onAppClick = { app -> backStack.add(FlickyDestination.Detail(app.packageName)) },
+                    onAppClick = { app -> backStack.add(NavScreen.Detail(app.packageName)) },
                 )
             }
 
-            entry<FlickyDestination.Updates> {
+            entry<NavScreen.Updates> {
                 UpdatesRoute(
-                    onOpenDetails = { pkg -> backStack.add(FlickyDestination.Detail(pkg)) }
+                    onOpenDetails = { pkg -> backStack.add(NavScreen.Detail(pkg)) }
                 )
             }
 
-            entry<FlickyDestination.Settings> {
+            entry<NavScreen.Settings> {
                 SettingsScreen(vm = settingsViewModel)
             }
 
-            entry<FlickyDestination.Detail> { args ->
+            entry<NavScreen.Detail> { args ->
                 AppDetailRoute(
                     pkg = args.pkg,
                     onOpenCategory = { cat ->
-                        backStack.add(FlickyDestination.Categories(selected = cat))
+                        backStack.add(NavScreen.Categories(selected = cat))
                     }
                 )
             }
 
-            entry<FlickyDestination.Favorites> {
+            entry<NavScreen.Favorites> {
                 FavoritesRoute(
-                    onOpenDetails = { pkg -> backStack.add(FlickyDestination.Detail(pkg)) }
+                    onOpenDetails = { pkg -> backStack.add(NavScreen.Detail(pkg)) }
                 )
             }
         }
@@ -107,23 +108,23 @@ fun Nav3Host(
 }
 
 @Serializable
-sealed interface FlickyDestination : NavKey {
+sealed interface NavScreen : NavKey {
 
     @Serializable
-    data object Browse : FlickyDestination
+    data object Browse : NavScreen
 
     @Serializable
-    data class Categories(val selected: String? = "All") : FlickyDestination
+    data class Categories(val selected: String? = "All") : NavScreen
 
     @Serializable
-    data object Updates : FlickyDestination
+    data object Updates : NavScreen
 
     @Serializable
-    data object Settings : FlickyDestination
+    data object Settings : NavScreen
 
     @Serializable
-    data class Detail(val pkg: String) : FlickyDestination
+    data class Detail(val pkg: String) : NavScreen
 
     @Serializable
-    data object Favorites : FlickyDestination
+    data object Favorites : NavScreen
 }
