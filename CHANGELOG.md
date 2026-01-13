@@ -1,3 +1,11 @@
+## v4.0.1
+
+- Move categories to browseScreen's dropdown menu, and make dropdown menu background align with theme
+- Add search settings option, and import / export json options
+- Add favourites tab (#48), and migrate update prefs to datastore
+- Add back categories & versions for TV (to app cards in browse screen), and improve their formatting
+
+
 ## v3.9.2
 
 - Move categories to browseScreen's dropdown menu, and make dropdown menu background align with theme
