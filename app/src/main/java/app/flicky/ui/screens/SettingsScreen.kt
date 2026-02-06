@@ -18,9 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
@@ -66,6 +65,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -140,8 +141,6 @@ fun SettingsScreen(vm: SettingsViewModel) {
     var showMoreMenu by remember { mutableStateOf(false) }
 
     val cfg = LocalConfiguration.current
-    val isTablet = cfg.screenWidthDp >= 600
-    val gridCells = if (isTablet) GridCells.Adaptive(minSize = 400.dp) else GridCells.Fixed(1)
 
     val repoConfigs by produceState(
         initialValue = emptyMap(),
@@ -338,11 +337,9 @@ fun SettingsScreen(vm: SettingsViewModel) {
             }
         }
     ) {
-        LazyVerticalGrid(
-            columns = gridCells,
+        LazyColumn(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize()
         ) {
             // Settings cards by category (schema-driven)
@@ -651,6 +648,9 @@ private fun RepoConfigCard(
     var openStrategy by remember { mutableStateOf(false) }
     var openTrust by remember { mutableStateOf(false) }
 
+    val strategyFocusRequester = remember { FocusRequester() }
+    val trustFocusRequester = remember { FocusRequester() }
+
     val updateConfig: (RepoConfig) -> Unit = { newConfig ->
         localConfig = newConfig
         onConfigChange(newConfig)
@@ -783,12 +783,16 @@ private fun RepoConfigCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                            .focusRequester(strategyFocusRequester)
                     )
 
                     ExposedDropdownMenu(
                         expanded = openStrategy,
                         containerColor = colorScheme.background,
-                        onDismissRequest = { openStrategy = false },
+                        onDismissRequest = {
+                            openStrategy = false
+                            strategyFocusRequester.requestFocus()
+                        },
                     ) {
                         strategies.forEach { s ->
                             DropdownMenuItem(
@@ -796,6 +800,7 @@ private fun RepoConfigCard(
                                 onClick = {
                                     openStrategy = false
                                     updateConfig(localConfig.copy(strategy = s))
+                                    strategyFocusRequester.requestFocus()
                                 }
                             )
                         }
@@ -817,7 +822,7 @@ private fun RepoConfigCard(
 
                 ExposedDropdownMenuBox(
                     expanded = openTrust,
-                    onExpandedChange = { openTrust = !openTrust }
+                    onExpandedChange = { openTrust = !openTrust },
                 ) {
                     OutlinedTextField(
                         value = trustModes[trustIdx],
@@ -831,12 +836,16 @@ private fun RepoConfigCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
+                            .focusRequester(trustFocusRequester)
                     )
 
                     ExposedDropdownMenu(
                         expanded = openTrust,
                         containerColor = colorScheme.background,
-                        onDismissRequest = { openTrust = false }
+                        onDismissRequest = {
+                            openTrust = false
+                            trustFocusRequester.requestFocus()
+                        }
                     ) {
                         trustModes.forEach { s ->
                             DropdownMenuItem(
@@ -844,6 +853,7 @@ private fun RepoConfigCard(
                                 onClick = {
                                     openTrust = false
                                     updateConfig(config.copy(trustMode = s))
+                                    trustFocusRequester.requestFocus()
                                 }
                             )
                         }
