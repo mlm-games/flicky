@@ -1,3 +1,9 @@
+## v4.1.2
+
+- Make settings always show in column, and add focus requesters for ExposedDropDown (#50)
+- Bump to agp 9, and settings module (fdroid - need to update ndk to r28c)
+
+
 ## v4.1.1
 
 - Make settings always show in column, and add focus requesters for ExposedDropDown (#50)
