@@ -123,6 +123,19 @@ fun AppDetailScreen(
     val cfg = LocalConfiguration.current
     val isWide = cfg.screenWidthDp >= 900
     val settings: SettingsRepository = koinInject()
+    val pref by settings.observeAppUpdatePreference(app.packageName)
+        .collectAsState(initial = AppUpdatePreference())
+    val globalPreferredRepo by settings.settingsFlow
+        .map { PreferredRepo.fromIndex(it.preferredRepo) }
+        .collectAsState(initial = PreferredRepo.Auto)
+    val updateCandidate = remember(variants, pref, globalPreferredRepo) {
+        VariantSelector.pickCompatible(
+            variants = variants,
+            preferred = globalPreferredRepo,
+            preferredRepoUrl = pref.preferredRepoUrl,
+            strict = pref.lockToRepo
+        )
+    }
 
     MyScreenScaffold(
         title = app.name,
@@ -165,6 +178,7 @@ fun AppDetailScreen(
                 DesktopLayout(
                     app = app,
                     installedVersionCode = installedVersionCode,
+                    updateCandidate = updateCandidate,
                     stage = stage,
                     onInstall = onInstall,
                     onInstallVariant = onInstallVariant,
@@ -174,12 +188,15 @@ fun AppDetailScreen(
                     error = error,
                     onOpenCategory = onOpenCategory,
                     variants = variants,
-                    settings = settings
+                    settings = settings,
+                    pref = pref,
+                    globalPreferredRepo = globalPreferredRepo
                 )
             } else {
                 MobileLayout(
                     app = app,
                     installedVersionCode = installedVersionCode,
+                    updateCandidate = updateCandidate,
                     stage = stage,
                     onInstall = onInstall,
                     onInstallVariant = onInstallVariant,
@@ -189,7 +206,9 @@ fun AppDetailScreen(
                     error = error,
                     onOpenCategory = onOpenCategory,
                     variants = variants,
-                    settings = settings
+                    settings = settings,
+                    pref = pref,
+                    globalPreferredRepo = globalPreferredRepo
                 )
             }
         }
@@ -205,6 +224,7 @@ fun AppDetailScreen(
 private fun DesktopLayout(
     app: FDroidApp,
     installedVersionCode: Long?,
+    updateCandidate: AppVariant?,
     stage: TaskStage?,
     onInstall: () -> Unit,
     onInstallVariant: (AppVariant) -> Unit,
@@ -215,6 +235,8 @@ private fun DesktopLayout(
     onOpenCategory: (String) -> Unit,
     variants: List<AppVariant>,
     settings: SettingsRepository,
+    pref: AppUpdatePreference,
+    globalPreferredRepo: PreferredRepo,
 ) {
     Row(Modifier.fillMaxSize()) {
         Surface(
@@ -228,7 +250,7 @@ private fun DesktopLayout(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    AppHeader(app, installedVersionCode, stage, onInstall, onOpen, onCancel, onUninstall, error, 96.dp)
+                    AppHeader(app, installedVersionCode, updateCandidate, stage, onInstall, onOpen, onCancel, onUninstall, error, 96.dp)
                 }
                 item { ChipsSection(app, installedVersionCode, onOpenCategory) }
                 item { DetailsSection(app) }
@@ -251,6 +273,8 @@ private fun DesktopLayout(
                     app = app,
                     variants = variants,
                     installedVersionCode = installedVersionCode,
+                    pref = pref,
+                    globalPreferredRepo = globalPreferredRepo,
                     onInstallVariant = onInstallVariant,
                     settings = settings
                 )
@@ -263,6 +287,7 @@ private fun DesktopLayout(
 private fun MobileLayout(
     app: FDroidApp,
     installedVersionCode: Long?,
+    updateCandidate: AppVariant?,
     stage: TaskStage?,
     onInstall: () -> Unit,
     onInstallVariant: (AppVariant) -> Unit,
@@ -273,6 +298,8 @@ private fun MobileLayout(
     onOpenCategory: (String) -> Unit,
     variants: List<AppVariant>,
     settings: SettingsRepository,
+    pref: AppUpdatePreference,
+    globalPreferredRepo: PreferredRepo,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -284,6 +311,7 @@ private fun MobileLayout(
                 AppHeader(
                     app = app,
                     installedVersionCode = installedVersionCode,
+                    updateCandidate = updateCandidate,
                     stage = stage,
                     onInstall = onInstall,
                     onOpen = onOpen,
@@ -304,6 +332,8 @@ private fun MobileLayout(
                 app = app,
                 variants = variants,
                 installedVersionCode = installedVersionCode,
+                pref = pref,
+                globalPreferredRepo = globalPreferredRepo,
                 onInstallVariant = onInstallVariant,
                 settings = settings
             )
@@ -317,15 +347,11 @@ private fun RightPaneContent(
     app: FDroidApp,
     variants: List<AppVariant>,
     installedVersionCode: Long?,
+    pref: AppUpdatePreference,
+    globalPreferredRepo: PreferredRepo,
     onInstallVariant: (AppVariant) -> Unit,
     settings: SettingsRepository
 ) {
-    val pref by settings.observeAppUpdatePreference(app.packageName)
-        .collectAsState(initial = AppUpdatePreference())
-    val globalPreferredRepo by settings.settingsFlow
-        .map { PreferredRepo.fromIndex(it.preferredRepo) }
-        .collectAsState(initial = PreferredRepo.Auto)
-
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (app.whatsNew.isNotBlank()) {
             SectionTitle(stringResource(R.string.whats_new))
@@ -365,6 +391,7 @@ private fun RightPaneContent(
 private fun AppHeader(
     app: FDroidApp,
     installedVersionCode: Long?,
+    updateCandidate: AppVariant?,
     stage: TaskStage?,
     onInstall: () -> Unit,
     onOpen: () -> Unit,
@@ -445,7 +472,7 @@ private fun AppHeader(
             }
         } else {
             if (installedVersionCode != null) {
-                val hasUpdate = app.versionCode > installedVersionCode
+                val hasUpdate = updateCandidate?.let { it.versionCode.toLong() > installedVersionCode } ?: false
                 Row {
                     if (hasUpdate) {
                         FilledTonalButton(onClick = onInstall) {
@@ -707,14 +734,35 @@ private fun VersionsSection(
             strict = pref.lockToRepo
         )
     }
+    val normalizedPreferredRepoUrl = remember(pref.preferredRepoUrl) {
+        pref.preferredRepoUrl?.trim()?.trimEnd('/')
+    }
+    val normalizedPreferredRepoFromGlobal = remember(variants, globalPreferredRepo) {
+        if (globalPreferredRepo == PreferredRepo.Auto) null
+        else variants.firstOrNull { VariantSelector.matchesPreferred(it, globalPreferredRepo) }
+            ?.repositoryUrl?.trim()?.trimEnd('/')
+    }
+    val preferredRepoUrl = normalizedPreferredRepoUrl
+        ?: normalizedPreferredRepoFromGlobal
+        ?: preferredVariant?.repositoryUrl?.trim()?.trimEnd('/')
+
+    val preferredRepoHasInstalledVersion = remember(variants, installedVersionCode, preferredRepoUrl) {
+        if (installedVersionCode == null || preferredRepoUrl == null) false
+        else variants.any { v ->
+            v.versionCode.toLong() == installedVersionCode &&
+                    v.repositoryUrl.trim().trimEnd('/') == preferredRepoUrl
+        }
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         variants.forEach { v ->
+            val installedMatchesVersion = installedVersionCode?.let { v.versionCode.toLong() == it } == true
             val installed = when {
                 installedVersionCode == null -> false
-                preferredVariant != null -> preferredVariant.versionCode.toLong() == installedVersionCode &&
-                        preferredVariant.repositoryUrl == v.repositoryUrl
-                else -> v.versionCode.toLong() == installedVersionCode
+                !installedMatchesVersion -> false
+                preferredRepoUrl != null && preferredRepoHasInstalledVersion ->
+                    v.repositoryUrl.trim().trimEnd('/') == preferredRepoUrl
+                else -> installedMatchesVersion
             }
             val compat = v.isCompatible
             var showMenu by remember { mutableStateOf(false) }

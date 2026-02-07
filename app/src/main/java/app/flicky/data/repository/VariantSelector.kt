@@ -62,4 +62,14 @@ object VariantSelector {
             strict = strict
         )
     }
+
+    fun matchesPreferred(variant: AppVariant, preferred: PreferredRepo): Boolean = when (preferred) {
+        PreferredRepo.FDroid ->
+            variant.repositoryName.equals("F-Droid", true) ||
+                    variant.repositoryUrl.contains("f-droid", true)
+        PreferredRepo.IzzyOnDroid ->
+            variant.repositoryName.contains("izzy", true) ||
+                    variant.repositoryUrl.contains("izzy", true)
+        PreferredRepo.Auto -> false
+    }
 }
