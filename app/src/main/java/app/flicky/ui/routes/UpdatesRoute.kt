@@ -17,7 +17,7 @@ interface UpdatesActions {
     fun updateAll()
     fun updateOne(app: FDroidApp)
     fun openDetails(app: FDroidApp)
-    fun ignoreThisVersion(app: FDroidApp)
+    fun ignoreThisVersion(packageName: String, versionCode: Long)
     fun ignoreAll(app: FDroidApp)
     fun stopIgnoring(app: FDroidApp)
     fun cancelBatch()
@@ -90,7 +90,12 @@ fun UpdatesRoute(
                                         if (!isActive) break
                                         try {
                                             Log.d("UpdatesRoute", "Worker $workerId: Installing ${app.packageName}")
-                                            installer.install(app)
+                                            val variant = ui.updateCandidates[app.packageName]
+                                            if (variant != null) {
+                                                installer.install(variant)
+                                            } else {
+                                                installer.install(app)
+                                            }
                                             // Wait for completion before starting the next one in this worker
                                             withTimeoutOrNull(300_000L) {
                                                 installer.tasks.first { tasks ->
@@ -120,7 +125,12 @@ fun UpdatesRoute(
             override fun updateOne(app: FDroidApp) {
                 scope.launch {
                     try {
-                        installer.install(app)
+                        val variant = ui.updateCandidates[app.packageName]
+                        if (variant != null) {
+                            installer.install(variant)
+                        } else {
+                            installer.install(app)
+                        }
                     } catch (e: Exception) {
                         Log.e("UpdatesRoute", "Failed to update ${app.packageName}", e)
                     }
@@ -129,7 +139,8 @@ fun UpdatesRoute(
 
             override fun openDetails(app: FDroidApp) = onOpenDetails(app.packageName)
 
-            override fun ignoreThisVersion(app: FDroidApp) = vm.ignoreThisVersion(app)
+            override fun ignoreThisVersion(packageName: String, versionCode: Long) =
+                vm.ignoreThisVersion(packageName, versionCode)
 
             override fun ignoreAll(app: FDroidApp) = vm.ignoreAllUpdates(app)
 

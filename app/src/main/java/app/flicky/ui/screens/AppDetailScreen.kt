@@ -83,6 +83,8 @@ import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.AppUpdatePreference
 import app.flicky.data.repository.SettingsRepository
+import app.flicky.data.repository.PreferredRepo
+import app.flicky.data.repository.VariantSelector
 import app.flicky.helper.openUrl
 import app.flicky.helper.shareText
 import app.flicky.install.TaskStage
@@ -91,6 +93,7 @@ import app.flicky.ui.components.SmartExpandableText
 import app.flicky.ui.components.global.MyScreenScaffold
 import app.flicky.ui.components.snackbar.SnackbarManager
 import coil.compose.AsyncImage
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import java.net.URLEncoder
@@ -317,6 +320,12 @@ private fun RightPaneContent(
     onInstallVariant: (AppVariant) -> Unit,
     settings: SettingsRepository
 ) {
+    val pref by settings.observeAppUpdatePreference(app.packageName)
+        .collectAsState(initial = AppUpdatePreference())
+    val globalPreferredRepo by settings.settingsFlow
+        .map { PreferredRepo.fromIndex(it.preferredRepo) }
+        .collectAsState(initial = PreferredRepo.Auto)
+
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (app.whatsNew.isNotBlank()) {
             SectionTitle(stringResource(R.string.whats_new))
@@ -339,6 +348,8 @@ private fun RightPaneContent(
             VersionsSection(
                 variants = variants.take(8),
                 installedVersionCode = installedVersionCode,
+                pref = pref,
+                globalPreferredRepo = globalPreferredRepo,
                 onInstallVariant = onInstallVariant
             )
             PreferredSourceSection(
@@ -680,15 +691,31 @@ private fun openAppSettings(context: Context, packageName: String) {
 private fun VersionsSection(
     variants: List<AppVariant>,
     installedVersionCode: Long?,
+    pref: AppUpdatePreference,
+    globalPreferredRepo: PreferredRepo,
     onInstallVariant: (AppVariant) -> Unit
 ) {
     val ctx = LocalContext.current
     val clipboard = LocalClipboard.current
     val snackbarManager: SnackbarManager = koinInject()
 
+    val preferredVariant = remember(variants, pref, globalPreferredRepo) {
+        VariantSelector.pick(
+            variants = variants,
+            preferred = globalPreferredRepo,
+            preferredRepoUrl = pref.preferredRepoUrl,
+            strict = pref.lockToRepo
+        )
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         variants.forEach { v ->
-            val installed = installedVersionCode?.let { v.versionCode.toLong() == it } == true
+            val installed = when {
+                installedVersionCode == null -> false
+                preferredVariant != null -> preferredVariant.versionCode.toLong() == installedVersionCode &&
+                        preferredVariant.repositoryUrl == v.repositoryUrl
+                else -> v.versionCode.toLong() == installedVersionCode
+            }
             val compat = v.isCompatible
             var showMenu by remember { mutableStateOf(false) }
 

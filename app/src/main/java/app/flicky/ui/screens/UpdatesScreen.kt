@@ -179,6 +179,9 @@ fun UpdatesScreen(
                             stage = installerTasks[app.packageName],
                             installedVersionName = ui.installedVersionsName[app.packageName],
                             installedVersionCode = ui.installedVersionsCode[app.packageName],
+                            updateVersionName = ui.updateCandidates[app.packageName]?.versionName,
+                            updateVersionCode = ui.updateCandidates[app.packageName]?.versionCode?.toLong(),
+                            updateRepoName = ui.updateCandidates[app.packageName]?.repositoryName,
                             actions = actions,
                             pref = ui.ignoredPrefs[app.packageName],
                             isTV = isTV,
@@ -214,6 +217,9 @@ fun UpdatesScreen(
                             stage = installerTasks[app.packageName],
                             installedVersionName = ui.installedVersionsName[app.packageName],
                             installedVersionCode = ui.installedVersionsCode[app.packageName],
+                            updateVersionName = ui.updateCandidates[app.packageName]?.versionName,
+                            updateVersionCode = ui.updateCandidates[app.packageName]?.versionCode?.toLong(),
+                            updateRepoName = ui.updateCandidates[app.packageName]?.repositoryName,
                             actions = actions,
                             pref = ui.ignoredPrefs[app.packageName],
                             isTV = isTV
@@ -238,6 +244,9 @@ fun UpdatesScreen(
                         stage = installerTasks[app.packageName],
                         installedVersionName = ui.installedVersionsName[app.packageName],
                         installedVersionCode = ui.installedVersionsCode[app.packageName],
+                        updateVersionName = ui.updateCandidates[app.packageName]?.versionName,
+                        updateVersionCode = ui.updateCandidates[app.packageName]?.versionCode?.toLong(),
+                        updateRepoName = ui.updateCandidates[app.packageName]?.repositoryName,
                         actions = actions,
                         pref = ui.ignoredPrefs[app.packageName],
                         isTV = isTV,
@@ -294,6 +303,9 @@ private fun UpdateCard(
     stage: TaskStage?,
     installedVersionName: String?,
     installedVersionCode: Long?,
+    updateVersionName: String?,
+    updateVersionCode: Long?,
+    updateRepoName: String?,
     actions: UpdatesActions,
     pref: AppUpdatePreference?,
     isTV: Boolean,
@@ -332,18 +344,18 @@ private fun UpdateCard(
                             AppTexts(
                                 name = app.name,
                                 installedLabel = installedLabel,
-                                newLabel = app.version,
+                                newLabel = updateVersionName ?: app.version,
                                 summary = app.summary
                             )
 
                             // Show preferred repo if set
-                            if (pref?.preferredRepoUrl != null && !isIgnored) {
+                            if (updateRepoName != null && !isIgnored) {
                                 Spacer(Modifier.height(4.dp))
                                 AssistChip(
                                     onClick = {},
                                     label = {
                                         Text(
-                                            app.repository,
+                                            updateRepoName,
                                             style = typography.labelSmall
                                         )
                                     },
@@ -357,8 +369,11 @@ private fun UpdateCard(
                 if (!isIgnored) {
                     IgnoreMenu(
                         pref = pref,
-                        currentVersionCode = app.versionCode.toLong(),
-                        onIgnoreThisVersion = { actions.ignoreThisVersion(app) },
+                        currentVersionCode = updateVersionCode ?: app.versionCode.toLong(),
+                        onIgnoreThisVersion = {
+                            val versionCode = updateVersionCode ?: app.versionCode.toLong()
+                            actions.ignoreThisVersion(app.packageName, versionCode)
+                        },
                         onIgnoreAll = { actions.ignoreAll(app) },
                         onStopIgnoring = { actions.stopIgnoring(app) },
                         isTV = isTV

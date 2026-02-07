@@ -34,30 +34,31 @@ class AutoUpdateWorker(
             val apps: List<FDroidApp> = db.appDao().observeAll().first()
             val allPrefs = AppUpdatePreferencesMap.fromJson(settingsState.appUpdatePrefsJson).prefs
 
-            val candidates = apps.filter { app ->
-                val cur = installedVc[app.packageName] ?: return@filter false
-                val latestCompat = db.appDao().maxCompatibleVersionCode(app.packageName)?.toLong() ?: 0L
-                if (latestCompat <= cur) return@filter false
+            val prefIdx = settingsState.preferredRepo
+            val preferredRepo = PreferredRepo.fromIndex(prefIdx)
 
+            val candidates = apps.mapNotNull { app ->
+                val cur = installedVc[app.packageName] ?: return@mapNotNull null
                 val pref = allPrefs[app.packageName] ?: AppUpdatePreference()
-                !pref.ignoreUpdates && !(pref.ignoreVersionCode > 0 && latestCompat <= pref.ignoreVersionCode)
-            }
+                if (pref.ignoreUpdates) return@mapNotNull null
 
-            for (app in candidates) {
-                val pref = allPrefs[app.packageName] ?: AppUpdatePreference()
                 val variants = db.appDao().variantsFor(app.packageName)
-                val chosen = VariantSelector.pick(
+                val chosen = VariantSelector.pickCompatible(
                     variants = variants,
-                    preferred = PreferredRepo.Auto,
+                    preferred = preferredRepo,
                     preferredRepoUrl = pref.preferredRepoUrl,
                     strict = pref.lockToRepo
-                )
-                if (chosen != null) {
-                    installer.install(chosen)
-                } else {
-                    // Skip if locked and no variant matches; otherwise fallback
-                    if (!pref.lockToRepo) installer.install(app)
-                }
+                ) ?: return@mapNotNull null
+
+                val latestCompat = chosen.versionCode.toLong()
+                if (latestCompat <= cur) return@mapNotNull null
+                if (pref.ignoreVersionCode > 0 && latestCompat <= pref.ignoreVersionCode) return@mapNotNull null
+
+                app to chosen
+            }
+
+            for ((app, chosen) in candidates) {
+                installer.install(chosen)
             }
             Result.success()
         } catch (e: Exception) {

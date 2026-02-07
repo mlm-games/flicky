@@ -46,4 +46,20 @@ object VariantSelector {
         )
         return sorted.firstOrNull()
     }
+
+    fun pickCompatible(
+        variants: List<AppVariant>,
+        preferred: PreferredRepo,
+        preferredRepoUrl: String? = null,
+        strict: Boolean = false
+    ): AppVariant? {
+        val compatible = variants.filter { it.isCompatible }
+        if (compatible.isEmpty()) return null
+        return pick(
+            variants = compatible,
+            preferred = preferred,
+            preferredRepoUrl = preferredRepoUrl,
+            strict = strict
+        )
+    }
 }

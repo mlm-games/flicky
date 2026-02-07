@@ -3,6 +3,7 @@ package app.flicky.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppRepository
@@ -25,6 +26,7 @@ data class UpdatesUi(
     val installed: List<FDroidApp> = emptyList(),
     val suppressed: List<FDroidApp> = emptyList(),
     val updates: List<FDroidApp> = emptyList(),
+    val updateCandidates: Map<String, AppVariant> = emptyMap(),
     val installingPackages: Set<String> = emptySet(),
     val installedVersionsCode: Map<String, Long> = emptyMap(),
     val installedVersionsName: Map<String, String> = emptyMap(),
@@ -33,6 +35,13 @@ data class UpdatesUi(
     val message: String? = null,
     val isLoading: Boolean = true,
     val error: String? = null
+)
+
+private data class UpdateCalcData(
+    val allApps: List<FDroidApp>,
+    val installedDetails: List<InstalledAppsRepository.InstalledDetailed>,
+    val allPrefs: Map<String, AppUpdatePreference>,
+    val preferredRepo: PreferredRepo
 )
 
 @OptIn(FlowPreview::class)
@@ -51,16 +60,17 @@ class UpdatesViewModel(
             combine(
                 repo.appsFlow("", sort = SortOption.Updated, hideAnti = false, showIncompatible = false),
                 installedRepo.packageChangesFlow().onStart { emit(Unit) },
-                settings.observeAppUpdatePreferences()
-            ) { allApps, _, allPrefs ->
-                Triple(allApps, allPrefs, installedRepo.getInstalledDetailed())
+                settings.observeAppUpdatePreferences(),
+                settings.settingsFlow.map { it.preferredRepo }.distinctUntilChanged()
+            ) { allApps, _, allPrefsMap, preferredRepoIdx ->
+                UpdateCalcData(allApps, installedRepo.getInstalledDetailed(), allPrefsMap.prefs, PreferredRepo.fromIndex(preferredRepoIdx))
             }
                 .distinctUntilChanged()
                 .debounce(150)
-                .collect { (allApps, allPrefs, installedDetails) ->
+                .collect { data ->
                     _ui.update { it.copy(isLoading = true, error = null) }
                     try {
-                        recalc(allApps, installedDetails, allPrefs.prefs)
+                        recalc(data.allApps, data.installedDetails, data.allPrefs, data.preferredRepo)
                         _ui.update { it.copy(isLoading = false) }
                     } catch (e: Exception) {
                         Log.e("UpdatesViewModel", "Failed to calculate updates", e)
@@ -96,7 +106,8 @@ class UpdatesViewModel(
     private suspend fun recalc(
         allApps: List<FDroidApp>,
         installedDetails: List<InstalledAppsRepository.InstalledDetailed>,
-        allPrefs: Map<String, AppUpdatePreference>
+        allPrefs: Map<String, AppUpdatePreference>,
+        preferredRepo: PreferredRepo
     ) = withContext(Dispatchers.IO) {
         val installedMap = installedDetails.associateBy { it.packageName }
         val installedFDroidApps = allApps.filter { installedMap.containsKey(it.packageName) }
@@ -106,31 +117,28 @@ class UpdatesViewModel(
             .variantsForPackages(installedPackageNames)
             .groupBy { it.packageName }
 
+        val candidatesByPkg = mutableMapOf<String, AppVariant>()
         val latestCompatByPkg = installedFDroidApps.associate { app ->
             val pref = allPrefs[app.packageName] ?: AppUpdatePreference()
             val variantsForApp = allVariantsByPackage[app.packageName] ?: emptyList()
-
-            val chosen = if (variantsForApp.isNotEmpty()) {
-                VariantSelector.pick(
-                    variants = variantsForApp,
-                    preferred = PreferredRepo.Auto,
-                    preferredRepoUrl = pref.preferredRepoUrl,
-                    strict = pref.lockToRepo
-                )
-            } else null
-
-            val latestCompat = chosen?.takeIf { it.isCompatible }?.versionCode?.toLong()
-                ?: variantsForApp.filter { it.isCompatible }.maxOfOrNull { it.versionCode.toLong() }
-                ?: 0L
-
-            app.packageName to latestCompat
+            val chosen = VariantSelector.pickCompatible(
+                variants = variantsForApp,
+                preferred = preferredRepo,
+                preferredRepoUrl = pref.preferredRepoUrl,
+                strict = pref.lockToRepo
+            )
+            if (chosen != null) {
+                candidatesByPkg[app.packageName] = chosen
+            }
+            app.packageName to (chosen?.versionCode?.toLong() ?: 0L)
         }
 
         val (updates, suppressed, upToDate) = partitionUpdates(
             installedFDroidApps,
             installedMap,
             latestCompatByPkg,
-            allPrefs
+            allPrefs,
+            candidatesByPkg
         )
 
         _ui.update {
@@ -138,6 +146,7 @@ class UpdatesViewModel(
                 installed = upToDate,
                 updates = updates,
                 suppressed = suppressed,
+                updateCandidates = candidatesByPkg,
                 installedVersionsCode = installedDetails.associate { p -> p.packageName to p.versionCode },
                 installedVersionsName = installedDetails.associate { p -> p.packageName to (p.versionName ?: "") },
                 ignoredPrefs = allPrefs
@@ -149,7 +158,8 @@ class UpdatesViewModel(
         installedApps: List<FDroidApp>,
         installedMap: Map<String, InstalledAppsRepository.InstalledDetailed>,
         latestCompatMap: Map<String, Long>,
-        prefsMap: Map<String, AppUpdatePreference>
+        prefsMap: Map<String, AppUpdatePreference>,
+        candidatesMap: Map<String, AppVariant>
     ): Triple<List<FDroidApp>, List<FDroidApp>, List<FDroidApp>> {
         val updates = mutableListOf<FDroidApp>()
         val suppressed = mutableListOf<FDroidApp>()
@@ -159,8 +169,10 @@ class UpdatesViewModel(
             val currentVersion = installedMap[app.packageName]?.versionCode ?: 0L
             val latestVersion = latestCompatMap[app.packageName] ?: 0L
 
-            if (latestVersion > currentVersion) {
-                val pref = prefsMap[app.packageName] ?: AppUpdatePreference()
+            val pref = prefsMap[app.packageName] ?: AppUpdatePreference()
+            val candidateVersion = candidatesMap[app.packageName]?.versionCode?.toLong() ?: 0L
+            val hasUpdate = latestVersion > currentVersion && candidateVersion == latestVersion
+            if (hasUpdate) {
                 val isIgnored = pref.ignoreUpdates ||
                         (pref.ignoreVersionCode != 0L && latestVersion <= pref.ignoreVersionCode)
                 if (isIgnored) {
@@ -179,10 +191,10 @@ class UpdatesViewModel(
         )
     }
 
-    fun ignoreThisVersion(app: FDroidApp) {
+    fun ignoreThisVersion(packageName: String, versionCode: Long) {
         viewModelScope.launch(Dispatchers.IO) {
-            settings.updateAppUpdatePreference(app.packageName) {
-                it.copy(ignoreVersionCode = app.versionCode.toLong())
+            settings.updateAppUpdatePreference(packageName) {
+                it.copy(ignoreVersionCode = versionCode)
             }
         }
     }

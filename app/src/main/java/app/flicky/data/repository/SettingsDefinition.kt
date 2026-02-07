@@ -12,7 +12,6 @@ import io.github.mlmgames.settings.core.types.Slider
 import io.github.mlmgames.settings.core.types.TextInput
 import io.github.mlmgames.settings.core.types.Toggle
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 
