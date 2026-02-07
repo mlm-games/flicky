@@ -164,7 +164,7 @@ fun AppDetailScreen(
                 shareText(ctx, shareTextContent)
             }) {
                 Icon(
-                    painterResource(android.R.drawable.ic_menu_share),
+                    imageVector = Icons.Default.Share,
                     contentDescription = stringResource(R.string.action_share)
                 )
             }
