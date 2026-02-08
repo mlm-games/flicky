@@ -14,6 +14,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -92,11 +94,9 @@ fun UpdatesScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
-                    CircularProgressIndicator(
+                    CircularWavyProgressIndicator(
                         progress = { batchProgress },
                         modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
-                        color = colorScheme.primary
                     )
 //                    Text(
 //                        stringResource(
@@ -315,7 +315,7 @@ private fun UpdateCard(
     val containerColor = when {
         isActive -> colorScheme.primaryContainer.copy(alpha = 0.3f)
         isIgnored -> colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        else -> colorScheme.surface
+        else -> colorScheme.surfaceContainer
     }
 
     ElevatedCard(
@@ -402,7 +402,7 @@ private fun UpdateCard(
                     else -> 0f
                 }
 
-                LinearProgressIndicator(
+                LinearWavyProgressIndicator(
                     progress = { progress },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -456,7 +456,7 @@ private fun InstalledCard(
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = colorScheme.surface,
+            containerColor = colorScheme.surfaceContainer,
             contentColor = colorScheme.onSurface
         )
     ) {

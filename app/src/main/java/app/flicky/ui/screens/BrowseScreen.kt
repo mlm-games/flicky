@@ -37,7 +37,6 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -45,8 +44,10 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
@@ -165,8 +166,7 @@ fun BrowseScreen(
             Column {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 3.dp
+                    color = colorScheme.surfaceContainerLow
                 ) {
                     Row(
                         modifier = Modifier
@@ -220,7 +220,7 @@ fun BrowseScreen(
                             enabled = !isSyncing
                         ) {
                             if (isSyncing) {
-                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                                LoadingIndicator(modifier = Modifier.size(24.dp),)
                             } else {
                                 Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_sync))
                             }
@@ -266,11 +266,12 @@ fun BrowseScreen(
 
                 val status = syncStatusRes?.asString()
                 if (isSyncing) {
-                    LinearProgressIndicator(
+                    LinearWavyProgressIndicator(
                         progress = { animatedProgress },
-                        modifier = Modifier.fillMaxWidth().height(4.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        modifier = Modifier.fillMaxWidth()
+//                            .height(4.dp),
+//                        color = MaterialTheme.colorScheme.primary,
+//                        trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                     if (!status.isNullOrBlank()) {
                         Text(
@@ -346,7 +347,7 @@ fun BrowseScreen(
                         ) { idx ->
                             apps[idx]?.let { app ->
                                 val key = app.packageName
-                                val focusRequester = focusRequesters.getOrPut(key) { FocusRequester() }
+                                val focusRequester = focusRequesters.getOrPut(key) { remember { FocusRequester() } }
 
                                 Box(
                                     modifier = Modifier
@@ -487,8 +488,7 @@ private fun InstallFromDialog(
                                 .semantics { role = Role.Button }
                                 .clickable(enabled = compat && !isWorking) { onInstall(v) },
                             shape = MaterialTheme.shapes.medium,
-                            color = MaterialTheme.colorScheme.surface,
-                            tonalElevation = 1.dp
+                            color = colorScheme.surfaceContainerLow
                         ) {
                             Row(
                                 Modifier
@@ -532,11 +532,11 @@ private fun InstallFromDialog(
 
             if (isWorking) {
                 Spacer(Modifier.height(6.dp))
-                LinearProgressIndicator(
+                LinearWavyProgressIndicator(
                     progress = { progress },
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+//                    color = MaterialTheme.colorScheme.primary,
+//                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
                 Spacer(Modifier.height(4.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -737,8 +737,8 @@ private fun TvAwareDockedSearchBar(
 private fun AppListRow(app: FDroidApp, onClick: () -> Unit, onLongClick: () -> Unit) {
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
+            containerColor = colorScheme.surfaceContainer,
+            contentColor = colorScheme.onSurface
         ),
         modifier = Modifier
             .fillMaxWidth()

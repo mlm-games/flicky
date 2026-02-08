@@ -19,8 +19,7 @@ fun MyScreenScaffold(
         topBar = {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = colorScheme.surface,
-                tonalElevation = 3.dp
+                color = colorScheme.surfaceContainerLow
             ) {
                 TopAppBar(
                     title = {
@@ -30,7 +29,7 @@ fun MyScreenScaffold(
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = colorScheme.surface,
+                        containerColor = colorScheme.surfaceContainerLow,
                         titleContentColor = colorScheme.onSurface
                     ),
                     actions = actions,

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Settings
@@ -59,7 +58,7 @@ fun MobileMainScaffold(
             NavigationRail(
                 modifier = Modifier.fillMaxHeight(),
                 containerColor =
-                    colorScheme.surface,
+                    colorScheme.surfaceContainerLow,
                 contentColor =
                     colorScheme.onSurfaceVariant,
                 header = {
@@ -108,10 +107,9 @@ fun MobileMainScaffold(
             bottomBar = {
                 NavigationBar(
                     containerColor =
-                        colorScheme.surface,
+                        colorScheme.surfaceContainerLow,
                     contentColor =
-                        colorScheme.onSurfaceVariant,
-                    tonalElevation = 3.dp
+                        colorScheme.onSurfaceVariant
                 ) {
                     navItems.forEach { item ->
                         val label = stringResource(item.labelResId)

@@ -77,7 +77,7 @@ fun FavoritesScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                LoadingIndicator()
             }
         } else if (ui.favorites.isEmpty()) {
             EmptyFavoritesContent()

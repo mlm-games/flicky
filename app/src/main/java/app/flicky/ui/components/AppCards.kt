@@ -124,7 +124,7 @@ fun MobileAppCard(
     ElevatedCard(
         shape = shape,
         colors = CardDefaults.elevatedCardColors(
-            containerColor = colorScheme.surface,
+            containerColor = colorScheme.surfaceContainer,
             contentColor = colorScheme.onSurface
         ),
         modifier = Modifier.fillMaxWidth()
@@ -199,7 +199,7 @@ fun TVAppCard(
             .onFocusChanged { setFocused(it.isFocused) }
             .fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = if (focused) colorScheme.primaryContainer else colorScheme.surface,
+            containerColor = if (focused) colorScheme.primaryContainer else colorScheme.surfaceContainer,
             contentColor = if (focused) colorScheme.onPrimaryContainer else colorScheme.onSurface
         )
     ) {

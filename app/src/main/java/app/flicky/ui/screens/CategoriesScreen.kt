@@ -78,7 +78,7 @@ fun CategoriesScreen(
                         }
                         if (isSyncing) {
                             Spacer(Modifier.height(8.dp))
-                            LinearProgressIndicator(
+                            LinearWavyProgressIndicator(
                                 progress = { animatedProgress },
                                 modifier = Modifier.fillMaxWidth()
                             )

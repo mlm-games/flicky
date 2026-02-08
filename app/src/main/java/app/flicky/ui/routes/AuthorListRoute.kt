@@ -1,9 +1,14 @@
 package app.flicky.ui.routes
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -53,8 +58,10 @@ fun AuthorListRoute(
         ) {
             when {
                 uiState.isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+                    LoadingIndicator(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(48.dp),
                     )
                 }
                 apps.itemCount == 0 -> {
@@ -66,11 +73,11 @@ fun AuthorListRoute(
                     )
                 }
                 else -> {
-                    androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
-                        columns = androidx.compose.foundation.lazy.grid.GridCells.Adaptive(minSize = 160.dp),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
-                        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(minSize = 160.dp),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(apps.itemCount) { index ->

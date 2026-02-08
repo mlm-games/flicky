@@ -657,7 +657,7 @@ private fun RepoConfigCard(
     }
 
     Surface(
-        tonalElevation = 1.dp,
+        color = colorScheme.surfaceContainerLow,
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth()
     ) {

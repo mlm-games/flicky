@@ -52,8 +52,7 @@ fun SettingsSection(
 
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = colorScheme.surface,
-            tonalElevation = 1.dp,
+            color = colorScheme.surfaceContainerLow,
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
@@ -280,7 +279,6 @@ private fun SettingRowContainer(
         enabled = enabled,
         shape = shape,
         color = containerColor,
-        tonalElevation = if (focused) 2.dp else 0.dp,
         border = BorderStroke(1.dp, borderColor),
         modifier = modifier
             .fillMaxWidth()

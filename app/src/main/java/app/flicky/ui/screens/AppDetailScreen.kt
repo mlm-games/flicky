@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,10 +44,10 @@ import androidx.compose.material3.ElevatedAssistChip
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
@@ -245,8 +246,7 @@ private fun DesktopLayout(
     Row(Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier.width(350.dp).fillMaxHeight(),
-            color = colorScheme.surface,
-            tonalElevation = 1.dp
+            color = colorScheme.surfaceContainerLow
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -263,9 +263,9 @@ private fun DesktopLayout(
             }
         }
 
-        Box(Modifier.fillMaxHeight().width(1.dp)) {
-            HorizontalDivider(Modifier, DividerDefaults.Thickness, color = colorScheme.outlineVariant)
-        }
+        VerticalDivider(
+            color = colorScheme.outlineVariant
+        )
 
         LazyColumn(
             modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -307,12 +307,13 @@ private fun MobileLayout(
     globalPreferredRepo: PreferredRepo,
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize()
+            .background(colorScheme.surfaceContainerLowest),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = colorScheme.surface)) {
+            ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = colorScheme.surfaceContainer)) {
                 AppHeader(
                     app = app,
                     installedVersionCode = installedVersionCode,
@@ -447,11 +448,11 @@ private fun AppHeader(
         val showBar = stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled && progressValue >= 0f
 
         if (showBar) {
-            LinearProgressIndicator(
+            LinearWavyProgressIndicator(
                 progress = { progressValue },
                 modifier = Modifier.fillMaxWidth(),
                 color = colorScheme.primary,
-                trackColor = colorScheme.surfaceVariant
+                trackColor = colorScheme.surfaceContainerHighest
             )
             Spacer(Modifier.height(6.dp))
 
@@ -790,7 +791,7 @@ private fun VersionsSection(
 
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.elevatedCardColors(containerColor = colorScheme.surface)
+                colors = CardDefaults.elevatedCardColors(containerColor = colorScheme.surfaceContainer)
             ) {
                 Row(
                     modifier = Modifier
