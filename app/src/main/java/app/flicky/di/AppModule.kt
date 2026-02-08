@@ -25,6 +25,7 @@ import app.flicky.data.repository.SettingsRepository
 import app.flicky.install.Installer
 import app.flicky.ui.components.snackbar.SnackbarManager
 import app.flicky.viewmodel.AppDetailViewModel
+import app.flicky.viewmodel.AuthorListViewModel
 import app.flicky.viewmodel.BrowseViewModel
 import app.flicky.viewmodel.FavoritesViewModel
 import app.flicky.viewmodel.SettingsViewModel
@@ -182,6 +183,13 @@ val appModule = module {
             installer = get(),
             settings = get(),
             packageName = pkg
+        )
+    }
+
+    viewModel { (authorName: String) ->
+        AuthorListViewModel(
+            authorName = authorName,
+            appDao = get()
         )
     }
 }

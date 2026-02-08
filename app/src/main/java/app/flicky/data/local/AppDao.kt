@@ -119,4 +119,7 @@ ORDER BY added DESC
 
     @Query("SELECT * FROM apps WHERE packageName = :pkg LIMIT 1")
     fun observeOne(pkg: String): Flow<FDroidApp?>
+
+    @Query("SELECT * FROM apps WHERE author = :author ORDER BY name COLLATE NOCASE ASC")
+    fun pagingByAuthor(author: String): PagingSource<Int, FDroidApp>
 }

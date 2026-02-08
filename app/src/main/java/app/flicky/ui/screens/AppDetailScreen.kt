@@ -116,9 +116,10 @@ fun AppDetailScreen(
     onUninstall: () -> Unit,
     error: String?,
     onOpenCategory: (String) -> Unit,
+    onOpenAuthor: (String) -> Unit,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
-    variants: List<AppVariant>,
+    variants: List<AppVariant>
 ) {
     val cfg = LocalConfiguration.current
     val isWide = cfg.screenWidthDp >= 900
@@ -187,6 +188,7 @@ fun AppDetailScreen(
                     onUninstall = onUninstall,
                     error = error,
                     onOpenCategory = onOpenCategory,
+                    onOpenAuthor = onOpenAuthor,
                     variants = variants,
                     settings = settings,
                     pref = pref,
@@ -205,6 +207,7 @@ fun AppDetailScreen(
                     onUninstall = onUninstall,
                     error = error,
                     onOpenCategory = onOpenCategory,
+                    onOpenAuthor = onOpenAuthor,
                     variants = variants,
                     settings = settings,
                     pref = pref,
@@ -233,6 +236,7 @@ private fun DesktopLayout(
     onUninstall: () -> Unit,
     error: String?,
     onOpenCategory: (String) -> Unit,
+    onOpenAuthor: (String) -> Unit,
     variants: List<AppVariant>,
     settings: SettingsRepository,
     pref: AppUpdatePreference,
@@ -250,9 +254,9 @@ private fun DesktopLayout(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    AppHeader(app, installedVersionCode, updateCandidate, stage, onInstall, onOpen, onCancel, onUninstall, error, 96.dp)
+                    AppHeader(app, installedVersionCode, updateCandidate, stage, onInstall, onOpen, onCancel, onUninstall, error, 96.dp, onOpenAuthor)
                 }
-                item { ChipsSection(app, installedVersionCode, onOpenCategory) }
+                item { ChipsSection(app, installedVersionCode, onOpenCategory, onOpenAuthor) }
                 item { DetailsSection(app) }
                 if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
                 item { LinksSection(app) }
@@ -296,6 +300,7 @@ private fun MobileLayout(
     onUninstall: () -> Unit,
     error: String?,
     onOpenCategory: (String) -> Unit,
+    onOpenAuthor: (String) -> Unit,
     variants: List<AppVariant>,
     settings: SettingsRepository,
     pref: AppUpdatePreference,
@@ -319,11 +324,12 @@ private fun MobileLayout(
                     onUninstall = onUninstall,
                     error = error,
                     iconSize = 88.dp,
+                    onOpenAuthor = onOpenAuthor,
                     modifier = Modifier.padding(16.dp)
                 )
             }
         }
-        item { ChipsSection(app, installedVersionCode, onOpenCategory) }
+        item { ChipsSection(app, installedVersionCode, onOpenCategory, onOpenAuthor) }
         if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
         item { LinksSection(app) }
         item { DetailsSection(app) }
@@ -399,6 +405,7 @@ private fun AppHeader(
     onUninstall: () -> Unit,
     error: String?,
     iconSize: Dp,
+    onOpenAuthor: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier) {
@@ -423,7 +430,8 @@ private fun AppHeader(
                     Text(
                         app.author,
                         style = typography.bodySmall,
-                        color = colorScheme.onSurfaceVariant
+                        color = colorScheme.primary,
+                        modifier = Modifier.clickable { onOpenAuthor(app.author) }
                     )
                 }
             }
@@ -514,7 +522,8 @@ private fun AppHeader(
 private fun ChipsSection(
     app: FDroidApp,
     installedVersionCode: Long?,
-    onOpenCategory: (String) -> Unit
+    onOpenCategory: (String) -> Unit,
+    onOpenAuthor: (String) -> Unit
 ) {
     Column {
         SectionTitle(stringResource(R.string.info))
@@ -528,6 +537,18 @@ private fun ChipsSection(
                 label = { Text(if (app.version.startsWith("v", true)) app.version else "v${app.version}") }
             )
             ElevatedAssistChip(onClick = {}, label = { Text(formatBytes(app.size)) })
+            if (app.category.isNotBlank()) {
+                ElevatedAssistChip(
+                    onClick = { onOpenCategory(app.category) },
+                    label = { Text(app.category) }
+                )
+            }
+            if (app.author.isNotBlank()) {
+                ElevatedAssistChip(
+                    onClick = { onOpenAuthor(app.author) },
+                    label = { Text(app.author) }
+                )
+            }
         }
     }
 }

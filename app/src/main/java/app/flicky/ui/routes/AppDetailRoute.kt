@@ -20,6 +20,7 @@ import org.koin.core.parameter.parametersOf
 fun AppDetailRoute(
     pkg: String,
     onOpenCategory: (String) -> Unit,
+    onOpenAuthor: (String) -> Unit,
     vm: AppDetailViewModel = koinViewModel(parameters = { parametersOf(pkg) })
 ) {
     val ui = vm.ui.collectAsStateWithLifecycle().value
@@ -60,6 +61,7 @@ fun AppDetailRoute(
         onUninstall = { vm.uninstall() },
         error = ui.error,
         onOpenCategory = onOpenCategory,
+        onOpenAuthor = onOpenAuthor,
         variants = ui.variants,
         isFavorite = ui.isFavorite,
         onToggleFavorite = { vm.toggleFavorite() }

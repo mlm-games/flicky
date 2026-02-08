@@ -147,6 +147,10 @@
     <string name="app_not_installed">App not installed</string>
     <string name="versions">Versions</string>
     <string name="installed">Installed</string>
+    <string name="more_apps">More</string>
+    <string name="more_apps_by_author">More apps by %1$s</string>
+    <string name="no_apps_by_author">No apps found by %1$s</string>
+    <string name="app_count">%1$d apps</string>
     <string name="incompatible">Incompatible</string>
     <string name="copied">Copied</string>
     <string name="copy_url">Copy URL</string>
