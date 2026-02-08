@@ -143,7 +143,8 @@ val appModule = module {
             context = androidContext(),
             settings = get(),
             mirrorPolicies = get(),
-            httpClients = get()
+            httpClients = get(),
+            snackbarManager = get()
         )
     }
 

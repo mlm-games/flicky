@@ -25,6 +25,7 @@ import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.VariantSelector
 import app.flicky.helper.DebugLog
+import app.flicky.ui.components.snackbar.SnackbarManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +36,9 @@ import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import rikka.shizuku.Shizuku
+import com.rosan.dhizuku.api.Dhizuku
+import com.rosan.dhizuku.api.DhizukuRequestPermissionListener
+import android.os.RemoteException
 import java.io.*
 import java.lang.reflect.Method
 import java.security.MessageDigest
@@ -48,7 +52,8 @@ class Installer(
     private val context: Context,
     private val settings: SettingsRepository,
     private val mirrorPolicies: MirrorPolicyProvider,
-    private val httpClients: HttpClientProvider
+    private val httpClients: HttpClientProvider,
+    private val snackbarManager: SnackbarManager? = null
 ) {
     private val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -270,6 +275,7 @@ class Installer(
             2 -> InstallSessionResult(installRootStream(file, req.packageName))
             3 -> InstallSessionResult(installShizukuStream(file, req.packageName))
             4 -> InstallSessionResult(installAppManager(file, req.packageName))
+            5 -> InstallSessionResult(installDhizukuSessionFromFile(file, req.packageName, req.sha256))
             else -> InstallSessionResult(installSystem(file, req.packageName))
         }
 
@@ -741,10 +747,11 @@ class Installer(
     }
 
     @SuppressLint("RequestInstallPackagesPolicy")
-    private suspend fun installSessionFromFile(
+    private suspend fun installSessionFromFileInternal(
         file: File,
         packageName: String,
         expectedSha256: String = "",
+        tweakParams: (PackageInstaller.SessionParams) -> Unit = {}
     ): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !context.packageManager.canRequestPackageInstalls()
@@ -760,6 +767,8 @@ class Installer(
         val pm = context.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
             .apply { setAppPackageName(packageName) }
+
+        tweakParams(params)
 
         val sessionId = pm.createSession(params)
         val session = pm.openSession(sessionId)
@@ -808,15 +817,21 @@ class Installer(
 
         val evt = try { withTimeout(180_000) { result.await() } } finally { waitJob.cancel() }
 
-        if (evt.status == PackageInstaller.STATUS_SUCCESS) {
+        return if (evt.status == PackageInstaller.STATUS_SUCCESS) {
             clearError(packageName)
-            return true
+            true
         } else {
             val msg = friendlyFromPackageInstaller(evt.status, evt.message, evt.otherPackage)
             setError(packageName, msg)
-            return false
+            false
         }
     }
+
+    private suspend fun installSessionFromFile(
+        file: File,
+        packageName: String,
+        expectedSha256: String = "",
+    ): Boolean = installSessionFromFileInternal(file, packageName, expectedSha256)
 
     private suspend fun installRootStream(file: File, packageName: String): Boolean {
         val size = file.length().coerceAtLeast(1L)
@@ -903,6 +918,80 @@ class Installer(
         m.isAccessible = true
         m.invoke(null, cmd, env, dir) as Process
     } catch (_: Exception) { null }
+
+    private suspend fun installDhizukuSessionFromFile(
+        file: File,
+        packageName: String,
+        expectedSha256: String = "",
+    ): Boolean {
+        val okInit = runCatching { Dhizuku.init(context) }.getOrDefault(false)
+        if (!okInit) {
+            Log.d("Installer", "Dhizuku: not available")
+            DebugLog.log("Installer", "Dhizuku not available")
+            setError(packageName, context.getString(R.string.dhizuku_not_available))
+            return false
+        }
+
+        val permissionGranted = runCatching { Dhizuku.isPermissionGranted() }.getOrDefault(false)
+        Log.d("Installer", "Dhizuku: permission granted = $permissionGranted")
+        DebugLog.log("Installer", "Dhizuku permission granted: $permissionGranted")
+
+        if (!permissionGranted) {
+            val granted = requestDhizukuPermission()
+            if (!granted) {
+                Log.d("Installer", "Dhizuku: permission denied")
+                DebugLog.log("Installer", "Dhizuku permission denied")
+                setError(packageName, context.getString(R.string.dhizuku_permission_denied))
+                return false
+            }
+        }
+
+        Log.d("Installer", "Dhizuku: attempting installation for $packageName")
+        DebugLog.log("Installer", "Dhizuku: attempting installation (package=$packageName)")
+
+        val dhizukuResult = installSessionFromFileInternal(
+            file = file,
+            packageName = packageName,
+            expectedSha256 = expectedSha256
+        ) { params ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+            }
+        }
+
+        if (!dhizukuResult) {
+            Log.d("Installer", "Dhizuku: failed, falling back to Session")
+            DebugLog.log("Installer", "Dhizuku: installation failed, falling back to Session")
+            snackbarManager?.show(context.getString(R.string.dhizuku_fallback))
+            return installSessionFromFile(file, packageName, expectedSha256)
+        } else {
+            Log.d("Installer", "Dhizuku: installation successful")
+            DebugLog.log("Installer", "Dhizuku: installation successful")
+            return true
+        }
+    }
+
+    private suspend fun requestDhizukuPermission(timeoutMs: Long = 15_000): Boolean {
+        if (runCatching { Dhizuku.isPermissionGranted() }.getOrDefault(false)) return true
+
+        val deferred = CompletableDeferred<Boolean>()
+
+        val listener = object : DhizukuRequestPermissionListener() {
+            @Throws(RemoteException::class)
+            override fun onRequestPermission(grantResult: Int) {
+                deferred.complete(grantResult == PackageManager.PERMISSION_GRANTED)
+            }
+        }
+
+        runCatching {
+            Dhizuku.requestPermission(listener)
+        }.onFailure {
+            DebugLog.log("Installer", "Dhizuku.requestPermission failed: ${it.message}")
+            deferred.complete(false)
+        }
+
+        return runCatching { withTimeout(timeoutMs) { deferred.await() } }.getOrDefault(false)
+    }
 
     private fun pipeWithProgress(src: FileInputStream, dst: OutputStream, total: Long, packageName: String) {
         val buf = ByteArray(STREAM_BUF)

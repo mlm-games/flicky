@@ -117,6 +117,7 @@
     <string name="installer_session">Session (Package Installer)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (device owner)</string>
     <string name="repo_auto">Auto</string>
     <string name="repo_prefer_fdroid">Prefer F-Droid</string>
     <string name="repo_prefer_izzy">Prefer IzzyOnDroid</string>
@@ -210,4 +211,11 @@
     <string name="search_settings">Search Settings</string>
     <string name="import_settings">Import settings</string>
     <string name="export_settings">Export settings</string>
+    <string name="izzy_stats_title">IzzyOnDroid Stats</string>
+    <string name="izzy_stats_monthly">Monthly downloads</string>
+    <string name="izzy_stats_yearly">Yearly downloads</string>
+    <string name="izzy_stats_unavailable">Stats unavailable</string>
+    <string name="dhizuku_permission_denied">Dhizuku permission denied. Please grant permission in Dhizuku app.</string>
+    <string name="dhizuku_not_available">Dhizuku is not available. Please install and set up Dhizuku as Device Owner first.</string>
+    <string name="dhizuku_fallback">Falling back to Session installer</string>
 </resources>

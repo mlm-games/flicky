@@ -36,6 +36,7 @@ kmpSettingsCore = "0.5.0"
 koinBom = "4.1.1"
 navigation3Runtime = "1.0.0"
 koin-annotations = "2.3.1"
+dhizuku = "2.5.4"
 
 [libraries]
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom-alpha", version.ref = "composeBom" }
@@ -94,6 +95,9 @@ androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runt
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3Runtime" }
 
 androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycle" }
+
+# Dhizuku
+dhizuku-api = { module = "io.github.iamr0s:Dhizuku-API", version.ref = "dhizuku" }
 
 
 [plugins]

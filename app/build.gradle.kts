@@ -170,6 +170,8 @@ dependencies {
     implementation(libs.api)
     implementation(libs.provider)
 
+    implementation(libs.dhizuku.api)
+
     implementation(libs.kmp.settings.core)
     implementation(libs.kmp.settings.ui.compose)
     ksp(libs.kmp.settings.ksp)
