@@ -14,6 +14,7 @@ import app.flicky.data.remote.DbHttpClientProvider
 import app.flicky.data.remote.DbMirrorPolicyProvider
 import app.flicky.data.remote.FDroidApi
 import app.flicky.data.remote.HttpClientProvider
+import app.flicky.data.remote.IzzyStatsRepository
 import app.flicky.data.remote.MirrorPolicyProvider
 import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.remote.MirrorStateStore
@@ -113,6 +114,7 @@ val appModule = module {
     single<MirrorPolicyProvider> { DbMirrorPolicyProvider(get()) }
     single<HttpClientProvider> { DbHttpClientProvider(get()) }
     single { FDroidApi(androidContext(), get()) }
+    single { IzzyStatsRepository(httpClientProvider = get()) }
 
     single {
         SettingsRepository(

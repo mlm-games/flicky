@@ -86,6 +86,8 @@ import app.flicky.data.repository.AppUpdatePreference
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.VariantSelector
+import app.flicky.data.remote.IzzyDownloadStats
+import app.flicky.data.remote.IzzyStatsRepository
 import app.flicky.helper.openUrl
 import app.flicky.helper.shareText
 import app.flicky.install.TaskStage
@@ -97,6 +99,10 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -137,6 +143,13 @@ fun AppDetailScreen(
             preferredRepoUrl = pref.preferredRepoUrl,
             strict = pref.lockToRepo
         )
+    }
+
+    val izzyStatsRepo: IzzyStatsRepository = koinInject()
+    var izzyStats by remember { mutableStateOf<IzzyDownloadStats?>(null) }
+
+    LaunchedEffect(app.packageName) {
+        izzyStats = runCatching { izzyStatsRepo.statsFor(app.packageName) }.getOrNull()
     }
 
     MyScreenScaffold(
@@ -193,7 +206,8 @@ fun AppDetailScreen(
                     variants = variants,
                     settings = settings,
                     pref = pref,
-                    globalPreferredRepo = globalPreferredRepo
+                    globalPreferredRepo = globalPreferredRepo,
+                    izzyStats = izzyStats
                 )
             } else {
                 MobileLayout(
@@ -212,7 +226,8 @@ fun AppDetailScreen(
                     variants = variants,
                     settings = settings,
                     pref = pref,
-                    globalPreferredRepo = globalPreferredRepo
+                    globalPreferredRepo = globalPreferredRepo,
+                    izzyStats = izzyStats
                 )
             }
         }
@@ -242,6 +257,7 @@ private fun DesktopLayout(
     settings: SettingsRepository,
     pref: AppUpdatePreference,
     globalPreferredRepo: PreferredRepo,
+    izzyStats: IzzyDownloadStats?,
 ) {
     Row(Modifier.fillMaxSize()) {
         Surface(
@@ -257,7 +273,7 @@ private fun DesktopLayout(
                     AppHeader(app, installedVersionCode, updateCandidate, stage, onInstall, onOpen, onCancel, onUninstall, error, 96.dp, onOpenAuthor)
                 }
                 item { ChipsSection(app, installedVersionCode, onOpenCategory, onOpenAuthor) }
-                item { DetailsSection(app) }
+                item { DetailsSection(app, izzyStats) }
                 if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
                 item { LinksSection(app) }
             }
@@ -305,6 +321,7 @@ private fun MobileLayout(
     settings: SettingsRepository,
     pref: AppUpdatePreference,
     globalPreferredRepo: PreferredRepo,
+    izzyStats: IzzyDownloadStats?,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize()
@@ -333,7 +350,7 @@ private fun MobileLayout(
         item { ChipsSection(app, installedVersionCode, onOpenCategory, onOpenAuthor) }
         if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
         item { LinksSection(app) }
-        item { DetailsSection(app) }
+        item { DetailsSection(app, izzyStats) }
         item {
             RightPaneContent(
                 app = app,
@@ -555,13 +572,29 @@ private fun ChipsSection(
 }
 
 @Composable
-private fun DetailsSection(app: FDroidApp) {
+private fun DetailsSection(app: FDroidApp, izzyStats: IzzyDownloadStats?) {
     Column {
         SectionTitle(stringResource(R.string.details))
         InfoRow(stringResource(R.string.package_name), app.packageName)
         InfoRow(stringResource(R.string.version_code), app.versionCode.toString())
         if (app.lastUpdated > 0) InfoRow(stringResource(R.string.updated), formatDate(app.lastUpdated))
         if (app.added > 0) InfoRow(stringResource(R.string.added), formatDate(app.added))
+
+        Spacer(Modifier.height(12.dp))
+
+        if (izzyStats != null) {
+            SectionTitle(stringResource(R.string.izzy_stats_title))
+            izzyStats.yearlyRolling?.let { InfoRow(stringResource(R.string.izzy_stats_yearly), formatNumber(it)) }
+            izzyStats.monthlyRolling?.let { InfoRow(stringResource(R.string.izzy_stats_monthly), formatNumber(it)) }
+        }
+    }
+}
+
+private fun formatNumber(number: Long): String {
+    return when {
+        number >= 1_000_000 -> String.format(Locale.getDefault(), "%.1fM", number / 1_000_000.0)
+        number >= 1_000 -> String.format(Locale.getDefault(), "%.1fK", number / 1_000.0)
+        else -> number.toString()
     }
 }
 
