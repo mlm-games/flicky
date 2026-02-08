@@ -26,6 +26,7 @@ data class DetailUiState(
     val stage: TaskStage? = null,
     val variants: List<AppVariant> = emptyList(),
     val isFavorite: Boolean = false,
+    val appNotFound: Boolean = false,
 )
 
 class AppDetailViewModel(
@@ -47,6 +48,7 @@ class AppDetailViewModel(
                 _ui.update {
                     it.copy(
                         app = app,
+                        appNotFound = app == null,
                         installedVersionCode = installed,
                         variants = variants.sortedByDescending { v -> v.versionCode }
                     )

@@ -1,6 +1,15 @@
 package app.flicky.ui.routes
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.flicky.viewmodel.AppDetailViewModel
 import app.flicky.ui.screens.AppDetailScreen
@@ -14,7 +23,31 @@ fun AppDetailRoute(
     vm: AppDetailViewModel = koinViewModel(parameters = { parametersOf(pkg) })
 ) {
     val ui = vm.ui.collectAsStateWithLifecycle().value
-    val app = ui.app ?: return
+    val app = ui.app
+
+    if (app == null) {
+        if (ui.appNotFound) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "App not found",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = pkg,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            }
+        }
+        return
+    }
 
     AppDetailScreen(
         app = app,

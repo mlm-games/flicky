@@ -1,6 +1,7 @@
 package app.flicky
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,10 +9,12 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.core.util.Consumer
 import androidx.navigation3.runtime.rememberNavBackStack
 import app.flicky.data.repository.AppSettings
 import app.flicky.di.AppDependencies
@@ -36,6 +39,23 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val initialPackage = intent?.data?.let { uri ->
+            when (uri.scheme) {
+                "https" -> {
+                    // Handle https://f-droid.org/packages/{packageName}
+                    if (uri.path?.startsWith("/packages/") == true) {
+                        uri.pathSegments.getOrNull(1)
+                    } else {
+                        null
+                    }
+                }
+                "fdroidrepos" -> {
+                    uri.host
+                }
+                else -> null
+            }
+        }
 
         runCatching {
             val callFactory = CoilCallFactory(AppDependencies.httpClients)
@@ -74,7 +94,29 @@ class MainActivity : ComponentActivity() {
             val themeMode = settingsState.themeMode
             val dynamicColors = settingsState.dynamicTheme
 
-            val backStack = rememberNavBackStack(NavScreen.Browse)
+            val backStack = rememberNavBackStack(
+                if (initialPackage != null) NavScreen.Detail(initialPackage) else NavScreen.Browse
+            )
+
+            // Handle when activity is already running
+            DisposableEffect(Unit) {
+                val listener = Consumer<Intent> { newIntent ->
+                    newIntent.data?.let { uri ->
+                        val pkg = when (uri.scheme) {
+                            "https" -> {
+                                if (uri.path?.startsWith("/packages/") == true) {
+                                    uri.pathSegments.getOrNull(1)
+                                } else null
+                            }
+                            "fdroidrepos" -> uri.host
+                            else -> null
+                        }
+                        pkg?.let { backStack.add(NavScreen.Detail(it)) }
+                    }
+                }
+                addOnNewIntentListener(listener)
+                onDispose { removeOnNewIntentListener(listener) }
+            }
 
             fun selectedIndexForTop(): Int {
                 return when (backStack.lastOrNull()) {
