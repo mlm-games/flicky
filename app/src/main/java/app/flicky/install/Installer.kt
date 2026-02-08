@@ -25,7 +25,6 @@ import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.VariantSelector
 import app.flicky.helper.DebugLog
-import app.flicky.ui.components.snackbar.SnackbarManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,8 +51,7 @@ class Installer(
     private val context: Context,
     private val settings: SettingsRepository,
     private val mirrorPolicies: MirrorPolicyProvider,
-    private val httpClients: HttpClientProvider,
-    private val snackbarManager: SnackbarManager? = null
+    private val httpClients: HttpClientProvider
 ) {
     private val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -926,30 +924,21 @@ class Installer(
     ): Boolean {
         val okInit = runCatching { Dhizuku.init(context) }.getOrDefault(false)
         if (!okInit) {
-            Log.d("Installer", "Dhizuku: not available")
             DebugLog.log("Installer", "Dhizuku not available")
             setError(packageName, context.getString(R.string.dhizuku_not_available))
             return false
         }
 
-        val permissionGranted = runCatching { Dhizuku.isPermissionGranted() }.getOrDefault(false)
-        Log.d("Installer", "Dhizuku: permission granted = $permissionGranted")
-        DebugLog.log("Installer", "Dhizuku permission granted: $permissionGranted")
-
-        if (!permissionGranted) {
+        if (!runCatching { Dhizuku.isPermissionGranted() }.getOrDefault(false)) {
             val granted = requestDhizukuPermission()
             if (!granted) {
-                Log.d("Installer", "Dhizuku: permission denied")
                 DebugLog.log("Installer", "Dhizuku permission denied")
                 setError(packageName, context.getString(R.string.dhizuku_permission_denied))
                 return false
             }
         }
 
-        Log.d("Installer", "Dhizuku: attempting installation for $packageName")
-        DebugLog.log("Installer", "Dhizuku: attempting installation (package=$packageName)")
-
-        val dhizukuResult = installSessionFromFileInternal(
+        return installSessionFromFileInternal(
             file = file,
             packageName = packageName,
             expectedSha256 = expectedSha256
@@ -957,17 +946,6 @@ class Installer(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
             }
-        }
-
-        if (!dhizukuResult) {
-            Log.d("Installer", "Dhizuku: failed, falling back to Session")
-            DebugLog.log("Installer", "Dhizuku: installation failed, falling back to Session")
-            snackbarManager?.show(context.getString(R.string.dhizuku_fallback))
-            return installSessionFromFile(file, packageName, expectedSha256)
-        } else {
-            Log.d("Installer", "Dhizuku: installation successful")
-            DebugLog.log("Installer", "Dhizuku: installation successful")
-            return true
         }
     }
 
