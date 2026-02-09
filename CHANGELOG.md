@@ -1,3 +1,16 @@
+## v4.2.1
+
+- Dhizuku impl.
+- add izzy download stats (#53)
+- Use material 3 expressive components
+- Add author's applist screen, and chips that redirect to screens (for Categories (back) and Author)
+- bump kotlin ver
+- Add deeplinks support
+- Use the material icons' share icon
+- Fix variant not being shown as installed in versions
+- Try to accurately resolve versions with the global preferred repo option (app specific overrides are unchanged)
+
+
 ## v4.1.2
 
 - Make settings always show in column, and add focus requesters for ExposedDropDown (#50)
