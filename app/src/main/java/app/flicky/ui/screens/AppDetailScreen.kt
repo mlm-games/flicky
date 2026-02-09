@@ -81,6 +81,7 @@ import androidx.core.net.toUri
 import app.flicky.R
 import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
+import app.flicky.data.model.ReproducibleBuildInfo
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.AppUpdatePreference
 import app.flicky.data.repository.SettingsRepository
@@ -126,7 +127,9 @@ fun AppDetailScreen(
     onOpenAuthor: (String) -> Unit,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
-    variants: List<AppVariant>
+    variants: List<AppVariant>,
+    reproducibleBuildInfo: ReproducibleBuildInfo? = null,
+    showReproducibleBadges: Boolean = false,
 ) {
     val cfg = LocalConfiguration.current
     val isWide = cfg.screenWidthDp >= 900
@@ -207,7 +210,9 @@ fun AppDetailScreen(
                     settings = settings,
                     pref = pref,
                     globalPreferredRepo = globalPreferredRepo,
-                    izzyStats = izzyStats
+                    izzyStats = izzyStats,
+                    reproducibleBuildInfo = reproducibleBuildInfo,
+                    showReproducibleBadges = showReproducibleBadges
                 )
             } else {
                 MobileLayout(
@@ -227,7 +232,9 @@ fun AppDetailScreen(
                     settings = settings,
                     pref = pref,
                     globalPreferredRepo = globalPreferredRepo,
-                    izzyStats = izzyStats
+                    izzyStats = izzyStats,
+                    reproducibleBuildInfo = reproducibleBuildInfo,
+                    showReproducibleBadges = showReproducibleBadges
                 )
             }
         }
@@ -258,6 +265,8 @@ private fun DesktopLayout(
     pref: AppUpdatePreference,
     globalPreferredRepo: PreferredRepo,
     izzyStats: IzzyDownloadStats?,
+    reproducibleBuildInfo: ReproducibleBuildInfo? = null,
+    showReproducibleBadges: Boolean = false,
 ) {
     Row(Modifier.fillMaxSize()) {
         Surface(
@@ -296,7 +305,9 @@ private fun DesktopLayout(
                     pref = pref,
                     globalPreferredRepo = globalPreferredRepo,
                     onInstallVariant = onInstallVariant,
-                    settings = settings
+                    settings = settings,
+                    reproducibleBuildInfo = reproducibleBuildInfo,
+                    showReproducibleBadges = showReproducibleBadges
                 )
             }
         }
@@ -322,6 +333,8 @@ private fun MobileLayout(
     pref: AppUpdatePreference,
     globalPreferredRepo: PreferredRepo,
     izzyStats: IzzyDownloadStats?,
+    reproducibleBuildInfo: ReproducibleBuildInfo? = null,
+    showReproducibleBadges: Boolean = false,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize()
@@ -359,7 +372,9 @@ private fun MobileLayout(
                 pref = pref,
                 globalPreferredRepo = globalPreferredRepo,
                 onInstallVariant = onInstallVariant,
-                settings = settings
+                settings = settings,
+                reproducibleBuildInfo = reproducibleBuildInfo,
+                showReproducibleBadges = showReproducibleBadges
             )
         }
     }
@@ -374,7 +389,9 @@ private fun RightPaneContent(
     pref: AppUpdatePreference,
     globalPreferredRepo: PreferredRepo,
     onInstallVariant: (AppVariant) -> Unit,
-    settings: SettingsRepository
+    settings: SettingsRepository,
+    reproducibleBuildInfo: ReproducibleBuildInfo? = null,
+    showReproducibleBadges: Boolean = false
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (app.whatsNew.isNotBlank()) {
@@ -400,7 +417,9 @@ private fun RightPaneContent(
                 installedVersionCode = installedVersionCode,
                 pref = pref,
                 globalPreferredRepo = globalPreferredRepo,
-                onInstallVariant = onInstallVariant
+                onInstallVariant = onInstallVariant,
+                reproducibleBuildInfo = reproducibleBuildInfo,
+                showReproducibleBadges = showReproducibleBadges
             )
             PreferredSourceSection(
                 pkg = app.packageName,
@@ -758,6 +777,39 @@ private fun resolveLicenseLink(raw: String): String {
     else "https://www.duckduckgo.com/search?q=" + URLEncoder.encode("$id license", "UTF-8")
 }
 
+@Composable
+private fun ReproducibleBadge(isReproducible: Boolean) {
+    val backgroundColor = if (isReproducible) {
+        colorScheme.tertiaryContainer
+    } else {
+        colorScheme.errorContainer
+    }
+    val contentColor = if (isReproducible) {
+        colorScheme.onTertiaryContainer
+    } else {
+        colorScheme.onErrorContainer
+    }
+    val text = if (isReproducible) "RB" else "!RB"
+    val description = if (isReproducible) {
+        "Reproducible build verified"
+    } else {
+        "Reproducible build failed"
+    }
+
+    Surface(
+        color = backgroundColor,
+        shape = MaterialTheme.shapes.small,
+        modifier = Modifier.padding(start = 4.dp)
+    ) {
+        Text(
+            text = text,
+            style = typography.labelSmall,
+            color = contentColor,
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+        )
+    }
+}
+
 private fun exodusReportUrl(packageName: String) =
     "https://reports.exodus-privacy.eu.org/en/reports/$packageName/latest/"
 
@@ -775,7 +827,9 @@ private fun VersionsSection(
     installedVersionCode: Long?,
     pref: AppUpdatePreference,
     globalPreferredRepo: PreferredRepo,
-    onInstallVariant: (AppVariant) -> Unit
+    onInstallVariant: (AppVariant) -> Unit,
+    reproducibleBuildInfo: ReproducibleBuildInfo? = null,
+    showReproducibleBadges: Boolean = false
 ) {
     val ctx = LocalContext.current
     val clipboard = LocalClipboard.current
@@ -821,6 +875,12 @@ private fun VersionsSection(
             }
             val compat = v.isCompatible
             var showMenu by remember { mutableStateOf(false) }
+            
+            val isReproducible = remember(v.versionCode, reproducibleBuildInfo) {
+                if (showReproducibleBadges && reproducibleBuildInfo != null) {
+                    reproducibleBuildInfo.isReproducible(v.versionCode)
+                } else null
+            }
 
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -834,7 +894,13 @@ private fun VersionsSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("v${v.versionName} (${v.versionCode})", style = typography.bodyLarge)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("v${v.versionName} (${v.versionCode})", style = typography.bodyLarge)
+                            if (showReproducibleBadges && isReproducible != null) {
+                                Spacer(Modifier.width(6.dp))
+                                ReproducibleBadge(isReproducible = isReproducible)
+                            }
+                        }
                         Text(
                             "${v.repositoryName} • ${formatBytes(v.size)}",
                             style = typography.bodySmall,

@@ -18,6 +18,7 @@ import app.flicky.data.remote.IzzyStatsRepository
 import app.flicky.data.remote.MirrorPolicyProvider
 import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.remote.MirrorStateStore
+import app.flicky.data.remote.ReproducibleBuildRepository
 import app.flicky.data.repository.AppRepository
 import app.flicky.data.repository.InstalledAppsRepository
 import app.flicky.data.repository.RepoHeadersStore
@@ -115,6 +116,7 @@ val appModule = module {
     single<HttpClientProvider> { DbHttpClientProvider(get()) }
     single { FDroidApi(androidContext(), get()) }
     single { IzzyStatsRepository(httpClientProvider = get()) }
+    single { ReproducibleBuildRepository() }
 
     single {
         SettingsRepository(
@@ -184,6 +186,7 @@ val appModule = module {
             installedRepo = get(),
             installer = get(),
             settings = get(),
+            rbRepo = get(),
             packageName = pkg
         )
     }

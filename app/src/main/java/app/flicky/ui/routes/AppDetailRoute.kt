@@ -64,6 +64,8 @@ fun AppDetailRoute(
         onOpenAuthor = onOpenAuthor,
         variants = ui.variants,
         isFavorite = ui.isFavorite,
-        onToggleFavorite = { vm.toggleFavorite() }
+        onToggleFavorite = { vm.toggleFavorite() },
+        reproducibleBuildInfo = ui.reproducibleBuildInfo,
+        showReproducibleBadges = ui.showReproducibleBadges
     )
 }

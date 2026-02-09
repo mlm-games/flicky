@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import app.flicky.data.local.AppDao
 import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
+import app.flicky.data.model.ReproducibleBuildInfo
+import app.flicky.data.remote.ReproducibleBuildRepository
 import app.flicky.data.repository.InstalledAppsRepository
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.PreferredRepo
@@ -27,6 +29,8 @@ data class DetailUiState(
     val variants: List<AppVariant> = emptyList(),
     val isFavorite: Boolean = false,
     val appNotFound: Boolean = false,
+    val reproducibleBuildInfo: ReproducibleBuildInfo? = null,
+    val showReproducibleBadges: Boolean = false,
 )
 
 class AppDetailViewModel(
@@ -34,6 +38,7 @@ class AppDetailViewModel(
     private val installedRepo: InstalledAppsRepository,
     private val installer: Installer,
     private val settings: SettingsRepository,
+    private val rbRepo: ReproducibleBuildRepository,
     private val packageName: String
 ) : ViewModel() {
 
@@ -130,6 +135,19 @@ class AppDetailViewModel(
                     }
                 }
             }
+        }
+
+        viewModelScope.launch {
+            settings.settingsFlow
+                .map { it.showReproducibleBadges }
+                .distinctUntilChanged()
+                .collect { enabled ->
+                    _ui.update { it.copy(showReproducibleBadges = enabled) }
+                    if (enabled && _ui.value.reproducibleBuildInfo == null) {
+                        val info = rbRepo.fetchReproducibleBuildInfo(packageName)
+                        _ui.update { it.copy(reproducibleBuildInfo = info) }
+                    }
+                }
         }
     }
 

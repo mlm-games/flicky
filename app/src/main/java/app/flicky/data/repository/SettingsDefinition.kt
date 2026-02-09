@@ -174,6 +174,14 @@ data class AppSettings(
     val showIncompatible: Boolean = false,
 
     @Setting(
+        title = "Show Reproducible Badges",
+        description = "Display reproducible build badges from IzzyOnDroid",
+        category = Filters::class,
+        type = Toggle::class
+    )
+    val showReproducibleBadges: Boolean = false,
+
+    @Setting(
         title = "Differential Sync",
         description = "Only fetch changes since last sync",
         category = Sync::class,
