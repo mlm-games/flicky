@@ -25,7 +25,8 @@ data class AppVariant(
     val apkUrl: String,
     val sha256: String,
     val size: Long,
-    val isCompatible: Boolean
+    val isCompatible: Boolean,
+    val reproducible: Boolean = false
 )
 
 @Dao

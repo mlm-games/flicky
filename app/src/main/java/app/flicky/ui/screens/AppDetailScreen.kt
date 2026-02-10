@@ -896,9 +896,15 @@ private fun VersionsSection(
                     Column(Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("v${v.versionName} (${v.versionCode})", style = typography.bodyLarge)
-                            if (showReproducibleBadges && isReproducible != null) {
+                            if (showReproducibleBadges) {
                                 Spacer(Modifier.width(6.dp))
-                                ReproducibleBadge(isReproducible = isReproducible)
+
+                                if (isReproducible != null) {
+                                    ReproducibleBadge(isReproducible = isReproducible)
+                                }
+                                else if (v.reproducible) {
+                                    ReproducibleBadge(isReproducible = true)
+                                }
                             }
                         }
                         Text(

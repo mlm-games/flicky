@@ -811,6 +811,7 @@ class FDroidApi(
         val nativecode: List<String> = emptyList(),
         val whatsNew: String? = null,
         val antiFeatures: List<String> = emptyList(),
+        val reproducible: Boolean = false,
     )
 
     @SuppressLint("CheckResult")
@@ -886,7 +887,8 @@ class FDroidApi(
                 apkUrl = if (v.file.startsWith("http")) v.file else "$baseUrl/${v.file}",
                 sha256 = v.sha256,
                 size = v.size,
-                isCompatible = isCompatible(v)
+                isCompatible = isCompatible(v),
+                reproducible = v.reproducible
             )
             runCatching { onVariant(variant) }
         }
@@ -968,6 +970,7 @@ class FDroidApi(
         var nativecode = emptyList<String>()
         var whatsNew: String? = null
         var antiFeatures: List<String> = emptyList()
+        var reproducible = false
 
         reader.beginObject()
         while (reader.hasNext()) {
@@ -1030,12 +1033,13 @@ class FDroidApi(
                     }
                 }
                 "antiFeatures" -> antiFeatures = parseAntiFeaturesKeys(reader)
+                "reproducible" -> reproducible = runCatching { reader.nextBoolean() }.getOrDefault(false)
                 else -> reader.skipValue()
             }
         }
         reader.endObject()
 
-        return Version(versionCode, versionName, file, size, sha256, minSdk, targetSdk, nativecode, whatsNew, antiFeatures)
+        return Version(versionCode, versionName, file, size, sha256, minSdk, targetSdk, nativecode, whatsNew, antiFeatures, reproducible)
     }
 
     private fun parseAntiFeaturesKeys(reader: JsonReader): List<String> {
