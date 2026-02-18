@@ -1,3 +1,12 @@
+## v4.2.2
+
+- bump gradle ver
+- Add a banner against dev. verification
+- bump jvm version to 21
+- fallback fdroid based badges (only shown if RB)
+- Add Izzy repro badges to versions
+
+
 ## v4.2.1
 
 - Dhizuku impl.
