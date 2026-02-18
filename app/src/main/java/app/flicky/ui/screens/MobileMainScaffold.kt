@@ -28,10 +28,7 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
@@ -65,14 +62,11 @@ fun MobileMainScaffold(
 
     val activeBanner = AlertBanners.activeBanners.firstOrNull()
     val settingsRepository = AppGraph.settings
-    val dismissedIds by settingsRepository.settingsFlow.collectAsState(initial = app.flicky.data.repository.AppSettings()).value.let { settings ->
-        remember { mutableStateOf(settings.dismissedAlertBannerIds) }
-    }
+    val settings by settingsRepository.settingsFlow.collectAsState(initial = app.flicky.data.repository.AppSettings())
+    val dismissedIds = settings.dismissedAlertBannerIds
     val scope = rememberCoroutineScope()
     
-    var localDismissedIds by remember { mutableStateOf(dismissedIds) }
-    
-    val currentBanner = activeBanner?.takeIf { it.id !in localDismissedIds }
+    val currentBanner = activeBanner?.takeIf { it.id !in dismissedIds }
 
     if (isTablet) {
         Column(Modifier.fillMaxSize()) {
@@ -80,7 +74,6 @@ fun MobileMainScaffold(
                 AlertBanner(
                     banner = banner,
                     onDismiss = {
-                        localDismissedIds = localDismissedIds + banner.id
                         scope.launch {
                             settingsRepository.dismissAlertBanner(banner.id)
                         }
@@ -174,7 +167,6 @@ fun MobileMainScaffold(
                     AlertBanner(
                         banner = banner,
                         onDismiss = {
-                            localDismissedIds = localDismissedIds + banner.id
                             scope.launch {
                                 settingsRepository.dismissAlertBanner(banner.id)
                             }
