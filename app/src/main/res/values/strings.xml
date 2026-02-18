@@ -220,4 +220,9 @@
     <string name="dhizuku_fallback">Falling back to Session installer</string>
     <string name="dismiss_banner">Dismiss banner</string>
     <string name="no_browser_available">No browser available to open link</string>
+    
+    <string name="category_about">About</string>
+    <string name="support_development">Support Development</string>
+    <string name="support_development_desc">If you find this app useful, consider supporting its continued development</string>
+    <string name="donate_on_kofi">Donate on Ko-fi</string>
 </resources>

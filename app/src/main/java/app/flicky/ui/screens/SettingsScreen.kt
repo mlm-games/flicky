@@ -2,7 +2,7 @@
 
 package app.flicky.ui.screens
 
-import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -217,6 +217,10 @@ fun SettingsScreen(vm: SettingsViewModel) {
                 is SettingsViewModel.UiEvent.RequestExport -> {
                     val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
                     exportLauncher.launch("flicky_settings_$timestamp.json")
+                }
+                is SettingsViewModel.UiEvent.OpenUrl -> {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(event.url))
+                    context.startActivity(intent)
                 }
             }
         }

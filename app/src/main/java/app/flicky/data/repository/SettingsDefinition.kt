@@ -256,6 +256,15 @@ data class AppSettings(
     )
     val showDebugInfo: Boolean = false,
 
+    @Setting(
+        title = "Support Development",
+        description = "If you find this app useful, consider supporting its continued development",
+        category = Other::class,
+        type = Button::class
+    )
+    @NoReset
+    val supportDevelopment: Long = 0L,
+
     // Non-UI persisted
     @Persisted
     val lastSync: Long = 0L,
@@ -297,3 +306,6 @@ object Proxy
 
 @CategoryDefinition(order = 6, titleRes = R.string.category_other)
 object Other
+
+//@CategoryDefinition(order = 7, titleRes = R.string.category_about)
+//object About

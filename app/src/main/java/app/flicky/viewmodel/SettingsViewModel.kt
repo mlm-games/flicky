@@ -79,6 +79,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
                 runCatching { AppDependencies.syncManager.syncAll(force = true) }
             }
             "exportSettings" -> _events.emit(UiEvent.RequestExport)
+            "supportDevelopment" -> _events.emit(UiEvent.OpenUrl("https://ko-fi.com/mlmgames"))
             else -> _events.emit(UiEvent.Toast(R.string.no_action_attached))
         }
     }
@@ -120,6 +121,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
     sealed class UiEvent {
         data object RequestExport : UiEvent()
+        data class OpenUrl(val url: String) : UiEvent()
         data class Toast(@param:StringRes val messageResId: Int) : UiEvent()
     }
 }
