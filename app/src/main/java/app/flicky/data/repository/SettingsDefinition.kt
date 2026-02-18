@@ -271,6 +271,9 @@ data class AppSettings(
 
     @Persisted(key = "app_update_prefs_json")
     val appUpdatePrefsJson: String = "{}",
+
+    @Persisted(key = "dismissed_alert_banner_ids")
+    val dismissedAlertBannerIds: Set<String> = emptySet(),
 )
 
 

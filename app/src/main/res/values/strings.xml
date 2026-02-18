@@ -218,4 +218,6 @@
     <string name="dhizuku_permission_denied">Dhizuku permission denied. Please grant permission in Dhizuku app.</string>
     <string name="dhizuku_not_available">Dhizuku is not available. Please install and set up Dhizuku as Device Owner first.</string>
     <string name="dhizuku_fallback">Falling back to Session installer</string>
+    <string name="dismiss_banner">Dismiss banner</string>
+    <string name="no_browser_available">No browser available to open link</string>
 </resources>

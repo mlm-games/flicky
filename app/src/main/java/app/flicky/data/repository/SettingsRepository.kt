@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import java.util.Locale
 
 class SettingsRepository(
     private val dataStore: DataStore<Preferences>,
@@ -239,4 +238,10 @@ class SettingsRepository(
     }
 
     fun normalizeUrl(url: String): String = url.trim().trimEnd('/')
+
+    suspend fun dismissAlertBanner(bannerId: String) {
+        repo.update { settings ->
+            settings.copy(dismissedAlertBannerIds = settings.dismissedAlertBannerIds + bannerId)
+        }
+    }
 }

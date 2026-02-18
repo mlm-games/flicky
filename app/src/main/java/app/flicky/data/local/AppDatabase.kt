@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 
 @Database(
     entities = [FDroidApp::class, AppVariant::class, RepoConfig::class, RepositoryEntity::class],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
