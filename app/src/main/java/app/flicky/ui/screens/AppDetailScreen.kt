@@ -47,6 +47,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -483,9 +484,14 @@ private fun AppHeader(
         }
         val showBar = stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled && progressValue >= 0f
 
+        val animatedProgress by animateFloatAsState(
+            targetValue = progressValue,
+            label = "app_detail_install_progress"
+        )
+
         if (showBar) {
             LinearWavyProgressIndicator(
-                progress = { progressValue },
+                progress = { animatedProgress },
                 modifier = Modifier.fillMaxWidth(),
                 color = colorScheme.primary,
                 trackColor = colorScheme.surfaceContainerHighest
@@ -501,7 +507,7 @@ private fun AppHeader(
                 else -> "Working"
             }
             val showPercent = stage is TaskStage.Downloading || stage is TaskStage.Installing
-            val percent = (progressValue * 100).toInt()
+            val percent = (animatedProgress * 100).toInt()
             Text(
                 if (showPercent) "$label $percent%" else label,
                 style = typography.bodySmall,

@@ -1,6 +1,7 @@
 package app.flicky.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
@@ -402,8 +403,13 @@ private fun UpdateCard(
                     else -> 0f
                 }
 
+                val animatedProgress by animateFloatAsState(
+                    targetValue = progress,
+                    label = "updates_install_progress"
+                )
+
                 LinearWavyProgressIndicator(
-                    progress = { progress },
+                    progress = { animatedProgress },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
@@ -414,9 +420,9 @@ private fun UpdateCard(
                 Spacer(Modifier.height(4.dp))
 
                 val label = when (stage) {
-                    is TaskStage.Downloading -> "Downloading ${(progress * 100).toInt()}%"
+                    is TaskStage.Downloading -> "Downloading ${(animatedProgress * 100).toInt()}%"
                     is TaskStage.Verifying -> "Verifying"
-                    is TaskStage.Installing -> "Installing ${(progress * 100).toInt()}%"
+                    is TaskStage.Installing -> "Installing ${(animatedProgress * 100).toInt()}%"
                     is TaskStage.Finished -> if (stage.success) "Completed" else "Failed"
                     is TaskStage.Cancelled -> "Cancelled"
                     else -> ""
