@@ -60,8 +60,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -107,23 +107,17 @@ import io.github.mlmgames.settings.core.types.TextInput
 import io.github.mlmgames.settings.core.types.Toggle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import org.koin.compose.koinInject
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
-import kotlin.system.measureTimeMillis
 
 @Composable
 fun SettingsScreen(vm: SettingsViewModel) {
-    val settings by vm.settings.collectAsState()
-    val repos by vm.repositories.collectAsState()
+    val settings by vm.settings.collectAsStateWithLifecycle()
+    val repos by vm.repositories.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -164,10 +158,14 @@ fun SettingsScreen(vm: SettingsViewModel) {
     val importLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
-        uri?.let {
+        uri?.let { fileUri ->
             scope.launch {
                 try {
-                    val json = context.contentResolver.openInputStream(it)?.bufferedReader()?.readText()
+                    val json = withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(fileUri)?.use { stream ->
+                            stream.bufferedReader().readText()
+                        }
+                    }
                     if (json != null) {
                         val result = vm.importSettings(json)
                         when (result) {
@@ -188,18 +186,21 @@ fun SettingsScreen(vm: SettingsViewModel) {
         }
     }
 
-    // File saver for export
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
-        uri?.let {
+        uri?.let { fileUri ->
             scope.launch {
                 try {
                     val result = vm.exportSettings()
                     when (result) {
                         is ExportResult.Success -> {
-                            context.contentResolver.openOutputStream(it)?.bufferedWriter()?.use { writer ->
-                                writer.write(result.json)
+                            withContext(Dispatchers.IO) {
+                                context.contentResolver.openOutputStream(fileUri)?.use { stream ->
+                                    stream.bufferedWriter().use { writer ->
+                                        writer.write(result.json)
+                                    }
+                                }
                             }
                             snackbarManager.show(context.getString(R.string.export_success))
                         }
@@ -221,7 +222,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                     snackbarManager.show(context.getString(event.messageResId))
                 }
                 is SettingsViewModel.UiEvent.RequestExport -> {
-                    val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                    val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
                     exportLauncher.launch("flicky_settings_$timestamp.json")
                 }
                 is SettingsViewModel.UiEvent.OpenUrl -> {
@@ -342,7 +343,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                     },
                                     onClick = {
                                         showMoreMenu = false
-                                        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                                        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
                                         exportLauncher.launch("flicky_settings_$timestamp.json")
                                     }
                                 )
@@ -499,7 +500,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                         onToggle = { vm.toggleRepository(repo.url) },
                         onTestMirrors = {
                             scope.launch {
-                                val results = testRepoMirrors(base)
+                                val results = vm.testRepoMirrors(base)
                                 val message = buildString {
                                     results.forEach { (url, ok, code, ms) ->
                                         append(if (ok) "✓" else "✗")
@@ -972,88 +973,3 @@ private fun AddRepoDialog(
         }
     }
 }
-
-private suspend fun testRepoMirrors(base: String): List<ProbeResult> = withContext(Dispatchers.IO) {
-    val policy = AppDependencies.mirrorPolicyProvider.policyFor(base)
-    val candidates = MirrorRegistry.candidates(
-        base = base,
-        includeOnion = policy.includeOnion,
-        strategy = MirrorRegistry.Strategy.RoundRobin
-    ).ifEmpty { listOf(base) }
-
-    val client = try {
-        AppDependencies.httpClients.clientFor(base).newBuilder()
-            .callTimeout(5, TimeUnit.SECONDS)
-            .connectTimeout(3, TimeUnit.SECONDS)
-            .readTimeout(5, TimeUnit.SECONDS)
-            .build()
-    } catch (_: Exception) {
-        OkHttpClient.Builder()
-            .callTimeout(5, TimeUnit.SECONDS)
-            .connectTimeout(3, TimeUnit.SECONDS)
-            .readTimeout(5, TimeUnit.SECONDS)
-            .build()
-    }
-
-    fun probe(urlBase: String): ProbeResult {
-        // Try HEAD on index-v2.json first
-        val url = "$urlBase/index-v2.json"
-        var ok = false
-        var code = -1
-        val elapsed = measureTimeMillis {
-            runCatching {
-                runBlocking {
-                    withTimeout(5000) {
-                        val req = Request.Builder()
-                            .url(url)
-                            .head()
-                            .build()
-                        client.newCall(req).execute().use { resp ->
-                            code = resp.code
-                            ok = resp.isSuccessful ||
-                                    resp.code in 200..399 ||
-                                    resp.code == 405 ||
-                                    resp.code == 501
-                        }
-                    }
-                }
-            }
-        }
-
-        // If HEAD failed, try GET with Range header on v1
-        if (!ok && code != 200) {
-            val v1Url = "$urlBase/index-v1.jar"
-            val v1Elapsed = measureTimeMillis {
-                runCatching {
-                    runBlocking {
-                        withTimeout(5000) {
-                            val req = Request.Builder()
-                                .url(v1Url)
-                                .get()
-                                .header("Range", "bytes=0-0")
-                                .build()
-                            client.newCall(req).execute().use { resp ->
-                                code = resp.code
-                                ok = resp.isSuccessful ||
-                                        resp.code in 200..399 ||
-                                        resp.code == 206
-                            }
-                        }
-                    }
-                }
-            }
-            return ProbeResult(urlBase, ok, code, v1Elapsed)
-        }
-
-        return ProbeResult(urlBase, ok, code, elapsed)
-    }
-
-    candidates.map { cand -> probe(cand) }
-}
-
-private data class ProbeResult(
-    val url: String,
-    val ok: Boolean,
-    val code: Int,
-    val ms: Long
-)

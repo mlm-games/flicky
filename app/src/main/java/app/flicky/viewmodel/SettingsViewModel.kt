@@ -7,6 +7,7 @@ import androidx.room.withTransaction
 import app.flicky.R
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.model.RepositoryInfo
+import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.di.AppDependencies
@@ -18,6 +19,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.util.concurrent.TimeUnit
+import kotlin.system.measureTimeMillis
 
 class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
@@ -93,6 +99,75 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
     suspend fun importSettings(json: String): ImportResult = repo.importSettings(json)
 
+    suspend fun testRepoMirrors(base: String): List<ProbeResult> = withContext(Dispatchers.IO) {
+        val policy = AppDependencies.mirrorPolicyProvider.policyFor(base)
+        val candidates = MirrorRegistry.candidates(
+            base = base,
+            includeOnion = policy.includeOnion,
+            strategy = MirrorRegistry.Strategy.RoundRobin
+        ).ifEmpty { listOf(base) }
+
+        val client = try {
+            AppDependencies.httpClients.clientFor(base).newBuilder()
+                .callTimeout(5, TimeUnit.SECONDS)
+                .connectTimeout(3, TimeUnit.SECONDS)
+                .readTimeout(5, TimeUnit.SECONDS)
+                .build()
+        } catch (_: Exception) {
+            OkHttpClient.Builder()
+                .callTimeout(5, TimeUnit.SECONDS)
+                .connectTimeout(3, TimeUnit.SECONDS)
+                .readTimeout(5, TimeUnit.SECONDS)
+                .build()
+        }
+
+        suspend fun probe(urlBase: String): ProbeResult {
+            val url = "$urlBase/index-v2.json"
+            var ok = false
+            var code = -1
+            val elapsed = measureTimeMillis {
+                runCatching {
+                    withTimeout(5000) {
+                        val req = Request.Builder().url(url).head().build()
+                        client.newCall(req).execute().use { resp ->
+                            code = resp.code
+                            ok = resp.isSuccessful ||
+                                    resp.code in 200..399 ||
+                                    resp.code == 405 ||
+                                    resp.code == 501
+                        }
+                    }
+                }
+            }
+
+            if (!ok && code != 200) {
+                val v1Url = "$urlBase/index-v1.jar"
+                val v1Elapsed = measureTimeMillis {
+                    runCatching {
+                        withTimeout(5000) {
+                            val req = Request.Builder()
+                                .url(v1Url)
+                                .get()
+                                .header("Range", "bytes=0-0")
+                                .build()
+                            client.newCall(req).execute().use { resp ->
+                                code = resp.code
+                                ok = resp.isSuccessful ||
+                                        resp.code in 200..399 ||
+                                        resp.code == 206
+                            }
+                        }
+                    }
+                }
+                return ProbeResult(urlBase, ok, code, v1Elapsed)
+            }
+
+            return ProbeResult(urlBase, ok, code, elapsed)
+        }
+
+        candidates.map { cand -> probe(cand) }
+    }
+
     @OptIn(ExperimentalCoilApi::class)
     private suspend fun clearAllCaches() = withContext(Dispatchers.IO) {
         AppDependencies.syncManager.cancelCurrentSync()
@@ -125,3 +200,10 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
         data class Toast(@param:StringRes val messageResId: Int) : UiEvent()
     }
 }
+
+data class ProbeResult(
+    val url: String,
+    val ok: Boolean,
+    val code: Int,
+    val ms: Long
+)

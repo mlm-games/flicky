@@ -99,6 +99,10 @@ android {
     dependenciesInfo {
         includeInApk = false
     }
+
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+    }
 }
 
 apkDist {
@@ -187,6 +191,8 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     // Testing
 //    androidTestImplementation(libs.androidx.ui.test.junit4)

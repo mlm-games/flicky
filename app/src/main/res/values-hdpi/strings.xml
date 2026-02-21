@@ -38,9 +38,9 @@
     <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
     <string name="import_success">Import Successful</string>
-    <string name="import_failed">Import failed!</string>
+    <string name="import_failed">Import failed: %s</string>
     <string name="export_success">Export Successful</string>
-    <string name="export_failed">Export failed!</string>
+    <string name="export_failed">Export failed: %s</string>
     <string name="search_settings">Search Settings</string>
     <string name="import_settings">Import settings</string>
     <string name="export_settings">Export settings</string>
