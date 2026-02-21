@@ -25,7 +25,8 @@ fun MyScreenScaffold(
                     title = {
                         Text(
                             title,
-                            color = colorScheme.onSurface
+                            color = colorScheme.onSurface,
+                            maxLines = 1
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(

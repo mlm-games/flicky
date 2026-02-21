@@ -6,7 +6,14 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,9 +54,6 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SearchBar
-import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -84,6 +88,7 @@ import app.flicky.ui.components.global.DropdownSettingDialog
 import app.flicky.ui.components.global.FlickyDialog
 import app.flicky.ui.components.global.InputDialog
 import app.flicky.ui.components.global.MyScreenScaffold
+import app.flicky.ui.components.global.AnimationConfig
 import app.flicky.ui.components.global.SettingsAction
 import app.flicky.ui.components.global.SettingsItem
 import app.flicky.ui.components.global.SettingsSection
@@ -249,94 +254,100 @@ fun SettingsScreen(vm: SettingsViewModel) {
     MyScreenScaffold(
         title = if (isSearchActive) "" else stringResource(R.string.nav_settings),
         actions = {
-            if (isSearchActive) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.search_settings),
-                            style = typography.bodyMedium
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = null,
-                            tint = colorScheme.onSurfaceVariant
-                        )
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = {
-                            if (searchQuery.isNotEmpty()) {
-                                searchQuery = ""
-                            } else {
-                                isSearchActive = false
-                            }
-                        }) {
+            AnimatedContent(
+                targetState = isSearchActive,
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(AnimationConfig.STANDARD)) +
+                            expandHorizontally(
+                                expandFrom = Alignment.End,
+                                animationSpec = tween(AnimationConfig.STANDARD)
+                            )) togetherWith
+                            (fadeOut(animationSpec = tween(AnimationConfig.QUICK)) +
+                                    shrinkHorizontally(
+                                        shrinkTowards = Alignment.End,
+                                        animationSpec = tween(AnimationConfig.STANDARD)
+                                    ))
+                },
+                label = "settings_search_bar_anim"
+            ) { searchActive ->
+                if (searchActive) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = {
+                            Text(
+                                stringResource(R.string.search_settings),
+                                style = typography.bodyMedium
+                            )
+                        },
+                        leadingIcon = {
                             Icon(
-                                Icons.Default.Close,
-                                contentDescription = stringResource(R.string.action_close),
+                                Icons.Default.Search,
+                                contentDescription = null,
                                 tint = colorScheme.onSurfaceVariant
                             )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                if (searchQuery.isNotEmpty()) {
+                                    searchQuery = ""
+                                } else {
+                                    isSearchActive = false
+                                }
+                            }) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = stringResource(R.string.action_close),
+                                    tint = colorScheme.onSurfaceVariant
+                                )
+                            }
+                        },
+                        singleLine = true,
+                        textStyle = typography.bodyMedium,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .padding(horizontal = 8.dp)
+                    )
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { isSearchActive = true }) {
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
                         }
-                    },
-                    singleLine = true,
-                    textStyle = typography.bodyMedium,
-//                    colors = OutlinedTextFieldDefaults.colors(
-//                        focusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.5f),
-//                        unfocusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.3f),
-//                        focusedBorderColor = colorScheme.primary,
-//                        unfocusedBorderColor = colorScheme.outline,
-//                        cursorColor = colorScheme.primary,
-//                        focusedTextColor = colorScheme.onSurface,
-//                        unfocusedTextColor = colorScheme.onSurface,
-//                        focusedPlaceholderColor = colorScheme.onSurfaceVariant,
-//                        unfocusedPlaceholderColor = colorScheme.onSurfaceVariant,
-//                        focusedLeadingIconColor = colorScheme.onSurfaceVariant,
-//                        unfocusedLeadingIconColor = colorScheme.onSurfaceVariant,
-//                    ),
-                    shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .padding(horizontal = 8.dp)
-                )
-            } else {
-                IconButton(onClick = { isSearchActive = true }) {
-                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
-                }
 
-                Box {
-                    IconButton(onClick = { showMoreMenu = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
-                    }
-                    DropdownMenu(
-                        expanded = showMoreMenu,
-                        containerColor = colorScheme.background,
-                        onDismissRequest = { showMoreMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.import_settings)) },
-                            leadingIcon = {
-                                Icon(Icons.Default.Download, contentDescription = null)
-                            },
-                            onClick = {
-                                showMoreMenu = false
-                                importLauncher.launch(arrayOf("application/json"))
+                        Box {
+                            IconButton(onClick = { showMoreMenu = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
                             }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.export_settings)) },
-                            leadingIcon = {
-                                Icon(Icons.Default.Upload, contentDescription = null)
-                            },
-                            onClick = {
-                                showMoreMenu = false
-                                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-                                exportLauncher.launch("flicky_settings_$timestamp.json")
+                            DropdownMenu(
+                                expanded = showMoreMenu,
+                                containerColor = colorScheme.background,
+                                onDismissRequest = { showMoreMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.import_settings)) },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Download, contentDescription = null)
+                                    },
+                                    onClick = {
+                                        showMoreMenu = false
+                                        importLauncher.launch(arrayOf("application/json"))
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.export_settings)) },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Upload, contentDescription = null)
+                                    },
+                                    onClick = {
+                                        showMoreMenu = false
+                                        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                                        exportLauncher.launch("flicky_settings_$timestamp.json")
+                                    }
+                                )
                             }
-                        )
+                        }
                     }
                 }
             }
