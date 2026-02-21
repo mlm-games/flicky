@@ -26,7 +26,7 @@ android {
 
     defaultConfig {
         applicationId = "app.flicky"
-        minSdk = 24
+        minSdk = 23
         targetSdk = 36
         versionCode = 830
         versionName = "4.2.2"

@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-sdk tools:overrideLibrary="com.rosan.dhizuku.api" />
+    <uses-sdk tools:overrideLibrary="com.rosan.dhizuku.api,rikka.shizuku.api" />
 
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
     <uses-permission
