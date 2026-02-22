@@ -66,6 +66,9 @@ interface RepositoryDao {
     @Query("DELETE FROM repositories")
     suspend fun clearAll()
 
+    @Query("DELETE FROM repositories WHERE baseUrl = :base")
+    suspend fun delete(base: String)
+
     /**
      * Observe the union of repositories and repo_config.
      */

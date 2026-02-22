@@ -111,7 +111,8 @@ class SettingsRepository(
 
     suspend fun deleteRepository(url: String) {
         val base = normalizeUrl(url)
-        repoConfigDao.upsert((repoConfigDao.get(base) ?: RepoConfig(baseUrl = base)).copy(enabled = false))
+        repositoryDao.delete(base)
+        repoConfigDao.delete(base)
         appDao.deleteByRepositoryUrl(base)
         appDao.deleteVariantsByRepositoryUrl(base)
         MirrorRegistry.clear(base)

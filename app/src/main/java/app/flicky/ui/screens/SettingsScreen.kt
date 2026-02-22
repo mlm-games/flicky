@@ -135,6 +135,8 @@ fun SettingsScreen(vm: SettingsViewModel) {
     var currentField by remember { mutableStateOf<SettingField<AppSettings, *>?>(null) }
 
     var showResetConfirm by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var repoToDelete by remember { mutableStateOf<RepositoryInfo?>(null) }
     var showAddRepo by remember { mutableStateOf(false) }
     var showImportDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
@@ -516,6 +518,10 @@ fun SettingsScreen(vm: SettingsViewModel) {
                         onForgetMirror = {
                             MirrorRegistry.clear(base)
                             snackbarManager.show(context.getString(R.string.forgot_mirror, repo.name))
+                        },
+                        onDelete = {
+                            repoToDelete = repo
+                            showDeleteConfirm = true
                         }
                     )
                 }
@@ -649,6 +655,25 @@ fun SettingsScreen(vm: SettingsViewModel) {
             onDismiss = { showResetConfirm = false }
         )
     }
+
+    if (showDeleteConfirm && repoToDelete != null) {
+        ConfirmationDialog(
+            title = stringResource(R.string.delete_repository),
+            message = stringResource(R.string.delete_repository_confirm, repoToDelete!!.name),
+            confirmText = stringResource(R.string.delete),
+            dismissText = stringResource(R.string.action_cancel),
+            isDangerous = true,
+            onConfirm = {
+                repoToDelete?.let { vm.deleteRepository(it.url) }
+                showDeleteConfirm = false
+                repoToDelete = null
+            },
+            onDismiss = {
+                showDeleteConfirm = false
+                repoToDelete = null
+            }
+        )
+    }
 }
 
 @Composable
@@ -743,6 +768,27 @@ private fun RepoConfigCard(
                                 onClick = {
                                     showMenu = false
                                     onForgetMirror()
+                                }
+                            )
+
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        stringResource(R.string.delete_repository),
+                                        color = colorScheme.error
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = null,
+                                        tint = colorScheme.error,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                },
+                                onClick = {
+                                    showMenu = false
+                                    onDelete()
                                 }
                             )
                         }
