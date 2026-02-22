@@ -15,15 +15,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.flicky.AppGraph
 import app.flicky.R
@@ -31,7 +28,6 @@ import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.AppUpdatePreference
 import app.flicky.helper.DeviceUtils
-import app.flicky.helper.cardAsFocusGroup
 import app.flicky.install.TaskStage
 import app.flicky.ui.components.AppIcon
 import app.flicky.ui.components.AppTexts

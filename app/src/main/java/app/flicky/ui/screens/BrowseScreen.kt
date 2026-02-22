@@ -47,7 +47,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
@@ -166,7 +165,7 @@ fun BrowseScreen(
             Column {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = colorScheme.surfaceContainerLow
+                    color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
                     Row(
                         modifier = Modifier
@@ -220,7 +219,7 @@ fun BrowseScreen(
                             enabled = !isSyncing
                         ) {
                             if (isSyncing) {
-                                LoadingIndicator(modifier = Modifier.size(24.dp),)
+                                LoadingIndicator(modifier = Modifier.size(24.dp))
                             } else {
                                 Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_sync))
                             }
@@ -488,7 +487,7 @@ private fun InstallFromDialog(
                                 .semantics { role = Role.Button }
                                 .clickable(enabled = compat && !isWorking) { onInstall(v) },
                             shape = MaterialTheme.shapes.medium,
-                            color = colorScheme.surfaceContainerLow
+                            color = MaterialTheme.colorScheme.surfaceContainerLow
                         ) {
                             Row(
                                 Modifier
@@ -737,8 +736,8 @@ private fun TvAwareDockedSearchBar(
 private fun AppListRow(app: FDroidApp, onClick: () -> Unit, onLongClick: () -> Unit) {
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors(
-            containerColor = colorScheme.surfaceContainer,
-            contentColor = colorScheme.onSurface
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface
         ),
         modifier = Modifier
             .fillMaxWidth()

@@ -181,7 +181,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
         runCatching {
             repo.repositoriesFlow.first().forEach {
-                app.flicky.data.remote.MirrorRegistry.clear(it.url)
+                MirrorRegistry.clear(it.url)
             }
         }
 

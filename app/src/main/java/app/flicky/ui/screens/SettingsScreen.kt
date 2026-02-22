@@ -658,7 +658,8 @@ private fun RepoConfigCard(
     onConfigChange: (RepoConfig) -> Unit,
     onToggle: () -> Unit,
     onTestMirrors: () -> Unit,
-    onForgetMirror: () -> Unit
+    onForgetMirror: () -> Unit,
+    onDelete: () -> Unit
 ) {
     var localConfig by remember(config) { mutableStateOf(config) }
     var showMenu by remember { mutableStateOf(false) }

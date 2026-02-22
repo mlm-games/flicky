@@ -594,7 +594,7 @@ class Installer(
         while (isActive) {
             if (isCancelled(packageName)) { dm.remove(id); return@withContext null }
             val c = dm.query(q)
-            try {
+            c.use { c ->
                 if (c != null && c.moveToFirst()) {
                     val statusIdx = c.getColumnIndex(DownloadManager.COLUMN_STATUS)
                     val status = if (statusIdx != -1) c.getInt(statusIdx) else DownloadManager.STATUS_PENDING
@@ -612,10 +612,12 @@ class Installer(
                             emitStage(packageName, TaskStage.Downloading(1f))
                             return@withContext dm.getUriForDownloadedFile(id)
                         }
+
                         DownloadManager.STATUS_FAILED -> {
                             DebugLog.log("Downloader", "Failed (${reasonText(reason)}) for $url")
                             return@withContext null
                         }
+
                         DownloadManager.STATUS_RUNNING, DownloadManager.STATUS_PAUSED, DownloadManager.STATUS_PENDING -> {
                             val soFarIdx = c.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
                             val totalIdx = c.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
@@ -643,7 +645,7 @@ class Installer(
                         }
                     }
                 }
-            } finally { c?.close() }
+            }
             delay(300)
         }
         null
@@ -771,24 +773,34 @@ class Installer(
         val sessionId = pm.createSession(params)
         val session = pm.openSession(sessionId)
         val total = file.length().coerceAtLeast(1L)
-        FileInputStream(file).use { fis ->
-            session.openWrite("base.apk", 0, -1).use { out ->
-                val buf = ByteArray(STREAM_BUF)
-                var written = 0L
-                var r = fis.read(buf)
-                while (r != -1) {
-                    if (isCancelled(packageName)) {
-                        runCatching { out.flush() }
-                        session.abandon()
-                        emitStage(packageName, TaskStage.Cancelled)
-                        return false
+        withContext(Dispatchers.IO) {
+            FileInputStream(file).use { fis ->
+                session.openWrite("base.apk", 0, -1).use { out ->
+                    val buf = ByteArray(STREAM_BUF)
+                    var written = 0L
+                    var r = fis.read(buf)
+                    while (r != -1) {
+                        if (isCancelled(packageName)) {
+                            runCatching { out.flush() }
+                            session.abandon()
+                            emitStage(packageName, TaskStage.Cancelled)
+                            return@use false
+                        }
+                        out.write(buf, 0, r)
+                        written += r
+                        emitStage(
+                            packageName,
+                            TaskStage.Installing(
+                                (written.toFloat() / total.toFloat()).coerceIn(
+                                    0f,
+                                    1f
+                                )
+                            )
+                        )
+                        r = fis.read(buf)
                     }
-                    out.write(buf, 0, r)
-                    written += r
-                    emitStage(packageName, TaskStage.Installing((written.toFloat() / total.toFloat()).coerceIn(0f, 1f)))
-                    r = fis.read(buf)
+                    session.fsync(out)
                 }
-                session.fsync(out)
             }
         }
         val result = CompletableDeferred<InstallEvent>()

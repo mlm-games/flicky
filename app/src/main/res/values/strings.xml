@@ -186,6 +186,9 @@
     <string name="test_ping">Test Ping</string>
     <string name="forget_last_mirror">Forget Last Mirror</string>
     <string name="forgot_mirror">Forgot last mirror for %s</string>
+    <string name="delete_repository">Delete Repository</string>
+    <string name="delete_repository_confirm">Delete %s from your repositories?</string>
+    <string name="delete">Delete</string>
     <string name="rotate_mirrors">Rotate mirrors</string>
     <string name="use_onion">Use onion</string>
     <string name="pins_label">Pins (sha256/BASE64, comma separated)</string>

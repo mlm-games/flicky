@@ -1274,13 +1274,13 @@ class FDroidApi(
     }
 
     private fun pickLocalized(map: Map<String, String>?): String? {
-        if (map == null || map.isEmpty()) return null
+        if (map.isNullOrEmpty()) return null
         for (t in localeTags) map[t]?.let { return it }
         return map.values.firstOrNull()
     }
 
     private fun <T> pickLocalizedObj(map: Map<String, T>?): T? {
-        if (map == null || map.isEmpty()) return null
+        if (map.isNullOrEmpty()) return null
         for (t in localeTags) map[t]?.let { return it }
         return map.values.firstOrNull()
     }
