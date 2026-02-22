@@ -1,3 +1,12 @@
+## v4.2.3
+
+- Option to delete repositories (#55)
+- reduce minsdk to 23 (support android 6)
+- smoother searchbar anim in settings
+- animate the progress updation for app downloads
+- Add a dono button as the last setting
+
+
 ## v4.2.2
 
 - bump gradle ver
