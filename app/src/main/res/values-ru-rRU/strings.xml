@@ -35,6 +35,7 @@
     <string name="force_sync">Принудительная синхронизация</string>
     <string name="clear_all_apps">Очистить все приложения</string>
     <string name="sort_name">Имя</string>
+    <string name="sort_name_desc">Имя (Я-А)</string>
     <string name="sort_updated">Недавно обновленные</string>
     <string name="sort_size">Размер</string>
     <string name="sort_added">Недавно добавленные</string>

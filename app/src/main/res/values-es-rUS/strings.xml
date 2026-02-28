@@ -35,6 +35,7 @@
     <string name="force_sync">Forzar sincronización</string>
     <string name="clear_all_apps">Borrar todas las apps</string>
     <string name="sort_name">Nombre</string>
+    <string name="sort_name_desc">Nombre (Z-A)</string>
     <string name="sort_updated">Actualizado recientemente</string>
     <string name="sort_size">Tamaño</string>
     <string name="sort_added">Añadido recientemente</string>

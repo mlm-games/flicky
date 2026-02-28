@@ -35,6 +35,7 @@
     <string name="force_sync">強制同期</string>
     <string name="clear_all_apps">すべてのアプリをクリア</string>
     <string name="sort_name">名前</string>
+    <string name="sort_name_desc">名前 (Z-A)</string>
     <string name="sort_updated">最近更新</string>
     <string name="sort_size">サイズ</string>
     <string name="sort_added">最近追加</string>

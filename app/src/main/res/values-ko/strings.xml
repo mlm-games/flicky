@@ -35,6 +35,7 @@
     <string name="force_sync">강제 동기화</string>
     <string name="clear_all_apps">모든 앱 지우기</string>
     <string name="sort_name">이름</string>
+    <string name="sort_name_desc">이름 (Z-A)</string>
     <string name="sort_updated">최근 업데이트</string>
     <string name="sort_size">크기</string>
     <string name="sort_added">최근 추가</string>

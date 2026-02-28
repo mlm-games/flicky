@@ -35,6 +35,7 @@
     <string name="force_sync">强制同步</string>
     <string name="clear_all_apps">清除所有应用</string>
     <string name="sort_name">名称</string>
+    <string name="sort_name_desc">名称 (Z-A)</string>
     <string name="sort_updated">最近更新</string>
     <string name="sort_size">大小</string>
     <string name="sort_added">最近添加</string>
