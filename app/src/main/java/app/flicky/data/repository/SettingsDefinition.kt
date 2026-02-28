@@ -101,7 +101,7 @@ data class AppSettings(
         description = "How to sort apps by default",
         category = General::class,
         type = Dropdown::class,
-        options = ["Name", "Updated", "Size", "Added"]
+        options = ["Name", "Name (Z-A)", "Updated", "Size", "Added"]
     )
     val defaultSort: Int = 1,
 

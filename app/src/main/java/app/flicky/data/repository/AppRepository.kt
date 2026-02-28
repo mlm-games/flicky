@@ -22,6 +22,7 @@ class AppRepository(private val dao: AppDao) {
             val compatFiltered = if (showIncompatible) antiFiltered else antiFiltered.filter { it.isCompatible }
             when (sort) {
                 SortOption.Name -> compatFiltered.sortedBy { it.name.lowercase() }
+                SortOption.NameDesc -> compatFiltered.sortedByDescending { it.name.lowercase() }
                 SortOption.Updated -> compatFiltered.sortedByDescending { it.lastUpdated }
                 SortOption.Size -> compatFiltered.sortedBy { it.size }
                 SortOption.Added -> compatFiltered.sortedByDescending { it.added }
@@ -42,6 +43,7 @@ class AppRepository(private val dao: AppDao) {
             when (sort) {
                 SortOption.Updated -> dao.pagingByUpdated(query, hideAntiInt, showIncompatInt)
                 SortOption.Name -> dao.pagingByName(query, hideAntiInt, showIncompatInt)
+                SortOption.NameDesc -> dao.pagingByNameDesc(query, hideAntiInt, showIncompatInt)
                 SortOption.Size -> dao.pagingBySize(query, hideAntiInt, showIncompatInt)
                 SortOption.Added -> dao.pagingByAdded(query, hideAntiInt, showIncompatInt)
             }

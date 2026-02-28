@@ -91,8 +91,20 @@ AND (:showIncompat = 1 OR EXISTS (
     WHERE v.packageName = apps.packageName AND v.isCompatible = 1
 ))
 ORDER BY name COLLATE NOCASE ASC
-""")
+    """)
     fun pagingByName(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
+
+    @Query("""
+SELECT * FROM apps
+WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
+AND (:hideAnti = 0 OR LENGTH(antiFeatures) = 2)
+AND (:showIncompat = 1 OR EXISTS (
+    SELECT 1 FROM app_variants v
+    WHERE v.packageName = apps.packageName AND v.isCompatible = 1
+))
+ORDER BY name COLLATE NOCASE DESC
+""")
+    fun pagingByNameDesc(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
 
     @Query("""
 SELECT * FROM apps
