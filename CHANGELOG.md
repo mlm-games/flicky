@@ -1,3 +1,9 @@
+## v4.3.1
+
+- Add name desc. sort option
+- Categories Screen does also react to list item, and default sort settings (#56)
+
+
 ## v4.2.3
 
 - Option to delete repositories (#55)
