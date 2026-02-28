@@ -53,6 +53,7 @@ fun FavoritesScreen(
             if (ui.favorites.isNotEmpty()) {
                 val sortLabel = when (sort) {
                     SortOption.Name -> stringResource(R.string.sort_name)
+                    SortOption.NameDesc -> stringResource(R.string.sort_name_desc)
                     SortOption.Updated -> stringResource(R.string.sort_updated)
                     SortOption.Size -> stringResource(R.string.sort_size)
                     SortOption.Added -> stringResource(R.string.sort_added)
@@ -215,6 +216,7 @@ private fun SortSelectionDialog(
             SortOption.entries.forEach { option ->
                 val label = when (option) {
                     SortOption.Name -> stringResource(R.string.sort_name)
+                    SortOption.NameDesc -> stringResource(R.string.sort_name_desc)
                     SortOption.Updated -> stringResource(R.string.sort_updated)
                     SortOption.Size -> stringResource(R.string.sort_size)
                     SortOption.Added -> stringResource(R.string.sort_added)

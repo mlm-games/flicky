@@ -46,9 +46,10 @@ fun CategoriesScreen(
     val settingsState by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
     val sortOption = when (settingsState.defaultSort) {
         0 -> SortOption.Name
-        1 -> SortOption.Updated
-        2 -> SortOption.Size
-        3 -> SortOption.Added
+        1 -> SortOption.NameDesc
+        2 -> SortOption.Updated
+        3 -> SortOption.Size
+        4 -> SortOption.Added
         else -> SortOption.Updated
     }
     val apps by AppDependencies.appRepo.appsFlow(

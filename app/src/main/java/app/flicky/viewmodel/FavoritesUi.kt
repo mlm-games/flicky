@@ -40,6 +40,7 @@ class FavoritesViewModel(
                 val favApps = allApps.filter { it.packageName in favSet }
                 val sorted = when (currentSort) {
                     SortOption.Name -> favApps.sortedBy { it.name.lowercase() }
+                    SortOption.NameDesc -> favApps.sortedByDescending { it.name.lowercase() }
                     SortOption.Updated -> favApps.sortedByDescending { it.lastUpdated }
                     SortOption.Size -> favApps.sortedBy { it.size }
                     SortOption.Added -> favApps.sortedByDescending { it.added }
