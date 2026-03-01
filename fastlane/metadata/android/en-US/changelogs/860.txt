@@ -1,0 +1,2 @@
+- Add name desc. sort option
+- Categories Screen does also react to list item, and default sort settings (#56)
