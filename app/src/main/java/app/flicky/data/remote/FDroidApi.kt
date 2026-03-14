@@ -74,6 +74,8 @@ class FDroidApi(
         suspend fun client(): OkHttpClient {
             return try {
                 clientProvider.clientFor(baseUrl)
+            } catch (e: TrustPolicyException) {
+                throw e
             } catch (e: Exception) {
                 if (strict) throw e else defaultClient
             }

@@ -20,6 +20,7 @@ import app.flicky.data.model.FDroidApp
 import app.flicky.data.remote.HttpClientProvider
 import app.flicky.data.remote.MirrorPolicyProvider
 import app.flicky.data.remote.MirrorRegistry
+import app.flicky.data.remote.TrustPolicyException
 import app.flicky.data.remote.MirrorRegistry.Strategy
 import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.SettingsRepository
@@ -432,7 +433,10 @@ class Installer(
 
         for (url in tryUrls) {
             if (trustRequiresCustomClient) {
-                val client = try { httpClients.clientFor(req.repoBase) } catch (e: Exception) {
+                val client = try { httpClients.clientFor(req.repoBase) } catch (e: TrustPolicyException) {
+                    DebugLog.log("Downloader", "TLS policy failed: ${e.message}")
+                    throw e
+                } catch (e: Exception) {
                     DebugLog.log("Downloader", "TLS client failed: ${e.message}")
                     if (failOnTrustErrors) return@withContext null
                     defaultStreamingClient()
@@ -487,7 +491,10 @@ class Installer(
             }
 
             DebugLog.log("Downloader", "Fallback to streaming for $url")
-            val client = try { httpClients.clientFor(req.repoBase) } catch (e: Exception) {
+            val client = try { httpClients.clientFor(req.repoBase) } catch (e: TrustPolicyException) {
+                DebugLog.log("Downloader", "TLS policy failed: ${e.message}")
+                throw e
+            } catch (e: Exception) {
                 if (failOnTrustErrors) {
                     DebugLog.log("Downloader", "TLS client failed (strict): ${e.message}")
                     null

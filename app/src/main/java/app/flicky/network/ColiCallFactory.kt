@@ -1,6 +1,7 @@
 package app.flicky.network
 
 import app.flicky.data.remote.HttpClientProvider
+import app.flicky.data.remote.TrustPolicyException
 import kotlinx.coroutines.runBlocking
 import okhttp3.Call
 import okhttp3.OkHttpClient
@@ -33,6 +34,8 @@ class CoilCallFactory(
             runBlocking {
                 try {
                     clients.clientFor(hostBase)
+                } catch (e: TrustPolicyException) {
+                    throw e
                 } catch (e: Exception) {
                     if (failOnTrustErrors) throw e
                     // permissive fallback

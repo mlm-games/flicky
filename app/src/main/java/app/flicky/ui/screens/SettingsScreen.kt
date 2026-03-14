@@ -980,7 +980,7 @@ private fun AddRepoDialog(
             TextButton(
                 onClick = {
                     if (canAdd) {
-                        val trustMode = if (allowInsecureHttp) "InsecureHttp" else "HttpsOnly"
+                        val trustMode = if (isHttpRepo && allowInsecureHttp) "InsecureHttp" else "HttpsOnly"
                         onAdd(name.ifBlank { url }, normalizedUrl, trustMode)
                     }
                 },
