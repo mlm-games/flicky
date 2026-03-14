@@ -229,4 +229,6 @@
     <string name="support_development">Support Development</string>
     <string name="support_development_desc">If you find this app useful, consider supporting its continued development</string>
     <string name="donate_on_kofi">Donate on Ko-fi</string>
+    <string name="insecure_http_warning">This repository uses insecure HTTP. Only enable this for a trusted local/LAN repo.</string>
+    <string name="allow_insecure_http">Allow insecure HTTP for this repo</string>
 </resources>

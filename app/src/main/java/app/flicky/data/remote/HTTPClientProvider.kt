@@ -79,12 +79,25 @@ class DbHttpClientProvider(
         val url = cfg.baseUrl.toHttpUrlOrNull()
             ?: return defaultClient
 
-        when (cfg.trustMode.lowercase()) {
+        return when (cfg.trustMode.lowercase()) {
             "httpsonly" -> {
                 if (!url.isHttps) {
                     throw IllegalStateException("Repo ${cfg.baseUrl} requires HTTPS (trustMode=HttpsOnly)")
                 }
-                return defaultClient
+                defaultClient
+            }
+
+            "insecurehttp" -> {
+                if (url.isHttps) {
+                    defaultClient
+                } else {
+                    if (!isPrivateOrLocalHost(url.host)) {
+                        throw IllegalStateException(
+                            "Insecure HTTP is only for localhost/LAN repos: ${cfg.baseUrl}" // maybe ask to open an issue if any other cases are valid?
+                        )
+                    }
+                    defaultClient
+                }
             }
 
             "pinned" -> {
@@ -93,20 +106,21 @@ class DbHttpClientProvider(
                 }
                 val host = url.host
                 val pins = parsePins(cfg.pins)
-                if (pins.isEmpty()) return defaultClient
-
-                val pinner = CertificatePinner.Builder().apply {
-                    pins.forEach { pin ->
-                        // Validate pin format
-                        if (isValidPin(pin)) {
-                            add(host, pin)
+                if (pins.isEmpty()) defaultClient
+                else {
+                    val pinner = CertificatePinner.Builder().apply {
+                        pins.forEach { pin ->
+                            // Validate pin format
+                            if (isValidPin(pin)) {
+                                add(host, pin)
+                            }
                         }
-                    }
-                }.build()
+                    }.build()
 
-                return defaultClient.newBuilder()
-                    .certificatePinner(pinner)
-                    .build()
+                    defaultClient.newBuilder()
+                        .certificatePinner(pinner)
+                        .build()
+                }
             }
 
             "customca" -> {
@@ -114,12 +128,33 @@ class DbHttpClientProvider(
                     throw IllegalStateException("CustomCA mode requires HTTPS: ${cfg.baseUrl}")
                 }
                 val trust = buildTrustFromPem(cfg.caPem)
-                return defaultClient.newBuilder()
+                defaultClient.newBuilder()
                     .sslSocketFactory(trust.first, trust.second)
                     .build()
             }
 
-            else -> return defaultClient
+            else -> defaultClient
+        }
+    }
+
+    private fun isPrivateOrLocalHost(host: String): Boolean {
+        val h = host.lowercase()
+
+        if (h == "localhost" || h == "127.0.0.1" || h == "::1") return true
+        if (h.endsWith(".local")) return true
+
+        val parts = h.split('.')
+        if (parts.size != 4) return false
+
+        val a = parts[0].toIntOrNull() ?: return false
+        val b = parts[1].toIntOrNull() ?: return false
+
+        return when (a) {
+            10 -> true
+            192 if b == 168 -> true
+            172 if b in 16..31 -> true
+            169 if b == 254 -> true
+            else -> false
         }
     }
 

@@ -69,8 +69,19 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
         repo.toggleRepository(url)
     }
 
-    fun addRepository(name: String, url: String) = viewModelScope.launch {
-        repo.addRepository(name, url)
+    fun addRepository(
+        name: String,
+        url: String,
+        trustMode: String = "HttpsOnly",
+    ) = viewModelScope.launch {
+        repo.addRepository(name, url, trustMode)
+        reloadConfigs()
+    }
+
+    fun upsertRepoConfig(config: RepoConfig) = viewModelScope.launch {
+        AppDependencies.syncManager.cancelCurrentSync()
+        repo.upsertRepoConfig(config)
+        reloadConfigs()
     }
 
     fun deleteRepository(url: String) = viewModelScope.launch {

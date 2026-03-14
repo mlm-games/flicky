@@ -42,6 +42,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:enableOnBackInvokedCallback="true"
+        android:usesCleartextTraffic="true"
         tools:ignore="UnusedAttribute">
 
         <activity

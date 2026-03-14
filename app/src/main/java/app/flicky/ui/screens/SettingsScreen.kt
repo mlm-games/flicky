@@ -631,9 +631,9 @@ fun SettingsScreen(vm: SettingsViewModel) {
     if (showAddRepo) {
         AddRepoDialog(
             onDismiss = { showAddRepo = false },
-            onAdd = { name, url ->
+            onAdd = { name, url, trustMode ->
                 scope.launch {
-                    vm.addRepository(name, url)
+                    vm.addRepository(name, url, trustMode)
                     AppDependencies.mirrorPolicyProvider.ensureDefault(url.trimEnd('/'))
                 }
                 showAddRepo = false
@@ -881,7 +881,7 @@ private fun RepoConfigCard(
 
                 Spacer(Modifier.height(6.dp))
 
-                val trustModes = listOf("HttpsOnly", "Pinned", "CustomCA")
+                val trustModes = listOf("HttpsOnly", "Pinned", "CustomCA", "InsecureHttp")
                 val trustIdx = trustModes.indexOf(localConfig.trustMode).coerceAtLeast(0)
 
                 ExposedDropdownMenuBox(
@@ -963,11 +963,15 @@ private fun RepoConfigCard(
 @Composable
 private fun AddRepoDialog(
     onDismiss: () -> Unit,
-    onAdd: (String, String) -> Unit
+    onAdd: (String, String, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
-    val canAdd = url.isNotBlank()
+    var allowInsecureHttp by remember { mutableStateOf(false) }
+
+    val normalizedUrl = url.trim()
+    val isHttpRepo = normalizedUrl.startsWith("http://", ignoreCase = true)
+    val canAdd = normalizedUrl.isNotBlank() && (!isHttpRepo || allowInsecureHttp)
 
     FlickyDialog(
         onDismissRequest = onDismiss,
@@ -975,7 +979,10 @@ private fun AddRepoDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (canAdd) onAdd(name.ifBlank { url }, url)
+                    if (canAdd) {
+                        val trustMode = if (allowInsecureHttp) "InsecureHttp" else "HttpsOnly"
+                        onAdd(name.ifBlank { url }, normalizedUrl, trustMode)
+                    }
                 },
                 enabled = canAdd,
                 colors = ButtonDefaults.textButtonColors(
@@ -1017,6 +1024,32 @@ private fun AddRepoDialog(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            if (isHttpRepo) {
+                Spacer(Modifier.height(12.dp))
+
+                Text(
+                    text = stringResource(R.string.insecure_http_warning),
+                    style = typography.bodySmall,
+                    color = colorScheme.error
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Switch(
+                        checked = allowInsecureHttp,
+                        onCheckedChange = { allowInsecureHttp = it }
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.allow_insecure_http),
+                        style = typography.bodyMedium
+                    )
+                }
+            }
         }
     }
 }

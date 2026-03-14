@@ -87,26 +87,42 @@ class SettingsRepository(
         }
     }
 
-    suspend fun addRepository(name: String, url: String) {
+    suspend fun addRepository(
+        name: String,
+        url: String,
+        trustMode: String = "HttpsOnly",
+    ) {
         val base = normalizeUrl(url)
+
         repositoryDao.upsert(
             RepositoryEntity(
                 baseUrl = base,
                 name = name.ifBlank { base }
             )
         )
-        val isFDroid = base.equals("https://f-droid.org/repo", ignoreCase = true) ||
-                name.equals("F-Droid", ignoreCase = true) ||
-                base.contains("f-droid.org", ignoreCase = true)
 
-        repoConfigDao.insertIgnore(
-            RepoConfig(
+        val isFDroid =
+            base.equals("https://f-droid.org/repo", ignoreCase = true) ||
+            name.equals("F-Droid", ignoreCase = true) ||
+            base.contains("f-droid.org", ignoreCase = true)
+
+        val existing = repoConfigDao.get(base)
+
+        repoConfigDao.upsert(
+            (existing ?: RepoConfig(
                 baseUrl = base,
                 enabled = true,
                 rotateMirrors = isFDroid,
                 strategy = if (isFDroid) "RoundRobin" else "StickyLastGood"
+            )).copy(
+                enabled = true,
+                trustMode = trustMode
             )
         )
+    }
+
+    suspend fun upsertRepoConfig(config: RepoConfig) {
+        repoConfigDao.upsert(config)
     }
 
     suspend fun deleteRepository(url: String) {

@@ -30,10 +30,11 @@ data class RepoConfig(
     @ColumnInfo(name = "strategy")
     val strategy: String = "StickyLastGood",
 
-    // Trust options
+    // Trust options:
     // HttpsOnly (default), Pinned (CertificatePinner), CustomCA (single or chain PEM)
+    // InsecureHttp (allow HTTP for localhost/LAN repos only)
     @ColumnInfo(name = "trustMode")
-    val trustMode: String = "HttpsOnly", // HttpsOnly | Pinned | CustomCA
+    val trustMode: String = "HttpsOnly", // HttpsOnly | Pinned | CustomCA | InsecureHttp
 
     // Comma/space-separated pins, each like "sha256/BASE64=="
     @ColumnInfo(name = "pins")

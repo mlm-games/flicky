@@ -20,7 +20,15 @@ class CoilCallFactory(
 
     override fun newCall(request: Request): Call {
         val url = request.url
-        val hostBase = "${url.scheme}://${url.host}"
+
+        val portSuffix = when (url.scheme) {
+            "http" -> if (url.port != 80) ":${url.port}" else ""
+            "https" -> if (url.port != 443) ":${url.port}" else ""
+            else -> if (url.port > 0) ":${url.port}" else ""
+        }
+
+        val hostBase = "${url.scheme}://${url.host}$portSuffix"
+
         val client = cache.getOrPut(hostBase) {
             runBlocking {
                 try {
