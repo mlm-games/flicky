@@ -7,6 +7,8 @@ import kotlinx.coroutines.withContext
 import okhttp3.CertificatePinner
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
+import java.net.InetAddress
+import java.net.UnknownHostException
 import java.security.KeyStore
 import java.security.SecureRandom
 import java.security.cert.CertificateFactory
@@ -143,37 +145,16 @@ class DbHttpClientProvider(
         val h = host.lowercase()
 
         if (h == "localhost" || h == "127.0.0.1" || h == "::1") return true
-
         if (h.endsWith(".local") || h.endsWith(".home.arpa")) return true
-
-        // IPv6 ULA
-        if (h.startsWith("fc") || h.startsWith("fd")) {
-            val parts = h.split(":")
-            if (parts.isNotEmpty() && parts[0].length == 2) {
-                val first = parts[0]
-                val c = first.getOrNull(1)?.digitToIntOrNull() ?: return false
-                return c and 0x2 != 0 // fc(d)00::/8 (c=12 or 13)
-            }
-        }
-
-        if (h.startsWith("fe80")) return true
-
         if (h == "10.0.2.2" || h == "10.0.2.3" || h == "10.0.3.1" || h == "10.0.3.2") return true
 
-        val parts = h.split('.')
-        if (parts.size == 4) {
-            val a = parts[0].toIntOrNull() ?: return false
-            val b = parts[1].toIntOrNull() ?: return false
-
-            return when (a) {
-                10 -> true
-                172 if b in 16..31 -> true
-                192 if b == 168 -> true
-                else -> false
-            }
+        return try {
+            val addr = InetAddress.getByName(host)
+            addr.isLoopbackAddress || addr.isLinkLocalAddress || addr.isSiteLocalAddress
+        } catch (e: UnknownHostException) {
+            e.printStackTrace()
+            false
         }
-
-        return false
     }
 
     private fun parsePins(raw: String): List<String> {

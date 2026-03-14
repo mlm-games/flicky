@@ -495,8 +495,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                         config = config,
                         onConfigChange = { newCfg ->
                             scope.launch {
-                                AppDependencies.db.repoConfigDao().upsert(newCfg)
-                                vm.reloadConfigs()
+                                vm.upsertRepoConfig(newCfg)
                             }
                         },
                         onToggle = { vm.toggleRepository(repo.url) },
