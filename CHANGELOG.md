@@ -1,3 +1,9 @@
+## v4.3.3
+
+- replace the proxy settings with a single proxy url conf. (#59)
+- Settings: Add (LAN only) http option to repo trustmode options (#58)
+
+
 ## v4.3.2
 
 - Add name desc. sort option
