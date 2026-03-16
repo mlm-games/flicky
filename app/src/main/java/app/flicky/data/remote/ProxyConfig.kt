@@ -5,9 +5,9 @@ import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.URI
 
-open class ClientConfigurationException(message: String) : IllegalStateException(message)
-class ProxyConfigurationException(message: String) : ClientConfigurationException(message)
-class TrustPolicyException(message: String) : ClientConfigurationException(message)
+open class ClientConfigurationException(message: String, cause: Throwable? = null) : IllegalStateException(message, cause)
+class ProxyConfigurationException(message: String, cause: Throwable? = null) : ClientConfigurationException(message, cause)
+class TrustPolicyException(message: String, cause: Throwable? = null) : ClientConfigurationException(message, cause)
 
 data class ProxyConfig(
     val scheme: String,

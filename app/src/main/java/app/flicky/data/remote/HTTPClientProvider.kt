@@ -65,28 +65,44 @@ class DbHttpClientProvider(
 
     override suspend fun clientFor(baseUrl: String): OkHttpClient = withContext(Dispatchers.IO) {
         val normalizedUrl = baseUrl.trim().trimEnd('/')
-        val cfg = repoConfigDao.get(normalizedUrl) ?: RepoConfig(baseUrl = normalizedUrl)
 
         val settings = settingsRepository.settingsFlow.first()
-        val proxyConfig = parseProxyConfig(settings)
+        val proxyConfig = try {
+            parseProxyConfig(settings)
+        } catch (e: ProxyConfigurationException) {
+            throw e
+        }
+        val proxyEnabled = proxyConfig != null
         val proxyKey = proxyConfig?.cacheKey ?: "DIRECT"
 
-        jvmProxyAuthenticator.current = proxyConfig
+        try {
+            val cfg = repoConfigDao.get(normalizedUrl) ?: RepoConfig(baseUrl = normalizedUrl)
 
-        val baseClient = baseClients.getOrPut(proxyKey) {
-            buildBaseClient(proxyConfig)
-        }
+            jvmProxyAuthenticator.current = proxyConfig
 
-        val key = CacheKey(
-            base = cfg.baseUrl,
-            trustMode = cfg.trustMode,
-            pins = cfg.pins,
-            caPem = cfg.caPem,
-            proxyKey = proxyKey,
-        )
+            val baseClient = baseClients.getOrPut(proxyKey) {
+                buildBaseClient(proxyConfig)
+            }
 
-        cache.getOrPut(key) {
-            buildClient(cfg, baseClient)
+            val key = CacheKey(
+                base = cfg.baseUrl,
+                trustMode = cfg.trustMode,
+                pins = cfg.pins,
+                caPem = cfg.caPem,
+                proxyKey = proxyKey,
+            )
+
+            cache.getOrPut(key) {
+                buildClient(cfg, baseClient)
+            }
+        } catch (e: ClientConfigurationException) {
+            throw e
+        } catch (e: Exception) {
+            if (proxyEnabled) {
+                throw ProxyConfigurationException("Failed to create proxy-aware client: ${e.message}", e)
+            } else {
+                throw e
+            }
         }
     }
 

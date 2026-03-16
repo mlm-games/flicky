@@ -11,6 +11,7 @@ import app.flicky.data.local.AppVariant
 import app.flicky.data.local.RepositoryEntity
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.RepositoryInfo
+import app.flicky.data.remote.parseProxyConfig
 import app.flicky.di.AppDependencies
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -69,15 +70,17 @@ class FDroidApi(
         onVariant: (AppVariant) -> Unit = {}
     ): FetchResult? = withContext(Dispatchers.IO) {
         val baseUrl = repo.url.trimEnd('/')
-        val strict = runCatching { AppDependencies.settings.settingsFlow.first().failOnTrustErrors }
-            .getOrDefault(false)
+        val settings = AppDependencies.settings.settingsFlow.first()
+        val strict = settings.failOnTrustErrors
+        val proxyEnabled = parseProxyConfig(settings) != null
+
         suspend fun client(): OkHttpClient {
             return try {
                 clientProvider.clientFor(baseUrl)
             } catch (e: ClientConfigurationException) {
                 throw e
             } catch (e: Exception) {
-                if (strict) throw e else defaultClient
+                if (proxyEnabled || strict) throw e else defaultClient
             }
         }
 

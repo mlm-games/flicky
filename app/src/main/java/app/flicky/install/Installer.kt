@@ -446,7 +446,7 @@ class Installer(
                     throw e
                 } catch (e: Exception) {
                     DebugLog.log("Downloader", "TLS client failed: ${e.message}")
-                    if (failOnTrustErrors) return@withContext null
+                    if (proxyEnabled || failOnTrustErrors) throw e
                     defaultStreamingClient()
                 }
                 DebugLog.log("Downloader", "Pinned/CustomCA: streaming for $url (strict=$failOnTrustErrors)")
@@ -503,9 +503,9 @@ class Installer(
                 DebugLog.log("Downloader", "TLS policy failed: ${e.message}")
                 throw e
             } catch (e: Exception) {
-                if (failOnTrustErrors) {
+                if (proxyEnabled || failOnTrustErrors) {
                     DebugLog.log("Downloader", "TLS client failed (strict): ${e.message}")
-                    null
+                    throw e
                 } else defaultStreamingClient()
             }
             if (client != null) {
