@@ -2,12 +2,18 @@ package app.flicky.data.remote
 
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.local.RepoConfigDao
+import app.flicky.data.repository.SettingsRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.CertificatePinner
+import okhttp3.Credentials
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
+import java.net.Authenticator
 import java.net.InetAddress
+import java.net.PasswordAuthentication
 import java.net.UnknownHostException
 import java.security.KeyStore
 import java.security.SecureRandom
@@ -20,87 +26,128 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
-class TrustPolicyException(message: String) : IllegalStateException(message)
-
 interface HttpClientProvider {
-    // suspend to avoid blocking
     suspend fun clientFor(baseUrl: String): OkHttpClient
-
     fun clientForSync(baseUrl: String): OkHttpClient
 }
 
-/**
- * Thread-safe HTTP client provider with proper async support.
- * Builds per-repo OkHttp clients based on RepoConfig (trustMode, pins, caPem).
- */
 class DbHttpClientProvider(
-    private val repoConfigDao: RepoConfigDao
+    private val repoConfigDao: RepoConfigDao,
+    private val settingsRepository: SettingsRepository,
 ) : HttpClientProvider {
 
     private data class CacheKey(
         val base: String,
         val trustMode: String,
         val pins: String,
-        val caPem: String
+        val caPem: String,
+        val proxyKey: String,
     )
 
     private val cache = ConcurrentHashMap<CacheKey, OkHttpClient>()
+    private val baseClients = ConcurrentHashMap<String, OkHttpClient>()
 
-    // Shared default client instance
-    private val defaultClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
+    private val jvmProxyAuthenticator = object : Authenticator() {
+        @Volatile
+        var current: ProxyConfig? = null
+
+        override fun getPasswordAuthentication(): PasswordAuthentication? {
+            val cfg = current ?: return null
+            if (requestorType != RequestorType.PROXY) return null
+            if (!requestingHost.equals(cfg.host, ignoreCase = true)) return null
+            if (requestingPort != cfg.port) return null
+            val user = cfg.username ?: return null
+            return PasswordAuthentication(user, (cfg.password ?: "").toCharArray())
+        }
+    }.also {
+        Authenticator.setDefault(it)
+    }
+
+    override suspend fun clientFor(baseUrl: String): OkHttpClient = withContext(Dispatchers.IO) {
+        val normalizedUrl = baseUrl.trim().trimEnd('/')
+        val cfg = repoConfigDao.get(normalizedUrl) ?: RepoConfig(baseUrl = normalizedUrl)
+
+        val settings = settingsRepository.settingsFlow.first()
+        val proxyConfig = parseProxyConfig(settings)
+        val proxyKey = proxyConfig?.cacheKey ?: "DIRECT"
+
+        jvmProxyAuthenticator.current = proxyConfig
+
+        val baseClient = baseClients.getOrPut(proxyKey) {
+            buildBaseClient(proxyConfig)
+        }
+
+        val key = CacheKey(
+            base = cfg.baseUrl,
+            trustMode = cfg.trustMode,
+            pins = cfg.pins,
+            caPem = cfg.caPem,
+            proxyKey = proxyKey,
+        )
+
+        cache.getOrPut(key) {
+            buildClient(cfg, baseClient)
+        }
+    }
+
+    override fun clientForSync(baseUrl: String): OkHttpClient = runBlocking {
+        clientFor(baseUrl)
+    }
+
+    private fun buildBaseClient(proxyConfig: ProxyConfig?): OkHttpClient {
+        return OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(300, TimeUnit.SECONDS)
             .writeTimeout(300, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
+            .apply {
+                if (proxyConfig != null) {
+                    proxy(proxyConfig.proxy)
+
+                    if (proxyConfig.scheme == "http" && !proxyConfig.username.isNullOrBlank()) {
+                        proxyAuthenticator { _, response ->
+                            if (response.request.header("Proxy-Authorization") != null) {
+                                null
+                            } else {
+                                response.request.newBuilder()
+                                    .header(
+                                        "Proxy-Authorization",
+                                        Credentials.basic(
+                                            proxyConfig.username,
+                                            proxyConfig.password.orEmpty()
+                                        )
+                                    )
+                                    .build()
+                            }
+                        }
+                    }
+                }
+            }
             .build()
     }
 
-    /**
-     * Async version - properly handles suspension
-     */
-    override suspend fun clientFor(baseUrl: String): OkHttpClient = withContext(Dispatchers.IO) {
-        val normalizedUrl = baseUrl.trim().trimEnd('/')
-        val cfg = repoConfigDao.get(normalizedUrl) ?: RepoConfig(baseUrl = normalizedUrl)
-        val key = CacheKey(cfg.baseUrl, cfg.trustMode, cfg.pins, cfg.caPem)
-
-        cache.getOrPut(key) {
-            buildClient(cfg)
-        }
-    }
-
-    /**
-     * Synchronous version for backward compatibility - returns default client if config not cached
-     */
-    override fun clientForSync(baseUrl: String): OkHttpClient {
-        val normalizedUrl = baseUrl.trim().trimEnd('/')
-        // Check if we have a cached client for this URL
-        val cachedKey = cache.keys.find { it.base == normalizedUrl }
-        return cachedKey?.let { cache[it] } ?: defaultClient
-    }
-
-    private fun buildClient(cfg: RepoConfig): OkHttpClient {
+    private fun buildClient(cfg: RepoConfig, baseClient: OkHttpClient): OkHttpClient {
         val url = cfg.baseUrl.toHttpUrlOrNull()
-            ?: return defaultClient
+            ?: return baseClient
 
         return when (cfg.trustMode.lowercase()) {
             "httpsonly" -> {
                 if (!url.isHttps) {
                     throw TrustPolicyException("Repo ${cfg.baseUrl} requires HTTPS (trustMode=HttpsOnly)")
                 }
-                defaultClient
+                baseClient
             }
 
             "insecurehttp" -> {
                 if (url.isHttps) {
-                    defaultClient
+                    baseClient
                 } else {
                     if (!isPrivateOrLocalHost(url.host)) {
                         throw TrustPolicyException(
                             "Insecure HTTP is only for localhost/LAN repos: ${cfg.baseUrl}"
                         )
                     }
-                    defaultClient
+                    baseClient
                 }
             }
 
@@ -110,18 +157,17 @@ class DbHttpClientProvider(
                 }
                 val host = url.host
                 val pins = parsePins(cfg.pins)
-                if (pins.isEmpty()) defaultClient
+                if (pins.isEmpty()) baseClient
                 else {
                     val pinner = CertificatePinner.Builder().apply {
                         pins.forEach { pin ->
-                            // Validate pin format
                             if (isValidPin(pin)) {
                                 add(host, pin)
                             }
                         }
                     }.build()
 
-                    defaultClient.newBuilder()
+                    baseClient.newBuilder()
                         .certificatePinner(pinner)
                         .build()
                 }
@@ -132,12 +178,12 @@ class DbHttpClientProvider(
                     throw TrustPolicyException("CustomCA mode requires HTTPS: ${cfg.baseUrl}")
                 }
                 val trust = buildTrustFromPem(cfg.caPem)
-                defaultClient.newBuilder()
+                baseClient.newBuilder()
                     .sslSocketFactory(trust.first, trust.second)
                     .build()
             }
 
-            else -> defaultClient
+            else -> baseClient
         }
     }
 

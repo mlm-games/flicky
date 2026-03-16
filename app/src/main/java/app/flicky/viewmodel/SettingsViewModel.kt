@@ -8,7 +8,7 @@ import app.flicky.R
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.model.RepositoryInfo
 import app.flicky.data.remote.MirrorRegistry
-import app.flicky.data.remote.TrustPolicyException
+import app.flicky.data.remote.ClientConfigurationException
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.di.AppDependencies
@@ -125,7 +125,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
                 .connectTimeout(3, TimeUnit.SECONDS)
                 .readTimeout(5, TimeUnit.SECONDS)
                 .build()
-        } catch (e: TrustPolicyException) {
+        } catch (e: ClientConfigurationException) {
             throw e
         } catch (_: Exception) {
             OkHttpClient.Builder()

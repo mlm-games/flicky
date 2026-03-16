@@ -34,7 +34,7 @@ class SettingsRepository(
         dataStore = dataStore,
         schema = AppSettingsSchema,
         appId = "app.flicky",
-        schemaVersion = 2,
+        schemaVersion = 3,
         deviceInfoProvider = {
             DeviceInfo(
                 platform = "Android",
@@ -154,6 +154,21 @@ class SettingsRepository(
                     rotateMirrors = isFDroid,
                     strategy = if (isFDroid) "RoundRobin" else "StickyLastGood"
                 )
+            )
+        }
+    }
+
+    suspend fun migrateLegacyProxySettingsIfNeeded() {
+        repo.update { settings ->
+            if (!settings.useProxy) return@update settings
+            if (settings.proxyUrl.isNotBlank()) return@update settings
+            if (settings.proxyHost.isBlank()) return@update settings
+
+            val scheme = if (settings.proxyType == 1) "socks5" else "http"
+            val port = settings.proxyPort.coerceIn(1, 65535)
+
+            settings.copy(
+                proxyUrl = "$scheme://${settings.proxyHost.trim()}:$port"
             )
         }
     }

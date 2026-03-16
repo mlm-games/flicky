@@ -8,7 +8,6 @@ import io.github.mlmgames.settings.core.annotations.SchemaVersion
 import io.github.mlmgames.settings.core.annotations.Setting
 import io.github.mlmgames.settings.core.types.Button
 import io.github.mlmgames.settings.core.types.Dropdown
-import io.github.mlmgames.settings.core.types.Slider
 import io.github.mlmgames.settings.core.types.TextInput
 import io.github.mlmgames.settings.core.types.Toggle
 import kotlinx.serialization.Serializable
@@ -61,7 +60,7 @@ data class AppUpdatePreferencesMap(
     }
 }
 
-@SchemaVersion(2)
+@SchemaVersion(3)
 data class AppSettings(
     @Setting(
         title = "Theme Mode",
@@ -209,34 +208,21 @@ data class AppSettings(
     val useProxy: Boolean = false,
 
     @Setting(
-        title = "Proxy Type",
-        description = "Type of proxy to use",
-        category = Proxy::class,
-        type = Dropdown::class,
-        options = ["HTTP", "SOCKS5"],
-        dependsOn = "useProxy"
-    )
-    val proxyType: Int = 0,
-
-    @Setting(
-        title = "Proxy Host",
-        description = "Proxy server hostname",
+        title = "Proxy URL",
+        description = "Examples: http://127.0.0.1:8080, http://user:pass@127.0.0.1:8080, socks5://127.0.0.1:1080, socks5://user:pass@127.0.0.1:1080",
         category = Proxy::class,
         type = TextInput::class,
         dependsOn = "useProxy"
     )
+    val proxyUrl: String = "",
+
+    @Persisted
+    val proxyType: Int = 0,
+
+    @Persisted
     val proxyHost: String = "",
 
-    @Setting(
-        title = "Proxy Port",
-        description = "Proxy server port",
-        category = Proxy::class,
-        type = Slider::class,
-        min = 1f,
-        max = 65535f,
-        step = 1f,
-        dependsOn = "useProxy"
-    )
+    @Persisted
     val proxyPort: Int = 9050,
 
     @Setting(

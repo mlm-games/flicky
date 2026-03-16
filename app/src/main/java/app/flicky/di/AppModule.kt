@@ -113,18 +113,22 @@ val appModule = module {
     single { get<AppDatabase>().repoConfigDao() }
 
     single<MirrorPolicyProvider> { DbMirrorPolicyProvider(get()) }
-    single<HttpClientProvider> { DbHttpClientProvider(get()) }
+    single<HttpClientProvider> { DbHttpClientProvider(get(), get()) }
     single { FDroidApi(androidContext(), get()) }
     single { IzzyStatsRepository(httpClientProvider = get()) }
     single { ReproducibleBuildRepository() }
 
     single {
-        SettingsRepository(
+        val repo = SettingsRepository(
             dataStore = get(),
             repositoryDao = get(),
             repoConfigDao = get(),
             appDao = get()
         )
+        get<CoroutineScope>().launch {
+            repo.migrateLegacyProxySettingsIfNeeded()
+        }
+        repo
     }
 
     single { RepoHeadersStore(get()) }
