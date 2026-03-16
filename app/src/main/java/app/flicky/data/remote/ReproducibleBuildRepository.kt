@@ -7,19 +7,15 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.util.concurrent.TimeUnit
 
-class ReproducibleBuildRepository {
+class ReproducibleBuildRepository(
+    private val httpClientProvider: HttpClientProvider
+) {
     companion object {
         private const val TAG = "ReproducibleBuildRepo"
         private const val RBTLOG_BASE_URL = "https://codeberg.org/IzzyOnDroid/rbtlog/raw/branch/izzy/log/logs"
         private const val CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000L // 24 hours
     }
-
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .build()
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -27,6 +23,8 @@ class ReproducibleBuildRepository {
     }
 
     private val cache = mutableMapOf<String, Pair<ReproducibleBuildInfo, Long>>()
+
+    private fun client(): OkHttpClient = httpClientProvider.clientForSync(RBTLOG_BASE_URL)
 
     suspend fun fetchReproducibleBuildInfo(packageName: String): ReproducibleBuildInfo? =
         withContext(Dispatchers.IO) {
@@ -42,7 +40,7 @@ class ReproducibleBuildRepository {
                     .header("Accept", "application/json")
                     .build()
 
-                client.newCall(request).execute().use { response ->
+                client().newCall(request).execute().use { response ->
                     if (!response.isSuccessful) {
                         Log.d(TAG, "No reproducible build data for $packageName: ${response.code}")
                         return@withContext null

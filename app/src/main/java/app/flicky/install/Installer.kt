@@ -21,6 +21,7 @@ import app.flicky.data.remote.HttpClientProvider
 import app.flicky.data.remote.MirrorPolicyProvider
 import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.remote.ClientConfigurationException
+import app.flicky.data.remote.parseProxyConfig
 import app.flicky.data.remote.MirrorRegistry.Strategy
 import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.SettingsRepository
@@ -424,15 +425,22 @@ class Installer(
         if (out.exists()) return@withContext out
         if (isCancelled(req.packageName)) return@withContext null
 
-        val failOnTrustErrors = runCatching { settings.settingsFlow.first().failOnTrustErrors }.getOrDefault(false)
+        val appSettings = settings.settingsFlow.first()
+        val failOnTrustErrors = appSettings.failOnTrustErrors
+        val proxyConfig = parseProxyConfig(appSettings)
+        val proxyEnabled = proxyConfig != null
+
         val preferred = preflightPickUrl(req.repoBase, req.urls)
         val tryUrls = if (preferred != null) listOf(preferred) + req.urls.filterNot { it == preferred } else req.urls
         val userAgent = "Flicky/${app.flicky.BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})"
 
-        val trustRequiresCustomClient = req.trustMode.equals("Pinned", true) || req.trustMode.equals("CustomCA", true)
+        val mustUseProviderClient = proxyEnabled ||
+                req.trustMode.equals("Pinned", true) ||
+                req.trustMode.equals("CustomCA", true) ||
+                req.trustMode.equals("InsecureHttp", true)
 
         for (url in tryUrls) {
-            if (trustRequiresCustomClient) {
+            if (mustUseProviderClient) {
                 val client = try { httpClients.clientFor(req.repoBase) } catch (e: ClientConfigurationException) {
                     DebugLog.log("Downloader", "TLS policy failed: ${e.message}")
                     throw e

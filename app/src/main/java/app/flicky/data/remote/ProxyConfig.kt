@@ -65,7 +65,8 @@ fun parseProxyConfig(settings: AppSettings): ProxyConfig? {
     if (!settings.useProxy) return null
 
     val raw = settings.proxyUrl.trim().ifBlank {
-        settings.legacyProxyUrlOrNull() ?: return null
+        settings.legacyProxyUrlOrNull()
+            ?: throw ProxyConfigurationException("Proxy URL is required when proxy is enabled")
     }
 
     val uri = try {

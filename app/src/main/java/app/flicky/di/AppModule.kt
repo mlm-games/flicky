@@ -116,7 +116,7 @@ val appModule = module {
     single<HttpClientProvider> { DbHttpClientProvider(get(), get()) }
     single { FDroidApi(androidContext(), get()) }
     single { IzzyStatsRepository(httpClientProvider = get()) }
-    single { ReproducibleBuildRepository() }
+    single { ReproducibleBuildRepository(get()) }
 
     single {
         val repo = SettingsRepository(
