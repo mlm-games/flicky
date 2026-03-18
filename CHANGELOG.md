@@ -1,3 +1,8 @@
+## v4.3.4
+
+- prev. release proxyUrl fix
+
+
 ## v4.3.3
 
 - replace the proxy settings with a single proxy url conf. (#59)
