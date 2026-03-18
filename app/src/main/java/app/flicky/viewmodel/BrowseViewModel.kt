@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import app.flicky.AppGraph
 import app.flicky.R
+import app.flicky.data.local.AppDao
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppRepository
@@ -35,7 +35,8 @@ sealed class UiText {
 class BrowseViewModel(
     private val repo: AppRepository,
     private val sync: RepositorySyncManager,
-    private val settings: SettingsRepository
+    private val settings: SettingsRepository,
+    private val appDao: AppDao
 ) : ViewModel() {
 
     private val _query = MutableStateFlow("")
@@ -115,9 +116,8 @@ class BrowseViewModel(
     fun clearAllApps() {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
-                val dao = AppGraph.db.appDao()
-                dao.clear()
-                dao.clearVariants()
+                appDao.clear()
+                appDao.clearVariants()
             }
         }
     }

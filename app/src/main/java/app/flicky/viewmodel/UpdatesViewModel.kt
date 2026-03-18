@@ -3,6 +3,7 @@ package app.flicky.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.flicky.data.local.AppDao
 import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
@@ -12,7 +13,6 @@ import app.flicky.data.repository.InstalledAppsRepository
 import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.VariantSelector
-import app.flicky.di.AppDependencies
 import app.flicky.install.Installer
 import app.flicky.install.TaskStage
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +49,8 @@ class UpdatesViewModel(
     private val repo: AppRepository,
     private val installedRepo: InstalledAppsRepository,
     private val installer: Installer,
-    private val settings: SettingsRepository
+    private val settings: SettingsRepository,
+    private val appDao: AppDao
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(UpdatesUi())
@@ -113,7 +114,7 @@ class UpdatesViewModel(
         val installedFDroidApps = allApps.filter { installedMap.containsKey(it.packageName) }
         val installedPackageNames = installedFDroidApps.map { it.packageName }
 
-        val allVariantsByPackage = AppDependencies.db.appDao()
+        val allVariantsByPackage = appDao
             .variantsForPackages(installedPackageNames)
             .groupBy { it.packageName }
 

@@ -2,6 +2,7 @@ package app.flicky
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,8 +17,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.core.util.Consumer
 import androidx.navigation3.runtime.rememberNavBackStack
+import app.flicky.data.remote.HttpClientProvider
 import app.flicky.data.repository.AppSettings
-import app.flicky.di.AppDependencies
 import app.flicky.navigation.NavScreen
 import app.flicky.navigation.Nav3Host
 import app.flicky.network.CoilCallFactory
@@ -31,40 +32,46 @@ import app.flicky.viewmodel.SettingsViewModel
 import app.flicky.work.SyncScheduler
 import coil.Coil
 import coil.ImageLoader
-import org.koin.androidx.compose.koinViewModel
+import org.koin.android.ext.android.inject
 import org.koin.compose.koinInject
+import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
 
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    private val httpClients: HttpClientProvider by inject()
 
-        val initialPackage = intent?.data?.let { uri ->
-            when (uri.scheme) {
-                "https" -> {
-                    // Handle https://f-droid.org/packages/{packageName}
-                    if (uri.path?.startsWith("/packages/") == true) {
-                        uri.pathSegments.getOrNull(1)
-                    } else {
-                        null
-                    }
-                }
-                "fdroidrepos" -> {
-                    uri.host
-                }
-                else -> null
-            }
-        }
-
+    private fun configureCoil(failOnTrustErrors: Boolean = false) {
         runCatching {
-            val callFactory = CoilCallFactory(AppDependencies.httpClients)
+            val callFactory = CoilCallFactory(httpClients, failOnTrustErrors)
             val loader = ImageLoader.Builder(applicationContext)
                 .callFactory(callFactory)
                 .crossfade(true)
                 .build()
             Coil.setImageLoader(loader)
         }
+    }
+
+    private fun Intent.deepLinkPackageName(): String? = data?.deepLinkPackageName()
+
+    private fun Uri.deepLinkPackageName(): String? = when {
+        scheme.equals("https", ignoreCase = true) &&
+            host.equals("f-droid.org", ignoreCase = true) &&
+            pathSegments.firstOrNull() == "packages" ->
+            pathSegments.getOrNull(1)
+
+        scheme.equals("fdroidrepos", ignoreCase = true) ->
+            host?.takeIf { it.isNotBlank() }
+
+        else -> null
+    }
+
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val initialPackage = intent.deepLinkPackageName()
+
+        configureCoil()
 
         setContent {
             val browseViewModel: BrowseViewModel = koinViewModel()
@@ -73,12 +80,7 @@ class MainActivity : ComponentActivity() {
             val settingsState by settingsViewModel.settings.collectAsState(AppSettings())
 
             LaunchedEffect(settingsState.failOnTrustErrors) {
-                val callFactory = CoilCallFactory(AppDependencies.httpClients, settingsState.failOnTrustErrors)
-                val loader = ImageLoader.Builder(applicationContext)
-                    .callFactory(callFactory)
-                    .crossfade(true)
-                    .build()
-                Coil.setImageLoader(loader)
+                configureCoil(settingsState.failOnTrustErrors)
             }
 
             LaunchedEffect(settingsState.wifiOnly, settingsState.syncIntervalIndex) {
@@ -98,21 +100,10 @@ class MainActivity : ComponentActivity() {
                 if (initialPackage != null) NavScreen.Detail(initialPackage) else NavScreen.Browse
             )
 
-            // Handle when activity is already running
             DisposableEffect(Unit) {
                 val listener = Consumer<Intent> { newIntent ->
-                    newIntent.data?.let { uri ->
-                        val pkg = when (uri.scheme) {
-                            "https" -> {
-                                if (uri.path?.startsWith("/packages/") == true) {
-                                    uri.pathSegments.getOrNull(1)
-                                } else null
-                            }
-                            "fdroidrepos" -> uri.host
-                            else -> null
-                        }
-                        pkg?.let { backStack.add(NavScreen.Detail(it)) }
-                    }
+                    val pkg = newIntent.deepLinkPackageName()
+                    pkg?.let { backStack.add(NavScreen.Detail(it)) }
                 }
                 addOnNewIntentListener(listener)
                 onDispose { removeOnNewIntentListener(listener) }

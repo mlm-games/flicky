@@ -78,11 +78,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.flicky.R
 import app.flicky.data.local.RepoConfig
+import app.flicky.data.local.RepoConfigDao
+import app.flicky.data.remote.MirrorPolicyProvider
 import app.flicky.data.model.RepositoryInfo
 import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.AppSettingsSchema
-import app.flicky.di.AppDependencies
 import app.flicky.ui.components.global.ConfirmationDialog
 import app.flicky.ui.components.global.DropdownSettingDialog
 import app.flicky.ui.components.global.FlickyDialog
@@ -120,6 +121,8 @@ fun SettingsScreen(vm: SettingsViewModel) {
     val repos by vm.repositories.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val repoConfigDao: RepoConfigDao = koinInject()
+    val mirrorPolicyProvider: MirrorPolicyProvider = koinInject()
 
     val schema = remember { AppSettingsSchema }
     val snackbarManager: SnackbarManager = koinInject()
@@ -149,10 +152,9 @@ fun SettingsScreen(vm: SettingsViewModel) {
         key1 = repos
     ) {
         value = withContext(Dispatchers.IO) {
-            val dao = AppDependencies.db.repoConfigDao()
             repos.associate { repo ->
                 val base = repo.url.trimEnd('/')
-                base to (dao.get(base) ?: RepoConfig(baseUrl = base, enabled = repo.enabled))
+                base to (repoConfigDao.get(base) ?: RepoConfig(baseUrl = base, enabled = repo.enabled))
             }
         }
     }
@@ -633,7 +635,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
             onAdd = { name, url, trustMode ->
                 scope.launch {
                     vm.addRepository(name, url, trustMode)
-                    AppDependencies.mirrorPolicyProvider.ensureDefault(url.trimEnd('/'))
+                    mirrorPolicyProvider.ensureDefault(url.trimEnd('/'))
                 }
                 showAddRepo = false
             }

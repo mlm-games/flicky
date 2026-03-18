@@ -2,8 +2,8 @@ package app.flicky.data.repository
 
 import android.util.Log
 import androidx.room.withTransaction
-import app.flicky.AppGraph
 import app.flicky.data.local.AppDao
+import app.flicky.data.local.AppDatabase
 import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.remote.FDroidApi
@@ -24,6 +24,7 @@ class RepositorySyncManager(
     private val dao: AppDao,
     private val settings: SettingsRepository,
     private val headersStore: RepoHeadersStore,
+    private val db: AppDatabase
 ) {
     companion object {
         private const val TAG = "RepositorySyncManager"
@@ -81,7 +82,7 @@ class RepositorySyncManager(
                 headersStore.clear()
                 dao.clear()
                 dao.clearVariants()
-                AppGraph.db.repositoryDao().clearAll()
+                db.repositoryDao().clearAll()
                 runCatching {
                     val bases = settings.repositoriesFlow.first().map { it.url }
                     bases.forEach { MirrorRegistry.clear(it) }
@@ -91,7 +92,7 @@ class RepositorySyncManager(
             // rm disabled repos
             val allNow = settings.repositoriesFlow.first()
             val disabled = allNow.filter { !it.enabled }
-            AppGraph.db.withTransaction {
+            db.withTransaction {
                 disabled.forEach { r ->
                     dao.deleteByRepositoryUrl(r.url)
                     dao.deleteVariantsByRepositoryUrl(r.url)
@@ -147,7 +148,7 @@ class RepositorySyncManager(
                             if (showDebug) DebugLog.log(TAG, "${repo.name} -> $errorMsg")
                         }
                         result.modified || force -> {
-                            AppGraph.db.withTransaction {
+                            db.withTransaction {
                                 dao.deleteByRepositoryUrl(repo.url)
                                 dao.deleteVariantsByRepositoryUrl(repo.url)
                                 if (apps.isNotEmpty()) {

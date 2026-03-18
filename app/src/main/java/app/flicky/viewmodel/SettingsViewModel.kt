@@ -1,17 +1,23 @@
 package app.flicky.viewmodel
 
+import android.content.Context
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.room.withTransaction
 import app.flicky.R
+import app.flicky.data.local.AppDatabase
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.model.RepositoryInfo
+import app.flicky.data.remote.HttpClientProvider
+import app.flicky.data.remote.MirrorPolicyProvider
 import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.remote.ClientConfigurationException
 import app.flicky.data.repository.AppSettings
+import app.flicky.data.repository.RepoHeadersStore
+import app.flicky.data.repository.RepositorySyncManager
 import app.flicky.data.repository.SettingsRepository
-import app.flicky.di.AppDependencies
+import app.flicky.install.Installer
 import coil.Coil
 import coil.annotation.ExperimentalCoilApi
 import io.github.mlmgames.settings.core.backup.ExportResult
@@ -26,7 +32,16 @@ import okhttp3.Request
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
-class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
+class SettingsViewModel(
+    private val repo: SettingsRepository,
+    private val db: AppDatabase,
+    private val syncManager: RepositorySyncManager,
+    private val mirrorPolicyProvider: MirrorPolicyProvider,
+    private val httpClients: HttpClientProvider,
+    private val headersStore: RepoHeadersStore,
+    private val installer: Installer,
+    private val context: Context
+) : ViewModel() {
 
     val settings: StateFlow<AppSettings> =
         repo.settingsFlow.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
@@ -49,7 +64,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
             _configsVersion
         ) { repos, _ ->
             withContext(Dispatchers.IO) {
-                val dao = AppDependencies.db.repoConfigDao()
+                val dao = db.repoConfigDao()
                 repos.map { r ->
                     val base = r.url.trimEnd('/')
                     val config = dao.get(base) ?: RepoConfig(
@@ -66,7 +81,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     }
 
     fun toggleRepository(url: String) = viewModelScope.launch {
-        AppDependencies.syncManager.cancelCurrentSync()
+        syncManager.cancelCurrentSync()
         repo.toggleRepository(url)
     }
 
@@ -80,7 +95,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     }
 
     fun upsertRepoConfig(config: RepoConfig) = viewModelScope.launch {
-        AppDependencies.syncManager.cancelCurrentSync()
+        syncManager.cancelCurrentSync()
         repo.upsertRepoConfig(config)
         reloadConfigs()
     }
@@ -94,7 +109,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
             "clearCache" -> {
                 clearAllCaches()
                 _events.emit(UiEvent.Toast(R.string.cache_cleared))
-                runCatching { AppDependencies.syncManager.syncAll(force = true) }
+                runCatching { syncManager.syncAll(force = true) }
             }
             "exportSettings" -> _events.emit(UiEvent.RequestExport)
             "supportDevelopment" -> _events.emit(UiEvent.OpenUrl("https://ko-fi.com/mlmgames"))
@@ -112,7 +127,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     suspend fun importSettings(json: String): ImportResult = repo.importSettings(json)
 
     suspend fun testRepoMirrors(base: String): List<ProbeResult> = withContext(Dispatchers.IO) {
-        val policy = AppDependencies.mirrorPolicyProvider.policyFor(base)
+        val policy = mirrorPolicyProvider.policyFor(base)
         val candidates = MirrorRegistry.candidates(
             base = base,
             includeOnion = policy.includeOnion,
@@ -120,7 +135,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
         ).ifEmpty { listOf(base) }
 
         val client = try {
-            AppDependencies.httpClients.clientFor(base).newBuilder()
+            httpClients.clientFor(base).newBuilder()
                 .callTimeout(5, TimeUnit.SECONDS)
                 .connectTimeout(3, TimeUnit.SECONDS)
                 .readTimeout(5, TimeUnit.SECONDS)
@@ -184,14 +199,14 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
     @OptIn(ExperimentalCoilApi::class)
     private suspend fun clearAllCaches() = withContext(Dispatchers.IO) {
-        AppDependencies.syncManager.cancelCurrentSync()
+        syncManager.cancelCurrentSync()
 
-        AppDependencies.db.withTransaction {
-            AppDependencies.db.appDao().clear()
-            AppDependencies.db.appDao().clearVariants()
-            AppDependencies.db.repositoryDao().clearAll()
+        db.withTransaction {
+            db.appDao().clear()
+            db.appDao().clearVariants()
+            db.repositoryDao().clearAll()
         }
-        AppDependencies.headersStore.clear()
+        headersStore.clear()
 
         runCatching {
             repo.repositoriesFlow.first().forEach {
@@ -200,12 +215,12 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
         }
 
         runCatching {
-            val loader = Coil.imageLoader(AppDependencies.context)
+            val loader = Coil.imageLoader(context)
             loader.memoryCache?.clear()
             loader.diskCache?.clear()
         }
 
-        runCatching { AppDependencies.installer.clearDownloadCache() }
+        runCatching { installer.clearDownloadCache() }
     }
 
     sealed class UiEvent {

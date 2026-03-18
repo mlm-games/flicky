@@ -12,8 +12,8 @@ import android.provider.Settings
 import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import app.flicky.AppGraph
 import app.flicky.R
+import app.flicky.data.local.AppDatabase
 import app.flicky.data.local.AppVariant
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.model.FDroidApp
@@ -53,7 +53,8 @@ class Installer(
     private val context: Context,
     private val settings: SettingsRepository,
     private val mirrorPolicies: MirrorPolicyProvider,
-    private val httpClients: HttpClientProvider
+    private val httpClients: HttpClientProvider,
+    private val db: AppDatabase
 ) {
     private val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -134,7 +135,7 @@ class Installer(
     suspend fun install(app: FDroidApp): Boolean {
         return try {
             val pref = PreferredRepo.fromIndex(settings.settingsFlow.first().preferredRepo)
-            val variants = runCatching { AppGraph.db.appDao().variantsFor(app.packageName) }.getOrElse { emptyList() }
+            val variants = runCatching { db.appDao().variantsFor(app.packageName) }.getOrElse { emptyList() }
             val chosen = VariantSelector.pick(variants, pref)
             val req = when {
                 chosen != null -> resolve(chosen)
@@ -325,7 +326,7 @@ class Installer(
     }
 
     private suspend fun resolveDownloadBaseAndTrust(baseUrl: String): Pair<String, String> {
-        val cfg: RepoConfig? = runCatching { AppGraph.db.repoConfigDao().get(baseUrl) }.getOrNull()
+        val cfg: RepoConfig? = runCatching { db.repoConfigDao().get(baseUrl) }.getOrNull()
         val dlBase = normalize(cfg?.downloadBase?.takeIf { it.isNotBlank() } ?: baseUrl)
         val trust = cfg?.trustMode ?: "HttpsOnly"
         return dlBase to trust

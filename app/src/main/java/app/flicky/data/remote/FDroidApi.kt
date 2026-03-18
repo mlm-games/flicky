@@ -5,14 +5,14 @@ import android.os.Build
 import android.util.JsonReader
 import android.util.JsonToken
 import android.util.Log
-import app.flicky.AppGraph
 import app.flicky.BuildConfig
+import app.flicky.data.local.AppDatabase
 import app.flicky.data.local.AppVariant
 import app.flicky.data.local.RepositoryEntity
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.RepositoryInfo
 import app.flicky.data.remote.parseProxyConfig
-import app.flicky.di.AppDependencies
+import app.flicky.data.repository.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -27,7 +27,10 @@ import java.util.zip.ZipInputStream
 
 class FDroidApi(
     context: android.content.Context,
-    private val clientProvider: HttpClientProvider
+    private val clientProvider: HttpClientProvider,
+    private val settings: SettingsRepository,
+    private val mirrorPolicyProvider: MirrorPolicyProvider,
+    private val db: AppDatabase
 ) {
     companion object {
         private const val TAG = "FDroidApi"
@@ -70,9 +73,9 @@ class FDroidApi(
         onVariant: (AppVariant) -> Unit = {}
     ): FetchResult? = withContext(Dispatchers.IO) {
         val baseUrl = repo.url.trimEnd('/')
-        val settings = AppDependencies.settings.settingsFlow.first()
-        val strict = settings.failOnTrustErrors
-        val proxyEnabled = parseProxyConfig(settings) != null
+        val currentSettings = settings.settingsFlow.first()
+        val strict = currentSettings.failOnTrustErrors
+        val proxyEnabled = parseProxyConfig(currentSettings) != null
 
         suspend fun client(): OkHttpClient {
             return try {
@@ -273,7 +276,7 @@ class FDroidApi(
         if (!address.isNullOrBlank()) {
             val base = address.trim().trimEnd('/')
             MirrorRegistry.register(base, listOf(base) + mirrors, primaryUrl)
-            runCatching { AppDependencies.mirrorPolicyProvider.ensureDefault(base) }
+            runCatching { mirrorPolicyProvider.ensureDefault(base) }
 
             val name = pickLocalized(nameLocalized) ?: ""
             val desc = pickLocalized(descLocalized) ?: ""
@@ -286,7 +289,7 @@ class FDroidApi(
                     timestamp = timestamp,
                     fingerprint = "" // v2 has no jar signer fingerprint
                 )
-                AppDependencies.db.repositoryDao().upsert(entity)
+                db.repositoryDao().upsert(entity)
             }
         }
     }
@@ -649,7 +652,7 @@ class FDroidApi(
         val base = address.trim().trimEnd('/')
         if (base.isNotBlank()) {
             MirrorRegistry.register(base, listOf(base) + mirrors)
-            runCatching { AppDependencies.mirrorPolicyProvider.ensureDefault(base) }
+            runCatching { mirrorPolicyProvider.ensureDefault(base) }
             runCatching {
                 val entity = RepositoryEntity(
                     baseUrl = base,
@@ -659,7 +662,7 @@ class FDroidApi(
                     timestamp = timestamp,
                     fingerprint = "" // v1 JAR signer not inspected here (kept minimal)
                 )
-                AppDependencies.db.repositoryDao().upsert(entity)
+                db.repositoryDao().upsert(entity)
             }
         }
     }

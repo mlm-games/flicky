@@ -23,16 +23,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.flicky.AppGraph
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
+import app.flicky.data.repository.AppRepository
 import app.flicky.data.repository.AppSettings
+import app.flicky.data.repository.SettingsRepository
 import app.flicky.ui.components.AdaptiveAppCard
 import app.flicky.ui.components.AppIcon
 import app.flicky.ui.components.AppTexts
 import app.flicky.R
-import app.flicky.di.AppDependencies
 import app.flicky.ui.components.global.MyScreenScaffold
+import org.koin.compose.koinInject
 
 
 @Composable
@@ -42,8 +43,11 @@ fun CategoriesScreen(
     progress: Float,
     initialCategory: String = "All"
 ) {
-    val categories by AppDependencies.appRepo.categories().collectAsState(initial = emptyList())
-    val settingsState by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
+    val appRepo: AppRepository = koinInject()
+    val settings: SettingsRepository = koinInject()
+
+    val categories by appRepo.categories().collectAsState(initial = emptyList())
+    val settingsState by settings.settingsFlow.collectAsState(initial = AppSettings())
     val sortOption = when (settingsState.defaultSort) {
         0 -> SortOption.Name
         1 -> SortOption.NameDesc
@@ -52,7 +56,7 @@ fun CategoriesScreen(
         4 -> SortOption.Added
         else -> SortOption.Updated
     }
-    val apps by AppDependencies.appRepo.appsFlow(
+    val apps by appRepo.appsFlow(
         query = "",
         sort = sortOption,
         hideAnti = false,

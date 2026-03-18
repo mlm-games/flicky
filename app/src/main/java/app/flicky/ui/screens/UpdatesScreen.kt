@@ -22,12 +22,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import app.flicky.AppGraph
 import app.flicky.R
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.AppUpdatePreference
+import app.flicky.data.repository.SettingsRepository
 import app.flicky.helper.DeviceUtils
+import app.flicky.install.Installer
+import org.koin.compose.koinInject
 import app.flicky.install.TaskStage
 import app.flicky.ui.components.AppIcon
 import app.flicky.ui.components.AppTexts
@@ -44,6 +46,9 @@ fun UpdatesScreen(
     isBatchUpdating: Boolean = false,
     batchProgress: Float = 0f
 ) {
+    val installer: Installer = koinInject()
+    val settings: SettingsRepository = koinInject()
+
     val cfg = LocalConfiguration.current
     val gridCells = remember(cfg.screenWidthDp) {
         GridCells.Adaptive(minSize = 320.dp)
@@ -66,7 +71,7 @@ fun UpdatesScreen(
     }
     var dismissedErrors by remember { mutableStateOf(false) }
 
-    val errMap by AppGraph.installer.errors.collectAsState(initial = emptyMap())
+    val errMap by installer.errors.collectAsState(initial = emptyMap())
     val failedPkgs = installerTasks.filterValues { s ->
         s is TaskStage.Finished && !s.success
     }.keys
@@ -288,9 +293,9 @@ fun UpdatesScreen(
         }
     }
 
-    val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
+    val settingsState by settings.settingsFlow.collectAsState(initial = AppSettings())
     Box(Modifier.fillMaxSize()) {
-        DebugOverlay(visible = settings.showDebugInfo)
+        DebugOverlay(visible = settingsState.showDebugInfo)
     }
 }
 

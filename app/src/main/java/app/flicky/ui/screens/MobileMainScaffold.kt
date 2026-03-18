@@ -34,11 +34,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.flicky.AppGraph
 import app.flicky.R
 import app.flicky.data.repository.AlertBanners
+import app.flicky.data.repository.SettingsRepository
 import app.flicky.ui.components.AlertBanner
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 private data class NavItem(@param:StringRes val labelResId: Int, val icon: ImageVector, val index: Int)
 
@@ -57,12 +58,13 @@ fun MobileMainScaffold(
     onSelect: (Int) -> Unit,
     content: @Composable () -> Unit
 ) {
+    val settingsRepository: SettingsRepository = koinInject()
+    val settings by settingsRepository.settingsFlow.collectAsState(initial = app.flicky.data.repository.AppSettings())
+
     val widthDp = LocalConfiguration.current.screenWidthDp
     val isTablet = widthDp >= 900
 
     val activeBanner = AlertBanners.activeBanners.firstOrNull()
-    val settingsRepository = AppGraph.settings
-    val settings by settingsRepository.settingsFlow.collectAsState(initial = app.flicky.data.repository.AppSettings())
     val dismissedIds = settings.dismissedAlertBannerIds
     val scope = rememberCoroutineScope()
     

@@ -86,14 +86,17 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
-import app.flicky.AppGraph
 import app.flicky.R
+import app.flicky.data.local.AppDao
 import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppSettings
-import app.flicky.di.AppDependencies
+import app.flicky.data.repository.InstalledAppsRepository
+import app.flicky.data.repository.SettingsRepository
+import app.flicky.install.Installer
 import app.flicky.install.TaskStage
+import org.koin.compose.koinInject
 import app.flicky.ui.components.AppIcon
 import app.flicky.ui.components.AppTexts
 import app.flicky.ui.components.VoiceSearchButton
@@ -124,12 +127,17 @@ fun BrowseScreen(
     errorMessage: UiText?,
     onDismissError: () -> Unit
 ) {
+    val appDao: AppDao = koinInject()
+    val installer: Installer = koinInject()
+    val installerTasks by installer.tasks.collectAsState(initial = emptyMap())
+    val settings: SettingsRepository = koinInject()
+
     val widthDp = LocalConfiguration.current.screenWidthDp
     val animatedProgress by animateFloatAsState(targetValue = progress, label = "sync_progress_anim")
     var menuOpen by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     var showSortDialog by remember { mutableStateOf(false) }
-    val s by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
+    val s by settings.settingsFlow.collectAsState(initial = AppSettings())
 
     val focusRequesters = remember { mutableMapOf<String, FocusRequester>() }
     var lastFocusedKey by rememberSaveable { mutableStateOf<String?>(null) }
@@ -137,15 +145,13 @@ fun BrowseScreen(
     val scope = rememberCoroutineScope()
     var installFromTarget by remember { mutableStateOf<FDroidApp?>(null) }
     var installVariants by remember { mutableStateOf<List<AppVariant>>(emptyList()) }
-    val installer = AppGraph.installer
-    val installerTasks by installer.tasks.collectAsState(initial = emptyMap())
 
     val resolvedError = errorMessage?.asString()
 
     fun onShowInstallFrom(app: FDroidApp) {
         installFromTarget = app
         scope.launch(Dispatchers.IO) {
-            val vars = AppGraph.db.appDao().variantsFor(app.packageName).sortedByDescending { it.versionCode }
+            val vars = appDao.variantsFor(app.packageName).sortedByDescending { it.versionCode }
             withContext(Dispatchers.Main) {
                 installVariants = vars
             }
@@ -736,6 +742,8 @@ private fun TvAwareDockedSearchBar(
 
 @Composable
 private fun AppListRow(app: FDroidApp, onClick: () -> Unit, onLongClick: () -> Unit) {
+    val installedRepo: InstalledAppsRepository = koinInject()
+
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -752,7 +760,6 @@ private fun AppListRow(app: FDroidApp, onClick: () -> Unit, onLongClick: () -> U
         ) {
             AppIcon(app.name, app.iconUrl, size = 56.dp)
             Column(Modifier.weight(1f)) {
-                val installedRepo = AppDependencies.installedRepo
                 val installedVn = remember { mutableStateOf<String?>(null) }
                 LaunchedEffect(app.packageName) {
                     installedVn.value = installedRepo.getVersionName(app.packageName)

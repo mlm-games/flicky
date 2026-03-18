@@ -2,7 +2,6 @@ package app.flicky
 
 import android.app.Application
 import app.flicky.data.repository.SettingsRepository
-import app.flicky.di.AppDependencies
 import app.flicky.di.appModule
 import app.flicky.migration.PreferencesMigration
 import kotlinx.coroutines.CoroutineScope
@@ -20,8 +19,6 @@ class FlickyApplication : Application() {
             androidContext(this@FlickyApplication)
             modules(appModule)
         }.koin
-
-        AppDependencies.init(koin, this)
 
         CoroutineScope(Dispatchers.IO).launch {
             delay(500)

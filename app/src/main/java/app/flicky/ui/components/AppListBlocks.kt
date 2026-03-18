@@ -11,14 +11,16 @@ import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.Dp
-import app.flicky.AppGraph
 import app.flicky.data.repository.AppSettings
+import app.flicky.data.repository.SettingsRepository
 import coil.compose.AsyncImage
+import org.koin.compose.koinInject
 
 @Composable
 fun AppIcon(name: String, url: String?, size: Dp = 56.dp) {
-    val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
-    if (settings.showAppIcons) {
+    val settings: SettingsRepository = koinInject()
+    val settingsState by settings.settingsFlow.collectAsState(initial = AppSettings())
+    if (settingsState.showAppIcons) {
         AsyncImage(model = url, contentDescription = name, modifier = Modifier.size(size))
     } else {
         Box(Modifier.size(size))

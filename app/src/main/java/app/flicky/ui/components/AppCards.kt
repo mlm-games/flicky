@@ -36,14 +36,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import app.flicky.AppGraph
 import app.flicky.R
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.AppSettings
+import app.flicky.data.repository.SettingsRepository
 import app.flicky.helper.DeviceUtils
 import app.flicky.helper.rememberDebouncedFocusState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import org.koin.compose.koinInject
 
 @Composable
 fun AdaptiveAppCard(
@@ -129,6 +130,7 @@ fun MobileAppCard(
         ),
         modifier = Modifier.fillMaxWidth()
     ) {
+        val settings: SettingsRepository = koinInject()
         Box(
             Modifier
                 .fillMaxWidth()
@@ -136,8 +138,8 @@ fun MobileAppCard(
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick)
         ) {
             Column(Modifier.padding(12.dp)) {
-                val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
-                if (settings.showAppIcons) {
+                val settingsState by settings.settingsFlow.collectAsState(initial = AppSettings())
+                if (settingsState.showAppIcons) {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(app.iconUrl)
@@ -186,6 +188,8 @@ fun TVAppCard(
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {}
 ) {
+    val settings: SettingsRepository = koinInject()
+
     val shape = RoundedCornerShape(16.dp)
     val (focused, setFocused) = rememberDebouncedFocusState()
 
@@ -210,8 +214,8 @@ fun TVAppCard(
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick)
         ) {
             Column(Modifier.padding(16.dp)) {
-                val settings by AppGraph.settings.settingsFlow.collectAsState(initial = AppSettings())
-                if (settings.showAppIcons) {
+                val settingsState by settings.settingsFlow.collectAsState(initial = AppSettings())
+                if (settingsState.showAppIcons) {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(app.iconUrl)

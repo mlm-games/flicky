@@ -2,8 +2,8 @@ package app.flicky.ui.routes
 
 import android.util.Log
 import androidx.compose.runtime.*
-import app.flicky.AppGraph
 import app.flicky.data.model.FDroidApp
+import app.flicky.data.repository.SettingsRepository
 import app.flicky.install.Installer
 import app.flicky.install.TaskStage
 import app.flicky.ui.screens.UpdatesScreen
@@ -12,6 +12,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 interface UpdatesActions {
     fun updateAll()
@@ -26,7 +27,8 @@ interface UpdatesActions {
 @Composable
 fun UpdatesRoute(
     vm: UpdatesViewModel = koinViewModel(),
-    installer: Installer = AppGraph.installer,
+    installer: Installer = koinInject(),
+    settings: SettingsRepository = koinInject(),
     onOpenDetails: (String) -> Unit
 ) {
     val ui by vm.ui.collectAsState()
@@ -71,7 +73,7 @@ fun UpdatesRoute(
                 isBatchUpdating = true
 
                 batchUpdateJob = scope.launch {
-                    val installerMode = runCatching { AppGraph.settings.settingsFlow.first().installerMode }.getOrDefault(0)
+                    val installerMode = runCatching { settings.settingsFlow.first().installerMode }.getOrDefault(0)
                     val parallelism = when (installerMode) {
                         2, 3 -> 3 // Test
                         else -> 10 // Certain roms might have problems with parallel root installs

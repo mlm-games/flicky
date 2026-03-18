@@ -2,32 +2,37 @@ package app.flicky.work
 
 import android.content.Context
 import androidx.work.*
+import app.flicky.data.local.AppDatabase
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.AppUpdatePreference
 import app.flicky.data.repository.AppUpdatePreferencesMap
+import app.flicky.data.repository.InstalledAppsRepository
 import app.flicky.data.repository.PreferredRepo
+import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.VariantSelector
-import app.flicky.di.AppDependencies
+import app.flicky.install.Installer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
 
 class AutoUpdateWorker(
     appContext: Context,
     params: WorkerParameters
-) : CoroutineWorker(appContext, params) {
+) : CoroutineWorker(appContext, params), KoinComponent {
+
+    private val settings: SettingsRepository by inject()
+    private val installedRepo: InstalledAppsRepository by inject()
+    private val db: AppDatabase by inject()
+    private val installer: Installer by inject()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            val settings = AppDependencies.settings
             val settingsState = settings.settingsFlow.first()
 
             if (!settingsState.autoUpdate) return@withContext Result.success()
-
-            val installedRepo = AppDependencies.installedRepo
-            val db = AppDependencies.db
-            val installer = AppDependencies.installer
 
             val installed = installedRepo.getInstalledDetailed()
             val installedVc = installed.associate { it.packageName to it.versionCode }
