@@ -209,7 +209,7 @@ data class AppSettings(
 
     @Setting(
         title = "Proxy URL",
-        description = "Examples: http://127.0.0.1:8080, http://user:pass@127.0.0.1:8080, socks5://127.0.0.1:1080, socks5://user:pass@127.0.0.1:1080",
+        description = "",
         category = Proxy::class,
         type = TextInput::class,
         dependsOn = "useProxy"

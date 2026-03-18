@@ -22,7 +22,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
@@ -36,6 +35,55 @@ class DbHttpClientProvider(
     private val settingsRepository: SettingsRepository,
 ) : HttpClientProvider {
 
+    private companion object {
+        private val jvmProxyAuthenticator = object : Authenticator() {
+            @Volatile
+            var current: ProxyConfig? = null
+
+            override fun getPasswordAuthentication(): PasswordAuthentication? {
+                val cfg = current ?: return null
+                val user = cfg.username ?: return null
+
+                return when (cfg.scheme) {
+                    "socks5" -> authenticateSocksProxy(cfg, user)
+                    else -> null
+                }
+            }
+
+            private fun authenticateSocksProxy(
+                cfg: ProxyConfig,
+                user: String,
+            ): PasswordAuthentication? {
+                val protocol = requestingProtocol
+                    ?.substringBefore('/')
+                    ?.lowercase()
+
+                if (protocol != null && protocol != "socks" && protocol != "socks5") return null
+                if (requestingPort != -1 && requestingPort != cfg.port) return null
+                if (!matchesSocksHost(cfg)) return null
+
+                return PasswordAuthentication(user, (cfg.password ?: "").toCharArray())
+            }
+
+            private fun matchesSocksHost(cfg: ProxyConfig): Boolean {
+                val host = requestingHost
+                if (host != null && host.equals(cfg.host, ignoreCase = true)) return true
+
+                val siteAddress = requestingSite?.hostAddress
+                if (siteAddress != null) {
+                    val cfgAddresses = runCatching { InetAddress.getAllByName(cfg.host) }.getOrNull()
+                    if (cfgAddresses != null && cfgAddresses.any { it.hostAddress == siteAddress }) {
+                        return true
+                    }
+                }
+
+                return host == null && requestingSite == null
+            }
+        }.also {
+            Authenticator.setDefault(it)
+        }
+    }
+
     private data class CacheKey(
         val base: String,
         val trustMode: String,
@@ -46,22 +94,6 @@ class DbHttpClientProvider(
 
     private val cache = ConcurrentHashMap<CacheKey, OkHttpClient>()
     private val baseClients = ConcurrentHashMap<String, OkHttpClient>()
-
-    private val jvmProxyAuthenticator = object : Authenticator() {
-        @Volatile
-        var current: ProxyConfig? = null
-
-        override fun getPasswordAuthentication(): PasswordAuthentication? {
-            val cfg = current ?: return null
-            if (requestorType != RequestorType.PROXY) return null
-            if (!requestingHost.equals(cfg.host, ignoreCase = true)) return null
-            if (requestingPort != cfg.port) return null
-            val user = cfg.username ?: return null
-            return PasswordAuthentication(user, (cfg.password ?: "").toCharArray())
-        }
-    }.also {
-        Authenticator.setDefault(it)
-    }
 
     override suspend fun clientFor(baseUrl: String): OkHttpClient = withContext(Dispatchers.IO) {
         val normalizedUrl = baseUrl.trim().trimEnd('/')
@@ -111,6 +143,10 @@ class DbHttpClientProvider(
     }
 
     private fun buildBaseClient(proxyConfig: ProxyConfig?): OkHttpClient {
+        val httpProxyAuthorization = proxyConfig
+            ?.takeIf { it.scheme == "http" && !it.username.isNullOrBlank() }
+            ?.let { Credentials.basic(it.username!!, it.password.orEmpty()) }
+
         return OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(300, TimeUnit.SECONDS)
@@ -120,7 +156,28 @@ class DbHttpClientProvider(
                 if (proxyConfig != null) {
                     proxy(proxyConfig.proxy)
 
-                    if (proxyConfig.scheme == "http" && !proxyConfig.username.isNullOrBlank()) {
+                    if (proxyConfig.scheme == "socks5" && !proxyConfig.username.isNullOrBlank()) {
+                        addInterceptor { chain ->
+                            jvmProxyAuthenticator.current = proxyConfig
+                            chain.proceed(chain.request())
+                        }
+                    }
+
+                    if (httpProxyAuthorization != null) {
+                        addInterceptor { chain ->
+                            val request = chain.request()
+                            val proxiedRequest =
+                                if (!request.url.isHttps && request.header("Proxy-Authorization") == null) {
+                                    request.newBuilder()
+                                        .header("Proxy-Authorization", httpProxyAuthorization)
+                                        .build()
+                                } else {
+                                    request
+                                }
+
+                            chain.proceed(proxiedRequest)
+                        }
+
                         proxyAuthenticator { _, response ->
                             if (response.request.header("Proxy-Authorization") != null) {
                                 null
@@ -128,10 +185,7 @@ class DbHttpClientProvider(
                                 response.request.newBuilder()
                                     .header(
                                         "Proxy-Authorization",
-                                        Credentials.basic(
-                                            proxyConfig.username,
-                                            proxyConfig.password.orEmpty()
-                                        )
+                                        httpProxyAuthorization
                                     )
                                     .build()
                             }
@@ -268,7 +322,7 @@ class DbHttpClientProvider(
             ?: throw IllegalStateException("No X509TrustManager from custom CA")
 
         val ctx = SSLContext.getInstance("TLS")
-        ctx.init(null, arrayOf<TrustManager>(x509), SecureRandom())
+        ctx.init(null, arrayOf(x509), SecureRandom())
 
         return Pair(ctx.socketFactory, x509)
     }
