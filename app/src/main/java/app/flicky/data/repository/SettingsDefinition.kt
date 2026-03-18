@@ -209,12 +209,12 @@ data class AppSettings(
 
     @Setting(
         title = "Proxy URL",
-        description = " ",
+        description = "",
         category = Proxy::class,
         type = TextInput::class,
         dependsOn = "useProxy"
     )
-    val proxyUrl: String = "",
+    val proxyUrl: String = "http://10.2.2.2:8888",
 
     @Persisted
     val proxyType: Int = 0,
