@@ -209,7 +209,7 @@ data class AppSettings(
 
     @Setting(
         title = "Proxy URL",
-        description = "",
+        description = " ",
         category = Proxy::class,
         type = TextInput::class,
         dependsOn = "useProxy"
