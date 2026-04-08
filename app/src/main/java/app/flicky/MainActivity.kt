@@ -55,9 +55,10 @@ class MainActivity : ComponentActivity() {
 
     private fun Uri.deepLinkPackageName(): String? = when {
         scheme.equals("https", ignoreCase = true) &&
-            host.equals("f-droid.org", ignoreCase = true) &&
-            pathSegments.firstOrNull() == "packages" ->
-            pathSegments.getOrNull(1)
+            host.equals("f-droid.org", ignoreCase = true) -> {
+            val idx = pathSegments.indexOf("packages")
+            if (idx != -1) pathSegments.getOrNull(idx + 1) else null
+        }
 
         scheme.equals("fdroidrepos", ignoreCase = true) ->
             host?.takeIf { it.isNotBlank() }
