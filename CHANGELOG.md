@@ -1,3 +1,8 @@
+## v4.3.5
+
+- fix locale links not being opened in-app (#63)
+
+
 ## v4.3.4
 
 - prev. release proxyUrl fix
