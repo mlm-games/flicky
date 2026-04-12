@@ -857,7 +857,11 @@ class Installer(
         file: File,
         packageName: String,
         expectedSha256: String = "",
-    ): Boolean = installSessionFromFileInternal(file, packageName, expectedSha256)
+    ): Boolean = installSessionFromFileInternal(file, packageName, expectedSha256) { params ->
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+        }
+    }
 
     private suspend fun installRootStream(file: File, packageName: String): Boolean {
         val size = file.length().coerceAtLeast(1L)
