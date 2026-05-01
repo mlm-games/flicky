@@ -1,0 +1,1 @@
+- fix locale links not being opened in-app (#63)

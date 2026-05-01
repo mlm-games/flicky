@@ -1,3 +1,8 @@
+## v4.3.6
+
+- fix locale links not being opened in-app (#63)
+
+
 ## v4.3.5
 
 - fix locale links not being opened in-app (#63)
