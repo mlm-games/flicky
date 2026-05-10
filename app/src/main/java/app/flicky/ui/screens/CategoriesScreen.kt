@@ -48,9 +48,9 @@ fun CategoriesScreen(
 
     val categories by appRepo.categories().collectAsState(initial = emptyList())
     val settingsState by settings.settingsFlow.collectAsState(initial = AppSettings())
+    val reverseSort = settingsState.defaultSort == 1
     val sortOption = when (settingsState.defaultSort) {
-        0 -> SortOption.Name
-        1 -> SortOption.NameDesc
+        0, 1 -> SortOption.Name
         2 -> SortOption.Updated
         3 -> SortOption.Size
         4 -> SortOption.Added
@@ -59,6 +59,7 @@ fun CategoriesScreen(
     val apps by appRepo.appsFlow(
         query = "",
         sort = sortOption,
+        reverseSort = reverseSort,
         hideAnti = false,
         showIncompatible = settingsState.showIncompatible
     ).collectAsState(initial = emptyList())

@@ -48,13 +48,16 @@ fun Nav3Host(
             entry<NavScreen.Browse> {
                 val query = browseViewModel.query.collectAsStateWithLifecycle().value
                 val sort = browseViewModel.sort.collectAsStateWithLifecycle().value
+                val reverseSort = browseViewModel.reverseSort.collectAsStateWithLifecycle().value
                 val browseUi = browseViewModel.uiState.collectAsStateWithLifecycle().value
 
                 BrowseScreen(
                     apps = browseViewModel.pagedApps.collectAsLazyPagingItems(),
                     query = query,
                     sort = sort,
+                    reverseSort = reverseSort,
                     onSortChange = browseViewModel::setSort,
+                    onReverseSortChange = browseViewModel::setReverseSort,
                     onSearchChange = browseViewModel::setQuery,
                     onAppClick = { app -> backStack.add(NavScreen.Detail(app.packageName)) },
                     onCategoriesClick = { backStack.add(NavScreen.Categories(it)) },

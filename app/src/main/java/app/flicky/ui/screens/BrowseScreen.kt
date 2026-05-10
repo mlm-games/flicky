@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.MoveDown
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
@@ -50,6 +51,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SnackbarHost
@@ -113,7 +117,9 @@ fun BrowseScreen(
     apps: LazyPagingItems<FDroidApp>,
     query: String,
     sort: SortOption,
+    reverseSort: Boolean,
     onSortChange: (SortOption) -> Unit,
+    onReverseSortChange: (Boolean) -> Unit,
     onSearchChange: (String) -> Unit,
     onAppClick: (FDroidApp) -> Unit,
     onCategoriesClick: (String?) -> Unit,
@@ -202,7 +208,6 @@ fun BrowseScreen(
                     ) {
                         val sortLabel = when (sort) {
                             SortOption.Name -> stringResource(R.string.sort_name)
-                            SortOption.NameDesc -> stringResource(R.string.sort_name_desc)
                             SortOption.Updated -> stringResource(R.string.sort_updated)
                             SortOption.Size -> stringResource(R.string.sort_size)
                             SortOption.Added -> stringResource(R.string.sort_added)
@@ -211,11 +216,20 @@ fun BrowseScreen(
                             onClick = { showSortDialog = true },
                             label = { Text(stringResource(R.string.sort_prefix, sortLabel)) },
                             leadingIcon = {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.Sort,
-                                    contentDescription = stringResource(R.string.sort_by),
-                                    modifier = Modifier.size(18.dp)
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.Sort,
+                                        contentDescription = stringResource(R.string.sort_by),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    if (reverseSort) {
+                                        Icon(
+                                            Icons.Default.MoveDown,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
                             }
                         )
 
@@ -394,8 +408,7 @@ fun BrowseScreen(
             ) {
                 Body()
             }
-        }
-        else {
+        } else {
             PullToRefreshBox(
                 modifier = Modifier
                     .fillMaxSize()
@@ -427,10 +440,12 @@ fun BrowseScreen(
     if (showSortDialog) {
         SortDialog(
             currentSort = sort,
+            reverseSort = reverseSort,
             onSortSelected = {
                 onSortChange(it)
                 showSortDialog = false
             },
+            onReverseSortChange = onReverseSortChange,
             onDismiss = { showSortDialog = false }
         )
     }
@@ -571,7 +586,9 @@ private fun InstallFromDialog(
 @Composable
 private fun SortDialog(
     currentSort: SortOption,
+    reverseSort: Boolean,
     onSortSelected: (SortOption) -> Unit,
+    onReverseSortChange: (Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     FlickyDialog(
@@ -592,7 +609,6 @@ private fun SortDialog(
             SortOption.entries.forEach { option ->
                 val optionText = when (option) {
                     SortOption.Name -> stringResource(R.string.sort_name)
-                    SortOption.NameDesc -> stringResource(R.string.sort_name_desc)
                     SortOption.Updated -> stringResource(R.string.sort_updated)
                     SortOption.Size -> stringResource(R.string.sort_size)
                     SortOption.Added -> stringResource(R.string.sort_added)
@@ -620,6 +636,29 @@ private fun SortDialog(
                     )
                 }
             }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onReverseSortChange(!reverseSort) }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = reverseSort,
+                    onCheckedChange = onReverseSortChange,
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = MaterialTheme.colorScheme.primary,
+                        uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.sort_reverse),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }
@@ -646,7 +685,7 @@ private fun TvAwareDockedSearchBar(
     val focusManager = LocalFocusManager.current
     val okKeys = remember { setOf(Key.Enter, Key.NumPadEnter, Key.DirectionCenter) }
 
-    val onActiveChange : (Boolean) -> Unit = { isActive ->
+    val onActiveChange: (Boolean) -> Unit = { isActive ->
         active = isActive
         if (!isActive) {
             keyboard?.hide()
@@ -697,8 +736,7 @@ private fun TvAwareDockedSearchBar(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    }
-                    else {
+                    } else {
                         VoiceSearchButton {
                             localQuery = it
                             onImmediateChange(it)
@@ -726,9 +764,11 @@ private fun TvAwareDockedSearchBar(
                     isTv && !active && e.type == KeyEventType.KeyDown && e.key in okKeys -> {
                         active = true; keyboard?.show(); true
                     }
+
                     isTv && active && e.type == KeyEventType.KeyDown && e.key == Key.Back -> {
                         active = false; keyboard?.hide(); true
                     }
+
                     else -> false
                 }
             },

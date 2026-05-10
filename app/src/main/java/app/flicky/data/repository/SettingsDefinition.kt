@@ -104,6 +104,9 @@ data class AppSettings(
     )
     val defaultSort: Int = 1,
 
+    @Persisted(key = "reverse_sort")
+    val reverseSort: Boolean = false,
+
     @Setting(
         title = "Auto Update",
         description = "Automatically update apps in the background",

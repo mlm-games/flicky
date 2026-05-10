@@ -90,6 +90,18 @@ AND (:showIncompat = 1 OR EXISTS (
     SELECT 1 FROM app_variants v
     WHERE v.packageName = apps.packageName AND v.isCompatible = 1
 ))
+ORDER BY lastUpdated ASC
+""")
+    fun pagingByUpdatedAsc(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
+
+    @Query("""
+SELECT * FROM apps
+WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
+AND (:hideAnti = 0 OR LENGTH(antiFeatures) = 2)
+AND (:showIncompat = 1 OR EXISTS (
+    SELECT 1 FROM app_variants v
+    WHERE v.packageName = apps.packageName AND v.isCompatible = 1
+))
 ORDER BY name COLLATE NOCASE ASC
     """)
     fun pagingByName(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
@@ -103,7 +115,7 @@ AND (:showIncompat = 1 OR EXISTS (
     WHERE v.packageName = apps.packageName AND v.isCompatible = 1
 ))
 ORDER BY name COLLATE NOCASE DESC
-""")
+    """)
     fun pagingByNameDesc(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
 
     @Query("""
@@ -126,9 +138,33 @@ AND (:showIncompat = 1 OR EXISTS (
     SELECT 1 FROM app_variants v
     WHERE v.packageName = apps.packageName AND v.isCompatible = 1
 ))
+ORDER BY size DESC
+""")
+    fun pagingBySizeDesc(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
+
+    @Query("""
+SELECT * FROM apps
+WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
+AND (:hideAnti = 0 OR LENGTH(antiFeatures) = 2)
+AND (:showIncompat = 1 OR EXISTS (
+    SELECT 1 FROM app_variants v
+    WHERE v.packageName = apps.packageName AND v.isCompatible = 1
+))
 ORDER BY added DESC
 """)
     fun pagingByAdded(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
+
+    @Query("""
+SELECT * FROM apps
+WHERE (:q == '' OR name LIKE '%'||:q||'%' OR summary LIKE '%'||:q||'%' OR packageName LIKE '%'||:q||'%')
+AND (:hideAnti = 0 OR LENGTH(antiFeatures) = 2)
+AND (:showIncompat = 1 OR EXISTS (
+    SELECT 1 FROM app_variants v
+    WHERE v.packageName = apps.packageName AND v.isCompatible = 1
+))
+ORDER BY added ASC
+""")
+    fun pagingByAddedAsc(q: String, hideAnti: Int, showIncompat: Int): PagingSource<Int, FDroidApp>
 
     @Query("SELECT * FROM apps WHERE packageName = :pkg LIMIT 1")
     fun observeOne(pkg: String): Flow<FDroidApp?>

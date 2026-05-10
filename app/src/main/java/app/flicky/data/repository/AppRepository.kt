@@ -14,6 +14,7 @@ class AppRepository(private val dao: AppDao) {
     fun appsFlow(
         query: String,
         sort: SortOption,
+        reverseSort: Boolean,
         hideAnti: Boolean,
         showIncompatible: Boolean
     ): Flow<List<FDroidApp>> =
@@ -21,11 +22,34 @@ class AppRepository(private val dao: AppDao) {
             val antiFiltered = if (hideAnti) list.filter { it.antiFeatures.isEmpty() } else list
             val compatFiltered = if (showIncompatible) antiFiltered else antiFiltered.filter { it.isCompatible }
             when (sort) {
-                SortOption.Name -> compatFiltered.sortedBy { it.name.lowercase() }
-                SortOption.NameDesc -> compatFiltered.sortedByDescending { it.name.lowercase() }
-                SortOption.Updated -> compatFiltered.sortedByDescending { it.lastUpdated }
-                SortOption.Size -> compatFiltered.sortedBy { it.size }
-                SortOption.Added -> compatFiltered.sortedByDescending { it.added }
+                SortOption.Name -> {
+                    if (reverseSort) {
+                        compatFiltered.sortedByDescending { it.name.lowercase() }
+                    } else {
+                        compatFiltered.sortedBy { it.name.lowercase() }
+                    }
+                }
+                SortOption.Updated -> {
+                    if (reverseSort) {
+                        compatFiltered.sortedBy { it.lastUpdated }
+                    } else {
+                        compatFiltered.sortedByDescending { it.lastUpdated }
+                    }
+                }
+                SortOption.Size -> {
+                    if (reverseSort) {
+                        compatFiltered.sortedByDescending { it.size }
+                    } else {
+                        compatFiltered.sortedBy { it.size }
+                    }
+                }
+                SortOption.Added -> {
+                    if (reverseSort) {
+                        compatFiltered.sortedBy { it.added }
+                    } else {
+                        compatFiltered.sortedByDescending { it.added }
+                    }
+                }
             }
         }
 
@@ -34,6 +58,7 @@ class AppRepository(private val dao: AppDao) {
     fun pagedAppsFlow(
         query: String,
         sort: SortOption,
+        reverseSort: Boolean,
         hideAnti: Boolean,
         showIncompatible: Boolean
     ): Flow<PagingData<FDroidApp>> {
@@ -41,11 +66,10 @@ class AppRepository(private val dao: AppDao) {
             val hideAntiInt = if (hideAnti) 1 else 0
             val showIncompatInt = if (showIncompatible) 1 else 0
             when (sort) {
-                SortOption.Updated -> dao.pagingByUpdated(query, hideAntiInt, showIncompatInt)
-                SortOption.Name -> dao.pagingByName(query, hideAntiInt, showIncompatInt)
-                SortOption.NameDesc -> dao.pagingByNameDesc(query, hideAntiInt, showIncompatInt)
-                SortOption.Size -> dao.pagingBySize(query, hideAntiInt, showIncompatInt)
-                SortOption.Added -> dao.pagingByAdded(query, hideAntiInt, showIncompatInt)
+                SortOption.Updated -> if (reverseSort) dao.pagingByUpdatedAsc(query, hideAntiInt, showIncompatInt) else dao.pagingByUpdated(query, hideAntiInt, showIncompatInt)
+                SortOption.Name -> if (reverseSort) dao.pagingByNameDesc(query, hideAntiInt, showIncompatInt) else dao.pagingByName(query, hideAntiInt, showIncompatInt)
+                SortOption.Size -> if (reverseSort) dao.pagingBySizeDesc(query, hideAntiInt, showIncompatInt) else dao.pagingBySize(query, hideAntiInt, showIncompatInt)
+                SortOption.Added -> if (reverseSort) dao.pagingByAddedAsc(query, hideAntiInt, showIncompatInt) else dao.pagingByAdded(query, hideAntiInt, showIncompatInt)
             }
         }
         return Pager(

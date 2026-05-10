@@ -14,11 +14,14 @@ fun FavoritesRoute(
 ) {
     val ui by vm.ui.collectAsState()
     val sort by vm.sort.collectAsState()
+    val reverseSort by vm.reverseSort.collectAsState()
 
     FavoritesScreen(
         ui = ui,
         sort = sort,
+        reverseSort = reverseSort,
         onSortChange = vm::setSort,
+        onReverseSortChange = vm::setReverseSort,
         onAppClick = { app -> onOpenDetails(app.packageName) },
         onRemoveFavorite = vm::removeFavorite
     )

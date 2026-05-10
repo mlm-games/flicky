@@ -59,7 +59,7 @@ class UpdatesViewModel(
     init {
         viewModelScope.launch {
             combine(
-                repo.appsFlow("", sort = SortOption.Updated, hideAnti = false, showIncompatible = false),
+                repo.appsFlow("", sort = SortOption.Updated, reverseSort = false, hideAnti = false, showIncompatible = false),
                 installedRepo.packageChangesFlow().onStart { emit(Unit) },
                 settings.observeAppUpdatePreferences(),
                 settings.settingsFlow.map { it.preferredRepo }.distinctUntilChanged()

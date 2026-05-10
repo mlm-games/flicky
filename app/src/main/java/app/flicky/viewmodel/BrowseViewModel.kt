@@ -45,6 +45,11 @@ class BrowseViewModel(
     private val _sort = MutableStateFlow(SortOption.Updated)
     val sort: StateFlow<SortOption> = _sort.asStateFlow()
 
+    val reverseSort: StateFlow<Boolean> = settings.settingsFlow
+        .map { it.reverseSort }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     private val _uiState = MutableStateFlow(BrowseUiState())
     val uiState: StateFlow<BrowseUiState> = _uiState.asStateFlow()
 
@@ -52,10 +57,11 @@ class BrowseViewModel(
         combine(
             _query.debounce(300),
             _sort,
+            settings.settingsFlow.map { it.reverseSort }.distinctUntilChanged(),
             settings.settingsFlow.map { it.hideAntiFeatures }.distinctUntilChanged(),
             settings.settingsFlow.map { it.showIncompatible }.distinctUntilChanged()
-        ) { query, sort, hideAnti, showIncompat ->
-            repo.pagedAppsFlow(query, sort, hideAnti, showIncompat)
+        ) { query, sort, reverseSort, hideAnti, showIncompat ->
+            repo.pagedAppsFlow(query, sort, reverseSort, hideAnti, showIncompat)
         }.flatMapLatest { it }
             .cachedIn(viewModelScope)
             .stateIn(viewModelScope, SharingStarted.Lazily, PagingData.empty())
@@ -70,8 +76,7 @@ class BrowseViewModel(
                 .distinctUntilChanged()
                 .collect { sortIndex ->
                     _sort.value = when (sortIndex) {
-                        0 -> SortOption.Name
-                        1 -> SortOption.NameDesc
+                        0, 1 -> SortOption.Name
                         2 -> SortOption.Updated
                         3 -> SortOption.Size
                         4 -> SortOption.Added
@@ -104,6 +109,12 @@ class BrowseViewModel(
 
     fun setSort(s: SortOption) {
         _sort.value = s
+    }
+
+    fun setReverseSort(reverse: Boolean) {
+        viewModelScope.launch {
+            settings.updateSettings { it.copy(reverseSort = reverse) }
+        }
     }
 
     fun clearError() {

@@ -31,7 +31,9 @@ import app.flicky.viewmodel.FavoritesUi
 fun FavoritesScreen(
     ui: FavoritesUi,
     sort: SortOption,
+    reverseSort: Boolean,
     onSortChange: (SortOption) -> Unit,
+    onReverseSortChange: (Boolean) -> Unit,
     onAppClick: (FDroidApp) -> Unit,
     onRemoveFavorite: (String) -> Unit
 ) {
@@ -53,20 +55,29 @@ fun FavoritesScreen(
             if (ui.favorites.isNotEmpty()) {
                 val sortLabel = when (sort) {
                     SortOption.Name -> stringResource(R.string.sort_name)
-                    SortOption.NameDesc -> stringResource(R.string.sort_name_desc)
                     SortOption.Updated -> stringResource(R.string.sort_updated)
                     SortOption.Size -> stringResource(R.string.sort_size)
                     SortOption.Added -> stringResource(R.string.sort_added)
                 }
+                val finalLabel = if (reverseSort) sortLabel else sortLabel
                 AssistChip(
                     onClick = { showSortDialog = true },
-                    label = { Text(sortLabel) },
+                    label = { Text(finalLabel) },
                     leadingIcon = {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Sort,
-                            contentDescription = stringResource(R.string.sort_by),
-                            modifier = Modifier.size(18.dp)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.Sort,
+                                contentDescription = stringResource(R.string.sort_by),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            if (reverseSort) {
+                                Icon(
+                                    Icons.Default.MoveDown,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
                     },
                     modifier = Modifier.padding(end = 8.dp)
                 )
@@ -108,10 +119,12 @@ fun FavoritesScreen(
     if (showSortDialog) {
         SortSelectionDialog(
             currentSort = sort,
+            reverseSort = reverseSort,
             onSortSelected = {
                 onSortChange(it)
                 showSortDialog = false
             },
+            onReverseSortChange = onReverseSortChange,
             onDismiss = { showSortDialog = false }
         )
     }
@@ -200,7 +213,9 @@ private fun EmptyFavoritesContent() {
 @Composable
 private fun SortSelectionDialog(
     currentSort: SortOption,
+    reverseSort: Boolean,
     onSortSelected: (SortOption) -> Unit,
+    onReverseSortChange: (Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     FlickyDialog(
@@ -216,7 +231,6 @@ private fun SortSelectionDialog(
             SortOption.entries.forEach { option ->
                 val label = when (option) {
                     SortOption.Name -> stringResource(R.string.sort_name)
-                    SortOption.NameDesc -> stringResource(R.string.sort_name_desc)
                     SortOption.Updated -> stringResource(R.string.sort_updated)
                     SortOption.Size -> stringResource(R.string.sort_size)
                     SortOption.Added -> stringResource(R.string.sort_added)
@@ -235,6 +249,21 @@ private fun SortSelectionDialog(
                     Spacer(Modifier.width(12.dp))
                     Text(label, style = typography.bodyLarge)
                 }
+            }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .combinedClickable(onClick = { onReverseSortChange(!reverseSort) })
+                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = reverseSort,
+                    onCheckedChange = onReverseSortChange
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(stringResource(R.string.sort_reverse), style = typography.bodyLarge)
             }
         }
     }
