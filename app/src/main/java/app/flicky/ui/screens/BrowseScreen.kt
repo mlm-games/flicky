@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -49,11 +48,6 @@ import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SnackbarHost
@@ -96,6 +90,7 @@ import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.model.SortOption
 import app.flicky.data.repository.AppSettings
+import app.flicky.ui.components.SortDialog
 import app.flicky.data.repository.InstalledAppsRepository
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.install.Installer
@@ -578,86 +573,6 @@ private fun InstallFromDialog(
                         )
                     ) { Text(stringResource(R.string.action_cancel)) }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SortDialog(
-    currentSort: SortOption,
-    reverseSort: Boolean,
-    onSortSelected: (SortOption) -> Unit,
-    onReverseSortChange: (Boolean) -> Unit,
-    onDismiss: () -> Unit
-) {
-    FlickyDialog(
-        onDismissRequest = onDismiss,
-        title = stringResource(R.string.sort_by),
-        confirmButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text(stringResource(R.string.action_close))
-            }
-        }
-    ) {
-        Column {
-            SortOption.entries.forEach { option ->
-                val optionText = when (option) {
-                    SortOption.Name -> stringResource(R.string.sort_name)
-                    SortOption.Updated -> stringResource(R.string.sort_updated)
-                    SortOption.Size -> stringResource(R.string.sort_size)
-                    SortOption.Added -> stringResource(R.string.sort_added)
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onSortSelected(option) }
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = currentSort == option,
-                        onClick = { onSortSelected(option) },
-                        colors = RadioButtonDefaults.colors(
-                            selectedColor = MaterialTheme.colorScheme.primary,
-                            unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        optionText,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onReverseSortChange(!reverseSort) }
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = reverseSort,
-                    onCheckedChange = onReverseSortChange,
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = MaterialTheme.colorScheme.primary,
-                        uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    stringResource(R.string.sort_reverse),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
             }
         }
     }

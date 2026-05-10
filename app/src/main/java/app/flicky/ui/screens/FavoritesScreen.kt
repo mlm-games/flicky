@@ -3,7 +3,6 @@
 package app.flicky.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material.icons.Icons
@@ -25,6 +24,7 @@ import app.flicky.data.model.SortOption
 import app.flicky.ui.components.AdaptiveAppCard
 import app.flicky.ui.components.global.FlickyDialog
 import app.flicky.ui.components.global.MyScreenScaffold
+import app.flicky.ui.components.SortDialog
 import app.flicky.viewmodel.FavoritesUi
 
 @Composable
@@ -117,7 +117,7 @@ fun FavoritesScreen(
     }
 
     if (showSortDialog) {
-        SortSelectionDialog(
+        SortDialog(
             currentSort = sort,
             reverseSort = reverseSort,
             onSortSelected = {
@@ -206,65 +206,6 @@ private fun EmptyFavoritesContent() {
                 color = colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
             )
-        }
-    }
-}
-
-@Composable
-private fun SortSelectionDialog(
-    currentSort: SortOption,
-    reverseSort: Boolean,
-    onSortSelected: (SortOption) -> Unit,
-    onReverseSortChange: (Boolean) -> Unit,
-    onDismiss: () -> Unit
-) {
-    FlickyDialog(
-        onDismissRequest = onDismiss,
-        title = stringResource(R.string.sort_by),
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_close))
-            }
-        }
-    ) {
-        Column {
-            SortOption.entries.forEach { option ->
-                val label = when (option) {
-                    SortOption.Name -> stringResource(R.string.sort_name)
-                    SortOption.Updated -> stringResource(R.string.sort_updated)
-                    SortOption.Size -> stringResource(R.string.sort_size)
-                    SortOption.Added -> stringResource(R.string.sort_added)
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .combinedClickable(onClick = { onSortSelected(option) })
-                        .padding(vertical = 12.dp, horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = currentSort == option,
-                        onClick = { onSortSelected(option) }
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Text(label, style = typography.bodyLarge)
-                }
-            }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .combinedClickable(onClick = { onReverseSortChange(!reverseSort) })
-                    .padding(vertical = 12.dp, horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = reverseSort,
-                    onCheckedChange = onReverseSortChange
-                )
-                Spacer(Modifier.width(12.dp))
-                Text(stringResource(R.string.sort_reverse), style = typography.bodyLarge)
-            }
         }
     }
 }
