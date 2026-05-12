@@ -162,14 +162,17 @@ class AppDetailViewModel(
 
                 val prefIdx = settings.settingsFlow.first().preferredRepo
                 val globalPref = PreferredRepo.fromIndex(prefIdx)
+                val globalIgnoreUnstable = settings.settingsFlow.first().ignoreUnstable
                 val perAppPref = settings.getAppUpdatePreference(packageName)
                 val variants = dao.variantsFor(app.packageName)
+                val effectiveIgnoreUnstable = perAppPref.ignoreUnstable ?: globalIgnoreUnstable
 
                 val chosen = VariantSelector.pick(
                     variants = variants,
                     preferred = globalPref,
                     preferredRepoUrl = perAppPref.preferredRepoUrl,
-                    strict = perAppPref.lockToRepo
+                    strict = perAppPref.lockToRepo,
+                    ignoreUnstable = effectiveIgnoreUnstable
                 )
 
                 val success = if (chosen != null) {

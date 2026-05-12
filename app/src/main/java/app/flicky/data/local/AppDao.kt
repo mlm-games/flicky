@@ -26,7 +26,8 @@ data class AppVariant(
     val sha256: String,
     val size: Long,
     val isCompatible: Boolean,
-    val reproducible: Boolean = false
+    val reproducible: Boolean = false,
+    val releaseChannels: List<String> = emptyList()
 )
 
 @Dao

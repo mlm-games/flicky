@@ -114,8 +114,12 @@ class FDroidApi(
                             Log.d(TAG, "HEAD 304 Not Modified for ${repo.name}")
                             return@withContext FetchResult(previous, modified = false)
                         }
-                        405, 501 -> { /* unsupported; try GET */ }
-                        else -> { /* proceed */ }
+
+                        405, 501 -> { /* unsupported; try GET */
+                        }
+
+                        else -> { /* proceed */
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -142,6 +146,7 @@ class FDroidApi(
                             Log.d(TAG, "GET 304 Not Modified for ${repo.name}")
                             return@withContext FetchResult(previous, modified = false)
                         }
+
                         resp.isSuccessful -> {
                             Log.d(TAG, "Parsing v2 index for ${repo.name}")
                             parseIndexV2(resp, baseUrl, repo.name, onApp, includeIncompatible, onVariant)
@@ -171,10 +176,28 @@ class FDroidApi(
         }
 
         // Fallback 1: index-v1.jar -> index-v1.json
-        fetchV1(baseUrl, repo.name, previous, force, includeIncompatible, onApp, onVariant, client())?.let { return@withContext it }
+        fetchV1(
+            baseUrl,
+            repo.name,
+            previous,
+            force,
+            includeIncompatible,
+            onApp,
+            onVariant,
+            client()
+        )?.let { return@withContext it }
 
         // Fallback 2 (legacy legacy): index.jar (v0) -> index.xml
-        fetchV0(baseUrl, repo.name, previous, force, includeIncompatible, onApp, onVariant, client())?.let { return@withContext it }
+        fetchV0(
+            baseUrl,
+            repo.name,
+            previous,
+            force,
+            includeIncompatible,
+            onApp,
+            onVariant,
+            client()
+        )?.let { return@withContext it }
 
         Log.e(TAG, "Failed to fetch ${repo.name}", lastException)
         null
@@ -202,7 +225,14 @@ class FDroidApi(
                             reader.beginObject()
                             while (reader.hasNext()) {
                                 val packageName = reader.nextName()
-                                val app = parsePackageStreamingBest(reader, packageName, baseUrl, repoName, includeIncompatible, onVariant)
+                                val app = parsePackageStreamingBest(
+                                    reader,
+                                    packageName,
+                                    baseUrl,
+                                    repoName,
+                                    includeIncompatible,
+                                    onVariant
+                                )
                                 if (app != null) {
                                     batch.add(app)
                                     totalApps++
@@ -214,6 +244,7 @@ class FDroidApi(
                             }
                             reader.endObject()
                         }
+
                         else -> reader.skipValue()
                     }
                 }
@@ -254,6 +285,7 @@ class FDroidApi(
                                     if (reader.peek() == JsonToken.BOOLEAN) isPrimary = reader.nextBoolean()
                                     else reader.skipValue()
                                 }
+
                                 else -> reader.skipValue()
                             }
                         }
@@ -265,6 +297,7 @@ class FDroidApi(
                     }
                     reader.endArray()
                 }
+
                 "name" -> nameLocalized = parseLocalizedStrings(reader).toMutableMap()
                 "description" -> descLocalized = parseLocalizedStrings(reader).toMutableMap()
                 "webBaseUrl" -> webBaseUrl = reader.nextString()
@@ -309,7 +342,10 @@ class FDroidApi(
             val req = Request.Builder()
                 .url("$baseUrl/$INDEX_V1_JAR")
                 .get()
-                .header("User-Agent", "Flicky/${BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})")
+                .header(
+                    "User-Agent",
+                    "Flicky/${BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})"
+                )
                 .apply {
                     if (!force) {
                         previous.etag?.let { header("If-None-Match", it) }
@@ -397,6 +433,7 @@ class FDroidApi(
             val added: Long = 0L,
             val updated: Long = 0L
         )
+
         val metaByPkg = hashMapOf<String, Meta>()
 
         // We’ll stream: first parse repo, then apps[], then packages{}
@@ -443,6 +480,7 @@ class FDroidApi(
                                     if (description.isNullOrEmpty()) description = loc["description"]
                                     if (icon.isNullOrEmpty()) icon = loc["icon"]
                                 }
+
                                 else -> reader.skipValue()
                             }
                         }
@@ -465,6 +503,7 @@ class FDroidApi(
                     }
                     reader.endArray()
                 }
+
                 "packages" -> {
                     // packages: { "pkg": [ {versionName, versionCode, apkName, ...}, ... ], ... }
                     reader.beginObject()
@@ -485,6 +524,7 @@ class FDroidApi(
                                         v.size in 1..Long.MAX_VALUE &&
                                         best.size in 1..Long.MAX_VALUE &&
                                         v.size < best.size -> v
+
                                 else -> best
                             }
                         }
@@ -502,7 +542,8 @@ class FDroidApi(
                                 apkUrl = if (v.apkName.startsWith("http")) v.apkName else "$baseUrl/${v.apkName}",
                                 sha256 = v.hash,
                                 size = v.size,
-                                isCompatible = isCompat
+                                isCompatible = isCompat,
+                                releaseChannels = v.releaseChannels
                             )
                             runCatching { onVariant(variant) }
                         }
@@ -558,6 +599,7 @@ class FDroidApi(
                     }
                     reader.endObject()
                 }
+
                 else -> reader.skipValue()
             }
         }
@@ -572,7 +614,8 @@ class FDroidApi(
         val size: Long,
         val hash: String,
         val minSdkVersion: Int,
-        val nativecode: List<String>
+        val nativecode: List<String>,
+        val releaseChannels: List<String> = emptyList()
     )
 
     private fun parseV1Version(reader: JsonReader): V1Version {
@@ -583,6 +626,7 @@ class FDroidApi(
         var hash = ""
         var minSdk = 1
         var nativecode: List<String> = emptyList()
+        var releaseChannels: List<String> = emptyList()
 
         reader.beginObject()
         while (reader.hasNext()) {
@@ -599,11 +643,13 @@ class FDroidApi(
                     // sometimes v1 uses srcname; prefer apkName if present
                     if (apkName.isBlank()) apkName = safeString(reader) ?: ""
                 }
+
+                "releaseChannels" -> releaseChannels = parseStringArray(reader)
                 else -> reader.skipValue()
             }
         }
         reader.endObject()
-        return V1Version(versionCode, versionName, apkName, size, hash, minSdk, nativecode)
+        return V1Version(versionCode, versionName, apkName, size, hash, minSdk, nativecode, releaseChannels)
     }
 
     private suspend fun parseRepoBlockV1(reader: JsonReader) {
@@ -633,6 +679,7 @@ class FDroidApi(
                                     }
                                     reader.endObject()
                                 }
+
                                 else -> reader.skipValue()
                             }
                         }
@@ -641,6 +688,7 @@ class FDroidApi(
                         reader.skipValue()
                     }
                 }
+
                 "name" -> name = safeString(reader) ?: ""
                 "description" -> description = safeString(reader) ?: ""
                 "timestamp" -> timestamp = safeLong(reader)
@@ -684,7 +732,10 @@ class FDroidApi(
             val req = Request.Builder()
                 .url("$baseUrl/$INDEX_V0_JAR")
                 .get()
-                .header("User-Agent", "Flicky/${BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})")
+                .header(
+                    "User-Agent",
+                    "Flicky/${BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})"
+                )
                 .apply {
                     if (!force) {
                         previous.etag?.let { header("If-None-Match", it) }
@@ -719,18 +770,27 @@ class FDroidApi(
 
     private fun safeString(r: JsonReader): String? = when (r.peek()) {
         JsonToken.STRING -> r.nextString()
-        else -> { r.skipValue(); null }
+        else -> {
+            r.skipValue(); null
+        }
     }
+
     private fun safeLong(r: JsonReader): Long = when (r.peek()) {
         JsonToken.NUMBER -> runCatching { r.nextLong() }.getOrElse { r.skipValue(); 0L }
         JsonToken.STRING -> runCatching { r.nextString().toLong() }.getOrElse { 0L }
-        else -> { r.skipValue(); 0L }
+        else -> {
+            r.skipValue(); 0L
+        }
     }
+
     private fun safeInt(r: JsonReader): Int = when (r.peek()) {
         JsonToken.NUMBER -> runCatching { r.nextInt() }.getOrElse { r.skipValue(); 0 }
         JsonToken.STRING -> runCatching { r.nextString().toInt() }.getOrElse { 0 }
-        else -> { r.skipValue(); 0 }
+        else -> {
+            r.skipValue(); 0
+        }
     }
+
     private fun parseStringArray(reader: JsonReader): List<String> {
         val list = mutableListOf<String>()
         if (reader.peek() == JsonToken.BEGIN_ARRAY) {
@@ -820,6 +880,7 @@ class FDroidApi(
         val whatsNew: String? = null,
         val antiFeatures: List<String> = emptyList(),
         val reproducible: Boolean = false,
+        val releaseChannels: List<String> = emptyList(),
     )
 
     @SuppressLint("CheckResult")
@@ -854,11 +915,13 @@ class FDroidApi(
                                             v.size in 1..Long.MAX_VALUE &&
                                             best.size in 1..Long.MAX_VALUE &&
                                             v.size < best.size -> v
+
                                     else -> best
                                 }
                             }
                             reader.endObject()
                         }
+
                         JsonToken.BEGIN_ARRAY -> {
                             reader.beginArray()
                             while (reader.hasNext()) {
@@ -871,14 +934,17 @@ class FDroidApi(
                                             v.size in 1..Long.MAX_VALUE &&
                                             best.size in 1..Long.MAX_VALUE &&
                                             v.size < best.size -> v
+
                                     else -> best
                                 }
                             }
                             reader.endArray()
                         }
+
                         else -> reader.skipValue()
                     }
                 }
+
                 else -> reader.skipValue()
             }
         }
@@ -896,7 +962,8 @@ class FDroidApi(
                 sha256 = v.sha256,
                 size = v.size,
                 isCompatible = isCompatible(v),
-                reproducible = v.reproducible
+                reproducible = v.reproducible,
+                releaseChannels = v.releaseChannels
             )
             runCatching { onVariant(variant) }
         }
@@ -917,6 +984,7 @@ class FDroidApi(
                     else -> "$baseUrl/$iconName"
                 }
             }
+
             repoName == "F-Droid Archive" -> "https://f-droid.org/repo/icons/$packageName.png"
             else -> "$baseUrl/icons/$packageName.png"
         }
@@ -979,6 +1047,7 @@ class FDroidApi(
         var whatsNew: String? = null
         var antiFeatures: List<String> = emptyList()
         var reproducible = false
+        var releaseChannels: List<String> = emptyList()
 
         reader.beginObject()
         while (reader.hasNext()) {
@@ -998,9 +1067,11 @@ class FDroidApi(
                             }
                             reader.endObject()
                         }
+
                         else -> reader.skipValue()
                     }
                 }
+
                 "apkName" -> file = reader.nextString() // v1 alias
                 "size" -> size = runCatching { reader.nextLong() }.getOrElse { reader.skipValue(); 0L }
                 "sha256", "sha256sum" -> sha256 = safeString(reader) ?: ""
@@ -1008,7 +1079,9 @@ class FDroidApi(
                     reader.beginObject()
                     while (reader.hasNext()) {
                         when (reader.nextName()) {
-                            "versionCode" -> versionCode = runCatching { reader.nextInt() }.getOrElse { reader.skipValue(); 0 }
+                            "versionCode" -> versionCode =
+                                runCatching { reader.nextInt() }.getOrElse { reader.skipValue(); 0 }
+
                             "versionName" -> versionName = safeString(reader) ?: "1.0"
                             "usesSdk", "sdk" -> {
                                 reader.beginObject()
@@ -1021,12 +1094,14 @@ class FDroidApi(
                                 }
                                 reader.endObject()
                             }
+
                             "nativecode" -> nativecode = parseStringArray(reader)
                             else -> reader.skipValue()
                         }
                     }
                     reader.endObject()
                 }
+
                 "versionCode" -> versionCode = runCatching { reader.nextInt() }.getOrElse { reader.skipValue(); 0 }
                 "versionName" -> versionName = safeString(reader) ?: "1.0"
                 "nativecode" -> nativecode = parseStringArray(reader)
@@ -1037,17 +1112,35 @@ class FDroidApi(
                             val map = parseLocalizedStrings(reader)
                             map["en-US"] ?: map.values.firstOrNull()
                         }
-                        else -> { reader.skipValue(); null }
+
+                        else -> {
+                            reader.skipValue(); null
+                        }
                     }
                 }
+
                 "antiFeatures" -> antiFeatures = parseAntiFeaturesKeys(reader)
                 "reproducible" -> reproducible = runCatching { reader.nextBoolean() }.getOrDefault(false)
+                "releaseChannels" -> releaseChannels = parseStringArray(reader)
                 else -> reader.skipValue()
             }
         }
         reader.endObject()
 
-        return Version(versionCode, versionName, file, size, sha256, minSdk, targetSdk, nativecode, whatsNew, antiFeatures, reproducible)
+        return Version(
+            versionCode,
+            versionName,
+            file,
+            size,
+            sha256,
+            minSdk,
+            targetSdk,
+            nativecode,
+            whatsNew,
+            antiFeatures,
+            reproducible,
+            releaseChannels
+        )
     }
 
     private fun parseAntiFeaturesKeys(reader: JsonReader): List<String> {
@@ -1062,9 +1155,11 @@ class FDroidApi(
                 }
                 reader.endObject()
             }
+
             JsonToken.BEGIN_ARRAY -> {
                 out += parseStringArray(reader)
             }
+
             JsonToken.STRING -> out += reader.nextString()
             else -> reader.skipValue()
         }
@@ -1106,7 +1201,9 @@ class FDroidApi(
             when (reader.nextName()) {
                 "name" -> name = (name ?: mutableMapOf()).apply { putAll(parseLocalizedStrings(reader)) }
                 "summary" -> summary = (summary ?: mutableMapOf()).apply { putAll(parseLocalizedStrings(reader)) }
-                "description" -> description = (description ?: mutableMapOf()).apply { putAll(parseLocalizedStrings(reader)) }
+                "description" -> description =
+                    (description ?: mutableMapOf()).apply { putAll(parseLocalizedStrings(reader)) }
+
                 "icon" -> {
                     icon = mutableMapOf()
                     reader.beginObject()
@@ -1123,6 +1220,7 @@ class FDroidApi(
                     }
                     reader.endObject()
                 }
+
                 "categories" -> categories = parseStringArray(reader)
                 "antiFeatures" -> antiFeatures = parseStringArray(reader)
                 "license" -> license = safeString(reader)
@@ -1143,6 +1241,7 @@ class FDroidApi(
                         screenshots = preferred ?: loc.screenshots.values.firstOrNull { it.isNotEmpty() }
                     }
                 }
+
                 else -> reader.skipValue()
             }
         }
@@ -1161,6 +1260,7 @@ class FDroidApi(
         val icons: MutableMap<String, IconInfo> = mutableMapOf(),
         val screenshots: MutableMap<String, List<String>> = mutableMapOf()
     )
+
     private fun parseLocalizedBlock(reader: JsonReader): LocalizedMeta {
         val out = LocalizedMeta()
         reader.beginObject()
@@ -1175,9 +1275,15 @@ class FDroidApi(
 
             while (reader.hasNext()) {
                 when (reader.nextName()) {
-                    "name" -> if (reader.peek() == JsonToken.STRING) locName = reader.nextString() else reader.skipValue()
-                    "summary" -> if (reader.peek() == JsonToken.STRING) locSummary = reader.nextString() else reader.skipValue()
-                    "description" -> if (reader.peek() == JsonToken.STRING) locDescription = reader.nextString() else reader.skipValue()
+                    "name" -> if (reader.peek() == JsonToken.STRING) locName =
+                        reader.nextString() else reader.skipValue()
+
+                    "summary" -> if (reader.peek() == JsonToken.STRING) locSummary =
+                        reader.nextString() else reader.skipValue()
+
+                    "description" -> if (reader.peek() == JsonToken.STRING) locDescription =
+                        reader.nextString() else reader.skipValue()
+
                     "icon" -> {
                         when (reader.peek()) {
                             JsonToken.STRING -> locIcon = IconInfo(reader.nextString())
@@ -1191,9 +1297,11 @@ class FDroidApi(
                                 }
                                 reader.endObject()
                             }
+
                             else -> reader.skipValue()
                         }
                     }
+
                     "screenshots" -> locShots = parseScreenshotsFlexible(reader)
                     else -> reader.skipValue()
                 }
@@ -1220,6 +1328,7 @@ class FDroidApi(
             }
         }
     }
+
     private fun parseScreenshotsArray(reader: JsonReader): List<String> {
         val list = mutableListOf<String>()
         reader.beginArray()
@@ -1238,6 +1347,7 @@ class FDroidApi(
                     reader.endObject()
                     name?.let { list.add(it) }
                 }
+
                 JsonToken.BEGIN_ARRAY -> list.addAll(parseScreenshotsArray(reader))
                 else -> reader.skipValue()
             }
@@ -1245,6 +1355,7 @@ class FDroidApi(
         reader.endArray()
         return list
     }
+
     private fun parseScreenshotsObject(reader: JsonReader): List<String> {
         val list = mutableListOf<String>()
         reader.beginObject()

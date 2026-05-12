@@ -140,12 +140,17 @@ fun AppDetailScreen(
     val globalPreferredRepo by settings.settingsFlow
         .map { PreferredRepo.fromIndex(it.preferredRepo) }
         .collectAsState(initial = PreferredRepo.Auto)
-    val updateCandidate = remember(variants, pref, globalPreferredRepo) {
+    val globalIgnoreUnstable by settings.settingsFlow
+        .map { it.ignoreUnstable }
+        .collectAsState(initial = false)
+    val effectiveIgnoreUnstable = pref.ignoreUnstable ?: globalIgnoreUnstable
+    val updateCandidate = remember(variants, pref, globalPreferredRepo, effectiveIgnoreUnstable) {
         VariantSelector.pickCompatible(
             variants = variants,
             preferred = globalPreferredRepo,
             preferredRepoUrl = pref.preferredRepoUrl,
-            strict = pref.lockToRepo
+            strict = pref.lockToRepo,
+            ignoreUnstable = effectiveIgnoreUnstable
         )
     }
 
@@ -211,6 +216,7 @@ fun AppDetailScreen(
                     settings = settings,
                     pref = pref,
                     globalPreferredRepo = globalPreferredRepo,
+                    globalIgnoreUnstable = globalIgnoreUnstable,
                     izzyStats = izzyStats,
                     reproducibleBuildInfo = reproducibleBuildInfo,
                     showReproducibleBadges = showReproducibleBadges
@@ -233,6 +239,7 @@ fun AppDetailScreen(
                     settings = settings,
                     pref = pref,
                     globalPreferredRepo = globalPreferredRepo,
+                    globalIgnoreUnstable = globalIgnoreUnstable,
                     izzyStats = izzyStats,
                     reproducibleBuildInfo = reproducibleBuildInfo,
                     showReproducibleBadges = showReproducibleBadges
@@ -265,6 +272,7 @@ private fun DesktopLayout(
     settings: SettingsRepository,
     pref: AppUpdatePreference,
     globalPreferredRepo: PreferredRepo,
+    globalIgnoreUnstable: Boolean,
     izzyStats: IzzyDownloadStats?,
     reproducibleBuildInfo: ReproducibleBuildInfo? = null,
     showReproducibleBadges: Boolean = false,
@@ -305,6 +313,7 @@ private fun DesktopLayout(
                     installedVersionCode = installedVersionCode,
                     pref = pref,
                     globalPreferredRepo = globalPreferredRepo,
+                    globalIgnoreUnstable = globalIgnoreUnstable,
                     onInstallVariant = onInstallVariant,
                     settings = settings,
                     reproducibleBuildInfo = reproducibleBuildInfo,
@@ -333,6 +342,7 @@ private fun MobileLayout(
     settings: SettingsRepository,
     pref: AppUpdatePreference,
     globalPreferredRepo: PreferredRepo,
+    globalIgnoreUnstable: Boolean,
     izzyStats: IzzyDownloadStats?,
     reproducibleBuildInfo: ReproducibleBuildInfo? = null,
     showReproducibleBadges: Boolean = false,
@@ -372,6 +382,7 @@ private fun MobileLayout(
                 installedVersionCode = installedVersionCode,
                 pref = pref,
                 globalPreferredRepo = globalPreferredRepo,
+                globalIgnoreUnstable = globalIgnoreUnstable,
                 onInstallVariant = onInstallVariant,
                 settings = settings,
                 reproducibleBuildInfo = reproducibleBuildInfo,
@@ -389,6 +400,7 @@ private fun RightPaneContent(
     installedVersionCode: Long?,
     pref: AppUpdatePreference,
     globalPreferredRepo: PreferredRepo,
+    globalIgnoreUnstable: Boolean,
     onInstallVariant: (AppVariant) -> Unit,
     settings: SettingsRepository,
     reproducibleBuildInfo: ReproducibleBuildInfo? = null,
@@ -418,6 +430,7 @@ private fun RightPaneContent(
                 installedVersionCode = installedVersionCode,
                 pref = pref,
                 globalPreferredRepo = globalPreferredRepo,
+                globalIgnoreUnstable = globalIgnoreUnstable,
                 onInstallVariant = onInstallVariant,
                 reproducibleBuildInfo = reproducibleBuildInfo,
                 showReproducibleBadges = showReproducibleBadges
@@ -833,6 +846,7 @@ private fun VersionsSection(
     installedVersionCode: Long?,
     pref: AppUpdatePreference,
     globalPreferredRepo: PreferredRepo,
+    globalIgnoreUnstable: Boolean,
     onInstallVariant: (AppVariant) -> Unit,
     reproducibleBuildInfo: ReproducibleBuildInfo? = null,
     showReproducibleBadges: Boolean = false
@@ -841,12 +855,14 @@ private fun VersionsSection(
     val clipboard = LocalClipboard.current
     val snackbarManager: SnackbarManager = koinInject()
 
-    val preferredVariant = remember(variants, pref, globalPreferredRepo) {
+    val effectiveIgnoreUnstable = pref.ignoreUnstable ?: globalIgnoreUnstable
+    val preferredVariant = remember(variants, pref, globalPreferredRepo, effectiveIgnoreUnstable) {
         VariantSelector.pick(
             variants = variants,
             preferred = globalPreferredRepo,
             preferredRepoUrl = pref.preferredRepoUrl,
-            strict = pref.lockToRepo
+            strict = pref.lockToRepo,
+            ignoreUnstable = effectiveIgnoreUnstable
         )
     }
     val normalizedPreferredRepoUrl = remember(pref.preferredRepoUrl) {

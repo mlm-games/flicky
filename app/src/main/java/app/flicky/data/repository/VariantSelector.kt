@@ -16,31 +16,28 @@ enum class PreferredRepo(val idx: Int) {
 object VariantSelector {
     private fun norm(u: String?) = u?.trim()?.trimEnd('/')?.lowercase().orEmpty()
 
+    private fun isStable(v: AppVariant): Boolean = v.releaseChannels.isEmpty()
+
     fun pick(
         variants: List<AppVariant>,
         preferred: PreferredRepo,
         preferredRepoUrl: String? = null,
-        strict: Boolean = false
+        strict: Boolean = false,
+        ignoreUnstable: Boolean = false
     ): AppVariant? {
         if (variants.isEmpty()) return null
         val pin = norm(preferredRepoUrl)
-
-        val preferMatcher: (AppVariant) -> Boolean = when (preferred) {
-            PreferredRepo.FDroid      -> { v -> v.repositoryName.equals("F-Droid", true) || v.repositoryUrl.contains("f-droid", true) }
-            PreferredRepo.IzzyOnDroid -> { v -> v.repositoryName.contains("izzy", true) || v.repositoryUrl.contains("izzy", true) }
-            else -> { _ -> false }
-        }
-
+        val pool = if (ignoreUnstable) variants.filter { isStable(it) } else variants
         val candidates = if (pin.isNotEmpty()) {
-            val pinned = variants.filter { norm(it.repositoryUrl) == pin }
-            if (strict) pinned else (pinned + variants.filter { norm(it.repositoryUrl) != pin })
-        } else variants
+            val pinned = pool.filter { norm(it.repositoryUrl) == pin }
+            if (strict) pinned else (pinned + pool.filter { norm(it.repositoryUrl) != pin })
+        } else pool
 
         if (strict && candidates.isEmpty()) return null
 
         val sorted = candidates.sortedWith(
             compareByDescending<AppVariant> { v -> if (pin.isNotEmpty() && norm(v.repositoryUrl) == pin) 1 else 0 }
-                .thenByDescending { v -> if (preferred != PreferredRepo.Auto && preferMatcher(v)) 1 else 0 }
+                .thenByDescending { v -> if (preferred != PreferredRepo.Auto && preferMatcher(v, preferred)) 1 else 0 }
                 .thenByDescending { it.isCompatible }
                 .thenByDescending { it.versionCode }
         )
@@ -51,7 +48,8 @@ object VariantSelector {
         variants: List<AppVariant>,
         preferred: PreferredRepo,
         preferredRepoUrl: String? = null,
-        strict: Boolean = false
+        strict: Boolean = false,
+        ignoreUnstable: Boolean = false
     ): AppVariant? {
         val compatible = variants.filter { it.isCompatible }
         if (compatible.isEmpty()) return null
@@ -59,17 +57,20 @@ object VariantSelector {
             variants = compatible,
             preferred = preferred,
             preferredRepoUrl = preferredRepoUrl,
-            strict = strict
+            strict = strict,
+            ignoreUnstable = ignoreUnstable
         )
     }
 
-    fun matchesPreferred(variant: AppVariant, preferred: PreferredRepo): Boolean = when (preferred) {
+    fun matchesPreferred(variant: AppVariant, preferred: PreferredRepo): Boolean = preferMatcher(variant, preferred)
+
+    private fun preferMatcher(v: AppVariant, preferred: PreferredRepo): Boolean = when (preferred) {
         PreferredRepo.FDroid ->
-            variant.repositoryName.equals("F-Droid", true) ||
-                    variant.repositoryUrl.contains("f-droid", true)
+            v.repositoryName.equals("F-Droid", true) ||
+                    v.repositoryUrl.contains("f-droid", true)
         PreferredRepo.IzzyOnDroid ->
-            variant.repositoryName.contains("izzy", true) ||
-                    variant.repositoryUrl.contains("izzy", true)
+            v.repositoryName.contains("izzy", true) ||
+                    v.repositoryUrl.contains("izzy", true)
         PreferredRepo.Auto -> false
     }
 }

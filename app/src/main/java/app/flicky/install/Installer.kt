@@ -134,9 +134,11 @@ class Installer(
 
     suspend fun install(app: FDroidApp): Boolean {
         return try {
-            val pref = PreferredRepo.fromIndex(settings.settingsFlow.first().preferredRepo)
+            val settingsState = settings.settingsFlow.first()
+            val pref = PreferredRepo.fromIndex(settingsState.preferredRepo)
+            val ignoreUnstable = settingsState.ignoreUnstable
             val variants = runCatching { db.appDao().variantsFor(app.packageName) }.getOrElse { emptyList() }
-            val chosen = VariantSelector.pick(variants, pref)
+            val chosen = VariantSelector.pick(variants, pref, ignoreUnstable = ignoreUnstable)
             val req = when {
                 chosen != null -> resolve(chosen)
                 else -> resolve(app)

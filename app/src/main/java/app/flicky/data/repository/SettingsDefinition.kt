@@ -20,6 +20,7 @@ data class AppUpdatePreference(
     val ignoreVersionCode: Long = 0L,
     val preferredRepoUrl: String? = null,
     val lockToRepo: Boolean = true,
+    val ignoreUnstable: Boolean? = null,
 )
 
 @Serializable
@@ -60,7 +61,7 @@ data class AppUpdatePreferencesMap(
     }
 }
 
-@SchemaVersion(3)
+@SchemaVersion(4)
 data class AppSettings(
     @Setting(
         title = "Theme Mode",
@@ -182,6 +183,14 @@ data class AppSettings(
         type = Toggle::class
     )
     val showReproducibleBadges: Boolean = false,
+
+    @Setting(
+        title = "Ignore Alpha/Beta Builds",
+        description = "Hide alpha and beta releases from updates",
+        category = Filters::class,
+        type = Toggle::class
+    )
+    val ignoreUnstable: Boolean = false,
 
     @Setting(
         title = "Differential Sync",

@@ -48,11 +48,13 @@ class AutoUpdateWorker(
                 if (pref.ignoreUpdates) return@mapNotNull null
 
                 val variants = db.appDao().variantsFor(app.packageName)
+                val effectiveIgnoreUnstable = pref.ignoreUnstable ?: settingsState.ignoreUnstable
                 val chosen = VariantSelector.pickCompatible(
                     variants = variants,
                     preferred = preferredRepo,
                     preferredRepoUrl = pref.preferredRepoUrl,
-                    strict = pref.lockToRepo
+                    strict = pref.lockToRepo,
+                    ignoreUnstable = effectiveIgnoreUnstable
                 ) ?: return@mapNotNull null
 
                 val latestCompat = chosen.versionCode.toLong()

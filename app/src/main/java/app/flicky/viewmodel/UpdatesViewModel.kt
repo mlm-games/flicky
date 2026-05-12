@@ -41,7 +41,8 @@ private data class UpdateCalcData(
     val allApps: List<FDroidApp>,
     val installedDetails: List<InstalledAppsRepository.InstalledDetailed>,
     val allPrefs: Map<String, AppUpdatePreference>,
-    val preferredRepo: PreferredRepo
+    val preferredRepo: PreferredRepo,
+    val ignoreUnstable: Boolean
 )
 
 @OptIn(FlowPreview::class)
@@ -62,16 +63,17 @@ class UpdatesViewModel(
                 repo.appsFlow("", sort = SortOption.Updated, reverseSort = false, hideAnti = false, showIncompatible = false),
                 installedRepo.packageChangesFlow().onStart { emit(Unit) },
                 settings.observeAppUpdatePreferences(),
-                settings.settingsFlow.map { it.preferredRepo }.distinctUntilChanged()
-            ) { allApps, _, allPrefsMap, preferredRepoIdx ->
-                UpdateCalcData(allApps, installedRepo.getInstalledDetailed(), allPrefsMap.prefs, PreferredRepo.fromIndex(preferredRepoIdx))
+                settings.settingsFlow.map { it.preferredRepo }.distinctUntilChanged(),
+                settings.settingsFlow.map { it.ignoreUnstable }.distinctUntilChanged()
+            ) { allApps, _, allPrefsMap, preferredRepoIdx, ignoreUnstable ->
+                UpdateCalcData(allApps, installedRepo.getInstalledDetailed(), allPrefsMap.prefs, PreferredRepo.fromIndex(preferredRepoIdx), ignoreUnstable)
             }
                 .distinctUntilChanged()
                 .debounce(150)
                 .collect { data ->
                     _ui.update { it.copy(isLoading = true, error = null) }
                     try {
-                        recalc(data.allApps, data.installedDetails, data.allPrefs, data.preferredRepo)
+                        recalc(data.allApps, data.installedDetails, data.allPrefs, data.preferredRepo, data.ignoreUnstable)
                         _ui.update { it.copy(isLoading = false) }
                     } catch (e: Exception) {
                         Log.e("UpdatesViewModel", "Failed to calculate updates", e)
@@ -108,7 +110,8 @@ class UpdatesViewModel(
         allApps: List<FDroidApp>,
         installedDetails: List<InstalledAppsRepository.InstalledDetailed>,
         allPrefs: Map<String, AppUpdatePreference>,
-        preferredRepo: PreferredRepo
+        preferredRepo: PreferredRepo,
+        ignoreUnstable: Boolean
     ) = withContext(Dispatchers.IO) {
         val installedMap = installedDetails.associateBy { it.packageName }
         val installedFDroidApps = allApps.filter { installedMap.containsKey(it.packageName) }
@@ -122,11 +125,13 @@ class UpdatesViewModel(
         val latestCompatByPkg = installedFDroidApps.associate { app ->
             val pref = allPrefs[app.packageName] ?: AppUpdatePreference()
             val variantsForApp = allVariantsByPackage[app.packageName] ?: emptyList()
+            val effectiveIgnoreUnstable = pref.ignoreUnstable ?: ignoreUnstable
             val chosen = VariantSelector.pickCompatible(
                 variants = variantsForApp,
                 preferred = preferredRepo,
                 preferredRepoUrl = pref.preferredRepoUrl,
-                strict = pref.lockToRepo
+                strict = pref.lockToRepo,
+                ignoreUnstable = effectiveIgnoreUnstable
             )
             if (chosen != null) {
                 candidatesByPkg[app.packageName] = chosen
