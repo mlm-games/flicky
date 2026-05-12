@@ -1,0 +1,2 @@
+- bump agp to 9.2.1 and gradle to 9.5.0
+- Replace descending name sort, with a reverse sort checkbox (#64)

@@ -1,3 +1,9 @@
+## v4.3.7
+
+- bump agp to 9.2.1 and gradle to 9.5.0
+- Replace descending name sort, with a reverse sort checkbox (#64)
+
+
 ## v4.3.6
 
 - fix locale links not being opened in-app (#63)
