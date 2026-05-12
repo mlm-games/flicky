@@ -101,6 +101,9 @@
     <string name="setting_show_incompatible">Show incompatible versions</string>
     <string name="setting_ignore_unstable">Ignore Alpha/Beta Builds</string>
     <string name="setting_ignore_unstable_desc">Hide alpha and beta releases from updates</string>
+    <string name="channel_beta">Beta</string>
+    <string name="channel_alpha">Alpha</string>
+    <string name="version_suggested">Suggested</string>
     <string name="setting_differential_sync">Differential sync</string>
     <string name="setting_differential_sync_desc">Use HTTP cache checks to skip unchanged repos</string>
     <string name="setting_preferred_repo">Preferred repository</string>

@@ -288,7 +288,19 @@ private fun DesktopLayout(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    AppHeader(app, installedVersionCode, updateCandidate, stage, onInstall, onOpen, onCancel, onUninstall, error, 96.dp, onOpenAuthor)
+                    AppHeader(
+                        app,
+                        installedVersionCode,
+                        updateCandidate,
+                        stage,
+                        onInstall,
+                        onOpen,
+                        onCancel,
+                        onUninstall,
+                        error,
+                        96.dp,
+                        onOpenAuthor
+                    )
                 }
                 item { ChipsSection(app, installedVersionCode, onOpenCategory, onOpenAuthor) }
                 item { DetailsSection(app, izzyStats) }
@@ -495,7 +507,8 @@ private fun AppHeader(
             is TaskStage.Installing -> (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f)
             else -> -1f
         }
-        val showBar = stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled && progressValue >= 0f
+        val showBar =
+            stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled && progressValue >= 0f
 
         val animatedProgress by animateFloatAsState(
             targetValue = progressValue,
@@ -893,11 +906,12 @@ private fun VersionsSection(
                 !installedMatchesVersion -> false
                 preferredRepoUrl != null && preferredRepoHasInstalledVersion ->
                     v.repositoryUrl.trim().trimEnd('/') == preferredRepoUrl
+
                 else -> installedMatchesVersion
             }
             val compat = v.isCompatible
             var showMenu by remember { mutableStateOf(false) }
-            
+
             val isReproducible = remember(v.versionCode, reproducibleBuildInfo) {
                 if (showReproducibleBadges && reproducibleBuildInfo != null) {
                     reproducibleBuildInfo.isReproducible(v.versionCode)
@@ -923,8 +937,7 @@ private fun VersionsSection(
 
                                 if (isReproducible != null) {
                                     ReproducibleBadge(isReproducible = isReproducible)
-                                }
-                                else if (v.reproducible) {
+                                } else if (v.reproducible) {
                                     ReproducibleBadge(isReproducible = true)
                                 }
                             }
@@ -937,6 +950,12 @@ private fun VersionsSection(
                         if (installed) {
                             Text(
                                 "✓ Installed",
+                                style = typography.labelSmall,
+                                color = colorScheme.primary
+                            )
+                        } else if (v == preferredVariant) {
+                            Text(
+                                "${stringResource(R.string.version_suggested)}",
                                 style = typography.labelSmall,
                                 color = colorScheme.primary
                             )
@@ -1050,7 +1069,8 @@ private fun PreferredSourceSection(
                 label = { Text(stringResource(R.string.lock_to_repo)) }
             )
         }
-        DropdownMenu(expanded = showMenu,
+        DropdownMenu(
+            expanded = showMenu,
             containerColor = colorScheme.background,
             onDismissRequest = { showMenu = false }) {
             DropdownMenuItem(
