@@ -1,7 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <string name="app_name">Flicky</string>
-    <string name="app_description">F-Droid (неофициальный) клиент для ТВ</string>
+    <string
+        name="app_description"
+    >F-Droid (неофициальный) клиент для ТВ</string>
     <string name="nav_browse">Обзор</string>
     <string name="nav_categories">Категории</string>
     <string name="nav_updates">Обновления</string>
@@ -28,14 +30,17 @@
     <string name="sort_prefix">Сортировка: %1$s</string>
     <string name="syncing">Синхронизация…</string>
     <string name="sync_status">Синхронизация %1$s (%2$d/%3$d)</string>
-    <string name="sync_complete">Синхронизация завершена: %1$d приложений</string>
+    <string
+        name="sync_complete"
+    >Синхронизация завершена: %1$d приложений</string>
     <string name="sync_failed">Синхронизация не удалась</string>
     <string name="no_apps_found">Приложения не найдены</string>
-    <string name="try_different_search">Попробуйте другой поисковый запрос</string>
+    <string
+        name="try_different_search"
+    >Попробуйте другой поисковый запрос</string>
     <string name="force_sync">Принудительная синхронизация</string>
     <string name="clear_all_apps">Очистить все приложения</string>
     <string name="sort_name">Имя</string>
-    <string name="sort_name_desc">Имя (Я-А)</string>
     <string name="sort_updated">Недавно обновленные</string>
     <string name="sort_size">Размер</string>
     <string name="sort_added">Недавно добавленные</string>
@@ -85,25 +90,49 @@
     <string name="repository_name">Имя</string>
     <string name="repository_url">URL</string>
     <string name="setting_default_sort">Сортировка по умолчанию</string>
-    <string name="setting_default_sort_desc">Сортировка по умолчанию для списков приложений</string>
+    <string
+        name="setting_default_sort_desc"
+    >Сортировка по умолчанию для списков приложений</string>
     <string name="setting_theme">Тема</string>
-    <string name="setting_dynamic_colors">Использовать динамические цвета</string>
-    <string name="setting_dynamic_colors_desc">Использовать цвета Material You (Android 12+)</string>
+    <string
+        name="setting_dynamic_colors"
+    >Использовать динамические цвета</string>
+    <string
+        name="setting_dynamic_colors_desc"
+    >Использовать цвета Material You (Android 12+)</string>
     <string name="setting_wifi_only">Обновлять только по Wi-Fi</string>
     <string name="setting_sync_interval">Интервал синхронизации</string>
-    <string name="setting_sync_interval_desc">Как часто синхронизировать репозитории</string>
+    <string
+        name="setting_sync_interval_desc"
+    >Как часто синхронизировать репозитории</string>
     <string name="setting_keep_cache">Сохранять кэш загрузок</string>
-    <string name="setting_keep_cache_desc">Сохранять загруженные APK для более быстрой переустановки</string>
+    <string
+        name="setting_keep_cache_desc"
+    >Сохранять загруженные APK для более быстрой переустановки</string>
     <string name="setting_installer">Установщик</string>
-    <string name="setting_installer_desc">Выберите способ установки приложений</string>
-    <string name="setting_hide_anti">Скрывать приложения с анти-функциями</string>
-    <string name="setting_show_incompatible">Показывать несовместимые версии</string>
-    <string name="setting_differential_sync">Дифференциальная синхронизация</string>
-    <string name="setting_differential_sync_desc">Использовать проверки кэша HTTP для пропуска неизмененных репозиториев</string>
+    <string
+        name="setting_installer_desc"
+    >Выберите способ установки приложений</string>
+    <string
+        name="setting_hide_anti"
+    >Скрывать приложения с анти-функциями</string>
+    <string
+        name="setting_show_incompatible"
+    >Показывать несовместимые версии</string>
+    <string
+        name="setting_differential_sync"
+    >Дифференциальная синхронизация</string>
+    <string
+        name="setting_differential_sync_desc"
+    >Использовать проверки кэша HTTP для пропуска неизмененных репозиториев</string>
     <string name="setting_preferred_repo">Предпочтительный репозиторий</string>
-    <string name="setting_preferred_repo_desc">Источник по умолчанию, если приложение существует в нескольких репозиториях</string>
+    <string
+        name="setting_preferred_repo_desc"
+    >Источник по умолчанию, если приложение существует в нескольких репозиториях</string>
     <string name="setting_clear_cache">Очистить кэш</string>
-    <string name="setting_clear_cache_desc">Удалить заголовки репозиториев и сбросить последнюю синхронизацию</string>
+    <string
+        name="setting_clear_cache_desc"
+    >Удалить заголовки репозиториев и сбросить последнюю синхронизацию</string>
     <string name="theme_system">Системная</string>
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Темная</string>
@@ -124,10 +153,18 @@
     <string name="toggle_off">Выкл.</string>
     <string name="cache_cleared">Кэш очищен</string>
     <string name="no_action_attached">Действие не прикреплено</string>
-    <string name="no_repos_enabled">Нет включенных репозиториев. Включите хотя бы один в Настройках.</string>
-    <string name="connection_timeout">Время ожидания соединения истекло. Проверьте подключение к интернету.</string>
-    <string name="sync_completed_with_errors">Синхронизация завершена с ошибками:\n%1$s</string>
-    <string name="partial_sync_completed">Частичная синхронизация завершена:\n%1$s</string>
+    <string
+        name="no_repos_enabled"
+    >Нет включенных репозиториев. Включите хотя бы один в Настройках.</string>
+    <string
+        name="connection_timeout"
+    >Время ожидания соединения истекло. Проверьте подключение к интернету.</string>
+    <string
+        name="sync_completed_with_errors"
+    >Синхронизация завершена с ошибками:\n%1$s</string>
+    <string
+        name="partial_sync_completed"
+    >Частичная синхронизация завершена:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Ошибка сети или анализа</string>
     <string name="error_unknown">Неизвестная ошибка</string>
@@ -164,9 +201,13 @@
     <string name="no_favorites">No favourites yet!</string>
     <string name="remove_from_favorites">Remove from favourites</string>
     <string name="add_to_favorites">Add to Favourites</string>
-    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
+    <string
+        name="no_favorites_hint"
+    >Tap the heart icon on any app to add it to your favourites</string>
     <string name="remove_favorite">Remove Favourite</string>
-    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
+    <string
+        name="remove_favorite_confirm"
+    >Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
     <string name="import_success">Import Successful</string>
     <string name="import_failed">Import failed: %s</string>

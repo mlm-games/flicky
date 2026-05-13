@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <string name="app_name">Flicky</string>
     <string name="app_description">Cliente F-Droid (No oficial) para TV</string>
@@ -23,7 +23,9 @@
     <string name="search_hint">Buscar aplicaciones…</string>
     <string name="voice_search">Búsqueda por voz</string>
     <string name="voice_search_prompt">Habla para buscar aplicaciones</string>
-    <string name="voice_search_unavailable">Búsqueda por voz no disponible</string>
+    <string
+        name="voice_search_unavailable"
+    >Búsqueda por voz no disponible</string>
     <string name="sort_by">Ordenar por</string>
     <string name="sort_prefix">Orden: %1$s</string>
     <string name="syncing">Sincronizando…</string>
@@ -31,17 +33,20 @@
     <string name="sync_complete">Sincronización completa: %1$d apps</string>
     <string name="sync_failed">Sincronización fallida</string>
     <string name="no_apps_found">No se encontraron aplicaciones</string>
-    <string name="try_different_search">Prueba con otro término de búsqueda</string>
+    <string
+        name="try_different_search"
+    >Prueba con otro término de búsqueda</string>
     <string name="force_sync">Forzar sincronización</string>
     <string name="clear_all_apps">Borrar todas las apps</string>
     <string name="sort_name">Nombre</string>
-    <string name="sort_name_desc">Nombre (Z-A)</string>
     <string name="sort_updated">Actualizado recientemente</string>
     <string name="sort_size">Tamaño</string>
     <string name="sort_added">Añadido recientemente</string>
     <string name="category_all">Todas</string>
     <string name="category_count">%1$s (%2$d)</string>
-    <string name="no_apps_in_category">No hay aplicaciones en esta categoría</string>
+    <string
+        name="no_apps_in_category"
+    >No hay aplicaciones en esta categoría</string>
     <string name="update_all">Actualizar todo (%1$d)</string>
     <string name="show_ignored">Mostrar ignoradas (%1$d)</string>
     <string name="hide_ignored">Ocultar ignoradas (%1$d)</string>
@@ -85,25 +90,43 @@
     <string name="repository_name">Nombre</string>
     <string name="repository_url">URL</string>
     <string name="setting_default_sort">Orden por defecto</string>
-    <string name="setting_default_sort_desc">Orden por defecto para las listas de aplicaciones</string>
+    <string
+        name="setting_default_sort_desc"
+    >Orden por defecto para las listas de aplicaciones</string>
     <string name="setting_theme">Tema</string>
     <string name="setting_dynamic_colors">Usar colores dinámicos</string>
-    <string name="setting_dynamic_colors_desc">Usar colores de Material You (Android 12+)</string>
+    <string
+        name="setting_dynamic_colors_desc"
+    >Usar colores de Material You (Android 12+)</string>
     <string name="setting_wifi_only">Actualizar solo por Wi‑Fi</string>
     <string name="setting_sync_interval">Intervalo de sincronización</string>
-    <string name="setting_sync_interval_desc">Frecuencia de sincronización de repositorios</string>
+    <string
+        name="setting_sync_interval_desc"
+    >Frecuencia de sincronización de repositorios</string>
     <string name="setting_keep_cache">Mantener caché de descarga</string>
-    <string name="setting_keep_cache_desc">Mantener APKs descargados para una reinstalación más rápida</string>
+    <string
+        name="setting_keep_cache_desc"
+    >Mantener APKs descargados para una reinstalación más rápida</string>
     <string name="setting_installer">Instalador</string>
-    <string name="setting_installer_desc">Elige cómo se instalan las aplicaciones</string>
+    <string
+        name="setting_installer_desc"
+    >Elige cómo se instalan las aplicaciones</string>
     <string name="setting_hide_anti">Ocultar apps con antifunciones</string>
-    <string name="setting_show_incompatible">Mostrar versiones incompatibles</string>
+    <string
+        name="setting_show_incompatible"
+    >Mostrar versiones incompatibles</string>
     <string name="setting_differential_sync">Sincronización diferencial</string>
-    <string name="setting_differential_sync_desc">Usar comprobaciones de caché HTTP para omitir repositorios sin cambios</string>
+    <string
+        name="setting_differential_sync_desc"
+    >Usar comprobaciones de caché HTTP para omitir repositorios sin cambios</string>
     <string name="setting_preferred_repo">Repositorio preferido</string>
-    <string name="setting_preferred_repo_desc">Fuente por defecto cuando una app existe en varios repositorios</string>
+    <string
+        name="setting_preferred_repo_desc"
+    >Fuente por defecto cuando una app existe en varios repositorios</string>
     <string name="setting_clear_cache">Limpiar caché</string>
-    <string name="setting_clear_cache_desc">Borrar cabeceras de repositorios y reiniciar la última sincronización</string>
+    <string
+        name="setting_clear_cache_desc"
+    >Borrar cabeceras de repositorios y reiniciar la última sincronización</string>
     <string name="theme_system">Sistema</string>
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Oscuro</string>
@@ -124,10 +147,18 @@
     <string name="toggle_off">Desactivado</string>
     <string name="cache_cleared">Caché limpiada</string>
     <string name="no_action_attached">No hay acción adjunta</string>
-    <string name="no_repos_enabled">No hay repositorios habilitados. Habilita al menos uno en Ajustes.</string>
-    <string name="connection_timeout">Tiempo de conexión agotado. Por favor, comprueba tu conexión a internet.</string>
-    <string name="sync_completed_with_errors">Sincronización completada con errores:\n%1$s</string>
-    <string name="partial_sync_completed">Sincronización parcial completada:\n%1$s</string>
+    <string
+        name="no_repos_enabled"
+    >No hay repositorios habilitados. Habilita al menos uno en Ajustes.</string>
+    <string
+        name="connection_timeout"
+    >Tiempo de conexión agotado. Por favor, comprueba tu conexión a internet.</string>
+    <string
+        name="sync_completed_with_errors"
+    >Sincronización completada con errores:\n%1$s</string>
+    <string
+        name="partial_sync_completed"
+    >Sincronización parcial completada:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Error de red o de análisis</string>
     <string name="error_unknown">Error desconocido</string>
@@ -164,9 +195,13 @@
     <string name="no_favorites">No favourites yet!</string>
     <string name="remove_from_favorites">Remove from favourites</string>
     <string name="add_to_favorites">Add to Favourites</string>
-    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
+    <string
+        name="no_favorites_hint"
+    >Tap the heart icon on any app to add it to your favourites</string>
     <string name="remove_favorite">Remove Favourite</string>
-    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
+    <string
+        name="remove_favorite_confirm"
+    >Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
     <string name="import_success">Import Successful</string>
     <string name="import_failed">Import failed: %s</string>

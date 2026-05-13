@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <string name="app_name">Flicky</string>
     <string name="app_description">F-Droid (비공식) TV용 클라이언트</string>
@@ -23,7 +23,9 @@
     <string name="search_hint">앱 검색…</string>
     <string name="voice_search">음성 검색</string>
     <string name="voice_search_prompt">앱을 검색하려면 말하세요</string>
-    <string name="voice_search_unavailable">음성 검색을 사용할 수 없습니다</string>
+    <string
+        name="voice_search_unavailable"
+    >음성 검색을 사용할 수 없습니다</string>
     <string name="sort_by">정렬 기준</string>
     <string name="sort_prefix">정렬: %1$s</string>
     <string name="syncing">동기화 중…</string>
@@ -35,7 +37,6 @@
     <string name="force_sync">강제 동기화</string>
     <string name="clear_all_apps">모든 앱 지우기</string>
     <string name="sort_name">이름</string>
-    <string name="sort_name_desc">이름 (Z-A)</string>
     <string name="sort_updated">최근 업데이트</string>
     <string name="sort_size">크기</string>
     <string name="sort_added">최근 추가</string>
@@ -88,22 +89,32 @@
     <string name="setting_default_sort_desc">앱 목록의 기본 정렬</string>
     <string name="setting_theme">테마</string>
     <string name="setting_dynamic_colors">동적 색상 사용</string>
-    <string name="setting_dynamic_colors_desc">Material You 색상 사용 (Android 12+)</string>
+    <string
+        name="setting_dynamic_colors_desc"
+    >Material You 색상 사용 (Android 12+)</string>
     <string name="setting_wifi_only">Wi-Fi에서만 업데이트</string>
     <string name="setting_sync_interval">동기화 간격</string>
     <string name="setting_sync_interval_desc">저장소를 동기화할 빈도</string>
     <string name="setting_keep_cache">다운로드 캐시 유지</string>
-    <string name="setting_keep_cache_desc">더 빠른 재설치를 위해 다운로드한 APK 유지</string>
+    <string
+        name="setting_keep_cache_desc"
+    >더 빠른 재설치를 위해 다운로드한 APK 유지</string>
     <string name="setting_installer">설치 프로그램</string>
     <string name="setting_installer_desc">앱 설치 방법 선택</string>
     <string name="setting_hide_anti">반기능이 있는 앱 숨기기</string>
     <string name="setting_show_incompatible">호환되지 않는 버전 표시</string>
     <string name="setting_differential_sync">차등 동기화</string>
-    <string name="setting_differential_sync_desc">HTTP 캐시 검사를 사용하여 변경되지 않은 저장소 건너뛰기</string>
+    <string
+        name="setting_differential_sync_desc"
+    >HTTP 캐시 검사를 사용하여 변경되지 않은 저장소 건너뛰기</string>
     <string name="setting_preferred_repo">선호하는 저장소</string>
-    <string name="setting_preferred_repo_desc">앱이 여러 저장소에 있을 때의 기본 소스</string>
+    <string
+        name="setting_preferred_repo_desc"
+    >앱이 여러 저장소에 있을 때의 기본 소스</string>
     <string name="setting_clear_cache">캐시 지우기</string>
-    <string name="setting_clear_cache_desc">저장소 헤더를 삭제하고 마지막 동기화 재설정</string>
+    <string
+        name="setting_clear_cache_desc"
+    >저장소 헤더를 삭제하고 마지막 동기화 재설정</string>
     <string name="theme_system">시스템</string>
     <string name="theme_light">라이트</string>
     <string name="theme_dark">다크</string>
@@ -124,9 +135,15 @@
     <string name="toggle_off">꺼짐</string>
     <string name="cache_cleared">캐시가 지워졌습니다</string>
     <string name="no_action_attached">연결된 동작 없음</string>
-    <string name="no_repos_enabled">활성화된 저장소가 없습니다. 설정에서 하나 이상 활성화하세요.</string>
-    <string name="connection_timeout">연결 시간이 초과되었습니다. 인터넷 연결을 확인하세요.</string>
-    <string name="sync_completed_with_errors">오류와 함께 동기화 완료:\n%1$s</string>
+    <string
+        name="no_repos_enabled"
+    >활성화된 저장소가 없습니다. 설정에서 하나 이상 활성화하세요.</string>
+    <string
+        name="connection_timeout"
+    >연결 시간이 초과되었습니다. 인터넷 연결을 확인하세요.</string>
+    <string
+        name="sync_completed_with_errors"
+    >오류와 함께 동기화 완료:\n%1$s</string>
     <string name="partial_sync_completed">부분 동기화 완료:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">네트워크 또는 구문 분석 오류</string>
@@ -164,9 +181,13 @@
     <string name="no_favorites">No favourites yet!</string>
     <string name="remove_from_favorites">Remove from favourites</string>
     <string name="add_to_favorites">Add to Favourites</string>
-    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
+    <string
+        name="no_favorites_hint"
+    >Tap the heart icon on any app to add it to your favourites</string>
     <string name="remove_favorite">Remove Favourite</string>
-    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
+    <string
+        name="remove_favorite_confirm"
+    >Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
     <string name="import_success">Import Successful</string>
     <string name="import_failed">Import failed: %s</string>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <string name="app_name">Flicky</string>
     <string name="app_description">F-Droid（非公式）TV用クライアント</string>
@@ -35,13 +35,14 @@
     <string name="force_sync">強制同期</string>
     <string name="clear_all_apps">すべてのアプリをクリア</string>
     <string name="sort_name">名前</string>
-    <string name="sort_name_desc">名前 (Z-A)</string>
     <string name="sort_updated">最近更新</string>
     <string name="sort_size">サイズ</string>
     <string name="sort_added">最近追加</string>
     <string name="category_all">すべて</string>
     <string name="category_count">%1$s (%2$d)</string>
-    <string name="no_apps_in_category">このカテゴリーにアプリはありません</string>
+    <string
+        name="no_apps_in_category"
+    >このカテゴリーにアプリはありません</string>
     <string name="update_all">すべて更新 (%1$d)</string>
     <string name="show_ignored">無視した項目を表示 (%1$d)</string>
     <string name="hide_ignored">無視した項目を非表示 (%1$d)</string>
@@ -55,7 +56,9 @@
     <string name="installing">インストール中…</string>
     <string name="installing_progress">インストール中… %1$d%%</string>
     <string name="installation_failed">インストールに失敗しました</string>
-    <string name="install_failed_message">インストールに失敗しました: %1$s</string>
+    <string
+        name="install_failed_message"
+    >インストールに失敗しました: %1$s</string>
     <string name="version_prefix">v%1$s</string>
     <string name="version_code">バージョンコード</string>
     <string name="package_name">パッケージ</string>
@@ -85,25 +88,41 @@
     <string name="repository_name">名前</string>
     <string name="repository_url">URL</string>
     <string name="setting_default_sort">デフォルトの並べ替え</string>
-    <string name="setting_default_sort_desc">アプリリストのデフォルトの並べ替え</string>
+    <string
+        name="setting_default_sort_desc"
+    >アプリリストのデフォルトの並べ替え</string>
     <string name="setting_theme">テーマ</string>
     <string name="setting_dynamic_colors">ダイナミックカラーを使用</string>
-    <string name="setting_dynamic_colors_desc">Material You カラーを使用 (Android 12+)</string>
+    <string
+        name="setting_dynamic_colors_desc"
+    >Material You カラーを使用 (Android 12+)</string>
     <string name="setting_wifi_only">Wi-Fi経由でのみ更新</string>
     <string name="setting_sync_interval">同期間隔</string>
     <string name="setting_sync_interval_desc">リポジトリを同期する頻度</string>
     <string name="setting_keep_cache">ダウンロードキャッシュを保持</string>
-    <string name="setting_keep_cache_desc">ダウンロードしたAPKを保持して再インストールを高速化</string>
+    <string
+        name="setting_keep_cache_desc"
+    >ダウンロードしたAPKを保持して再インストールを高速化</string>
     <string name="setting_installer">インストーラー</string>
-    <string name="setting_installer_desc">アプリのインストール方法を選択</string>
+    <string
+        name="setting_installer_desc"
+    >アプリのインストール方法を選択</string>
     <string name="setting_hide_anti">アンチ機能を持つアプリを非表示</string>
-    <string name="setting_show_incompatible">互換性のないバージョンを表示</string>
+    <string
+        name="setting_show_incompatible"
+    >互換性のないバージョンを表示</string>
     <string name="setting_differential_sync">差分同期</string>
-    <string name="setting_differential_sync_desc">HTTPキャッシュチェックを使用して変更のないリポジトリをスキップ</string>
+    <string
+        name="setting_differential_sync_desc"
+    >HTTPキャッシュチェックを使用して変更のないリポジトリをスキップ</string>
     <string name="setting_preferred_repo">優先リポジトリ</string>
-    <string name="setting_preferred_repo_desc">アプリが複数のリポジトリに存在する場合のデフォルトソース</string>
+    <string
+        name="setting_preferred_repo_desc"
+    >アプリが複数のリポジトリに存在する場合のデフォルトソース</string>
     <string name="setting_clear_cache">キャッシュをクリア</string>
-    <string name="setting_clear_cache_desc">リポジトリのヘッダーを削除し、最終同期をリセット</string>
+    <string
+        name="setting_clear_cache_desc"
+    >リポジトリのヘッダーを削除し、最終同期をリセット</string>
     <string name="theme_system">システム</string>
     <string name="theme_light">ライト</string>
     <string name="theme_dark">ダーク</string>
@@ -114,7 +133,9 @@
     <string name="sync_weekly">毎週</string>
     <string name="sync_manual">手動のみ</string>
     <string name="installer_system">システム (デフォルト)</string>
-    <string name="installer_session">セッション (パッケージインストーラー)</string>
+    <string
+        name="installer_session"
+    >セッション (パッケージインストーラー)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
     <string name="repo_auto">自動</string>
@@ -124,10 +145,18 @@
     <string name="toggle_off">オフ</string>
     <string name="cache_cleared">キャッシュがクリアされました</string>
     <string name="no_action_attached">アクションがありません</string>
-    <string name="no_repos_enabled">有効なリポジトリがありません。設定で少なくとも1つ有効にしてください。</string>
-    <string name="connection_timeout">接続がタイムアウトしました。インターネット接続を確認してください。</string>
-    <string name="sync_completed_with_errors">エラーありで同期が完了しました:\n%1$s</string>
-    <string name="partial_sync_completed">部分的な同期が完了しました:\n%1$s</string>
+    <string
+        name="no_repos_enabled"
+    >有効なリポジトリがありません。設定で少なくとも1つ有効にしてください。</string>
+    <string
+        name="connection_timeout"
+    >接続がタイムアウトしました。インターネット接続を確認してください。</string>
+    <string
+        name="sync_completed_with_errors"
+    >エラーありで同期が完了しました:\n%1$s</string>
+    <string
+        name="partial_sync_completed"
+    >部分的な同期が完了しました:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">ネットワークまたは解析エラー</string>
     <string name="error_unknown">不明なエラー</string>
@@ -164,9 +193,13 @@
     <string name="no_favorites">No favourites yet!</string>
     <string name="remove_from_favorites">Remove from favourites</string>
     <string name="add_to_favorites">Add to Favourites</string>
-    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
+    <string
+        name="no_favorites_hint"
+    >Tap the heart icon on any app to add it to your favourites</string>
     <string name="remove_favorite">Remove Favourite</string>
-    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
+    <string
+        name="remove_favorite_confirm"
+    >Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
     <string name="import_success">Import Successful</string>
     <string name="import_failed">Import failed: %s</string>

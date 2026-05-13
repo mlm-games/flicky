@@ -1,7 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <string name="app_name">Flicky</string>
-    <string name="app_description">F-Droid (Inoffizieller) Client für TV</string>
+    <string
+        name="app_description"
+    >F-Droid (Inoffizieller) Client für TV</string>
     <string name="nav_browse">Durchsuchen</string>
     <string name="nav_categories">Kategorien</string>
     <string name="nav_updates">Aktualisierungen</string>
@@ -28,14 +30,17 @@
     <string name="sort_prefix">Sortierung: %1$s</string>
     <string name="syncing">Synchronisiere…</string>
     <string name="sync_status">Synchronisiere %1$s (%2$d/%3$d)</string>
-    <string name="sync_complete">Synchronisierung abgeschlossen: %1$d Apps</string>
+    <string
+        name="sync_complete"
+    >Synchronisierung abgeschlossen: %1$d Apps</string>
     <string name="sync_failed">Synchronisierung fehlgeschlagen</string>
     <string name="no_apps_found">Keine Apps gefunden</string>
-    <string name="try_different_search">Versuchen Sie einen anderen Suchbegriff</string>
+    <string
+        name="try_different_search"
+    >Versuchen Sie einen anderen Suchbegriff</string>
     <string name="force_sync">Synchronisierung erzwingen</string>
     <string name="clear_all_apps">Alle Apps löschen</string>
     <string name="sort_name">Name</string>
-    <string name="sort_name_desc">Name (Z-A)</string>
     <string name="sort_updated">Kürzlich aktualisiert</string>
     <string name="sort_size">Größe</string>
     <string name="sort_added">Kürzlich hinzugefügt</string>
@@ -50,12 +55,16 @@
     <string name="ignored_updates">Ignorierte Aktualisierungen</string>
     <string name="ignore_this_version">Diese Version ignorieren</string>
     <string name="ignore_all_updates">Alle Aktualisierungen ignorieren</string>
-    <string name="stop_ignoring">Ignorieren von Aktualisierungen beenden</string>
+    <string
+        name="stop_ignoring"
+    >Ignorieren von Aktualisierungen beenden</string>
     <string name="more_options">Mehr</string>
     <string name="installing">Installiere…</string>
     <string name="installing_progress">Installiere… %1$d%%</string>
     <string name="installation_failed">Installation fehlgeschlagen</string>
-    <string name="install_failed_message">Installation fehlgeschlagen: %1$s</string>
+    <string
+        name="install_failed_message"
+    >Installation fehlgeschlagen: %1$s</string>
     <string name="version_prefix">v%1$s</string>
     <string name="version_code">Versionscode</string>
     <string name="package_name">Paket</string>
@@ -85,25 +94,45 @@
     <string name="repository_name">Name</string>
     <string name="repository_url">URL</string>
     <string name="setting_default_sort">Standardsortierung</string>
-    <string name="setting_default_sort_desc">Standardsortierung für App-Listen</string>
+    <string
+        name="setting_default_sort_desc"
+    >Standardsortierung für App-Listen</string>
     <string name="setting_theme">Thema</string>
     <string name="setting_dynamic_colors">Dynamische Farben verwenden</string>
-    <string name="setting_dynamic_colors_desc">Material You-Farben verwenden (Android 12+)</string>
+    <string
+        name="setting_dynamic_colors_desc"
+    >Material You-Farben verwenden (Android 12+)</string>
     <string name="setting_wifi_only">Nur über WLAN aktualisieren</string>
     <string name="setting_sync_interval">Synchronisierungsintervall</string>
-    <string name="setting_sync_interval_desc">Wie oft Paketquellen synchronisiert werden sollen</string>
+    <string
+        name="setting_sync_interval_desc"
+    >Wie oft Paketquellen synchronisiert werden sollen</string>
     <string name="setting_keep_cache">Download-Cache behalten</string>
-    <string name="setting_keep_cache_desc">Heruntergeladene APKs für schnellere Neuinstallation behalten</string>
+    <string
+        name="setting_keep_cache_desc"
+    >Heruntergeladene APKs für schnellere Neuinstallation behalten</string>
     <string name="setting_installer">Installationsprogramm</string>
-    <string name="setting_installer_desc">Wählen Sie, wie Apps installiert werden</string>
+    <string
+        name="setting_installer_desc"
+    >Wählen Sie, wie Apps installiert werden</string>
     <string name="setting_hide_anti">Apps mit Anti-Features ausblenden</string>
-    <string name="setting_show_incompatible">Inkompatible Versionen anzeigen</string>
-    <string name="setting_differential_sync">Differenzielle Synchronisierung</string>
-    <string name="setting_differential_sync_desc">HTTP-Cache-Prüfungen verwenden, um unveränderte Paketquellen zu überspringen</string>
+    <string
+        name="setting_show_incompatible"
+    >Inkompatible Versionen anzeigen</string>
+    <string
+        name="setting_differential_sync"
+    >Differenzielle Synchronisierung</string>
+    <string
+        name="setting_differential_sync_desc"
+    >HTTP-Cache-Prüfungen verwenden, um unveränderte Paketquellen zu überspringen</string>
     <string name="setting_preferred_repo">Bevorzugte Paketquelle</string>
-    <string name="setting_preferred_repo_desc">Standardquelle, wenn eine App in mehreren Paketquellen existiert</string>
+    <string
+        name="setting_preferred_repo_desc"
+    >Standardquelle, wenn eine App in mehreren Paketquellen existiert</string>
     <string name="setting_clear_cache">Cache leeren</string>
-    <string name="setting_clear_cache_desc">Paketquellen-Header löschen und letzte Synchronisierung zurücksetzen</string>
+    <string
+        name="setting_clear_cache_desc"
+    >Paketquellen-Header löschen und letzte Synchronisierung zurücksetzen</string>
     <string name="theme_system">System</string>
     <string name="theme_light">Hell</string>
     <string name="theme_dark">Dunkel</string>
@@ -124,10 +153,18 @@
     <string name="toggle_off">Aus</string>
     <string name="cache_cleared">Cache geleert</string>
     <string name="no_action_attached">Keine Aktion angehängt</string>
-    <string name="no_repos_enabled">Keine Paketquellen aktiviert. Aktivieren Sie mindestens eine in den Einstellungen.</string>
-    <string name="connection_timeout">Zeitüberschreitung der Verbindung. Bitte überprüfen Sie Ihre Internetverbindung.</string>
-    <string name="sync_completed_with_errors">Synchronisierung mit Fehlern abgeschlossen:\n%1$s</string>
-    <string name="partial_sync_completed">Partielle Synchronisierung abgeschlossen:\n%1$s</string>
+    <string
+        name="no_repos_enabled"
+    >Keine Paketquellen aktiviert. Aktivieren Sie mindestens eine in den Einstellungen.</string>
+    <string
+        name="connection_timeout"
+    >Zeitüberschreitung der Verbindung. Bitte überprüfen Sie Ihre Internetverbindung.</string>
+    <string
+        name="sync_completed_with_errors"
+    >Synchronisierung mit Fehlern abgeschlossen:\n%1$s</string>
+    <string
+        name="partial_sync_completed"
+    >Partielle Synchronisierung abgeschlossen:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Netzwerk- oder Analysefehler</string>
     <string name="error_unknown">Unbekannter Fehler</string>
@@ -164,9 +201,13 @@
     <string name="no_favorites">No favourites yet!</string>
     <string name="remove_from_favorites">Remove from favourites</string>
     <string name="add_to_favorites">Add to Favourites</string>
-    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
+    <string
+        name="no_favorites_hint"
+    >Tap the heart icon on any app to add it to your favourites</string>
     <string name="remove_favorite">Remove Favourite</string>
-    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
+    <string
+        name="remove_favorite_confirm"
+    >Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
     <string name="import_success">Import Successful</string>
     <string name="import_failed">Import failed: %s</string>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <string name="app_name">Flicky</string>
     <string name="app_description">F-Droid（非官方）电视客户端</string>
@@ -35,7 +35,6 @@
     <string name="force_sync">强制同步</string>
     <string name="clear_all_apps">清除所有应用</string>
     <string name="sort_name">名称</string>
-    <string name="sort_name_desc">名称 (Z-A)</string>
     <string name="sort_updated">最近更新</string>
     <string name="sort_size">大小</string>
     <string name="sort_added">最近添加</string>
@@ -88,22 +87,32 @@
     <string name="setting_default_sort_desc">应用列表的默认排序方式</string>
     <string name="setting_theme">主题</string>
     <string name="setting_dynamic_colors">使用动态颜色</string>
-    <string name="setting_dynamic_colors_desc">使用 Material You 颜色 (Android 12+)</string>
+    <string
+        name="setting_dynamic_colors_desc"
+    >使用 Material You 颜色 (Android 12+)</string>
     <string name="setting_wifi_only">仅通过 Wi-Fi 更新</string>
     <string name="setting_sync_interval">同步间隔</string>
     <string name="setting_sync_interval_desc">同步软件源的频率</string>
     <string name="setting_keep_cache">保留下载缓存</string>
-    <string name="setting_keep_cache_desc">保留已下载的 APK 以便更快地重新安装</string>
+    <string
+        name="setting_keep_cache_desc"
+    >保留已下载的 APK 以便更快地重新安装</string>
     <string name="setting_installer">安装程序</string>
     <string name="setting_installer_desc">选择应用的安装方式</string>
     <string name="setting_hide_anti">隐藏具有反特征的应用</string>
     <string name="setting_show_incompatible">显示不兼容的版本</string>
     <string name="setting_differential_sync">差分同步</string>
-    <string name="setting_differential_sync_desc">使用 HTTP 缓存检查以跳过未更改的软件源</string>
+    <string
+        name="setting_differential_sync_desc"
+    >使用 HTTP 缓存检查以跳过未更改的软件源</string>
     <string name="setting_preferred_repo">首选软件源</string>
-    <string name="setting_preferred_repo_desc">当应用存在于多个软件源时的默认来源</string>
+    <string
+        name="setting_preferred_repo_desc"
+    >当应用存在于多个软件源时的默认来源</string>
     <string name="setting_clear_cache">清除缓存</string>
-    <string name="setting_clear_cache_desc">删除软件源头部信息并重置上次同步</string>
+    <string
+        name="setting_clear_cache_desc"
+    >删除软件源头部信息并重置上次同步</string>
     <string name="theme_system">系统</string>
     <string name="theme_light">浅色</string>
     <string name="theme_dark">深色</string>
@@ -124,9 +133,13 @@
     <string name="toggle_off">关闭</string>
     <string name="cache_cleared">缓存已清除</string>
     <string name="no_action_attached">未附加操作</string>
-    <string name="no_repos_enabled">没有已启用的软件源。请在设置中至少启用一个。</string>
+    <string
+        name="no_repos_enabled"
+    >没有已启用的软件源。请在设置中至少启用一个。</string>
     <string name="connection_timeout">连接超时。请检查您的网络连接。</string>
-    <string name="sync_completed_with_errors">同步完成，但出现错误：\n%1$s</string>
+    <string
+        name="sync_completed_with_errors"
+    >同步完成，但出现错误：\n%1$s</string>
     <string name="partial_sync_completed">部分同步完成：\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">网络或解析错误</string>
@@ -164,9 +177,13 @@
     <string name="no_favorites">No favourites yet!</string>
     <string name="remove_from_favorites">Remove from favourites</string>
     <string name="add_to_favorites">Add to Favourites</string>
-    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
+    <string
+        name="no_favorites_hint"
+    >Tap the heart icon on any app to add it to your favourites</string>
     <string name="remove_favorite">Remove Favourite</string>
-    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
+    <string
+        name="remove_favorite_confirm"
+    >Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
     <string name="import_success">Import Successful</string>
     <string name="import_failed">Import failed: %s</string>
