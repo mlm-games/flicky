@@ -84,14 +84,6 @@ class MainActivity : ComponentActivity() {
                 configureCoil(settingsState.failOnTrustErrors)
             }
 
-            LaunchedEffect(settingsState.wifiOnly, settingsState.syncIntervalIndex) {
-                val wifiOnly = settingsState.wifiOnly
-                val hours = when (settingsState.syncIntervalIndex) {
-                    0 -> 3; 1 -> 6; 2 -> 12; 3 -> 24; 4 -> 24 * 7; else -> -1
-                }
-                SyncScheduler.schedule(applicationContext, wifiOnly, hours)
-            }
-
             val isTV = app.flicky.helper.DeviceUtils.isTV(packageManager)
 
             val themeMode = settingsState.themeMode
