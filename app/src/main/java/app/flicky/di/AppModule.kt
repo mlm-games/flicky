@@ -37,11 +37,9 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
-    single { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
+    single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
 
-    single<DataStore<Preferences>> {
-        createSettingsDataStore(androidContext(), name = "flicky.settings")
-    }
+    single<DataStore<Preferences>> { createSettingsDataStore(androidContext(), name = "flicky.settings") }
 
     single {
         val context = androidContext()
@@ -69,9 +67,9 @@ val appModule = module {
 
     single<MirrorPolicyProvider> { DbMirrorPolicyProvider(get()) }
     single<HttpClientProvider> { DbHttpClientProvider(get(), get()) }
-    single { FDroidApi(androidContext(), get(), get(), get(), get()) }
-    single { IzzyStatsRepository(httpClientProvider = get()) }
-    single { ReproducibleBuildRepository(get()) }
+    single<FDroidApi> { FDroidApi(androidContext(), get(), get(), get(), get()) }
+    single<IzzyStatsRepository> { IzzyStatsRepository(httpClientProvider = get()) }
+    single<ReproducibleBuildRepository> { ReproducibleBuildRepository(get()) }
 
     single {
         val repo = SettingsRepository(
@@ -86,11 +84,11 @@ val appModule = module {
         repo
     }
 
-    single { RepoHeadersStore(get()) }
-    single { AppRepository(get()) }
-    single { InstalledAppsRepository(androidContext()) }
+    single<RepoHeadersStore> { RepoHeadersStore(get()) }
+    single<AppRepository> { AppRepository(get()) }
+    single<InstalledAppsRepository> { InstalledAppsRepository(androidContext()) }
 
-    single {
+    single<RepositorySyncManager> {
         RepositorySyncManager(
             api = get(),
             dao = get(),
@@ -100,7 +98,7 @@ val appModule = module {
         )
     }
 
-    single {
+    single<Installer> {
         Installer(
             context = androidContext(),
             settings = get(),
@@ -110,7 +108,7 @@ val appModule = module {
         )
     }
 
-    single { SnackbarManager() }
+    single<SnackbarManager> { SnackbarManager() }
 
     viewModel {
         BrowseViewModel(
