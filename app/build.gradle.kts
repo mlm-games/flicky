@@ -22,12 +22,12 @@ kotlin {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "app.flicky"
         minSdk = 23
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 920
         versionName = "4.4.0"
 
@@ -80,7 +80,6 @@ android {
             isShrinkResources = true
         }
         getByName("debug") {
-            isShrinkResources = false
             isDebuggable = true
             isMinifyEnabled = false
             applicationIdSuffix = ".debug"
