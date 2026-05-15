@@ -30,11 +30,12 @@ datastorePreferencesCore = "1.2.1"
 uiText = "1.11.1"
 apkDist = "0.5.2"
 composeBom = "2026.05.00"
-kmpSettingsCore = "0.5.3"
+kmpSettingsCore = "0.8.1"
 
 koinBom = "4.2.1"
 navigation3Runtime = "1.1.1"
-koin-annotations = "2.3.1"
+koin-annotations = "4.2.1"
+koin-plugin = "1.0.0-RC2"
 dhizuku = "2.5.4"
 
 [libraries]
@@ -87,9 +88,8 @@ kmp-settings-ui-compose = { module = "io.github.mlm-games:kmp-settings-ui-compos
 koin-android = { module = "io.insert-koin:koin-android" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koinBom" }
-
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koinBom" }
 koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "koin-annotations" }
-koin-ksp-compiler = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koin-annotations" }
 
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3Runtime" }
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3Runtime" }
@@ -106,5 +106,6 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-ksp = { id = "com.google.devtools.ksp", version.ref = "kotlin-ksp" }
+koin-compiler = { id = "io.insert-koin.compiler.plugin", version.ref = "koin-plugin" }
 apk-dist = { id = "io.github.mlm-games.apk-dist", version.ref = "apkDist" }
 
