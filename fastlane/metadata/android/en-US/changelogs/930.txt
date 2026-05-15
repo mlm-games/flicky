@@ -1,0 +1,4 @@
+- add a suggested tag for a version that will be installed by default
+- Add an option to ignore alpha/beta updates (#67)
+- bump agp to 9.2.1 and gradle to 9.5.0
+- Replace descending name sort, with a reverse sort checkbox (#64)
