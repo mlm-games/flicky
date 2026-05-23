@@ -784,7 +784,18 @@ class Installer(
 
         val pm = context.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
-            .apply { setAppPackageName(packageName) }
+            .apply {
+                setAppPackageName(packageName)
+                if (Build.VERSION.SDK_INT >= 26) {
+                    setInstallReason(PackageManager.INSTALL_REASON_USER)
+                }
+                if (Build.VERSION.SDK_INT >= 33) {
+                    setPackageSource(PackageInstaller.PACKAGE_SOURCE_STORE)
+                }
+                if (Build.VERSION.SDK_INT >= 34) {
+                    setRequestUpdateOwnership(true)
+                }
+            }
 
         tweakParams(params)
 

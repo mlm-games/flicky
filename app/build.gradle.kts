@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.apk.dist)
-    alias(libs.plugins.koin.compiler)
 }
 
 kotlin {
