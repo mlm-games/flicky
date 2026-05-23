@@ -149,7 +149,7 @@ data class AppSettings(
         type = Dropdown::class,
         options = ["System", "Session", "Root", "Shizuku", "App Manager", "Dhizuku"]
     )
-    val installerMode: Int = 0,
+    val installerMode: Int = 1,
 
     @Setting(
         title = "Preferred Repository",
