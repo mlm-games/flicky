@@ -1,0 +1,2 @@
+- unattended (bg) auto-updates
+- set "Session" as the default installer mode
