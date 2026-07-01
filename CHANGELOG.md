@@ -1,3 +1,9 @@
+## v4.4.3
+
+- unattended (bg) auto-updates
+- set "Session" as the default installer mode
+
+
 ## v4.4.2
 
 - unattended (bg) auto-updates
