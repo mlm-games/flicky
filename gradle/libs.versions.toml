@@ -32,7 +32,7 @@ apkDist = "0.5.2"
 composeBom = "2026.05.00"
 kmpSettingsCore = "0.8.1"
 
-koinBom = "4.2.1"
+koinBom = "4.2.2"
 navigation3Runtime = "1.1.1"
 koin-annotations = "4.2.1"
 koin-plugin = "1.0.0-RC2"
