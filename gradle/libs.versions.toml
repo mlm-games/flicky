@@ -29,7 +29,7 @@ androidbrowserhelper = "2.7.1"
 datastorePreferencesCore = "1.2.1"
 uiText = "1.11.4"
 apkDist = "0.5.2"
-composeBom = "2026.05.00"
+composeBom = "2026.07.00"
 kmpSettingsCore = "0.8.1"
 
 koinBom = "4.2.2"
