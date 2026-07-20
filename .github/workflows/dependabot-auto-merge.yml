@@ -11,7 +11,7 @@ permissions:
 jobs:
   dependabot:
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.user.login }} == 'dependabot[bot]'
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       PR_URL: ${{github.event.pull_request.html_url}}
