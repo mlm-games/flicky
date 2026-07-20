@@ -23,7 +23,7 @@ jobs:
           
       - name: SetUp auto-merge
         id: auto-merge
-        uses: dependabot/fetch-metadata@v2.2.0
+        uses: dependabot/fetch-metadata@v3
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           
