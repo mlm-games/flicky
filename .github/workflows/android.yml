@@ -48,7 +48,7 @@ jobs:
       release_notes: ${{ steps.release-notes.outputs.release-notes }}
       commit_sha: ${{ steps.commit-and-push.outputs.commit_sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -112,7 +112,7 @@ jobs:
       contents: write
     
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare-version.outputs.commit_sha }}
       
