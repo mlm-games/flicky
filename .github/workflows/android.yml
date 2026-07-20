@@ -185,7 +185,7 @@ jobs:
 
       - name: Create GitHub Release
         if: github.event_name == 'workflow_dispatch' && inputs.upload_releases == true
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: artifacts/*
           name: ${{ env.APP_NAME }} ${{ needs.prepare-version.outputs.version_name }}
