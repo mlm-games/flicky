@@ -36,7 +36,7 @@ koinBom = "4.2.2"
 navigation3Runtime = "1.1.1"
 koin-annotations = "4.2.1"
 koin-plugin = "1.0.2"
-dhizuku = "2.5.4"
+dhizuku = "2.6.0"
 
 [libraries]
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom-alpha", version.ref = "composeBom" }
