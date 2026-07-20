@@ -1,21 +1,20 @@
 version: 2
 updates:
-  # Configure updates for Gradle dependencies
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
-    target-branch: "kotlin"  # default branch name
     labels:
       - "dependencies"
       - "android"
       - "security"
-
-    
-  # Configure updates for GitHub Actions
+      
   - package-ecosystem: "github-actions"
-    directory: ".github/workflows"
+    directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "github-actions"
