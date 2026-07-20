@@ -35,7 +35,7 @@ kmpSettingsCore = "0.8.1"
 koinBom = "4.2.2"
 navigation3Runtime = "1.1.1"
 koin-annotations = "4.2.1"
-koin-plugin = "1.0.0-RC2"
+koin-plugin = "1.0.2"
 dhizuku = "2.5.4"
 
 [libraries]
