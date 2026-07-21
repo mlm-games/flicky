@@ -137,12 +137,12 @@ fun AppDetailScreen(
     val settings: SettingsRepository = koinInject()
     val pref by settings.observeAppUpdatePreference(app.packageName)
         .collectAsState(initial = AppUpdatePreference())
-    val globalPreferredRepo by settings.settingsFlow
-        .map { PreferredRepo.fromIndex(it.preferredRepo) }
-        .collectAsState(initial = PreferredRepo.Auto)
-    val globalIgnoreUnstable by settings.settingsFlow
-        .map { it.ignoreUnstable }
-        .collectAsState(initial = false)
+    val globalPreferredRepo by remember {
+        settings.settingsFlow.map { PreferredRepo.fromIndex(it.preferredRepo) }
+    }.collectAsState(initial = PreferredRepo.Auto)
+    val globalIgnoreUnstable by remember {
+        settings.settingsFlow.map { it.ignoreUnstable }
+    }.collectAsState(initial = false)
     val effectiveIgnoreUnstable = pref.ignoreUnstable ?: globalIgnoreUnstable
     val updateCandidate = remember(variants, pref, globalPreferredRepo, effectiveIgnoreUnstable) {
         VariantSelector.pickCompatible(

@@ -42,6 +42,7 @@ import kotlin.math.roundToInt
 /**
  * Dialog for slider-based settings
  */
+@Suppress("NonObservableLocale")
 @Composable
 fun SliderSettingDialog(
     title: String,

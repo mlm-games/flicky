@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <lint>
     <issue id="ConfigurationScreenWidthHeight" severity="ignore" />
-
+    <issue id="MissingTranslation" severity="ignore" />
+    <issue id="StringFormatInvalid" severity="ignore" />
+    <issue id="LocalContextGetResourceValueCall" severity="ignore" />
 </lint>

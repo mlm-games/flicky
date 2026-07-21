@@ -22,6 +22,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.closeQuietly
 import java.io.InputStreamReader
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipInputStream
 
@@ -1372,12 +1373,16 @@ class FDroidApi(
         return list
     }
 
+    @SuppressLint("NewApi")
     private val localeTags: List<String> = run {
-        val ls =
-            context.resources.configuration.locales
+        val ls: List<Locale> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val localeList = context.resources.configuration.locales
+            (0 until localeList.size()).map { localeList[it] }
+        } else {
+            listOf(context.resources.configuration.locale)
+        }
         val tags = mutableListOf<String>()
-        for (i in 0 until ls.size()) {
-            val l = ls[i]
+        for (l in ls) {
             val lang = l.language
             val country = l.country
             val script = l.script

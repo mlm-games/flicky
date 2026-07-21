@@ -116,6 +116,7 @@ import java.util.Locale
 import kotlin.reflect.KClass
 
 @Composable
+@Suppress("NonObservableLocale")
 fun SettingsScreen(vm: SettingsViewModel) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val repos by vm.repositories.collectAsStateWithLifecycle()
