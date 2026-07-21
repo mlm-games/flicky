@@ -225,11 +225,15 @@ class Installer(
     }
 
     private suspend fun installResolved(req: ResolvedApk): Boolean = withContext(NonCancellable) {
-        val mode = settings.settingsFlow.first().installerMode
-        val showDebug = runCatching { settings.settingsFlow.first().showDebugInfo }.getOrDefault(false)
+        val settingsState = settings.settingsFlow.first()
+        val primaryMode = settingsState.installerMode
+        val fallbackRaw = settingsState.fallbackInstallerMode
+        val fallbackMode = if (fallbackRaw <= 0) -1 else fallbackRaw - 1
+        val showDebug = settingsState.showDebugInfo
 
         val existedBefore = cacheFileFor(req).exists()
-        if (showDebug) DebugLog.log("Installer", "Starting ${req.packageName} via mode=$mode")
+        if (showDebug) DebugLog.log("Installer", "Starting ${req.packageName} via primary mode=$primaryMode" +
+                (if (fallbackMode >= 0) ", fallback=$fallbackMode" else ""))
 
         emitStage(req.packageName, TaskStage.Downloading(0f))
         val file = download(req) ?: run {
@@ -272,14 +276,29 @@ class Installer(
             clearError(req.packageName)
         }
 
-        val result = when (mode) {
-            0 -> InstallSessionResult(installSystem(file, req.packageName))
-            1 -> InstallSessionResult(installSessionFromFile(file, req.packageName, req.sha256))
-            2 -> InstallSessionResult(installRootStream(file, req.packageName))
-            3 -> InstallSessionResult(installShizukuStream(file, req.packageName))
-            4 -> InstallSessionResult(installAppManager(file, req.packageName))
-            5 -> InstallSessionResult(installDhizukuSessionFromFile(file, req.packageName, req.sha256))
-            else -> InstallSessionResult(installSystem(file, req.packageName))
+        val modesToTry = buildList {
+            add(primaryMode)
+            if (fallbackMode >= 0 && fallbackMode != primaryMode) add(fallbackMode)
+        }
+
+        var result = InstallSessionResult(success = false)
+        for ((attempt, mode) in modesToTry.withIndex()) {
+            if (isCancelled(req.packageName)) break
+
+            if (attempt > 0) {
+                clearError(req.packageName)
+                if (showDebug) {
+                    DebugLog.log("Installer", "Primary failed; trying fallback mode=$mode for ${req.packageName}")
+                }
+                setError(req.packageName, "Primary installer failed; trying fallback method")
+            }
+
+            result = tryInstallWithMode(mode, file, req.packageName, req.sha256)
+
+            if (result.success || result.wasCancelledByUser || isCancelled(req.packageName)) {
+                if (result.success) clearError(req.packageName)
+                break
+            }
         }
 
         if (isCancelled(req.packageName)) {
@@ -297,6 +316,23 @@ class Installer(
         }
         clearCancel(req.packageName)
         return@withContext result.success && !result.wasCancelledByUser
+    }
+
+    private suspend fun tryInstallWithMode(
+        mode: Int,
+        file: File,
+        packageName: String,
+        sha256: String
+    ): InstallSessionResult {
+        return when (mode) {
+            0 -> InstallSessionResult(installSystem(file, packageName))
+            1 -> InstallSessionResult(installSessionFromFile(file, packageName, sha256))
+            2 -> InstallSessionResult(installRootStream(file, packageName))
+            3 -> InstallSessionResult(installShizukuStream(file, packageName))
+            4 -> InstallSessionResult(installAppManager(file, packageName))
+            5 -> InstallSessionResult(installDhizukuSessionFromFile(file, packageName, sha256))
+            else -> InstallSessionResult(installSystem(file, packageName))
+        }
     }
 
     private data class ResolvedApk(

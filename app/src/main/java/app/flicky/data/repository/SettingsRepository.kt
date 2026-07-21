@@ -34,7 +34,7 @@ class SettingsRepository(
         dataStore = dataStore,
         schema = AppSettingsSchema,
         appId = "app.flicky",
-        schemaVersion = 3,
+        schemaVersion = 5,
         deviceInfoProvider = {
             DeviceInfo(
                 platform = "Android",

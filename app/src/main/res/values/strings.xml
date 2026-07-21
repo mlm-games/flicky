@@ -105,6 +105,11 @@
     >Keep downloaded APKs for faster reinstall</string>
     <string name="setting_installer">Installer</string>
     <string name="setting_installer_desc">Choose how apps are installed</string>
+    <string name="setting_fallback_installer">Fallback Installer</string>
+    <string name="setting_fallback_installer_desc">Installer to use if the primary method fails</string>
+    <string name="installer_none">None</string>
+    <string name="installer_app_manager">App Manager</string>
+    <string name="fallback_triggered">Primary installer failed; falling back to %1$s</string>
     <string name="setting_hide_anti">Hide apps with anti-features</string>
     <string name="setting_show_incompatible">Show incompatible versions</string>
     <string name="setting_ignore_unstable">Ignore Alpha/Beta Builds</string>

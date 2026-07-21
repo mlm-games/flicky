@@ -61,7 +61,7 @@ data class AppUpdatePreferencesMap(
     }
 }
 
-@SchemaVersion(4)
+@SchemaVersion(5)
 data class AppSettings(
     @Setting(
         title = "Theme Mode",
@@ -150,6 +150,15 @@ data class AppSettings(
         options = ["System", "Session", "Root", "Shizuku", "App Manager", "Dhizuku"]
     )
     val installerMode: Int = 1,
+
+    @Setting(
+        title = "Fallback Installer Mode",
+        description = "Used if the primary installer fails, set to None to disable",
+        category = Downloads::class,
+        type = Dropdown::class,
+        options = ["None", "System", "Session", "Root", "Shizuku", "App Manager", "Dhizuku"]
+    )
+    val fallbackInstallerMode: Int = 2,
 
     @Setting(
         title = "Preferred Repository",
