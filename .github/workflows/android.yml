@@ -1,195 +1,39 @@
 name: Android App Releases
-
 on:
-  schedule:
-    - cron: '0 0 1 */2 *'  # Every other month on the 1st
-  workflow_dispatch: 
+  workflow_dispatch:
     inputs:
       upload_releases:
         description: 'Upload releases'
         required: true
-        default: 'true'
+        default: true
         type: boolean
       mark_prerelease:
         description: 'Mark as prerelease'
         required: true
-        default: 'false'
+        default: false
         type: boolean
-      # play_track:
-      #   description: 'Google Play track (internal, alpha, beta, production)'
-      #   required: true
-      #   default: 'production'
-      #   type: choice
-      #   options: [internal, alpha, beta, production]
+      play_track:
+        description: 'Google Play track'
+        required: true
+        default: 'alpha'
+        type: choice
+        options: [internal, alpha, beta, production]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
-env:
-  APP_NAME: 'Flicky'      
-  APP_SLUG: 'flicky'     
-  APPLICATION_ID: 'app.flicky'
-
-  JAVA_VERSION: '21'
-  JAVA_DISTRIBUTION: 'corretto'
-  BUILD_GRADLE_PATH: 'app/build.gradle.kts'
-
 jobs:
-  prepare-version:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      old_version_name: ${{ steps.version.outputs.old_version_name }}
-      version_name: ${{ steps.version.outputs.version_name }}
-      base_version_code: ${{ steps.version.outputs.version_code }}
-      build_date: ${{ steps.version.outputs.build_date }}
-      release_notes: ${{ steps.release-notes.outputs.release-notes }}
-      commit_sha: ${{ steps.commit-and-push.outputs.commit_sha }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
-      
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
-      
-      - id: version
-        name: Update Version Numbers
-        run: |
-          OLD_VERSION_CODE=$(grep "versionCode" $BUILD_GRADLE_PATH | head -1 | grep -oE '[0-9]+')
-          OLD_VERSION_NAME=$(grep "versionName" $BUILD_GRADLE_PATH | head -1 | grep -oE '"([^"]+)"' | tr -d '"')
-          
-          NEW_VERSION_CODE=$((OLD_VERSION_CODE + 10))
-          
-          IFS='.' read -ra VERSION_PARTS <<< "$OLD_VERSION_NAME"
-          MINOR=$((VERSION_PARTS[2] + 1))
-          VERSION_PARTS[2]=$MINOR
-          NEW_VERSION_NAME="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.${VERSION_PARTS[2]}"
-          
-          BUILD_DATE=$(date +'%Y%m%d')
-
-          echo "old_version_name=$OLD_VERSION_NAME" >> $GITHUB_OUTPUT
-          echo "version_name=$NEW_VERSION_NAME" >> $GITHUB_OUTPUT
-          echo "version_code=$NEW_VERSION_CODE" >> $GITHUB_OUTPUT
-          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
-
-          # Update build.gradle.kts
-          sed -i "s/versionCode = $OLD_VERSION_CODE/versionCode = $NEW_VERSION_CODE/" $BUILD_GRADLE_PATH
-          sed -i "s/versionName = \"$OLD_VERSION_NAME\"/versionName = \"$NEW_VERSION_NAME\"/" $BUILD_GRADLE_PATH
-
-      - name: Generate Release Notes
-        id: release-notes
-        uses: mlm-games/release-notes-generator@main
-        with:
-          version: ${{ steps.version.outputs.version_name }}
-          changelog-path: 'CHANGELOG.md'
-          version-file-path: './fastlane/metadata/android/en-US/changelogs/${{ steps.version.outputs.version_code }}.txt'
-          version-code: '${{ steps.version.outputs.version_code }}'
-          format: '- {{subject}}'
-          exclude-patterns: 'chore:,ci:,docs:,build:,Bump version,Merge pull request,[skip ci]'
-          auto-commit: 'false'
-
-      - name: Commit Changes
-        id: commit-and-push
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git add .
-          git commit -m "chore: bump version to ${{ steps.version.outputs.version_name }} [skip ci]" || echo "No changes to commit"
-          git push
-          echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
-  build-and-release:
-    needs: prepare-version
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.prepare-version.outputs.commit_sha }}
-      
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
-          cache: 'gradle'
-          
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-          
-      - name: Decode Keystore
-        run: |
-          echo "${{ secrets.KEYSTORE }}" > release.keystore.asc
-          gpg -d --passphrase "${{ secrets.KEYSTORE_PASSPHRASE }}" --batch release.keystore.asc > release.keystore
-
-      - name: Build AAB
-        env:
-          KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew :app:bundleRelease -PenableApkSplits=false
-      
-      - name: Prepare AAB artifact
-        run: |
-          mkdir -p artifacts
-          cp app/build/outputs/bundle/release/app-release.aab \
-             "artifacts/${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}.aab"
-      
-      # - name: Upload AAB to Google Play
-      #   if: github.event_name == 'workflow_dispatch' && inputs.upload_releases == true
-      #   uses: r0adkll/upload-google-play@v1
-      #   with:
-      #     serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-      #     packageName: ${{ env.APPLICATION_ID }}
-      #     releaseFiles: app/build/outputs/bundle/release/app-release.aab
-      #     track: ${{ inputs.play_track }}
-      #     status: completed
-      #     whatsNewDirectory: fastlane/metadata/android
-
-      - name: Build APK splits
-        env:
-          KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease -PenableApkSplits=true -PincludeUniversalApk=true
-          
-      - name: Prepare APKs
-        run: |
-          mkdir -p artifacts
-          for apk in app/build/outputs/apk/release/*.apk; do
-            if [ -f "$apk" ]; then
-              arch=$(echo "$apk" | grep -oE '(arm64-v8a|armeabi-v7a|x86_64|x86|universal)')
-              if [ -n "$arch" ]; then
-                cp "$apk" "artifacts/${{ env.APP_SLUG }}-${{ needs.prepare-version.outputs.version_name }}-${arch}.apk"
-              fi
-            fi
-          done
-  
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v7
-        if: inputs.upload_releases == false || github.event_name != 'workflow_dispatch'
-        with:
-          name: release-${{ needs.prepare-version.outputs.version_name }}
-          path: artifacts/*
-
-      - name: Create GitHub Release
-        if: github.event_name == 'workflow_dispatch' && inputs.upload_releases == true
-        uses: softprops/action-gh-release@v3
-        with:
-          files: artifacts/*
-          name: ${{ env.APP_NAME }} ${{ needs.prepare-version.outputs.version_name }}
-          tag_name: ${{ needs.prepare-version.outputs.version_name }}
-          target_commitish: ${{ needs.prepare-version.outputs.commit_sha }}
-          prerelease: ${{ inputs.mark_prerelease }}
-          body_path: ./fastlane/metadata/android/en-US/changelogs/${{ needs.prepare-version.outputs.base_version_code }}.txt
+  release:
+    uses: mlm-games/ci/.github/workflows/android-release.yml@v1
+    with:
+      app-name: Flicky
+      app-slug: flicky
+      application-id: app.flicky
+      play-track: ${{ inputs.play_track || 'alpha' }}
+    secrets:
+      KEYSTORE: ${{ secrets.KEYSTORE }}
+      KEYSTORE_PASSPHRASE: ${{ secrets.KEYSTORE_PASSPHRASE }}
+      STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
