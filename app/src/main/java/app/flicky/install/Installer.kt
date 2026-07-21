@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import app.flicky.R
@@ -287,9 +288,17 @@ class Installer(
 
             if (attempt > 0) {
                 clearError(req.packageName)
-                if (showDebug) {
-                    DebugLog.log("Installer", "Primary failed; trying fallback mode=$mode for ${req.packageName}")
+                val modeName = when (mode) {
+                    0 -> "System"
+                    1 -> "Session"
+                    2 -> "Root"
+                    3 -> "Shizuku"
+                    4 -> "App Manager"
+                    5 -> "Dhizuku"
+                    else -> "System"
                 }
+                DebugLog.log("Installer", "Primary failed; trying fallback mode=$mode ($modeName) for ${req.packageName}")
+                Toast.makeText(context, "Primary installer failed; trying $modeName", Toast.LENGTH_SHORT).show()
                 setError(req.packageName, "Primary installer failed; trying fallback method")
             }
 
