@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.InstallDesktop
 import androidx.compose.material.icons.outlined.KeyboardDoubleArrowUp
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DividerDefaults
@@ -90,6 +91,10 @@ import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.VariantSelector
 import app.flicky.data.remote.IzzyDownloadStats
 import app.flicky.data.remote.IzzyStatsRepository
+import app.flicky.data.remote.PlexusApp
+import app.flicky.data.remote.PlexusBadge
+import app.flicky.data.remote.PlexusRepository
+import app.flicky.data.remote.PlexusScore
 import app.flicky.helper.openUrl
 import app.flicky.helper.shareText
 import app.flicky.install.TaskStage
@@ -161,6 +166,13 @@ fun AppDetailScreen(
         izzyStats = runCatching { izzyStatsRepo.statsFor(app.packageName) }.getOrNull()
     }
 
+    val plexusRepo: PlexusRepository = koinInject()
+    var plexusApp by remember { mutableStateOf<PlexusApp?>(null) }
+
+    LaunchedEffect(app.packageName) {
+        plexusApp = runCatching { plexusRepo.scoresFor(app.packageName) }.getOrNull()
+    }
+
     MyScreenScaffold(
         title = app.name,
         actions = {
@@ -218,6 +230,7 @@ fun AppDetailScreen(
                     globalPreferredRepo = globalPreferredRepo,
                     globalIgnoreUnstable = globalIgnoreUnstable,
                     izzyStats = izzyStats,
+                    plexusApp = plexusApp,
                     reproducibleBuildInfo = reproducibleBuildInfo,
                     showReproducibleBadges = showReproducibleBadges
                 )
@@ -241,6 +254,7 @@ fun AppDetailScreen(
                     globalPreferredRepo = globalPreferredRepo,
                     globalIgnoreUnstable = globalIgnoreUnstable,
                     izzyStats = izzyStats,
+                    plexusApp = plexusApp,
                     reproducibleBuildInfo = reproducibleBuildInfo,
                     showReproducibleBadges = showReproducibleBadges
                 )
@@ -274,9 +288,12 @@ private fun DesktopLayout(
     globalPreferredRepo: PreferredRepo,
     globalIgnoreUnstable: Boolean,
     izzyStats: IzzyDownloadStats?,
+    plexusApp: PlexusApp?,
     reproducibleBuildInfo: ReproducibleBuildInfo? = null,
     showReproducibleBadges: Boolean = false,
 ) {
+    var showPlexusDialog by remember { mutableStateOf(false) }
+
     Row(Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier.width(350.dp).fillMaxHeight(),
@@ -305,7 +322,7 @@ private fun DesktopLayout(
                 item { ChipsSection(app, installedVersionCode, onOpenCategory, onOpenAuthor) }
                 item { DetailsSection(app, izzyStats) }
                 if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
-                item { LinksSection(app) }
+                item { LinksSection(app, onPlexusClick = { showPlexusDialog = true }) }
             }
         }
 
@@ -334,6 +351,13 @@ private fun DesktopLayout(
             }
         }
     }
+
+    if (showPlexusDialog && plexusApp != null) {
+        PlexusDetailsDialog(
+            plexusApp = plexusApp,
+            onDismiss = { showPlexusDialog = false }
+        )
+    }
 }
 
 @Composable
@@ -356,9 +380,12 @@ private fun MobileLayout(
     globalPreferredRepo: PreferredRepo,
     globalIgnoreUnstable: Boolean,
     izzyStats: IzzyDownloadStats?,
+    plexusApp: PlexusApp?,
     reproducibleBuildInfo: ReproducibleBuildInfo? = null,
     showReproducibleBadges: Boolean = false,
 ) {
+    var showPlexusDialog by remember { mutableStateOf(false) }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize()
             .background(colorScheme.surfaceContainerLowest),
@@ -385,7 +412,7 @@ private fun MobileLayout(
         }
         item { ChipsSection(app, installedVersionCode, onOpenCategory, onOpenAuthor) }
         if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
-        item { LinksSection(app) }
+        item { LinksSection(app, onPlexusClick = { showPlexusDialog = true }) }
         item { DetailsSection(app, izzyStats) }
         item {
             RightPaneContent(
@@ -401,6 +428,13 @@ private fun MobileLayout(
                 showReproducibleBadges = showReproducibleBadges
             )
         }
+    }
+
+    if (showPlexusDialog && plexusApp != null) {
+        PlexusDetailsDialog(
+            plexusApp = plexusApp,
+            onDismiss = { showPlexusDialog = false }
+        )
     }
 }
 
@@ -659,7 +693,7 @@ private fun AntiFeaturesSection(tags: List<String>) {
 }
 
 @Composable
-private fun LinksSection(app: FDroidApp) {
+private fun LinksSection(app: FDroidApp, onPlexusClick: (() -> Unit)? = null) {
     val ctx = LocalContext.current
     Column {
         SectionTitle(stringResource(R.string.links))
@@ -693,9 +727,122 @@ private fun LinksSection(app: FDroidApp) {
                 onClick = { openUrl(ctx, exodusReportUrl(app.packageName)) },
                 label = { Text(stringResource(R.string.exodus_privacy)) }
             )
+            if (onPlexusClick != null) {
+                AssistChip(
+                    onClick = onPlexusClick,
+                    label = { Text(stringResource(R.string.plexus)) }
+                )
+            }
         }
     }
 }
+
+@Composable
+private fun PlexusDetailsDialog(
+    plexusApp: PlexusApp,
+    onDismiss: () -> Unit,
+) {
+    val ctx = LocalContext.current
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    stringResource(R.string.plexus_compatibility),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(Modifier.height(16.dp))
+
+                plexusApp.scores?.let { scores ->
+                    scores.native?.let { score ->
+                        PlexusDetailRow(
+                            label = stringResource(R.string.plexus_degoogled),
+                            score = score
+                        )
+                    }
+                    scores.micro_g?.let { score ->
+                        PlexusDetailRow(
+                            label = stringResource(R.string.plexus_microg),
+                            score = score
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                FilledTonalButton(
+                    onClick = {
+                        openUrl(ctx, plexusUrl(plexusApp.packageName))
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.plexus_open_website))
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.action_close))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlexusDetailRow(
+    label: String,
+    score: PlexusScore,
+) {
+    val badgeColor = when (score.badge) {
+        PlexusBadge.GOLD -> MaterialTheme.colorScheme.tertiary
+        PlexusBadge.SILVER -> MaterialTheme.colorScheme.outline
+        PlexusBadge.BRONZE -> MaterialTheme.colorScheme.secondary
+        PlexusBadge.BROKEN -> MaterialTheme.colorScheme.error
+        PlexusBadge.UNRATED -> MaterialTheme.colorScheme.outlineVariant
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                "${score.display}  •  ${score.total_count} ${stringResource(R.string.plexus_ratings).lowercase()}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            score.badge.name,
+            style = MaterialTheme.typography.labelLarge,
+            color = badgeColor
+        )
+    }
+}
+
+private fun plexusUrl(packageName: String) =
+    "https://plexus.techlore.tech/#/apps?q=$packageName"
 
 @Composable
 private fun ScreenshotsSection(urls: List<String>) {

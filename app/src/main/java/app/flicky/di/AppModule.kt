@@ -11,6 +11,7 @@ import app.flicky.data.remote.FDroidApi
 import app.flicky.data.remote.HttpClientProvider
 import app.flicky.data.remote.IzzyStatsRepository
 import app.flicky.data.remote.MirrorPolicyProvider
+import app.flicky.data.remote.PlexusRepository
 import app.flicky.data.remote.MirrorRegistry
 import app.flicky.data.remote.MirrorStateStore
 import app.flicky.data.remote.ReproducibleBuildRepository
@@ -70,6 +71,7 @@ val appModule = module {
     single<FDroidApi> { FDroidApi(androidContext(), get(), get(), get(), get()) }
     single<IzzyStatsRepository> { IzzyStatsRepository(httpClientProvider = get()) }
     single<ReproducibleBuildRepository> { ReproducibleBuildRepository(get()) }
+    single<PlexusRepository> { PlexusRepository(httpClientProvider = get()) }
 
     single {
         val repo = SettingsRepository(

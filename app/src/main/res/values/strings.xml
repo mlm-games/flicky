@@ -186,6 +186,14 @@
     <string name="trust">Trust</string>
     <string name="trust_mode">Trust Mode</string>
     <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Plexus Compatibility</string>
+    <string name="plexus_degoogled">de-Googled</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Not rated on Plexus</string>
+    <string name="plexus_view_details">View details</string>
+    <string name="plexus_ratings">ratings</string>
+    <string name="plexus_open_website">Open on Plexus website</string>
     <string name="permissions">App Info</string>
     <string name="app_not_installed">App not installed</string>
     <string name="versions">Versions</string>
