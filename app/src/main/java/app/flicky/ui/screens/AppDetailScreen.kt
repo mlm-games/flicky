@@ -989,8 +989,30 @@ private fun ReproducibleBadge(isReproducible: Boolean) {
     }
 }
 
-private fun exodusReportUrl(packageName: String) =
-    "https://reports.exodus-privacy.eu.org/en/reports/$packageName/latest/"
+private fun exodusReportUrl(packageName: String): String {
+    val supported = setOf(
+        "cs", "de", "el", "en", "es", "et", "fr", "id", "it", "ja",
+        "nl", "no", "pl", "pt", "pt-br", "ro", "ru", "sv", "tr", "uk", "zh-hans"
+    )
+
+    val locale = Locale.getDefault()
+    val lang = locale.language.lowercase(Locale.ROOT)
+    val country = locale.country.lowercase(Locale.ROOT)
+    val script = locale.script.lowercase(Locale.ROOT)
+
+    val candidates = buildList {
+        when {
+            lang == "zh" && (script == "hans" || country in setOf("cn", "sg")) -> add("zh-hans")
+            lang == "pt" && country == "br" -> add("pt-br")
+        }
+        if (lang.isNotBlank() && country.isNotBlank()) add("$lang-$country")
+        if (lang.isNotBlank()) add(lang)
+        add("en")
+    }
+
+    val langCode = candidates.firstOrNull { it in supported } ?: "en"
+    return "https://reports.exodus-privacy.eu.org/$langCode/reports/$packageName/latest/"
+}
 
 private fun openAppSettings(context: Context, packageName: String) {
     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
