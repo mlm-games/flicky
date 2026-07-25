@@ -57,7 +57,17 @@ class Installer(
     private val httpClients: HttpClientProvider,
     private val db: AppDatabase
 ) {
-    private val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    private val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
+
+    private val isDownloadManagerUsable: Boolean by lazy {
+        try {
+            dm != null &&
+                context.packageManager.resolveContentProvider("downloads", 0) != null
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val activeDownloads = ConcurrentHashMap<String, Long>()
     private val cancelFlags = ConcurrentHashMap<String, Boolean>()
@@ -110,7 +120,7 @@ class Installer(
             .filter { it.key.startsWith("$packageName-") }
             .toList()
             .forEach { (key, id) ->
-                dm.remove(id)
+                runCatching { dm?.remove(id) }
                 activeDownloads.remove(key)
             }
         activeCalls.remove(packageName)?.cancel()
@@ -511,39 +521,48 @@ class Installer(
                 }
             }
 
-            val request = DownloadManager.Request(url.toUri())
-                .setTitle(req.title)
-                .setDescription(context.getString(R.string.settings_downloads))
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setAllowedOverMetered(true)
-                .setAllowedOverRoaming(true)
-                .apply {
-                    addRequestHeader("User-Agent", userAgent)
-                    addRequestHeader("Accept-Encoding", "gzip, deflate")
-                    addRequestHeader("Referer", req.repoBase)
-                    context.externalCacheDir?.let { setDestinationUri(Uri.fromFile(out)) }
-                }
-
-            DebugLog.log("Downloader", "Enqueue (DM) $url")
-            val id = dm.enqueue(request)
-            activeDownloads[out.name] = id
-            val uri = monitorDownload(id, req.packageName, url)
-            activeDownloads.remove(out.name)
-
-            if (uri != null) {
-                if (!out.exists()) {
-                    runCatching {
-                        context.contentResolver.openInputStream(uri)?.use { src ->
-                            out.outputStream().use { dst -> src.copyTo(dst) }
+            if (isDownloadManagerUsable && dm != null) {
+                try {
+                    val request = DownloadManager.Request(url.toUri())
+                        .setTitle(req.title)
+                        .setDescription(context.getString(R.string.settings_downloads))
+                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        .setAllowedOverMetered(true)
+                        .setAllowedOverRoaming(true)
+                        .apply {
+                            addRequestHeader("User-Agent", userAgent)
+                            addRequestHeader("Accept-Encoding", "gzip, deflate")
+                            addRequestHeader("Referer", req.repoBase)
+                            context.externalCacheDir?.let { setDestinationUri(Uri.fromFile(out)) }
                         }
+
+                    DebugLog.log("Downloader", "Enqueue (DM) $url")
+                    val id = dm.enqueue(request)
+                    activeDownloads[out.name] = id
+                    val uri = monitorDownload(id, req.packageName, url)
+                    activeDownloads.remove(out.name)
+
+                    if (uri != null) {
+                        if (!out.exists()) {
+                            runCatching {
+                                context.contentResolver.openInputStream(uri)?.use { src ->
+                                    out.outputStream().use { dst -> src.copyTo(dst) }
+                                }
+                            }
+                        }
+                        if (out.exists()) {
+                            MirrorRegistry.markHealthy(req.repoBase, url)
+                            return@withContext out
+                        }
+                    } else {
+                        runCatching { if (out.exists()) out.delete() }
                     }
-                }
-                if (out.exists()) {
-                    MirrorRegistry.markHealthy(req.repoBase, url)
-                    return@withContext out
+                } catch (e: Exception) {
+                    DebugLog.log("Downloader", "DownloadManager failed for $url: ${e.message}; falling back to streaming")
+                    runCatching { if (out.exists()) out.delete() }
                 }
             } else {
-                runCatching { if (out.exists()) out.delete() }
+                DebugLog.log("Downloader", "DownloadManager unavailable; using streaming for $url")
             }
 
             DebugLog.log("Downloader", "Fallback to streaming for $url")
@@ -635,6 +654,7 @@ class Installer(
     }
 
     private suspend fun monitorDownload(id: Long, packageName: String, url: String): Uri? = withContext(Dispatchers.IO) {
+        val downloadManager = dm ?: return@withContext null
         val q = DownloadManager.Query().setFilterById(id)
         var lastProgress = -1f
         var lastStatusChange = System.currentTimeMillis()
@@ -655,8 +675,8 @@ class Installer(
             else -> "Pending"
         }
         while (isActive) {
-            if (isCancelled(packageName)) { dm.remove(id); return@withContext null }
-            val c = dm.query(q)
+            if (isCancelled(packageName)) { runCatching { downloadManager.remove(id) }; return@withContext null }
+            val c = downloadManager.query(q)
             c.use { c ->
                 if (c != null && c.moveToFirst()) {
                     val statusIdx = c.getColumnIndex(DownloadManager.COLUMN_STATUS)
@@ -673,7 +693,7 @@ class Installer(
                     when (status) {
                         DownloadManager.STATUS_SUCCESSFUL -> {
                             emitStage(packageName, TaskStage.Downloading(1f))
-                            return@withContext dm.getUriForDownloadedFile(id)
+                            return@withContext downloadManager.getUriForDownloadedFile(id)
                         }
 
                         DownloadManager.STATUS_FAILED -> {
@@ -689,7 +709,7 @@ class Installer(
                                 if (total > 0) {
                                     val p = c.getLong(soFarIdx).toFloat() / total.toFloat()
                                     if (p != lastProgress) {
-                                        if (isCancelled(packageName)) { dm.remove(id); return@withContext null }
+                                        if (isCancelled(packageName)) { runCatching { downloadManager.remove(id) }; return@withContext null }
                                         lastProgress = p
                                         emitStage(packageName, TaskStage.Downloading(p.coerceIn(0f, 0.999f)))
                                     }
@@ -701,7 +721,7 @@ class Installer(
                             if (!waitingOnNetwork && (status == DownloadManager.STATUS_PENDING || status == DownloadManager.STATUS_PAUSED)) {
                                 if (elapsed > 30_000) {
                                     DebugLog.log("Downloader", "Stalled ($elapsed ms) on $url, switching")
-                                    dm.remove(id)
+                                    runCatching { downloadManager.remove(id) }
                                     return@withContext null
                                 }
                             }
