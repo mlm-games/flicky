@@ -12,12 +12,18 @@ on:
         required: true
         default: false
         type: boolean
-      play_track:
-        description: 'Google Play track'
-        required: true
-        default: 'alpha'
-        type: choice
-        options: [internal, alpha, beta, production]
+      # play_track:
+      #   description: 'Google Play track'
+      #   required: true
+      #   default: 'alpha'
+      #   type: choice
+      #   options: [internal, alpha, beta, production]
+      # bump_type:
+      #   description: 'Ver bump type'
+      #   required: true
+      #   default: 'patch'
+      #   type: choice
+      #   options: [patch, minor, major]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,6 +36,7 @@ jobs:
       app-name: Flicky
       app-slug: flicky
       application-id: app.flicky
+      auto-bump-version: true
       # play-track: ${{ inputs.play_track || 'alpha' }}
     secrets:
       KEYSTORE: ${{ secrets.KEYSTORE }}
