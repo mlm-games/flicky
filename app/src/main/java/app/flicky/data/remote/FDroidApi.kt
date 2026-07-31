@@ -5,6 +5,8 @@ import android.os.Build
 import android.util.JsonReader
 import android.util.JsonToken
 import android.util.Log
+import androidx.core.os.LocaleListCompat
+import androidx.core.text.ICUCompat
 import app.flicky.BuildConfig
 import app.flicky.data.local.AppDatabase
 import app.flicky.data.local.AppVariant
@@ -807,38 +809,38 @@ class FDroidApi(
     }
 
     private fun parseV1Localized(reader: JsonReader): Map<String, String> {
-        // Similar to v2 localized, only pick a few keys
-        val out = mutableMapOf<String, String>()
+        val names = mutableMapOf<String, String>()
+        val summaries = mutableMapOf<String, String>()
+        val descriptions = mutableMapOf<String, String>()
+        val icons = mutableMapOf<String, String>()
+
         reader.beginObject()
         while (reader.hasNext()) {
             val locale = reader.nextName()
-            // localized value can be object with name/summary/description/icon
             if (reader.peek() == JsonToken.BEGIN_OBJECT) {
                 reader.beginObject()
-                var name: String? = null
-                var summary: String? = null
-                var description: String? = null
-                var icon: String? = null
                 while (reader.hasNext()) {
                     when (reader.nextName()) {
-                        "name" -> name = safeString(reader)
-                        "summary" -> summary = safeString(reader)
-                        "description" -> description = safeString(reader)
-                        "icon" -> icon = safeString(reader)
+                        "name" -> safeString(reader)?.let { names[locale] = it }
+                        "summary" -> safeString(reader)?.let { summaries[locale] = it }
+                        "description" -> safeString(reader)?.let { descriptions[locale] = it }
+                        "icon" -> safeString(reader)?.let { icons[locale] = it }
                         else -> reader.skipValue()
                     }
                 }
                 reader.endObject()
-                name?.let { out["name"] = it }
-                summary?.let { out["summary"] = it }
-                description?.let { out["description"] = it }
-                icon?.let { out["icon"] = icon }
             } else {
                 reader.skipValue()
             }
         }
         reader.endObject()
-        return out
+
+        return buildMap {
+            pickLocalized(names)?.let { put("name", it) }
+            pickLocalized(summaries)?.let { put("summary", it) }
+            pickLocalized(descriptions)?.let { put("description", it) }
+            pickLocalized(icons)?.let { put("icon", it) }
+        }
     }
 
     private fun isCompatible(minSdkVersion: Int, nativecode: List<String>): Boolean {
@@ -1109,11 +1111,7 @@ class FDroidApi(
                 "whatsNew" -> {
                     whatsNew = when (reader.peek()) {
                         JsonToken.STRING -> reader.nextString()
-                        JsonToken.BEGIN_OBJECT -> {
-                            val map = parseLocalizedStrings(reader)
-                            map["en-US"] ?: map.values.firstOrNull()
-                        }
-
+                        JsonToken.BEGIN_OBJECT -> pickLocalized(parseLocalizedStrings(reader))
                         else -> {
                             reader.skipValue(); null
                         }
@@ -1238,8 +1236,8 @@ class FDroidApi(
                     description = (description ?: mutableMapOf()).apply { putAll(loc.descriptions) }
                     icon = (icon ?: mutableMapOf()).apply { putAll(loc.icons) }
                     if (screenshots.isNullOrEmpty()) {
-                        val preferred = localeTags.firstNotNullOfOrNull { loc.screenshots[it] }
-                        screenshots = preferred ?: loc.screenshots.values.firstOrNull { it.isNotEmpty() }
+                        screenshots = pickLocalizedObj(loc.screenshots)
+                            ?: loc.screenshots.values.firstOrNull { it.isNotEmpty() }
                     }
                 }
 
@@ -1373,39 +1371,114 @@ class FDroidApi(
         return list
     }
 
-    @SuppressLint("NewApi")
-    private val localeTags: List<String> = run {
-        val ls: List<Locale> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val localeList = context.resources.configuration.locales
-            (0 until localeList.size()).map { localeList[it] }
-        } else {
-            listOf(context.resources.configuration.locale)
-        }
-        val tags = mutableListOf<String>()
-        for (l in ls) {
-            val lang = l.language
-            val country = l.country
-            val script = l.script
-            if (lang.isNotBlank() && country.isNotBlank() && script.isNotBlank()) {
-                tags += "$lang-$script-$country"
-            }
-            if (lang.isNotBlank() && country.isNotBlank()) tags += "$lang-$country"
-            if (lang.isNotBlank() && script.isNotBlank()) tags += "$lang-$script"
-            if (lang.isNotBlank()) tags += lang
-        }
-        // Fall back to en-US then any
-        tags + listOf("en-US", "en")
-    }
+    private fun currentLocaleList(): LocaleListCompat = LocaleListCompat.getDefault()
 
-    private fun pickLocalized(map: Map<String, String>?): String? {
-        if (map.isNullOrEmpty()) return null
-        for (t in localeTags) map[t]?.let { return it }
-        return map.values.firstOrNull()
-    }
+    private fun pickLocalized(map: Map<String, String>?): String? = pickLocalizedObj(map)
 
+    /**
+     * https://gitlab.com/fdroid/fdroidclient LocaleChooser ref.
+     */
     private fun <T> pickLocalizedObj(map: Map<String, T>?): T? {
         if (map.isNullOrEmpty()) return null
-        for (t in localeTags) map[t]?.let { return it }
-        return map.values.firstOrNull()
+        if (map.size == 1) return map.values.first()
+        return map.getBestLocale(currentLocaleList())
     }
+
+    private fun <T> Map<String, T>.getBestLocale(localeList: LocaleListCompat): T? {
+        val firstMatch = when (localeList.size()) {
+            0 -> null
+            1 -> localeList[0]
+            else -> localeList.getFirstMatch(keys.toTypedArray())
+        } ?: return get("en-US") ?: get("en") ?: values.firstOrNull()
+
+        // Exact BCP-47 tag (e.g. de-DE)
+        get(firstMatch.toLanguageTag())?.let { return it }
+
+        // Ranking by script/country when no exact match
+        val tried =
+            (if (firstMatch.script.isNullOrEmpty()) 0 else 1) +
+                (if (firstMatch.country.isNullOrEmpty()) 0 else 2)
+
+        val ranked = if (firstMatch.script.isNullOrEmpty()) {
+            ICUCompat.maximizeAndGetScript(firstMatch)
+                ?.takeUnless { it.isEmpty() }
+                ?.let { script -> getInRankingOrder(firstMatch, tried + 1, script, tried) }
+        } else {
+            if (tried > 1) getInRankingOrder(firstMatch, tried - 1, firstMatch.script, tried)
+            else null
+        }
+
+        ranked?.let { return it }
+
+        // Language-only if script matches
+        if (tried != 0) {
+            get(firstMatch.language)
+                ?.takeIf {
+                    LocaleListCompat.matchesLanguageAndScript(
+                        localeOf(firstMatch.language),
+                        firstMatch
+                    )
+                }
+                ?.let { return it }
+        }
+
+        getFirstSameScript(firstMatch)?.let { return it }
+
+        return get("en-US") ?: get("en") ?: values.firstOrNull()
+    }
+
+    private tailrec fun <T> Map<String, T>.getInRankingOrder(
+        locale: Locale,
+        rank: Int,
+        script: String?,
+        tried: Int,
+    ): T? {
+        if (rank <= 0) return null
+        if (rank != tried) {
+            getRankingTag(locale, rank, script)?.let { tag -> get(tag) }?.let { return it }
+        }
+        return getInRankingOrder(locale, rank - 1, script, tried)
+    }
+
+    private fun <T> Map<String, T>.getFirstSameScript(locale: Locale): T? {
+        val langLen = locale.language.length
+        for ((key, value) in entries) {
+            if (key.length > langLen &&
+                key.startsWith(locale.language) &&
+                key[langLen] == '-' &&
+                LocaleListCompat.matchesLanguageAndScript(Locale.forLanguageTag(key), locale)
+            ) {
+                return value
+            }
+        }
+        return null
+    }
+
+    private fun getRankingTag(locale: Locale, rank: Int, script: String?): String? {
+        if (rank >= 2 && locale.country.isNullOrEmpty()) return null
+        if (rank != 2 && script.isNullOrEmpty()) return null
+        return when (rank) {
+            3 -> "${locale.language}-$script-${locale.country}"
+            2 -> {
+                val ok = script.isNullOrEmpty() ||
+                    script.equals(
+                        ICUCompat.maximizeAndGetScript(localeOf(locale.language, locale.country)),
+                        ignoreCase = true
+                    )
+                if (ok) "${locale.language}-${locale.country}" else null
+            }
+
+            1 -> "${locale.language}-$script"
+            else -> null
+        }
+    }
+
+    @SuppressLint("NewApi")
+    private fun localeOf(language: String, country: String = ""): Locale =
+        if (Build.VERSION.SDK_INT >= 36) {
+            Locale.of(language, country)
+        } else {
+            @Suppress("DEPRECATION")
+            Locale(language, country)
+        }
 }
