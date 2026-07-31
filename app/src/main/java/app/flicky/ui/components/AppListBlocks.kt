@@ -39,7 +39,7 @@ fun AppTexts(
         Text("Installed: $it", style = typography.bodySmall, color = colorScheme.onSurfaceVariant)
     }
     newLabel?.let {
-        Text("New: $it", style = typography.bodySmall, color = colorScheme.primary)
+        Text(it, style = typography.bodySmall, color = colorScheme.primary)
     }
     Text(summary, style = typography.bodySmall, color = colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
 }
