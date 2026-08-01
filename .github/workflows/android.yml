@@ -18,12 +18,16 @@ on:
       #   default: 'alpha'
       #   type: choice
       #   options: [internal, alpha, beta, production]
-      # bump_type:
-      #   description: 'Ver bump type'
-      #   required: true
-      #   default: 'patch'
-      #   type: choice
-      #   options: [patch, minor, major]
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - none
+          - patch
+          - minor
+          - major
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,7 +40,7 @@ jobs:
       app-name: Flicky
       app-slug: flicky
       application-id: app.flicky
-      auto-bump-version: true
+      bump-type: ${{ inputs.bump_type }}
       # play-track: ${{ inputs.play_track || 'alpha' }}
     secrets:
       KEYSTORE: ${{ secrets.KEYSTORE }}
