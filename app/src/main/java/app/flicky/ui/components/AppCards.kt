@@ -41,6 +41,7 @@ import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.helper.DeviceUtils
+import app.flicky.helper.RequestFocusOnKey
 import app.flicky.helper.rememberDebouncedFocusState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -192,15 +193,20 @@ fun TVAppCard(
 
     val shape = RoundedCornerShape(16.dp)
     val (focused, setFocused) = rememberDebouncedFocusState()
+    val focusRequester = remember { FocusRequester() }
 
     val colors = colorScheme
+
+    RequestFocusOnKey(
+        key = app.packageName,
+        focusRequester = focusRequester,
+        enabled = autofocus,
+    )
 
     ElevatedCard(
         shape = shape,
         modifier = Modifier
             .scale(if (focused) 1.05f else 1f)
-            .focusRequester(remember { FocusRequester() })
-            .onFocusChanged { setFocused(it.isFocused) }
             .fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(
             containerColor = if (focused) colorScheme.primaryContainer else colorScheme.surfaceContainer,
@@ -211,6 +217,8 @@ fun TVAppCard(
             Modifier
                 .fillMaxWidth()
                 .clip(shape)
+                .focusRequester(focusRequester)
+                .onFocusChanged { setFocused(it.isFocused || it.hasFocus) }
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick)
         ) {
             Column(Modifier.padding(16.dp)) {

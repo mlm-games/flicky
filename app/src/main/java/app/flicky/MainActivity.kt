@@ -113,6 +113,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            fun contentKeyForFocus(): Any {
+                return when (val top = backStack.lastOrNull()) {
+                    is NavScreen.Detail -> "detail:${top.pkg}"
+                    is NavScreen.Categories -> "categories:${top.selected}"
+                    is NavScreen.AuthorList -> "author:${top.authorName}"
+                    is NavScreen.Browse -> "browse"
+                    is NavScreen.Updates -> "updates"
+                    is NavScreen.Favorites -> "favorites"
+                    is NavScreen.Settings -> "settings"
+                    else -> top?.toString() ?: "root"
+                }
+            }
+
             fun switchTab(index: Int) {
                 while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
 
@@ -154,6 +167,7 @@ class MainActivity : ComponentActivity() {
                     if (isTV) {
                         TvMainScreen(
                             selectedIndex = selectedIndexForTop(),
+                            contentKey = contentKeyForFocus(),
                             onSelect = ::switchTab,
                             content = content
                         )

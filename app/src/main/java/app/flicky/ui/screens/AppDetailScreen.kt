@@ -68,6 +68,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -95,6 +97,9 @@ import app.flicky.data.remote.PlexusApp
 import app.flicky.data.remote.PlexusBadge
 import app.flicky.data.remote.PlexusRepository
 import app.flicky.data.remote.PlexusScore
+import app.flicky.helper.DeviceUtils
+import app.flicky.helper.RequestFocusOnKey
+import app.flicky.helper.TvFocusConfig
 import app.flicky.helper.openUrl
 import app.flicky.helper.shareText
 import app.flicky.install.TaskStage
@@ -505,6 +510,9 @@ private fun AppHeader(
     onOpenAuthor: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isTv = DeviceUtils.isTV(LocalContext.current)
+    val primaryFocus = remember { FocusRequester() }
+
     Column(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
@@ -544,6 +552,14 @@ private fun AppHeader(
         val showBar =
             stage != null && stage !is TaskStage.Finished && stage !is TaskStage.Cancelled && progressValue >= 0f
 
+        // Prefer primary CTA over sidebar AND over top-bar Favorite/Share
+        RequestFocusOnKey(
+            key = listOf(app.packageName, installedVersionCode, showBar),
+            focusRequester = primaryFocus,
+            enabled = isTv,
+            delayMs = TvFocusConfig.PRIMARY_FOCUS_DELAY,
+        )
+
         val animatedProgress by animateFloatAsState(
             targetValue = progressValue,
             label = "app_detail_install_progress"
@@ -575,7 +591,12 @@ private fun AppHeader(
             )
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = onCancel, Modifier.fillMaxWidth()) {
+                TextButton(
+                    onClick = onCancel,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(primaryFocus)
+                ) {
                     Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_cancel))
                     Spacer(Modifier.width(6.dp))
                     Text(stringResource(R.string.action_cancel))
@@ -595,7 +616,12 @@ private fun AppHeader(
                         Spacer(Modifier.width(8.dp))
                     }
 
-                    Button(onClick = onOpen, modifier = Modifier.weight(1f)) {
+                    Button(
+                        onClick = onOpen,
+                        modifier = Modifier
+                            .weight(1f)
+                            .focusRequester(primaryFocus)
+                    ) {
                         Text(stringResource(R.string.action_open))
                     }
                     Spacer(Modifier.width(8.dp))
@@ -604,7 +630,12 @@ private fun AppHeader(
                     }
                 }
             } else {
-                Button(onClick = onInstall, modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = onInstall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(primaryFocus)
+                ) {
                     Icon(
                         imageVector = Icons.Outlined.InstallDesktop,
                         contentDescription = stringResource(R.string.action_install)

@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
+import androidx.compose.foundation.focusGroup
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -26,6 +27,7 @@ fun TvNavigationSidebar(selected: Int, onSelect: (Int)->Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
+                .focusGroup()
         ) {
             Row(Modifier.padding(8.dp)) {
                 Icon(
