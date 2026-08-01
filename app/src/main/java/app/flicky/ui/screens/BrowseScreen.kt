@@ -67,9 +67,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -103,7 +100,6 @@ import app.flicky.ui.components.AdaptiveAppCard
 import app.flicky.ui.components.global.FlickyDialog
 import app.flicky.viewmodel.UiText
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -140,7 +136,6 @@ fun BrowseScreen(
     var showSortDialog by remember { mutableStateOf(false) }
     val s by settings.settingsFlow.collectAsState(initial = AppSettings())
 
-    val focusRequesters = remember { mutableMapOf<String, FocusRequester>() }
     var lastFocusedKey by rememberSaveable { mutableStateOf<String?>(null) }
 
     val scope = rememberCoroutineScope()
@@ -186,7 +181,15 @@ fun BrowseScreen(
                             isTv = isTv,
                             onImmediateChange = onSearchChange,
                             onCommit = onSearchChange,
+                            // (focus) hide nested mic on TV; show external one
+                            includeVoiceTrailing = !isTv,
+                            modifier = Modifier.weight(1f),
                         )
+                        if (isTv) {
+                            VoiceSearchButton(
+                                onResult = { onSearchChange(it) }
+                            )
+                        }
                     }
                 }
 
@@ -362,32 +365,15 @@ fun BrowseScreen(
                         ) { idx ->
                             apps[idx]?.let { app ->
                                 val key = app.packageName
-                                val focusRequester = focusRequesters.getOrPut(key) { remember { FocusRequester() } }
-
-                                Box(
-                                    modifier = Modifier
-                                        .focusRequester(focusRequester)
-                                        .onFocusChanged {
-                                            if (it.isFocused) lastFocusedKey = key
-                                        }
-                                ) {
-                                    AdaptiveAppCard(
-                                        app = app,
-                                        onClick = { onAppClick(app) },
-                                        onLongClick = { onShowInstallFrom(app) }
-                                    )
-                                }
-
-                                LaunchedEffect(key) {
-                                    if (lastFocusedKey == key) {
-                                        delay(50)
-                                        try {
-                                            focusRequester.requestFocus()
-                                        } catch (_: Exception) {
-                                            // Ignore if focus request fails
-                                        }
-                                    }
-                                }
+                                AdaptiveAppCard(
+                                    app = app,
+                                    autofocus = (lastFocusedKey == key),
+                                    onClick = {
+                                        lastFocusedKey = key
+                                        onAppClick(app)
+                                    },
+                                    onLongClick = { onShowInstallFrom(app) }
+                                )
                             }
                         }
                     }
@@ -590,7 +576,9 @@ private fun TvAwareDockedSearchBar(
     query: String,
     isTv: Boolean,
     onImmediateChange: (String) -> Unit,
-    onCommit: (String) -> Unit
+    onCommit: (String) -> Unit,
+    includeVoiceTrailing: Boolean = true,
+    modifier: Modifier = Modifier,
 ) {
     var localQuery by rememberSaveable { mutableStateOf(query) }
     LaunchedEffect(query) { if (query != localQuery) localQuery = query }
@@ -643,18 +631,24 @@ private fun TvAwareDockedSearchBar(
                     )
                 },
                 trailingIcon = {
-                    if (localQuery.isNotEmpty()) {
-                        IconButton(onClick = { localQuery = ""; onImmediateChange("") }) {
-                            Icon(
-                                Icons.Default.Clear,
-                                contentDescription = stringResource(R.string.action_clear),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    when {
+                        localQuery.isNotEmpty() -> {
+                            IconButton(onClick = { localQuery = ""; onImmediateChange("") }) {
+                                Icon(
+                                    Icons.Default.Clear,
+                                    contentDescription = stringResource(R.string.action_clear),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
-                    } else {
-                        VoiceSearchButton {
-                            localQuery = it
-                            onImmediateChange(it)
+
+                        includeVoiceTrailing -> {
+                            VoiceSearchButton(
+                                onResult = {
+                                    localQuery = it
+                                    onImmediateChange(it)
+                                }
+                            )
                         }
                     }
                 },
@@ -673,7 +667,8 @@ private fun TvAwareDockedSearchBar(
         },
         expanded = false,
         onExpandedChange = onActiveChange,
-        modifier = Modifier.fillMaxWidth(1f)
+        modifier = modifier
+            .fillMaxWidth()
             .onPreviewKeyEvent { e ->
                 when {
                     isTv && !active && e.type == KeyEventType.KeyDown && e.key in okKeys -> {
