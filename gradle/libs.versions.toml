@@ -30,7 +30,7 @@ datastorePreferencesCore = "1.2.1"
 uiText = "1.11.4"
 apkDist = "0.5.2"
 composeBom = "2026.09.00"
-kmpSettingsCore = "0.8.1"
+kmpSettingsCore = "0.8.3"
 
 koinBom = "4.2.2"
 navigation3Runtime = "1.1.5"
