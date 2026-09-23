@@ -1,6 +1,8 @@
 package app.flicky.work
 
 import android.content.Context
+import android.content.pm.PackageInstaller
+import android.os.Build
 import androidx.work.*
 import app.flicky.data.local.AppDatabase
 import app.flicky.data.model.FDroidApp
@@ -13,10 +15,13 @@ import app.flicky.data.repository.VariantSelector
 import app.flicky.install.Installer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.resume
 
 class AutoUpdateWorker(
     appContext: Context,
@@ -64,13 +69,34 @@ class AutoUpdateWorker(
                 app to chosen
             }
 
-            for ((app, chosen) in candidates) {
+            gentleDelay(candidates.map { it.first.packageName })
+            for ((_, chosen) in candidates) {
                 installer.install(chosen)
             }
             Result.success()
         } catch (e: Exception) {
             android.util.Log.e("AutoUpdateWorker", "Auto update failed", e)
             Result.retry()
+        }
+    }
+
+    private suspend fun gentleDelay(packageNames: List<String>) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || packageNames.isEmpty()) {
+            return
+        }
+        try {
+            val pi = applicationContext.packageManager.packageInstaller
+            val constraints = PackageInstaller.InstallConstraints.GENTLE_UPDATE
+            val satisfied = suspendCancellableCoroutine { cont ->
+                val executor = Executor { it.run() }
+                pi.checkInstallConstraints(packageNames, constraints, executor) { result ->
+                    cont.resume(result.areAllConstraintsSatisfied())
+                }
+            }
+            if (!satisfied) {
+                android.util.Log.d("AutoUpdateWorker", "Gentle-update constraints not met, proceeding anyway")
+            }
+        } catch (_: Exception) {
         }
     }
 

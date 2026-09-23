@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.app.PendingIntent
 import android.content.*
+import android.content.pm.PackageInfo
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -30,6 +31,8 @@ import app.flicky.data.repository.VariantSelector
 import app.flicky.helper.DebugLog
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -45,6 +48,7 @@ import java.io.*
 import java.lang.reflect.Method
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.SSLHandshakeException
 import kotlin.coroutines.resume
 
@@ -73,6 +77,8 @@ class Installer(
     private val cancelFlags = ConcurrentHashMap<String, Boolean>()
     private val activeCalls = ConcurrentHashMap<String, Call>()
     private val activeProcs = ConcurrentHashMap<String, Process>()
+    private val sessionMutex = Mutex()
+    private val sessionsCleaned = AtomicBoolean(false)
 
     private val _tasks = MutableStateFlow<Map<String, TaskStage>>(emptyMap())
     val tasks: StateFlow<Map<String, TaskStage>> = _tasks.asStateFlow()
@@ -99,7 +105,19 @@ class Installer(
         _errors.update { it - pkg }
     }
 
-    init { cleanOldCache() }
+    init {
+        cleanOldCache()
+        scope.launch {
+            if (sessionsCleaned.compareAndSet(false, true)) {
+                val pi = context.packageManager.packageInstaller
+                var cleaned = 0
+                runCatching { pi.mySessions }.getOrDefault(emptyList()).forEach { info ->
+                    if (runCatching { pi.abandonSession(info.sessionId) }.isSuccess) cleaned++
+                }
+                if (cleaned > 0) DebugLog.log("Installer", "Abandoned $cleaned stale sessions on startup")
+            }
+        }
+    }
 
     fun open(packageName: String) {
         context.packageManager.getLaunchIntentForPackage(packageName)?.let {
@@ -345,11 +363,11 @@ class Installer(
     ): InstallSessionResult {
         return when (mode) {
             0 -> InstallSessionResult(installSystem(file, packageName))
-            1 -> InstallSessionResult(installSessionFromFile(file, packageName, sha256))
+            1 -> InstallSessionResult(sessionMutex.withLock { installSessionFromFile(file, packageName, sha256) })
             2 -> InstallSessionResult(installRootStream(file, packageName))
             3 -> InstallSessionResult(installShizukuStream(file, packageName))
             4 -> InstallSessionResult(installAppManager(file, packageName))
-            5 -> InstallSessionResult(installDhizukuSessionFromFile(file, packageName, sha256))
+            5 -> InstallSessionResult(sessionMutex.withLock { installDhizukuSessionFromFile(file, packageName, sha256) })
             else -> InstallSessionResult(installSystem(file, packageName))
         }
     }
@@ -851,6 +869,8 @@ class Installer(
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
             .apply {
                 setAppPackageName(packageName)
+                setSize(file.length().coerceAtLeast(1L))
+                setInstallLocation(PackageInfo.INSTALL_LOCATION_AUTO)
                 if (Build.VERSION.SDK_INT >= 26) {
                     setInstallReason(PackageManager.INSTALL_REASON_USER)
                 }
@@ -864,70 +884,100 @@ class Installer(
 
         tweakParams(params)
 
-        val sessionId = pm.createSession(params)
-        val session = pm.openSession(sessionId)
-        val total = file.length().coerceAtLeast(1L)
-        withContext(Dispatchers.IO) {
-            FileInputStream(file).use { fis ->
-                session.openWrite("base.apk", 0, -1).use { out ->
-                    val buf = ByteArray(STREAM_BUF)
-                    var written = 0L
-                    var r = fis.read(buf)
-                    while (r != -1) {
-                        if (isCancelled(packageName)) {
-                            runCatching { out.flush() }
-                            session.abandon()
-                            emitStage(packageName, TaskStage.Cancelled)
-                            return@use false
-                        }
-                        out.write(buf, 0, r)
-                        written += r
-                        emitStage(
-                            packageName,
-                            TaskStage.Installing(
-                                (written.toFloat() / total.toFloat()).coerceIn(
-                                    0f,
-                                    1f
-                                )
-                            )
-                        )
-                        r = fis.read(buf)
-                    }
-                    session.fsync(out)
-                }
+        val sessionId = try {
+            pm.createSession(params)
+        } catch (e: IllegalStateException) {
+            DebugLog.log("Installer", "createSession failed (${e.message}), cleaning stale sessions and retrying once")
+            var cleaned = 0
+            runCatching { pm.mySessions }.getOrDefault(emptyList()).forEach { info ->
+                if (runCatching { pm.abandonSession(info.sessionId) }.isSuccess) cleaned++
+            }
+            try {
+                pm.createSession(params)
+            } catch (e2: IllegalStateException) {
+                DebugLog.log("Installer", "createSession still failing after cleaning $cleaned sessions")
+                setError(packageName, "Too many pending installs. Restart Flicky and try again.")
+                return false
             }
         }
-        val result = CompletableDeferred<InstallEvent>()
-        val waitJob = CoroutineScope(Dispatchers.Default).launch {
-            val evt = SessionInstallBus.events.first { it.sessionId == sessionId }
-            result.complete(evt)
-        }
-
-        val intent = Intent(context, InstallResultReceiver::class.java)
-        val pendingFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-        else PendingIntent.FLAG_UPDATE_CURRENT
-
-        val pending = PendingIntent.getBroadcast(context, sessionId, intent, pendingFlags)
-
+        val sess = pm.openSession(sessionId)
         try {
-            session.commit(pending.intentSender)
-            session.close()
-        } catch (e: Exception) {
-            DebugLog.log("Installer", "Session commit() unexpected error: ${e.message}")
-            runCatching { session.abandon() }
-            waitJob.cancel()
-        }
+            val total = file.length().coerceAtLeast(1L)
+            val writeOk = withContext(Dispatchers.IO) {
+                FileInputStream(file).use { fis ->
+                    sess.openWrite("base.apk", 0, -1).use { out ->
+                        val buf = ByteArray(STREAM_BUF)
+                        var written = 0L
+                        var r = fis.read(buf)
+                        while (r != -1) {
+                            if (isCancelled(packageName)) {
+                                runCatching { out.flush() }
+                                return@withContext false
+                            }
+                            out.write(buf, 0, r)
+                            written += r
+                            emitStage(
+                                packageName,
+                                TaskStage.Installing(
+                                    (written.toFloat() / total.toFloat()).coerceIn(
+                                        0f,
+                                        1f
+                                    )
+                                )
+                            )
+                            r = fis.read(buf)
+                        }
+                        sess.fsync(out)
+                    }
+                }
+                true
+            }
+            if (!writeOk || isCancelled(packageName)) {
+                runCatching { sess.abandon() }
+                emitStage(packageName, TaskStage.Cancelled)
+                return false
+            }
+            val result = CompletableDeferred<InstallEvent>()
+            val waitJob = CoroutineScope(Dispatchers.Default).launch {
+                val evt = SessionInstallBus.events.first { it.sessionId == sessionId }
+                result.complete(evt)
+            }
 
-        val evt = try { withTimeout(180_000) { result.await() } } finally { waitJob.cancel() }
+            val intent = Intent(context, InstallResultReceiver::class.java)
+            val pendingFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            else PendingIntent.FLAG_UPDATE_CURRENT
 
-        return if (evt.status == PackageInstaller.STATUS_SUCCESS) {
-            clearError(packageName)
-            true
-        } else {
-            val msg = friendlyFromPackageInstaller(evt.status, evt.message, evt.otherPackage)
-            setError(packageName, msg)
-            false
+            val pending = PendingIntent.getBroadcast(context, sessionId, intent, pendingFlags)
+
+            try {
+                sess.commit(pending.intentSender)
+            } catch (e: Exception) {
+                DebugLog.log("Installer", "Session commit() unexpected error: ${e.message}")
+                runCatching { sess.abandon() }
+                waitJob.cancel()
+                return false
+            }
+
+            val evt = try { withTimeout(180_000) { result.await() } } finally { waitJob.cancel() }
+
+            if (evt.status == PackageInstaller.STATUS_FAILURE_ABORTED &&
+                (evt.message?.contains("INSTALL_FAILED_VERIFICATION_FAILURE") == true)
+            ) {
+                DebugLog.log("Installer", "Verification failure for $packageName, trying legacy install")
+                return installSystem(file, packageName)
+            }
+
+            return if (evt.status == PackageInstaller.STATUS_SUCCESS) {
+                clearError(packageName)
+                true
+            } else {
+                val msg = friendlyFromPackageInstaller(evt.status, evt.message, evt.otherPackage)
+                setError(packageName, msg)
+                false
+            }
+        } finally {
+            runCatching { sess.close() }
         }
     }
 
@@ -936,9 +986,21 @@ class Installer(
         packageName: String,
         expectedSha256: String = "",
     ): Boolean = installSessionFromFileInternal(file, packageName, expectedSha256) { params ->
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && canDoUnattendedUpdate(packageName)) {
             params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
         }
+    }
+
+    private fun canDoUnattendedUpdate(packageName: String): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return false
+        val installed = runCatching {
+            context.packageManager.getInstallSourceInfo(packageName)
+        }.getOrNull() ?: return false
+        val ours = context.packageName
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+            installed.updateOwnerPackageName == ours
+        ) return true
+        return installed.installingPackageName == ours
     }
 
     private suspend fun installRootStream(file: File, packageName: String): Boolean {
@@ -1053,7 +1115,7 @@ class Installer(
             packageName = packageName,
             expectedSha256 = expectedSha256
         ) { params ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && canDoUnattendedUpdate(packageName)) {
                 params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
             }
         }

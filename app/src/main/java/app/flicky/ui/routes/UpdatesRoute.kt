@@ -74,9 +74,10 @@ fun UpdatesRoute(
 
                 batchUpdateJob = scope.launch {
                     val installerMode = runCatching { settings.settingsFlow.first().installerMode }.getOrDefault(0)
+                    // forgot the test... keeping 2 to avoid ROM-specific races.
                     val parallelism = when (installerMode) {
-                        2, 3 -> 3 // Test
-                        else -> 10 // Certain roms might have problems with parallel root installs
+                        2, 3 -> 2
+                        else -> 1
                     }
                     Log.d("UpdatesRoute", "Starting batch update with parallelism: $parallelism")
 
