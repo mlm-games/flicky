@@ -961,6 +961,45 @@ class Installer(
 
             val evt = try { withTimeout(180_000) { result.await() } } finally { waitJob.cancel() }
 
+            if (evt.status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
+                val confirm = evt.confirmIntent ?: run {
+                    DebugLog.log("Installer", "User action required but no confirm intent for $packageName")
+                    emitStage(packageName, TaskStage.Finished(false))
+                    return false
+                }
+                emitStage(packageName, TaskStage.NeedsConfirmation(confirm))
+                val finalEvt = try {
+                    withTimeout(300_000L) {
+                        SessionInstallBus.events.first {
+                            it.sessionId == sessionId && it.status != PackageInstaller.STATUS_PENDING_USER_ACTION
+                        }
+                    }
+                } catch (_: TimeoutCancellationException) {
+                    DebugLog.log("Installer", "Timed out waiting for user confirmation for $packageName")
+                    emitStage(packageName, TaskStage.Finished(false))
+                    return false
+                }
+                if (finalEvt.status == PackageInstaller.STATUS_SUCCESS) {
+                    clearError(packageName)
+                    emitStage(packageName, TaskStage.Finished(true))
+                    return true
+                }
+                if (finalEvt.status == PackageInstaller.STATUS_FAILURE_ABORTED &&
+                    (finalEvt.message?.contains("INSTALL_FAILED_VERIFICATION_FAILURE") == true)
+                ) {
+                    DebugLog.log("Installer", "Verification failure for $packageName, trying legacy install")
+                    return installSystem(file, packageName)
+                }
+                if (isUserCancelled(finalEvt.status)) {
+                    emitStage(packageName, TaskStage.Cancelled)
+                    return false
+                }
+                val msg = friendlyFromPackageInstaller(finalEvt.status, finalEvt.message, finalEvt.otherPackage)
+                setError(packageName, msg)
+                emitStage(packageName, TaskStage.Finished(false))
+                return false
+            }
+
             if (evt.status == PackageInstaller.STATUS_FAILURE_ABORTED &&
                 (evt.message?.contains("INSTALL_FAILED_VERIFICATION_FAILURE") == true)
             ) {
@@ -971,6 +1010,9 @@ class Installer(
             return if (evt.status == PackageInstaller.STATUS_SUCCESS) {
                 clearError(packageName)
                 true
+            } else if (isUserCancelled(evt.status)) {
+                emitStage(packageName, TaskStage.Cancelled)
+                false
             } else {
                 val msg = friendlyFromPackageInstaller(evt.status, evt.message, evt.otherPackage)
                 setError(packageName, msg)
@@ -1002,6 +1044,9 @@ class Installer(
         ) return true
         return installed.installingPackageName == ours
     }
+
+    private fun isUserCancelled(status: Int): Boolean =
+        status == PackageInstaller.STATUS_FAILURE_ABORTED
 
     private suspend fun installRootStream(file: File, packageName: String): Boolean {
         val size = file.length().coerceAtLeast(1L)

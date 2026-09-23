@@ -1,5 +1,6 @@
 package app.flicky.install
 
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -20,9 +21,16 @@ class InstallResultReceiver : BroadcastReceiver() {
             } else {
                 @Suppress("DEPRECATION") intent.getParcelableExtra(Intent.EXTRA_INTENT)
             }
-            if (confirm != null) {
-                confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(confirm)
+            val pending = confirm?.let {
+                PendingIntent.getActivity(
+                    context,
+                    sessionId,
+                    it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+            }
+            CoroutineScope(Dispatchers.Default).launch {
+                SessionInstallBus.publish(InstallEvent(sessionId, status, confirmIntent = pending))
             }
             return
         }

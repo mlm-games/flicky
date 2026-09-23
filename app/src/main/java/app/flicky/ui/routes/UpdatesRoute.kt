@@ -2,6 +2,7 @@ package app.flicky.ui.routes
 
 import android.util.Log
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.install.Installer
@@ -17,6 +18,8 @@ import org.koin.compose.koinInject
 interface UpdatesActions {
     fun updateAll()
     fun updateOne(app: FDroidApp)
+    fun confirmOne(packageName: String)
+    fun cancelOne(packageName: String)
     fun openDetails(app: FDroidApp)
     fun ignoreThisVersion(packageName: String, versionCode: Long)
     fun ignoreAll(app: FDroidApp)
@@ -31,6 +34,7 @@ fun UpdatesRoute(
     settings: SettingsRepository = koinInject(),
     onOpenDetails: (String) -> Unit
 ) {
+    val context = LocalContext.current
     val ui by vm.ui.collectAsState()
     val scope = rememberCoroutineScope()
     val installerTasks by installer.tasks.collectAsState(initial = emptyMap())
@@ -53,6 +57,7 @@ fun UpdatesRoute(
                     is TaskStage.Downloading -> stage.progress * 0.33
                     is TaskStage.Verifying -> 0.33 + 0.33
                     is TaskStage.Installing -> 0.66 + stage.progress * 0.34
+                    is TaskStage.NeedsConfirmation -> 0.66
                     is TaskStage.Finished if stage.success -> 1.0
                     else -> 0.0
                 }
@@ -61,7 +66,7 @@ fun UpdatesRoute(
         }
     }
 
-    val actions = remember(vm, installer, isBatchUpdating) {
+    val actions = remember(vm, installer, settings, context, isBatchUpdating) {
         object : UpdatesActions {
             override fun updateAll() {
                 if (isBatchUpdating) return
@@ -99,11 +104,24 @@ fun UpdatesRoute(
                                             } else {
                                                 installer.install(app)
                                             }
-                                            // Wait for completion before starting the next one in this worker
-                                            withTimeoutOrNull(300_000L) {
+                                            // Wait for the terminal stage
+                                            withTimeoutOrNull(600_000L) {
                                                 installer.tasks.first { tasks ->
                                                     val stage = tasks[app.packageName]
-                                                    stage is TaskStage.Finished || stage is TaskStage.Cancelled || stage == null
+                                                    when {
+                                                        stage == null -> false
+                                                        stage is TaskStage.NeedsConfirmation -> {
+                                                            runCatching {
+                                                                stage.intent.send()
+                                                            }.onFailure {
+                                                                installer.cancel(app.packageName)
+                                                            }
+                                                            false
+                                                        }
+                                                        stage is TaskStage.Finished ||
+                                                                stage is TaskStage.Cancelled -> true
+                                                        else -> false
+                                                    }
                                                 }
                                             }
                                         } catch (e: CancellationException) {
@@ -138,6 +156,17 @@ fun UpdatesRoute(
                         Log.e("UpdatesRoute", "Failed to update ${app.packageName}", e)
                     }
                 }
+            }
+
+            override fun confirmOne(packageName: String) {
+                val stage = installerTasks[packageName]
+                if (stage is TaskStage.NeedsConfirmation) {
+                    runCatching { stage.intent.send() }
+                }
+            }
+
+            override fun cancelOne(packageName: String) {
+                installer.cancel(packageName)
             }
 
             override fun openDetails(app: FDroidApp) = onOpenDetails(app.packageName)

@@ -401,6 +401,7 @@ private fun UpdateCard(
                     is TaskStage.Downloading -> stage.progress
                     is TaskStage.Verifying -> 0.995f
                     is TaskStage.Installing -> stage.progress
+                    is TaskStage.NeedsConfirmation -> 1f
                     else -> 0f
                 }
 
@@ -424,6 +425,7 @@ private fun UpdateCard(
                     is TaskStage.Downloading -> "Downloading ${(animatedProgress * 100).toInt()}%"
                     is TaskStage.Verifying -> "Verifying"
                     is TaskStage.Installing -> "Installing ${(animatedProgress * 100).toInt()}%"
+                    is TaskStage.NeedsConfirmation -> "Tap Confirm to install"
                     is TaskStage.Finished -> if (stage.success) "Completed" else "Failed"
                     is TaskStage.Cancelled -> "Cancelled"
                     else -> ""
@@ -434,6 +436,31 @@ private fun UpdateCard(
                     style = typography.labelSmall,
                     color = colorScheme.onSurfaceVariant
                 )
+
+                if (stage is TaskStage.NeedsConfirmation) {
+                    Spacer(Modifier.height(4.dp))
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { actions.confirmOne(app.packageName) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .focusProperties { canFocus = true }
+                        ) {
+                            Text(stringResource(R.string.action_install))
+                        }
+                        OutlinedButton(
+                            onClick = { actions.cancelOne(app.packageName) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .focusProperties { canFocus = true }
+                        ) {
+                            Text(stringResource(R.string.action_cancel))
+                        }
+                    }
+                }
             } else if (!isIgnored) {
                 Button(
                     onClick = { actions.updateOne(app) },
