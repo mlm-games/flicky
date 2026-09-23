@@ -1,3 +1,21 @@
+## v4.5.3
+
+- Installer bug fixes
+- chore(deps): bump the gradle-dependencies group with 4 updates
+- chore(deps): bump com.android.application
+- chore(deps): bump the gradle-dependencies group with 3 updates
+- chore(deps): bump the gradle-dependencies group with 9 updates
+- chore(deps): bump the gradle-dependencies group with 3 updates
+- chore(deps): bump com.android.application
+- chore(deps): bump the gradle-dependencies group with 3 updates
+- chore(deps): bump the gradle-dependencies group with 2 updates
+- chore(deps): bump com.squareup.okhttp3:okhttp
+- chore(deps): bump the gradle-dependencies group with 5 updates
+- chore(deps): bump gradle-wrapper in the gradle-dependencies group
+- chore(deps): bump com.google.devtools.ksp
+- chore(deps): bump the gradle-dependencies group with 4 updates
+
+
 ## v4.4.3
 
 - unattended (bg) auto-updates
