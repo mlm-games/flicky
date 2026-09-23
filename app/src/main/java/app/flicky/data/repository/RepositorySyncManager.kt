@@ -168,6 +168,10 @@ class RepositorySyncManager(
                             if (showDebug) DebugLog.log(TAG, "${repo.name} not modified")
                         }
                     }
+                } catch (e: app.flicky.data.remote.IndexVerificationException) {
+                    val errorMsg = "Index signature rejected: ${e.message}"
+                    repoErrors.add(repo.name to errorMsg)
+                    DebugLog.log(TAG, "${repo.name} -> $errorMsg")
                 } catch (e: Exception) {
                     val errorMsg = e.message ?: "Unknown error"
                     repoErrors.add(repo.name to errorMsg)

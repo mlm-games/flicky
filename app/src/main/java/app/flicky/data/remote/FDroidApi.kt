@@ -21,15 +21,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.Response
-import okhttp3.internal.closeQuietly
 import java.io.InputStreamReader
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import java.util.zip.ZipInputStream
 
 class FDroidApi(
-    context: android.content.Context,
+    private val context: android.content.Context,
     private val clientProvider: HttpClientProvider,
     private val settings: SettingsRepository,
     private val mirrorPolicyProvider: MirrorPolicyProvider,
@@ -41,12 +38,22 @@ class FDroidApi(
         private const val MAX_RETRIES = 2
         private const val RETRY_BACKOFF_MS = 1200L
 
-        // v1/v0 assets
         private const val INDEX_V1_JAR = "index-v1.jar"
-        private const val INDEX_V1_JSON = "index-v1.json"
         private const val INDEX_V0_JAR = "index.jar"
-        private const val INDEX_V0_XML = "index.xml"
         private const val INDEX_V2_JSON = "index-v2.json"
+        private const val ENTRY_JAR = "entry.jar"
+        private const val MAX_ENTRY_JAR_BYTES = 64 * 1024L
+        private const val MAX_V1_JAR_BYTES = 128 * 1024 * 1024L
+
+        val knownRepoFingerprints: Map<String, String> = mapOf(
+            "https://f-droid.org/repo" to "43238d512c1e5eb2d6569f4a3afbf5523418b82e0a3ed1552770abb9a9c9ccab",
+            "https://f-droid.org/archive" to "43238d512c1e5eb2d6569f4a3afbf5523418b82e0a3ed1552770abb9a9c9ccab",
+            "https://apt.izzysoft.de/fdroid/repo" to "3bf0d6abfeae2f401707b6d966be743bf0eee49c2561b9ba39073711f628937a",
+            "https://archive.newpipe.net/fdroid/repo" to "e2402c78f9b97c6c89e97db914a2751fda1d02fe2039cc0897a462bdb57e7501",
+            "https://briarproject.org/fdroid/repo" to "1fb874bee7276d28ecb2c9b06e8a122ec4bcb4008161436ce474c257cbf49bd6",
+            "https://guardianproject.info/fdroid/repo" to "b7c2eefd8dac7806af67dfcd92eb18126bc08312a7f2d6f3862e46013c7a6135",
+            "https://microg.org/fdroid/repo" to "9bd06727e62796c0130eb6dab39b73157451582cbd138e86c468acc395d14165",
+        )
     }
 
     // Fallback client (rarely used when provider throws)
@@ -65,6 +72,60 @@ class FDroidApi(
 
     data class RepoHeaders(val etag: String?, val lastModified: String?)
     data class FetchResult(val headers: RepoHeaders?, val modified: Boolean)
+
+    private fun buildBaseRequest(
+        url: String,
+        method: String,
+        force: Boolean,
+        previous: RepoHeaders
+    ): Request.Builder {
+        val b = Request.Builder()
+            .url(url)
+            .method(method, null)
+            .header(
+                "User-Agent",
+                "Flicky/${BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})"
+            )
+        if (!force) {
+            previous.etag?.let { b.header("If-None-Match", it) }
+            previous.lastModified?.let { b.header("If-Modified-Since", it) }
+        }
+        return b
+    }
+
+    private fun indexCacheDir(): java.io.File =
+        java.io.File(context.cacheDir, "index").apply { mkdirs() }
+
+    private fun cacheFileFor(baseUrl: String, name: String): java.io.File {
+        val safe = baseUrl.lowercase().let {
+            java.security.MessageDigest.getInstance("SHA-256")
+                .digest(it.toByteArray()).joinToString("") { b -> "%02x".format(b) }.take(16)
+        }
+        return java.io.File(indexCacheDir(), "$safe-$name")
+    }
+
+    private suspend fun expectedSignerFor(baseUrl: String): Pair<String?, String?> {
+        val norm = baseUrl.trim().trimEnd('/').lowercase()
+        val knownFp = knownRepoFingerprints[norm]
+        if (knownFp != null) return knownFp to null
+        val stored = runCatching { db.repositoryDao().get(baseUrl.trim().trimEnd('/')) }.getOrNull()
+        val fp = stored?.fingerprint?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
+        return fp to null
+    }
+
+    private suspend fun persistVerifiedSigner(baseUrl: String, fingerprint: String) {
+        val base = baseUrl.trim().trimEnd('/')
+        runCatching {
+            val existing = db.repositoryDao().get(base)
+            if (existing != null) {
+                db.repositoryDao().upsert(existing.copy(fingerprint = fingerprint.lowercase()))
+            } else {
+                db.repositoryDao().upsert(
+                    RepositoryEntity(baseUrl = base, fingerprint = fingerprint.lowercase())
+                )
+            }
+        }
+    }
 
     suspend fun fetchWithCache(
         repo: RepositoryInfo,
@@ -90,20 +151,8 @@ class FDroidApi(
             }
         }
 
-        fun baseRequest(url: String, method: String): Request.Builder {
-            val b = Request.Builder()
-                .url(url)
-                .method(method, null)
-                .header(
-                    "User-Agent",
-                    "Flicky/${BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})"
-                )
-            if (!force) {
-                previous.etag?.let { b.header("If-None-Match", it) }
-                previous.lastModified?.let { b.header("If-Modified-Since", it) }
-            }
-            return b
-        }
+        fun baseRequest(url: String, method: String): Request.Builder =
+            buildBaseRequest(url, method, force, previous)
 
         // Try HEAD for v2 (lightweight diff)
         if (!force && enableDifferential) {
@@ -132,7 +181,27 @@ class FDroidApi(
             }
         }
 
-        // Try index-v2.json first
+        // Signed path first: entry.jar -> verify -> fetch pinned index -> parse.
+        // Falls back to legacy unsigned index-v2.json, then signed index-v1.jar.
+        // Note: entry.jar verification throws IndexVerificationException on pin
+        // mismatch or rollback; that must abort the repo, not fall through.
+        val signed = try {
+            fetchSignedV2(
+                repo = repo,
+                baseUrl = baseUrl,
+                force = force,
+                previous = previous,
+                includeIncompatible = includeIncompatible,
+                onApp = onApp,
+                onVariant = onVariant,
+                client = { client() }
+            )
+        } catch (e: IndexVerificationException) {
+            throw e
+        }
+        if (signed != null) return@withContext signed
+
+        // Legacy unsigned fast path (compat for third-party repos without entry.jar)
         var attempt = 0
         var lastException: Exception? = null
         while (attempt <= MAX_RETRIES) {
@@ -151,7 +220,7 @@ class FDroidApi(
                         }
 
                         resp.isSuccessful -> {
-                            Log.d(TAG, "Parsing v2 index for ${repo.name}")
+                            Log.w(TAG, "Unsigned v2 index for ${repo.name} (no entry.jar); parsing without verification")
                             parseIndexV2(resp, baseUrl, repo.name, onApp, includeIncompatible, onVariant)
                             val etag = resp.header("ETag")
                             val lastMod = resp.header("Last-Modified")
@@ -206,8 +275,166 @@ class FDroidApi(
         null
     }
 
+    private suspend fun fetchSignedV2(
+        repo: RepositoryInfo,
+        baseUrl: String,
+        force: Boolean,
+        previous: RepoHeaders,
+        includeIncompatible: Boolean,
+        onApp: suspend (FDroidApp) -> Unit,
+        onVariant: (AppVariant) -> Unit,
+        client: suspend () -> OkHttpClient
+    ): FetchResult? {
+        val (expectedFp, expectedCert) = expectedSignerFor(baseUrl)
+        var entryCall: okhttp3.Call? = null
+        val jarBytes: ByteArray = try {
+            val req = buildBaseRequest("$baseUrl/$ENTRY_JAR", "GET", force, previous)
+                .header("Accept", "application/java-archive")
+                .build()
+            entryCall = client().newCall(req)
+            currentCall.set(entryCall)
+            entryCall.execute().use { resp ->
+                if (resp.code == 304) return null
+                if (!resp.isSuccessful || resp.body == null) {
+                    Log.d(TAG, "No entry.jar for ${repo.name} (${resp.code}); using legacy path")
+                    return null
+                }
+                IndexVerifier.readFullyCapped(resp.body, MAX_ENTRY_JAR_BYTES)
+            }
+        } catch (e: IndexVerificationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.d(TAG, "entry.jar fetch skipped for ${repo.name}: ${e.message}")
+            return null
+        } finally {
+            currentCall.compareAndSet(entryCall, null)
+        }
+
+        val tmpJar = java.io.File.createTempFile("entry-", ".jar", indexCacheDir())
+        try {
+            tmpJar.writeBytes(jarBytes)
+            val verified: VerifiedEntry
+            try {
+                verified = IndexVerifier.verifyEntryJar(tmpJar, expectedFp, expectedCert)
+            } catch (e: IndexVerificationException) {
+                val msg = (e.message ?: "").lowercase()
+                val soft = msg.contains("not signed") ||
+                    msg.contains("not found") ||
+                    msg.contains("no manifest") ||
+                    msg.contains("no signature") ||
+                    msg.contains("unsupported digest") ||
+                    msg.contains("too short") ||
+                    msg.contains("single signer") ||
+                    msg.contains("single certificate") ||
+                    msg.contains("not x.509") ||
+                    msg.contains("signature check failed") ||
+                    msg.contains("failed to verify")
+                if (soft && expectedFp == null && expectedCert == null) {
+                    Log.d(TAG, "entry.jar not usable for ${repo.name} (${e.message}); using legacy path")
+                    return null
+                }
+                Log.w(TAG, "entry.jar rejected for ${repo.name}: ${e.message}")
+                throw e
+            }
+
+            val stored = runCatching { db.repositoryDao().get(baseUrl) }.getOrNull()
+            val storedTs = stored?.timestamp ?: 0L
+            if (!force && storedTs > 0 && verified.timestamp < storedTs) {
+                Log.w(TAG, "entry.jar timestamp rollback for ${repo.name}: ${verified.timestamp} < $storedTs")
+                throw IndexVerificationException("Repo timestamp rollback for ${repo.name}")
+            }
+
+            persistVerifiedSigner(baseUrl, verified.fingerprint)
+
+            val cached = cacheFileFor(baseUrl, "index-v2.json")
+            if (!force && cached.exists()) {
+                val cachedDigest = runCatching { IndexVerifier.sha256Hex(cached) }.getOrNull()
+                if (cachedDigest != null && cachedDigest.equals(verified.indexSha256, ignoreCase = true)) {
+                    Log.d(TAG, "Signed index unchanged for ${repo.name} (sha256 match)")
+                    return FetchResult(null, modified = false)
+                }
+            }
+
+            val indexPath = verified.indexName.trim().trimStart('/')
+            var getCall: okhttp3.Call? = null
+            try {
+                val req = buildBaseRequest("$baseUrl/$indexPath", "GET", true, previous)
+                    .header("Accept", "application/json")
+                    .build()
+                getCall = client().newCall(req)
+                currentCall.set(getCall)
+                getCall.execute().use { resp ->
+                    if (!resp.isSuccessful || resp.body == null) {
+                        Log.w(TAG, "Signed index GET ${resp.code} for ${repo.name}")
+                        return null
+                    }
+                    IndexVerifier.streamToFile(
+                        resp.body,
+                        cached,
+                        expectedSha256 = verified.indexSha256,
+                        expectedSize = verified.indexSize
+                    )
+                }
+            } finally {
+                currentCall.compareAndSet(getCall, null)
+            }
+            parseIndexV2File(cached, baseUrl, repo.name, onApp, includeIncompatible, onVariant)
+            return FetchResult(null, modified = true)
+        } finally {
+            tmpJar.delete()
+        }
+    }
+
+    private suspend fun parseIndexV2File(
+        file: java.io.File,
+        baseUrl: String,
+        repoName: String,
+        onApp: suspend (FDroidApp) -> Unit,
+        includeIncompatible: Boolean = true,
+        onVariant: (AppVariant) -> Unit = {}
+    ) = withContext(Dispatchers.IO) {
+        var totalApps = 0
+        val batch = mutableListOf<FDroidApp>()
+        file.inputStream().bufferedReader(Charsets.UTF_8).use { br ->
+            JsonReader(br).use { reader ->
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    when (reader.nextName()) {
+                        "repo" -> parseRepoBlockV2(reader)
+                        "packages" -> {
+                            reader.beginObject()
+                            while (reader.hasNext()) {
+                                val packageName = reader.nextName()
+                                val app = parsePackageStreamingBest(
+                                    reader, packageName, baseUrl, repoName,
+                                    includeIncompatible, onVariant
+                                )
+                                if (app != null) {
+                                    batch.add(app)
+                                    totalApps++
+                                    if (batch.size >= BATCH_SIZE) {
+                                        batch.forEach { onApp(it) }
+                                        batch.clear()
+                                    }
+                                }
+                            }
+                            reader.endObject()
+                        }
+                        else -> reader.skipValue()
+                    }
+                }
+                reader.endObject()
+            }
+        }
+        if (batch.isNotEmpty()) {
+            batch.forEach { onApp(it) }
+            batch.clear()
+        }
+        Log.d(TAG, "Parsed $totalApps apps from $repoName (v2, verified)")
+    }
+
     private suspend fun parseIndexV2(
-        resp: Response,
+        resp: okhttp3.Response,
         baseUrl: String,
         repoName: String,
         onApp: suspend (FDroidApp) -> Unit,
@@ -317,16 +544,30 @@ class FDroidApi(
             val name = pickLocalized(nameLocalized) ?: ""
             val desc = pickLocalized(descLocalized) ?: ""
             runCatching {
+                val existing = db.repositoryDao().get(base)
                 val entity = RepositoryEntity(
                     baseUrl = base,
                     name = name,
                     description = desc,
                     webBaseUrl = webBaseUrl.orEmpty(),
                     timestamp = timestamp,
-                    fingerprint = "" // v2 has no jar signer fingerprint
+                    fingerprint = existing?.fingerprint.orEmpty()
                 )
                 db.repositoryDao().upsert(entity)
             }
+        }
+    }
+
+    private fun blockingParseIndexV1(
+        reader: JsonReader,
+        baseUrl: String,
+        repoName: String,
+        onApp: suspend (FDroidApp) -> Unit,
+        includeIncompatible: Boolean,
+        onVariant: (AppVariant) -> Unit
+    ) {
+        kotlinx.coroutines.runBlocking {
+            parseIndexV1Json(reader, baseUrl, repoName, onApp, includeIncompatible, onVariant)
         }
     }
 
@@ -340,6 +581,7 @@ class FDroidApi(
         onVariant: (AppVariant) -> Unit,
         client: OkHttpClient
     ): FetchResult? {
+        val (expectedFp, expectedCert) = expectedSignerFor(baseUrl)
         var call: okhttp3.Call? = null
         try {
             val req = Request.Builder()
@@ -363,54 +605,38 @@ class FDroidApi(
                     Log.d(TAG, "v1 JAR 304 Not Modified for $repoName")
                     return FetchResult(previous, modified = false)
                 }
-                if (!resp.isSuccessful) {
+                if (!resp.isSuccessful || resp.body == null) {
                     Log.w(TAG, "v1 JAR non-success ${resp.code} for $repoName")
                     return null
                 }
-                Log.d(TAG, "Parsing v1 index for $repoName")
-                parseIndexV1Zip(resp, baseUrl, repoName, onApp, includeIncompatible, onVariant)
+                Log.d(TAG, "Verifying v1 index for $repoName")
+                val jarBytes = IndexVerifier.readFullyCapped(resp.body, MAX_V1_JAR_BYTES)
+                try {
+                    val certHex = IndexVerifier.verifyV1JarStreaming(
+                        jarBytes, expectedFp, expectedCert
+                    ) { stream ->
+                        InputStreamReader(stream, Charsets.UTF_8).use { isr ->
+                            JsonReader(isr).use { reader ->
+                                blockingParseIndexV1(reader, baseUrl, repoName, onApp, includeIncompatible, onVariant)
+                            }
+                        }
+                    }
+                    persistVerifiedSigner(baseUrl, IndexVerifier.fingerprintFromCertificateHex(certHex))
+                } catch (e: IndexVerificationException) {
+                    Log.w(TAG, "index-v1.jar rejected for $repoName: ${e.message}")
+                    throw e
+                }
                 val etag = resp.header("ETag")
                 val lastMod = resp.header("Last-Modified")
                 return FetchResult(RepoHeaders(etag, lastMod), modified = true)
             }
+        } catch (e: IndexVerificationException) {
+            throw e
         } catch (e: Exception) {
             Log.w(TAG, "v1 fetch error for $repoName: ${e.message}")
             return null
         } finally {
             currentCall.compareAndSet(call, null)
-        }
-    }
-
-    private suspend fun parseIndexV1Zip(
-        resp: Response,
-        baseUrl: String,
-        repoName: String,
-        onApp: suspend (FDroidApp) -> Unit,
-        includeIncompatible: Boolean,
-        onVariant: (AppVariant) -> Unit
-    ) {
-        val body = resp.body
-        val zis = ZipInputStream(body.byteStream())
-        try {
-            var entry = zis.nextEntry
-            var parsed = false
-            while (entry != null) {
-                if (!entry.isDirectory && entry.name.endsWith(INDEX_V1_JSON)) {
-                    InputStreamReader(zis, Charsets.UTF_8).use { isr ->
-                        JsonReader(isr).use { reader ->
-                            parseIndexV1Json(reader, baseUrl, repoName, onApp, includeIncompatible, onVariant)
-                            parsed = true
-                        }
-                    }
-                    break
-                }
-                entry = zis.nextEntry
-            }
-            if (!parsed) Log.w(TAG, "v1 zip did not contain $INDEX_V1_JSON for $repoName")
-        } catch (e: Exception) {
-            Log.w(TAG, "v1 parse error: ${e.message}")
-        } finally {
-            zis.closeQuietly()
         }
     }
 
@@ -705,13 +931,14 @@ class FDroidApi(
             MirrorRegistry.register(base, listOf(base) + mirrors)
             runCatching { mirrorPolicyProvider.ensureDefault(base) }
             runCatching {
+                val existing = db.repositoryDao().get(base)
                 val entity = RepositoryEntity(
                     baseUrl = base,
                     name = name,
                     description = description,
                     webBaseUrl = "",
                     timestamp = timestamp,
-                    fingerprint = "" // v1 JAR signer not inspected here (kept minimal)
+                    fingerprint = existing?.fingerprint.orEmpty()
                 )
                 db.repositoryDao().upsert(entity)
             }
