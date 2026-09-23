@@ -1,10 +1,14 @@
 package app.flicky
 
 import android.app.Application
+import app.flicky.data.repository.ClearCacheAction
+import app.flicky.data.repository.SettingsActions
 import app.flicky.data.repository.SettingsRepository
+import app.flicky.data.repository.SupportDevelopmentAction
 import app.flicky.di.appModule
 import app.flicky.migration.PreferencesMigration
 import app.flicky.work.SyncScheduler
+import io.github.mlmgames.settings.core.actions.ActionRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -21,6 +25,13 @@ class FlickyApplication : Application() {
             androidContext(this@FlickyApplication)
             modules(appModule)
         }.koin
+
+        ActionRegistry.register(ClearCacheAction::class) {
+            koin.get<SettingsActions>().clearCache()
+        }
+        ActionRegistry.register(SupportDevelopmentAction::class) {
+            koin.get<SettingsActions>().openSupportDevelopment()
+        }
 
         CoroutineScope(Dispatchers.IO).launch {
             delay(500)

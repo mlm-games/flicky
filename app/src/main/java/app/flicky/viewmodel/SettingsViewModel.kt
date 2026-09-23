@@ -9,10 +9,10 @@ import app.flicky.R
 import app.flicky.data.local.AppDatabase
 import app.flicky.data.local.RepoConfig
 import app.flicky.data.model.RepositoryInfo
+import app.flicky.data.remote.ClientConfigurationException
 import app.flicky.data.remote.HttpClientProvider
 import app.flicky.data.remote.MirrorPolicyProvider
 import app.flicky.data.remote.MirrorRegistry
-import app.flicky.data.remote.ClientConfigurationException
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.RepoHeadersStore
 import app.flicky.data.repository.RepositorySyncManager
@@ -20,8 +20,11 @@ import app.flicky.data.repository.SettingsRepository
 import app.flicky.install.Installer
 import coil.Coil
 import coil.annotation.ExperimentalCoilApi
+import io.github.mlmgames.settings.core.actions.ActionRegistry
 import io.github.mlmgames.settings.core.backup.ExportResult
 import io.github.mlmgames.settings.core.backup.ImportResult
+import io.github.mlmgames.settings.core.annotations.SettingAction
+import kotlin.reflect.KClass
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -104,17 +107,11 @@ class SettingsViewModel(
         repo.deleteRepository(url)
     }
 
-    fun performAction(propertyName: String) = viewModelScope.launch {
-        when (propertyName) {
-            "clearCache" -> {
-                clearAllCaches()
-                _events.emit(UiEvent.Toast(R.string.cache_cleared))
-                runCatching { syncManager.syncAll(force = true) }
-            }
-            "exportSettings" -> _events.emit(UiEvent.RequestExport)
-            "supportDevelopment" -> _events.emit(UiEvent.OpenUrl("https://ko-fi.com/mlmgames"))
-            else -> _events.emit(UiEvent.Toast(R.string.no_action_attached))
-        }
+    suspend fun executeSettingAction(actionClass: KClass<out SettingAction>): Boolean =
+        ActionRegistry.execute(actionClass)
+
+    fun emitActionFromScreen(actionClass: KClass<out SettingAction>) = viewModelScope.launch {
+        executeSettingAction(actionClass)
     }
 
     fun resetRepositoriesToDefaults() = viewModelScope.launch {
@@ -197,8 +194,20 @@ class SettingsViewModel(
         candidates.map { cand -> probe(cand) }
     }
 
+    suspend fun emitToast(@androidx.annotation.StringRes messageResId: Int) {
+        _events.emit(UiEvent.Toast(messageResId))
+    }
+
+    suspend fun emitOpenUrl(url: String) {
+        _events.emit(UiEvent.OpenUrl(url))
+    }
+
+    suspend fun forceSync() {
+        runCatching { syncManager.syncAll(force = true) }
+    }
+
     @OptIn(ExperimentalCoilApi::class)
-    private suspend fun clearAllCaches() = withContext(Dispatchers.IO) {
+    suspend fun clearAllCaches() = withContext(Dispatchers.IO) {
         syncManager.cancelCurrentSync()
 
         db.withTransaction {

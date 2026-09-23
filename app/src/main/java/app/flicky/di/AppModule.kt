@@ -19,6 +19,8 @@ import app.flicky.data.repository.AppRepository
 import app.flicky.data.repository.InstalledAppsRepository
 import app.flicky.data.repository.RepoHeadersStore
 import app.flicky.data.repository.RepositorySyncManager
+import app.flicky.data.repository.SettingsActions
+import app.flicky.R
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.install.Installer
 import app.flicky.ui.components.snackbar.SnackbarManager
@@ -111,6 +113,21 @@ val appModule = module {
     }
 
     single<SnackbarManager> { SnackbarManager() }
+
+    single<SettingsActions> {
+        SettingsActions(
+            clearCache = {
+                val vm: SettingsViewModel = get()
+                vm.clearAllCaches()
+                vm.emitToast(R.string.cache_cleared)
+                runCatching { vm.forceSync() }
+            },
+            openSupportDevelopment = {
+                val vm: SettingsViewModel = get()
+                vm.emitOpenUrl("https://ko-fi.com/mlmgames")
+            }
+        )
+    }
 
     viewModel {
         BrowseViewModel(

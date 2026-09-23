@@ -1,11 +1,13 @@
 package app.flicky.data.repository
 
 import app.flicky.R
+import io.github.mlmgames.settings.core.annotations.ActionHandler
 import io.github.mlmgames.settings.core.annotations.CategoryDefinition
 import io.github.mlmgames.settings.core.annotations.NoReset
 import io.github.mlmgames.settings.core.annotations.Persisted
 import io.github.mlmgames.settings.core.annotations.SchemaVersion
 import io.github.mlmgames.settings.core.annotations.Setting
+import io.github.mlmgames.settings.core.annotations.SettingAction
 import io.github.mlmgames.settings.core.types.Button
 import io.github.mlmgames.settings.core.types.Dropdown
 import io.github.mlmgames.settings.core.types.TextInput
@@ -253,7 +255,8 @@ data class AppSettings(
         type = Button::class
     )
     @NoReset
-    val clearCache: Long = 0L,
+    @ActionHandler(ClearCacheAction::class)
+    val clearCache: Unit = Unit,
 
     @Setting(
         title = "Show Debug Info",
@@ -270,7 +273,8 @@ data class AppSettings(
         type = Button::class
     )
     @NoReset
-    val supportDevelopment: Long = 0L,
+    @ActionHandler(SupportDevelopmentAction::class)
+    val supportDevelopment: Unit = Unit,
 
     // Non-UI persisted
     @Persisted
@@ -316,3 +320,14 @@ object Other
 
 //@CategoryDefinition(order = 7, titleRes = R.string.category_about)
 //object About
+
+object ClearCacheAction : SettingAction
+object SupportDevelopmentAction : SettingAction
+
+class SettingsActions(
+    private val clearCache: suspend () -> Unit,
+    private val openSupportDevelopment: suspend () -> Unit
+) {
+    suspend fun clearCache() = clearCache.invoke()
+    suspend fun openSupportDevelopment() = openSupportDevelopment.invoke()
+}

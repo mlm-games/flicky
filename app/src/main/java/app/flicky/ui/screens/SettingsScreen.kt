@@ -449,10 +449,9 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                         buttonText = stringResource(R.string.run),
                                         enabled = enabled,
                                         onClick = {
-                                            vm.performAction(field.name)
-                                            val current = field.get(settings)
-                                            if (current is Long) {
-                                                vm.updateSetting(field.name, System.currentTimeMillis())
+                                            val actionClass = meta.actionClass
+                                            if (actionClass != null) {
+                                                vm.emitActionFromScreen(actionClass)
                                             }
                                         }
                                     )
