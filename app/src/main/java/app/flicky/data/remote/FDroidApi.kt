@@ -24,9 +24,11 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.closeQuietly
 import java.io.InputStreamReader
+import java.security.cert.CertificateException
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipInputStream
+import javax.net.ssl.SSLException
 
 class FDroidApi(
     context: android.content.Context,
@@ -166,6 +168,14 @@ class FDroidApi(
                 }
             } catch (e: Exception) {
                 lastException = e
+                if (isTrustFailure(e)) {
+                    Log.e(
+                        TAG,
+                        "TLS trust failure for ${repo.name}; this device's certificate store cannot " +
+                                "validate the repository. Not retrying. (${rootMessage(e)})"
+                    )
+                    break
+                }
                 Log.w(TAG, "v2 fetch error for ${repo.name} (attempt $attempt): ${e.message}")
                 if (attempt < MAX_RETRIES) {
                     attempt++
@@ -204,6 +214,27 @@ class FDroidApi(
 
         Log.e(TAG, "Failed to fetch ${repo.name}", lastException)
         null
+    }
+
+    private fun isTrustFailure(t: Throwable?): Boolean {
+        var cur = t
+        var depth = 0
+        while (cur != null && depth < 12) {
+            if (cur is SSLException || cur is CertificateException) return true
+            cur = cur.cause
+            depth++
+        }
+        return false
+    }
+
+    private fun rootMessage(t: Throwable?): String {
+        var cur = t
+        var depth = 0
+        while (cur != null && cur.cause != null && depth < 12) {
+            cur = cur.cause
+            depth++
+        }
+        return cur?.message ?: "unknown"
     }
 
     private suspend fun parseIndexV2(

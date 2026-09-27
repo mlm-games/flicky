@@ -363,13 +363,40 @@ class Installer(
     ): InstallSessionResult {
         return when (mode) {
             0 -> InstallSessionResult(installSystem(file, packageName))
-            1 -> InstallSessionResult(sessionMutex.withLock { installSessionFromFile(file, packageName, sha256) })
+            1 -> InstallSessionResult(sessionMutex.withLock { installViaSession(file, packageName, sha256) })
             2 -> InstallSessionResult(installRootStream(file, packageName))
             3 -> InstallSessionResult(installShizukuStream(file, packageName))
             4 -> InstallSessionResult(installAppManager(file, packageName))
-            5 -> InstallSessionResult(sessionMutex.withLock { installDhizukuSessionFromFile(file, packageName, sha256) })
+            5 -> InstallSessionResult(sessionMutex.withLock { installViaDhizukuSession(file, packageName, sha256) })
             else -> InstallSessionResult(installSystem(file, packageName))
         }
+    }
+
+    private val sessionCommitSupported: Boolean
+        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+
+    private suspend fun installViaSession(
+        file: File,
+        packageName: String,
+        sha256: String
+    ): Boolean {
+        if (!sessionCommitSupported) {
+            DebugLog.log("Installer", "Session commit unsupported below API 26; using system installer")
+            return installSystem(file, packageName)
+        }
+        return installSessionFromFile(file, packageName, sha256)
+    }
+
+    private suspend fun installViaDhizukuSession(
+        file: File,
+        packageName: String,
+        sha256: String
+    ): Boolean {
+        if (!sessionCommitSupported) {
+            DebugLog.log("Installer", "Dhizuku session unsupported below API 26; using system installer")
+            return installSystem(file, packageName)
+        }
+        return installDhizukuSessionFromFile(file, packageName, sha256)
     }
 
     private data class ResolvedApk(
