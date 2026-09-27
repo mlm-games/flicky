@@ -6,6 +6,9 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 10
     target-branch: "kotlin"
+    # 1.13+ needs minSdk 24
+    ignore:
+      - dependency-name: "androidx.compose:compose-bom-alpha"
     groups:
       gradle-dependencies:
         patterns: ["*"]
