@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Flicky</string>
-    <string name="app_description">F-Droid (ανεπίσημος) πελάτης για TV</string>
+    <string name="app_description">Μη επίσημο πελάτη F-Droid για τηλεόραση</string>
     <string name="nav_browse">Περιήγηση</string>
     <string name="nav_categories">Κατηγορίες</string>
     <string name="nav_updates">Ενημερώσεις</string>
@@ -31,14 +31,15 @@
     <string name="sync_complete">Ο συγχρονισμός ολοκληρώθηκε: %1$d εφαρμογές</string>
     <string name="sync_failed">Ο συγχρονισμός απέτυχε</string>
     <string name="no_apps_found">Δεν βρέθηκαν εφαρμογές</string>
-    <string name="try_different_search">Δοκιμάστε έναν διαφορετικό όρο αναζήτησης</string>
+    <string name="try_different_search">Δοκιμάστε διαφορετικό όρο αναζήτησης</string>
     <string name="force_sync">Εξαναγκασμένος συγχρονισμός</string>
-    <string name="clear_all_apps">Εκκαθάριση όλων των εφαρμογών</string>
+    <string name="clear_all_apps">Καθαρισμός όλων των εφαρμογών</string>
     <string name="sort_name">Όνομα</string>
-    <string name="sort_updated">Πρόσφατα ενημερωμένα</string>
+    <string name="sort_reverse">Αντίστροφη σειρά</string>
+    <string name="sort_updated">Πρόσφατα ενημερωμένες</string>
     <string name="sort_size">Μέγεθος</string>
-    <string name="sort_added">Πρόσφατα προστιθέμενα</string>
-    <string name="category_all">Όλα</string>
+    <string name="sort_added">Πρόσφατα προσθεμένες</string>
+    <string name="category_all">Όλες</string>
     <string name="category_count">%1$s (%2$d)</string>
     <string name="no_apps_in_category">Δεν υπάρχουν εφαρμογές σε αυτήν την κατηγορία</string>
     <string name="update_all">Ενημέρωση όλων (%1$d)</string>
@@ -54,8 +55,8 @@
     <string name="installing">Εγκατάσταση…</string>
     <string name="installing_progress">Εγκατάσταση… %1$d%%</string>
     <string name="installation_failed">Η εγκατάσταση απέτυχε</string>
-    <string name="install_failed_message">Σφάλμα εγκατάστασης: %1$s</string>
-    <string name="version_prefix">v%1$s</string>
+    <string name="install_failed_message">Η εγκατάσταση απέτυχε: %1$s</string>
+    <string name="version_prefix">έκδοση %1$s</string>
     <string name="version_code">Κωδικός έκδοσης</string>
     <string name="package_name">Πακέτο</string>
     <string name="updated">Ενημερώθηκε</string>
@@ -66,14 +67,14 @@
     <string name="screenshots">Στιγμιότυπα</string>
     <string name="info">Πληροφορίες</string>
     <string name="details">Λεπτομέρειες</string>
-    <string name="anti_features">Αντι-χαρακτηριστικά</string>
+    <string name="anti_features">Αντιχαρακτηριστικά</string>
     <string name="links">Σύνδεσμοι</string>
-    <string name="website">Ιστοσελίδα</string>
+    <string name="website">Ιστότοπος</string>
     <string name="source_code">Πηγαίος κώδικας</string>
     <string name="read_more">Διαβάστε περισσότερα</string>
     <string name="unknown">Άγνωστο</string>
-    <string name="installed_version">Εγκατεστημένο: %1$s</string>
-    <string name="new_version">Νέο: %1$s</string>
+    <string name="installed_version">Εγκατεστημένη: %1$s</string>
+    <string name="new_version">Νέα: %1$s</string>
     <string name="settings_general">Γενικά</string>
     <string name="settings_appearance">Εμφάνιση</string>
     <string name="settings_downloads">Λήψεις</string>
@@ -84,94 +85,239 @@
     <string name="repository_name">Όνομα</string>
     <string name="repository_url">URL</string>
     <string name="setting_default_sort">Προεπιλεγμένη ταξινόμηση</string>
-    <string name="setting_default_sort_desc">Προεπιλεγμένη ταξινόμηση για λίστες εφαρμογών</string>
+    <string name="setting_default_sort_desc">Προεπιλεγμένη ταξινόμηση της λίστας εφαρμογών</string>
     <string name="setting_theme">Θέμα</string>
     <string name="setting_dynamic_colors">Χρήση δυναμικών χρωμάτων</string>
     <string name="setting_dynamic_colors_desc">Χρήση χρωμάτων Material You (Android 12+)</string>
     <string name="setting_wifi_only">Ενημέρωση μόνο μέσω Wi-Fi</string>
     <string name="setting_sync_interval">Διάστημα συγχρονισμού</string>
-    <string name="setting_sync_interval_desc">Πόσο συχνά να συγχρονίζονται τα αποθετήρια</string>
+    <string name="setting_sync_interval_desc">Πόσο συχνά γίνεται συγχρονισμός των αποθετηρίων</string>
     <string name="setting_keep_cache">Διατήρηση προσωρινής μνήμης λήψεων</string>
-    <string name="setting_keep_cache_desc">Διατήρηση ληφθέντων APK για ταχύτερη επανεγκατάσταση</string>
+    <string name="setting_keep_cache_desc">Διατήρηση των ληφθέντων APK για ταχύτερη επανεγκατάσταση</string>
     <string name="setting_installer">Εγκαταστάτης</string>
-    <string name="setting_installer_desc">Επιλέξτε πώς εγκαθίστανται οι εφαρμογές</string>
-    <string name="setting_hide_anti">Απόκρυψη εφαρμογών με αντι-χαρακτηριστικά</string>
+    <string name="setting_installer_desc">Τρόπος εγκατάστασης των εφαρμογών</string>
+    <string name="setting_fallback_installer">Εφεδρικός εγκαταστάτης</string>
+    <string name="setting_fallback_installer_desc">Εγκαταστάτης που χρησιμοποιείται αν αποτύχει η κύρια μέθοδος</string>
+    <string name="installer_none">Κανένας</string>
+    <string name="installer_app_manager">Διαχειριστής εφαρμογών</string>
+    <string name="fallback_triggered">Ο κύριος εγκαταστάτης απέτυχε· χρησιμοποιείται %1$s</string>
+    <string name="setting_hide_anti">Απόκρυψη εφαρμογών με αντιχαρακτηριστικά</string>
     <string name="setting_show_incompatible">Εμφάνιση μη συμβατών εκδόσεων</string>
+    <string name="setting_ignore_unstable">Αγνόηση εκδόσεων άλφα/βήτα</string>
+    <string name="setting_ignore_unstable_desc">Απόκρυψη εκδόσεων άλφα και βήτα στις ενημερώσεις</string>
+    <string name="channel_beta">Βήτα</string>
+    <string name="channel_alpha">Άλφα</string>
+    <string name="version_suggested">Προτεινόμενη</string>
     <string name="setting_differential_sync">Διαφορικός συγχρονισμός</string>
-    <string name="setting_differential_sync_desc">Χρήση ελέγχων προσωρινής μνήμης HTTP για παράλειψη αμετάβλητων αποθετηρίων</string>
+    <string name="setting_differential_sync_desc">Χρήση ελέγχου προσωρινής μνήμης HTTP για παράλειψη αμετάβλητων αποθετηρίων</string>
     <string name="setting_preferred_repo">Προτιμώμενο αποθετήριο</string>
-    <string name="setting_preferred_repo_desc">Προεπιλεγμένη πηγή όταν μια εφαρμογή υπάρχει σε πολλαπλά αποθετήρια</string>
+    <string name="setting_preferred_repo_desc">Προεπιλεγμένη πηγή όταν μια εφαρμογή υπάρχει σε πολλά αποθετήρια</string>
     <string name="setting_clear_cache">Εκκαθάριση προσωρινής μνήμης</string>
-    <string name="setting_clear_cache_desc">Διαγραφή κεφαλίδων αποθετηρίου και επαναφορά του τελευταίου συγχρονισμού</string>
+    <string name="setting_clear_cache_desc">Διαγραφή κεφαλίδων αποθετηρίων και επαναφορά της τελευταίας συγχρονισμένης</string>
     <string name="theme_system">Σύστημα</string>
     <string name="theme_light">Φωτεινό</string>
-    <string name="theme_dark">Σκοτεινό</string>
+    <string name="theme_dark">Σκούρο</string>
     <string name="sync_3_hours">3 ώρες</string>
     <string name="sync_6_hours">6 ώρες</string>
     <string name="sync_12_hours">12 ώρες</string>
     <string name="sync_24_hours">24 ώρες</string>
-    <string name="sync_weekly">Εβδομαδιαίως</string>
+    <string name="sync_weekly">Εβδομαδιαία</string>
     <string name="sync_manual">Μόνο χειροκίνητα</string>
     <string name="installer_system">Σύστημα (προεπιλογή)</string>
-    <string name="installer_session">Συνεδρία (Πρόγραμμα εγκατάστασης πακέτων)</string>
+    <string name="installer_session">Συνεδρία (Εγκαταστάτης πακέτων)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (κάτοχος συσκευής)</string>
     <string name="repo_auto">Αυτόματο</string>
     <string name="repo_prefer_fdroid">Προτίμηση F-Droid</string>
     <string name="repo_prefer_izzy">Προτίμηση IzzyOnDroid</string>
     <string name="toggle_on">Ενεργό</string>
     <string name="toggle_off">Ανενεργό</string>
-    <string name="cache_cleared">Η προσωρινή μνήμη εκκαθαρίστηκε</string>
-    <string name="no_action_attached">Δεν υπάρχει συνημμένη ενέργεια</string>
+    <string name="cache_cleared">Η προσωρινή μνήμη καθαρίστηκε</string>
+    <string name="no_action_attached">Καμία συνδεδεμένη ενέργεια</string>
     <string name="no_repos_enabled">Δεν υπάρχουν ενεργοποιημένα αποθετήρια. Ενεργοποιήστε τουλάχιστον ένα στις Ρυθμίσεις.</string>
-    <string name="connection_timeout">Το χρονικό όριο σύνδεσης έληξε. Ελέγξτε τη σύνδεσή σας στο διαδίκτυο.</string>
-    <string name="sync_completed_with_errors">Ο συγχρονισμός ολοκληρώθηκε με σφάλματα:\n%1$s</string>
-    <string name="partial_sync_completed">Ο μερικός συγχρονισμός ολοκληρώθηκε:\n%1$s</string>
+    <string name="connection_timeout">Λήξη χρονικού ορίου σύνδεσης. Ελέγξτε τη σύνδεσή σας στο διαδίκτυο.</string>
+    <string name="sync_completed_with_errors">Ο συγχρονισμός ολοκληρώθηκε με σφάλματα:\\\\n%1$s</string>
+    <string name="partial_sync_completed">Μερικός συγχρονισμός ολοκληρώθηκε:\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Σφάλμα δικτύου ή ανάλυσης</string>
     <string name="error_unknown">Άγνωστο σφάλμα</string>
-    <string name="repositories_reset">Reset Repositories</string>
-    <string name="mirror_strategy">Mirror Strategy</string>
-    <string name="trust">Trust</string>
-    <string name="trust_mode">Trust Mode</string>
+    <string name="repositories_reset">Επαναφορά αποθετηρίων</string>
+    <string name="name">Όνομα</string>
+    <string name="url">URL</string>
+    <string name="mirror_strategy">Στρατηγική καθρέφτη</string>
+    <string name="trust">Εμπιστοσύνη</string>
+    <string name="trust_mode">Λειτουργία εμπιστοσύνης</string>
     <string name="exodus_privacy">Exodus Privacy</string>
-    <string name="permissions">App Info</string>
-    <string name="app_not_installed">App not installed</string>
-    <string name="versions">Versions</string>
-    <string name="installed" />
-    <string name="incompatible">Incompatible</string>
-    <string name="copied">Copied</string>
-    <string name="copy_url">Copy URL</string>
-    <string name="no_variants_found">No variants found</string>
-    <string name="downloading">Downloading</string>
-    <string name="verifying">Verifying</string>
-    <string name="preferred_source">Preferred Source</string>
-    <string name="auto">Auto</string>
-    <string name="locked_to_repo">Locked to Repo</string>
-    <string name="unlocked_repo">Unlocked</string>
-    <string name="lock_to_repo">Lock to Repo</string>
-    <string name="updating_count">Updating %d apps</string>
-    <string name="installation_errors">%d installation error(s)</string>
-    <string name="available_updates">Available Updates</string>
-    <string name="dismiss">Dismiss</string>
-    <string name="search">Search</string>
-    <string name="more_options_for">More Options Dropdown</string>
-    <string name="install_from">Install from</string>
-    <string name="show_less">Show less</string>
-    <string name="license">License</string>
-    <string name="nav_favorites">Favourites</string>
-    <string name="no_favorites">No favourites yet!</string>
-    <string name="remove_from_favorites">Remove from favourites</string>
-    <string name="add_to_favorites">Add to Favourites</string>
-    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
-    <string name="remove_favorite">Remove Favourite</string>
-    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
-    <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
-    <string name="import_failed">Import failed: %s</string>
-    <string name="export_success">Export Successful</string>
-    <string name="export_failed">Export failed: %s</string>
-    <string name="search_settings">Search Settings</string>
-    <string name="import_settings">Import settings</string>
-    <string name="export_settings">Export settings</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Συμβατότητα με Plexus</string>
+    <string name="plexus_degoogled">Από-Google</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Μη αξιολογημένη στο Plexus</string>
+    <string name="plexus_view_details">Προβολή λεπτομερειών</string>
+    <string name="plexus_ratings">αξιολογήσεις</string>
+    <string name="plexus_open_website">Άνοιγμα στον ιστότοπο του Plexus</string>
+    <string name="permissions">Πληροφορίες εφαρμογής</string>
+    <string name="app_not_installed">Η εφαρμογή δεν είναι εγκατεστημένη</string>
+    <string name="versions">Εκδόσεις</string>
+    <string name="installed">Εγκατεστημένη</string>
+    <string name="more_apps">Περισσότερα</string>
+    <string name="more_apps_by_author">Περισσότερες εφαρμογές από %1$s</string>
+    <string name="no_apps_by_author">Δεν βρέθηκαν εφαρμογές από %1$s</string>
+    <string name="app_count">%1$d εφαρμογές</string>
+    <string name="incompatible">Μη συμβατή</string>
+    <string name="copied">Αντιγράφηκε</string>
+    <string name="copy_url">Αντιγραφή URL</string>
+    <string name="no_variants_found">Δεν βρέθηκαν παραλλαγές</string>
+    <string name="downloading">Λήψη</string>
+    <string name="verifying">Επαλήθευση</string>
+    <string name="preferred_source">Προτιμώμενη πηγή</string>
+    <string name="auto">Αυτόματο</string>
+    <string name="locked_to_repo">Κλειδωμένο στο αποθετήριο</string>
+    <string name="unlocked_repo">Ξεκλείδωτο</string>
+    <string name="lock_to_repo">Κλείδωμα στο αποθετήριο</string>
+    <string name="updating_count">Ενημέρωση %d εφαρμογών</string>
+    <string name="installation_errors">%d σφάλματα εγκατάστασης</string>
+    <string name="updating">Ενημέρωση…</string>
+    <string name="available_updates">Διαθέσιμες ενημερώσεις</string>
+    <string name="dismiss">Απόρριψη</string>
+    <string name="search">Αναζήτηση</string>
+    <string name="category_appearance">Εμφάνιση</string>
+    <string name="category_general">Γενικά</string>
+    <string name="category_downloads">Λήψεις και ενημερώσεις</string>
+    <string name="category_filters">Φίλτρα</string>
+    <string name="category_sync">Συμπεριφορά συγχρονισμού</string>
+    <string name="category_proxy">Διαμεσολαβητής (proxy)</string>
+    <string name="category_other">Άλλα</string>
+    <string name="repositories">Αποθετήρια</string>
+    <string name="reset_to_defaults">Επαναφορά προεπιλογών</string>
+    <string name="reset_repositories">Επαναφορά αποθετηρίων</string>
+    <string name="reset_repositories_confirm">Αυτό θα αφαιρέσει όλα τα προσαρμοσμένα αποθετήρια και θα επαναφέρει την προεπιλεγμένη λίστα. Συνέχεια;</string>
+    <string name="reset">Επαναφορά</string>
+    <string name="run">Εκτέλεση</string>
+    <string name="test_ping">Δοκιμή ping</string>
+    <string name="forget_last_mirror">Αγνόηση τελευταίου καθρέφτη</string>
+    <string name="forgot_mirror">Αγνοήθηκε ο τελευταίος καθρέφτης για %s</string>
+    <string name="delete_repository">Διαγραφή αποθετηρίου</string>
+    <string name="delete_repository_confirm">Διαγραφή %s από τα αποθετήριά σας;</string>
+    <string name="delete">Διαγραφή</string>
+    <string name="rotate_mirrors">Εναλλαγή καθρεφτών</string>
+    <string name="use_onion">Χρήση onion</string>
+    <string name="pins_label">Καρφινάκια (sha256/BASE64, διαχωρισμένα με κόμματα)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">Προσαρμοσμένο πιστοποιητικό CA</string>
+    <string name="optional">Προαιρετικό</string>
+    <string name="more_options_for">Μενού περισσότερων επιλογών</string>
+    <string name="install_from">Εγκατάσταση από</string>
+    <string name="show_less">Εμφάνιση λιγότερων</string>
+    <string name="license">Άδεια χρήσης</string>
+    <string name="nav_favorites">Αγαπημένα</string>
+    <string name="no_favorites">Δεν υπάρχουν ακόμη αγαπημένα!</string>
+    <string name="remove_from_favorites">Αφαίρεση από τα αγαπημένα</string>
+    <string name="add_to_favorites">Προσθήκη στα αγαπημένα</string>
+    <string name="no_favorites_hint">Πατήστε την καρδιά σε οποιαδήποτε εφαρμογή για να την προσθέσετε στα αγαπημένα</string>
+    <string name="remove_favorite">Αφαίρεση από τα αγαπημένα</string>
+    <string name="remove_favorite_confirm">Αφαίρεση %1$s από τα αγαπημένα;</string>
+    <string name="remove">Αφαίρεση</string>
+    <string name="import_success">Επιτυχής εισαγωγή (%d στοιχεία)</string>
+    <string name="import_failed">Η εισαγωγή απέτυχε: %s</string>
+    <string name="export_success">Επιτυχής εξαγωγή</string>
+    <string name="export_failed">Η εξαγωγή απέτυχε: %s</string>
+    <string name="search_settings">Αναζήτηση στις ρυθμίσεις</string>
+    <string name="import_settings">Εισαγωγή ρυθμίσεων</string>
+    <string name="export_settings">Εξαγωγή ρυθμίσεων</string>
+    <string name="izzy_stats_title">Στατιστικά IzzyOnDroid</string>
+    <string name="izzy_stats_monthly">Μηνιαίες λήψεις</string>
+    <string name="izzy_stats_yearly">Ετήσιες λήψεις</string>
+    <string name="izzy_stats_unavailable">Τα στατιστικά δεν είναι διαθέσιμα</string>
+    <string name="dhizuku_permission_denied">Η άδεια Dhizuku απορρίφθηκε. Παραχωρήστε την άδεια στην εφαρμογή Dhizuku.</string>
+    <string name="dhizuku_not_available">Το Dhizuku δεν είναι διαθέσιμο. Εγκαταστήστε και ρυθμίστε πρώτα το Dhizuku ως κάτοχο συσκευής.</string>
+    <string name="dhizuku_fallback">Επιστροφή στον εγκαταστάτη συνεδρίας</string>
+    <string name="dismiss_banner">Απόρριψη πανίου</string>
+    <string name="no_browser_available">Δεν υπάρχει διαθέσιμο πρόγραμμα περιήγησης για το άνοιγμα του συνδέσμου</string>
+    <string name="alert_keep_android_open">Το F-Droid αντιμετωπίζει απειλή. Η Google αλλάζει τον τρόπο εγκατάστασης εφαρμογών στο τηλέφωνό σας. Χρειαζόμαστε τη βοήθειά σας.</string>
+    <string name="category_about">Σχετικά</string>
+    <string name="support_development">Υποστήριξη της ανάπτυξης</string>
+    <string name="support_development_desc">Αν σας φαίνεται χρήσιμη αυτή η εφαρμογή, σκεφτείτε να υποστηρίξετε τη συνέχεια της ανάπτυξής της</string>
+    <string name="donate_on_kofi">Δωρεά στο Ko-fi</string>
+    <string name="insecure_http_warning">Αυτό το αποθετήριο χρησιμοποιεί μη ασφαλές HTTP. Ενεργοποιήστε το μόνο για αξιόπιστο τοπικό ή LAN αποθετήριο.</string>
+    <string name="allow_insecure_http">Επιτρέψτε μη ασφαλές HTTP για αυτό το αποθετήριο</string>
+    <string name="setting_theme_desc">Επιλέξτε μεταξύ φωτεινού, σκούρου ή θέματος συστήματος</string>
+    <string name="setting_show_app_icons">Εμφάνιση εικονιδίων εφαρμογών</string>
+    <string name="setting_show_app_icons_desc">Εμφάνιση εικονιδίων εφαρμογών σε λίστες και πλέγματα</string>
+    <string name="setting_use_list_layout">Χρήση διάταξης λίστας</string>
+    <string name="setting_use_list_layout_desc">Εμφάνιση εφαρμογών σε λίστα αντί για πλέγμα</string>
+    <string name="sort_name_za">Όνομα (Z-A)</string>
+    <string name="setting_auto_update">Αυτόματη ενημέρωση</string>
+    <string name="setting_auto_update_desc">Αυτόματη ενημέρωση εφαρμογών στο παρασκήνιο</string>
+    <string name="setting_wifi_only_desc">Λήψη και συγχρονισμός μόνο μέσω Wi-Fi</string>
+    <string name="setting_show_reproducible">Εμφάνιση σημάτων αναπαραγωγίμων builds</string>
+    <string name="setting_show_reproducible_desc">Εμφάνιση σημάτων αναπαραγωγίμων builds από το IzzyOnDroid</string>
+    <string name="setting_fail_on_trust_errors">Αποτυχία σε σφάλματα εμπιστοσύνης</string>
+    <string name="setting_fail_on_trust_errors_desc">Αυστηρή επαλήθευση SSL/TLS</string>
+    <string name="setting_use_proxy">Χρήση proxy</string>
+    <string name="setting_use_proxy_desc">Δροματολόγηση συνδέσεων μέσω proxy</string>
+    <string name="setting_proxy_url">URL του proxy</string>
+    <string name="setting_show_debug_info">Εμφάνιση πληροφοριών αποσφαλμάτωσης</string>
+    <string name="setting_show_debug_info_desc">Εμφάνιση πληροφοριών αποσφαλμάτωσης στην διεπαφή</string>
+    <string name="mirror_sticky_last_good">Προτίμηση τελευταίου έγκυρου</string>
+    <string name="mirror_round_robin">Εναλλακτικά</string>
+    <string name="mirror_canonical_first">Πρώτα το κανονικό</string>
+    <string name="trust_https_only">Μόνο HTTPS</string>
+    <string name="trust_pinned">Καρφιτσωμένα πιστοποιητικά</string>
+    <string name="trust_custom_ca">Προσαρμοσμένο CA</string>
+    <string name="trust_insecure_http">Επιτρέψτε μη ασφαλές HTTP</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

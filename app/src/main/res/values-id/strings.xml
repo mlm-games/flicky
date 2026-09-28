@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Flicky</string>
+    <string name="app_description">Klien F-Droid (nonresmi) untuk TV</string>
+    <string name="nav_browse">Jelajahi</string>
+    <string name="nav_categories">Kategori</string>
+    <string name="nav_updates">Pembaruan</string>
+    <string name="nav_settings">Pengaturan</string>
+    <string name="action_install">Pasang</string>
+    <string name="action_update">Perbarui</string>
+    <string name="action_uninstall">Hapus instalan</string>
+    <string name="action_open">Buka</string>
+    <string name="action_share">Bagikan</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_apply">Terapkan</string>
+    <string name="action_add">Tambah</string>
+    <string name="action_close">Tutup</string>
+    <string name="action_confirm">Konfirmasi</string>
+    <string name="action_select">Pilih</string>
+    <string name="action_run">Jalankan</string>
+    <string name="action_sync">Sinkronkan</string>
+    <string name="action_clear">Bersihkan</string>
+    <string name="search_hint">Cari aplikasi…</string>
+    <string name="voice_search">Pencarian suara</string>
+    <string name="voice_search_prompt">Bicara untuk mencari aplikasi</string>
+    <string name="voice_search_unavailable">Pencarian suara tidak tersedia</string>
+    <string name="sort_by">Urutkan menurut</string>
+    <string name="sort_prefix">Urutkan: %1$s</string>
+    <string name="syncing">Menyinkronkan…</string>
+    <string name="sync_status">Menyinkronkan %1$s (%2$d/%3$d)</string>
+    <string name="sync_complete">Sinkronisasi selesai: %1$d aplikasi</string>
+    <string name="sync_failed">Sinkronisasi gagal</string>
+    <string name="no_apps_found">Tidak ada aplikasi ditemukan</string>
+    <string name="try_different_search">Coba kata kunci lain</string>
+    <string name="force_sync">Paksa sinkronisasi</string>
+    <string name="clear_all_apps">Hapus Semua Aplikasi</string>
+    <string name="sort_name">Nama</string>
+    <string name="sort_reverse">Urutan terbalik</string>
+    <string name="sort_updated">Baru diperbarui</string>
+    <string name="sort_size">Ukuran</string>
+    <string name="sort_added">Baru ditambahkan</string>
+    <string name="category_all">Semua</string>
+    <string name="category_count">%1$s (%2$d)</string>
+    <string name="no_apps_in_category">Tidak ada aplikasi di kategori ini</string>
+    <string name="update_all">Perbarui Semua (%1$d)</string>
+    <string name="show_ignored">Tampilkan yang diabaikan (%1$d)</string>
+    <string name="hide_ignored">Sembunyikan yang diabaikan (%1$d)</string>
+    <string name="no_updates">Tidak ada pembaruan tersedia</string>
+    <string name="installed_apps">Aplikasi Terpasang</string>
+    <string name="ignored_updates">Pembaruan yang diabaikan</string>
+    <string name="ignore_this_version">Abaikan versi ini</string>
+    <string name="ignore_all_updates">Abaikan semua pembaruan</string>
+    <string name="stop_ignoring">Berhenti mengabaikan pembaruan</string>
+    <string name="more_options">Selengkapnya</string>
+    <string name="installing">Memasang…</string>
+    <string name="installing_progress">Memasang… %1$d%%</string>
+    <string name="installation_failed">Pemasangan gagal</string>
+    <string name="install_failed_message">Pemasangan gagal: %1$s</string>
+    <string name="version_prefix">v%1$s</string>
+    <string name="version_code">Kode versi</string>
+    <string name="package_name">Paket</string>
+    <string name="updated">Diperbarui</string>
+    <string name="added">Ditambahkan</string>
+    <string name="overview">Ikhtisar</string>
+    <string name="whats_new">Apa yang baru</string>
+    <string name="about">Tentang</string>
+    <string name="screenshots">Tangkapan layar</string>
+    <string name="info">Info</string>
+    <string name="details">Rincian</string>
+    <string name="anti_features">Fitur anti</string>
+    <string name="links">Tautan</string>
+    <string name="website">Situs web</string>
+    <string name="source_code">Kode sumber</string>
+    <string name="read_more">Selengkapnya</string>
+    <string name="unknown">Tidak diketahui</string>
+    <string name="installed_version">Terpasang: %1$s</string>
+    <string name="new_version">Baru: %1$s</string>
+    <string name="settings_general">Umum</string>
+    <string name="settings_appearance">Tampilan</string>
+    <string name="settings_downloads">Unduhan</string>
+    <string name="settings_filters">Filter</string>
+    <string name="settings_system">Sistem</string>
+    <string name="settings_repositories">Repositori</string>
+    <string name="add_repository">Tambah Repositori</string>
+    <string name="repository_name">Nama</string>
+    <string name="repository_url">URL</string>
+    <string name="setting_default_sort">Urutan bawaan</string>
+    <string name="setting_default_sort_desc">Urutan bawaan untuk daftar aplikasi</string>
+    <string name="setting_theme">Tema</string>
+    <string name="setting_dynamic_colors">Gunakan warna dinamis</string>
+    <string name="setting_dynamic_colors_desc">Gunakan warna Material You (Android 12+)</string>
+    <string name="setting_wifi_only">Perbarui hanya lewat Wi-Fi</string>
+    <string name="setting_sync_interval">Interval sinkronisasi</string>
+    <string name="setting_sync_interval_desc">Seberapa sering repositori disinkronkan</string>
+    <string name="setting_keep_cache">Simpan cache unduhan</string>
+    <string name="setting_keep_cache_desc">Simpan APK yang diunduh untuk pemasangan ulang lebih cepat</string>
+    <string name="setting_installer">Pemasang</string>
+    <string name="setting_installer_desc">Cara memasang aplikasi</string>
+    <string name="setting_fallback_installer">Pemasang cadangan</string>
+    <string name="setting_fallback_installer_desc">Pemasang yang dipakai jika metode utama gagal</string>
+    <string name="installer_none">Tidak ada</string>
+    <string name="installer_app_manager">Pengelola Aplikasi</string>
+    <string name="fallback_triggered">Pemasang utama gagal; memakai %1$s</string>
+    <string name="setting_hide_anti">Sembunyikan aplikasi dengan fitur anti</string>
+    <string name="setting_show_incompatible">Tampilkan versi yang tidak kompatibel</string>
+    <string name="setting_ignore_unstable">Abaikan versi Alpha/Beta</string>
+    <string name="setting_ignore_unstable_desc">Sembunyikan rilis alpha dan beta dari pembaruan</string>
+    <string name="channel_beta">Beta</string>
+    <string name="channel_alpha">Alfa</string>
+    <string name="version_suggested">Disarankan</string>
+    <string name="setting_differential_sync">Sinkronisasi diferensial</string>
+    <string name="setting_differential_sync_desc">Gunakan pemeriksaan cache HTTP untuk melewati repositori yang tidak berubah</string>
+    <string name="setting_preferred_repo">Repositori pilihan</string>
+    <string name="setting_preferred_repo_desc">Sumber bawaan saat aplikasi ada di beberapa repositori</string>
+    <string name="setting_clear_cache">Bersihkan cache</string>
+    <string name="setting_clear_cache_desc">Hapus header repositori dan atur ulang sinkronisasi terakhir</string>
+    <string name="theme_system">Sistem</string>
+    <string name="theme_light">Terang</string>
+    <string name="theme_dark">Gelap</string>
+    <string name="sync_3_hours">3 jam</string>
+    <string name="sync_6_hours">6 jam</string>
+    <string name="sync_12_hours">12 jam</string>
+    <string name="sync_24_hours">24 jam</string>
+    <string name="sync_weekly">Mingguan</string>
+    <string name="sync_manual">Manual saja</string>
+    <string name="installer_system">Sistem (bawaan)</string>
+    <string name="installer_session">Sesi (Pemasang Paket)</string>
+    <string name="installer_root">Root (pm)</string>
+    <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (pemilik perangkat)</string>
+    <string name="repo_auto">Otomatis</string>
+    <string name="repo_prefer_fdroid">Utamakan F-Droid</string>
+    <string name="repo_prefer_izzy">Utamakan IzzyOnDroid</string>
+    <string name="toggle_on">Aktif</string>
+    <string name="toggle_off">Nonaktif</string>
+    <string name="cache_cleared">Cache dibersihkan</string>
+    <string name="no_action_attached">Tidak ada tindakan yang terlampir</string>
+    <string name="no_repos_enabled">Tidak ada repositori yang diaktifkan. Aktifkan setidaknya satu di Pengaturan.</string>
+    <string name="connection_timeout">Waktu koneksi habis. Periksa koneksi internet Anda.</string>
+    <string name="sync_completed_with_errors">Sinkronisasi selesai dengan kesalahan:\\\\n%1$s</string>
+    <string name="partial_sync_completed">Sinkronisasi sebagian selesai:\\\\n%1$s</string>
+    <string name="image_counter">%1$d / %2$d</string>
+    <string name="error_network">Kesalahan jaringan atau penguraian</string>
+    <string name="error_unknown">Kesalahan tidak diketahui</string>
+    <string name="repositories_reset">Atur Ulang Repositori</string>
+    <string name="name">Nama</string>
+    <string name="url">URL</string>
+    <string name="mirror_strategy">Strategi cermin</string>
+    <string name="trust">Kepercayaan</string>
+    <string name="trust_mode">Mode kepercayaan</string>
+    <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Kompatibilitas Plexus</string>
+    <string name="plexus_degoogled">Di-degoogle</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Belum dinilai di Plexus</string>
+    <string name="plexus_view_details">Lihat rincian</string>
+    <string name="plexus_ratings">penilaian</string>
+    <string name="plexus_open_website">Buka di situs Plexus</string>
+    <string name="permissions">Info aplikasi</string>
+    <string name="app_not_installed">Aplikasi belum terpasang</string>
+    <string name="versions">Versi</string>
+    <string name="installed">Terpasang</string>
+    <string name="more_apps">Selengkapnya</string>
+    <string name="more_apps_by_author">Lebih banyak aplikasi dari %1$s</string>
+    <string name="no_apps_by_author">Tidak ada aplikasi dari %1$s ditemukan</string>
+    <string name="app_count">%1$d aplikasi</string>
+    <string name="incompatible">Tidak kompatibel</string>
+    <string name="copied">Disalin</string>
+    <string name="copy_url">Salin URL</string>
+    <string name="no_variants_found">Tidak ada varian ditemukan</string>
+    <string name="downloading">Mengunduh</string>
+    <string name="verifying">Memverifikasi</string>
+    <string name="preferred_source">Sumber pilihan</string>
+    <string name="auto">Otomatis</string>
+    <string name="locked_to_repo">Terkunci ke repositori</string>
+    <string name="unlocked_repo">Terbuka</string>
+    <string name="lock_to_repo">Kunci ke repositori</string>
+    <string name="updating_count">Memperbarui %d aplikasi</string>
+    <string name="installation_errors">%d kesalahan pemasangan</string>
+    <string name="updating">Memperbarui…</string>
+    <string name="available_updates">Pembaruan tersedia</string>
+    <string name="dismiss">Tutup</string>
+    <string name="search">Cari</string>
+    <string name="category_appearance">Tampilan</string>
+    <string name="category_general">Umum</string>
+    <string name="category_downloads">Unduhan dan Pembaruan</string>
+    <string name="category_filters">Filter</string>
+    <string name="category_sync">Perilaku sinkronisasi</string>
+    <string name="category_proxy">Proksi</string>
+    <string name="category_other">Lainnya</string>
+    <string name="repositories">Repositori</string>
+    <string name="reset_to_defaults">Atur Ulang ke Bawaan</string>
+    <string name="reset_repositories">Atur Ulang Repositori</string>
+    <string name="reset_repositories_confirm">Ini akan menghapus semua repositori khusus dan mengembalikan daftar bawaan. Lanjutkan?</string>
+    <string name="reset">Atur Ulang</string>
+    <string name="run">Jalankan</string>
+    <string name="test_ping">Uji ping</string>
+    <string name="forget_last_mirror">Lupakan cermin terakhir</string>
+    <string name="forgot_mirror">Melupakan cermin terakhir untuk %s</string>
+    <string name="delete_repository">Hapus Repositori</string>
+    <string name="delete_repository_confirm">Hapus %s dari repositori Anda?</string>
+    <string name="delete">Hapus</string>
+    <string name="rotate_mirrors">Ganti cermin</string>
+    <string name="use_onion">Gunakan onion</string>
+    <string name="pins_label">Pin (sha256/BASE64, dipisahkan koma)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">CA khusus</string>
+    <string name="optional">Opsional</string>
+    <string name="more_options_for">Menu opsi lainnya</string>
+    <string name="install_from">Pasang dari</string>
+    <string name="show_less">Tampilkan lebih sedikit</string>
+    <string name="license">Lisensi</string>
+    <string name="nav_favorites">Favorit</string>
+    <string name="no_favorites">Belum ada favorit!</string>
+    <string name="remove_from_favorites">Hapus dari favorit</string>
+    <string name="add_to_favorites">Tambahkan ke favorit</string>
+    <string name="no_favorites_hint">Ketuk ikon hati pada aplikasi mana pun untuk menambahkannya ke favorit</string>
+    <string name="remove_favorite">Hapus dari Favorit</string>
+    <string name="remove_favorite_confirm">Hapus %1$s dari favorit?</string>
+    <string name="remove">Hapus</string>
+    <string name="import_success">Impor Berhasil (%d item)</string>
+    <string name="import_failed">Impor gagal: %s</string>
+    <string name="export_success">Ekspor Berhasil</string>
+    <string name="export_failed">Ekspor gagal: %s</string>
+    <string name="search_settings">Cari Pengaturan</string>
+    <string name="import_settings">Impor pengaturan</string>
+    <string name="export_settings">Ekspor pengaturan</string>
+    <string name="izzy_stats_title">Statistik IzzyOnDroid</string>
+    <string name="izzy_stats_monthly">Unduhan bulanan</string>
+    <string name="izzy_stats_yearly">Unduhan tahunan</string>
+    <string name="izzy_stats_unavailable">Statistik tidak tersedia</string>
+    <string name="dhizuku_permission_denied">Izin Dhizuku ditolak. Berikan izin di aplikasi Dhizuku.</string>
+    <string name="dhizuku_not_available">Dhizuku tidak tersedia. Pasang dan atur Dhizuku sebagai Pemilik Perangkat terlebih dahulu.</string>
+    <string name="dhizuku_fallback">Beralih ke pemasang sesi</string>
+    <string name="dismiss_banner">Tutup banner</string>
+    <string name="no_browser_available">Tidak ada browser untuk membuka tautan</string>
+    <string name="alert_keep_android_open">F-Droid terancam. Google mengubah cara Anda memasang aplikasi di ponsel. Kami butuh bantuan Anda.</string>
+    <string name="category_about">Tentang</string>
+    <string name="support_development">Dukung pengembangan</string>
+    <string name="support_development_desc">Jika aplikasi ini berguna bagi Anda, pertimbangkan untuk mendukung pengembangannya</string>
+    <string name="donate_on_kofi">Donasi di Ko-fi</string>
+    <string name="insecure_http_warning">Repositori ini memakai HTTP yang tidak aman. Aktifkan hanya untuk repositori lokal atau LAN yang tepercaya.</string>
+    <string name="allow_insecure_http">Izinkan HTTP tidak aman untuk repositori ini</string>
+    <string name="setting_theme_desc">Pilih antara tema terang, gelap, atau sistem</string>
+    <string name="setting_show_app_icons">Tampilkan ikon aplikasi</string>
+    <string name="setting_show_app_icons_desc">Tampilkan ikon aplikasi di daftar dan kisi</string>
+    <string name="setting_use_list_layout">Gunakan tata letak daftar</string>
+    <string name="setting_use_list_layout_desc">Tampilkan aplikasi sebagai daftar, bukan kisi</string>
+    <string name="sort_name_za">Nama (Z-A)</string>
+    <string name="setting_auto_update">Pembaruan otomatis</string>
+    <string name="setting_auto_update_desc">Perbarui aplikasi secara otomatis di latar belakang</string>
+    <string name="setting_wifi_only_desc">Unduh dan sinkronkan hanya lewat Wi-Fi</string>
+    <string name="setting_show_reproducible">Tampilkan lencana build yang dapat direproduksi</string>
+    <string name="setting_show_reproducible_desc">Tampilkan lencana build yang dapat direproduksi dari IzzyOnDroid</string>
+    <string name="setting_fail_on_trust_errors">Gagal saat terjadi kesalahan kepercayaan</string>
+    <string name="setting_fail_on_trust_errors_desc">Verifikasi SSL/TLS ketat</string>
+    <string name="setting_use_proxy">Gunakan proksi</string>
+    <string name="setting_use_proxy_desc">Arahkan koneksi melalui proksi</string>
+    <string name="setting_proxy_url">URL proksi</string>
+    <string name="setting_show_debug_info">Tampilkan info awakutu (debug)</string>
+    <string name="setting_show_debug_info_desc">Tampilkan info awakutu di antarmuka</string>
+    <string name="mirror_sticky_last_good">Utamakan yang terakhir valid</string>
+    <string name="mirror_round_robin">Bergantian</string>
+    <string name="mirror_canonical_first">Yang kanonik dulu</string>
+    <string name="trust_https_only">HTTPS saja</string>
+    <string name="trust_pinned">Sertifikat yang dikunci</string>
+    <string name="trust_custom_ca">CA khusus</string>
+    <string name="trust_insecure_http">Izinkan HTTP tidak aman</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
+</resources>

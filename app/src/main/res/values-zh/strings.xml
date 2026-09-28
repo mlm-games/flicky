@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Flicky</string>
     <string name="app_description">F-Droid（非官方）电视客户端</string>
@@ -35,6 +35,7 @@
     <string name="force_sync">强制同步</string>
     <string name="clear_all_apps">清除所有应用</string>
     <string name="sort_name">名称</string>
+    <string name="sort_reverse">反向排序</string>
     <string name="sort_updated">最近更新</string>
     <string name="sort_size">大小</string>
     <string name="sort_added">最近添加</string>
@@ -87,32 +88,32 @@
     <string name="setting_default_sort_desc">应用列表的默认排序方式</string>
     <string name="setting_theme">主题</string>
     <string name="setting_dynamic_colors">使用动态颜色</string>
-    <string
-        name="setting_dynamic_colors_desc"
-    >使用 Material You 颜色 (Android 12+)</string>
+    <string name="setting_dynamic_colors_desc">使用 Material You 颜色 (Android 12+)</string>
     <string name="setting_wifi_only">仅通过 Wi-Fi 更新</string>
     <string name="setting_sync_interval">同步间隔</string>
     <string name="setting_sync_interval_desc">同步软件源的频率</string>
     <string name="setting_keep_cache">保留下载缓存</string>
-    <string
-        name="setting_keep_cache_desc"
-    >保留已下载的 APK 以便更快地重新安装</string>
+    <string name="setting_keep_cache_desc">保留已下载的 APK 以便更快地重新安装</string>
     <string name="setting_installer">安装程序</string>
     <string name="setting_installer_desc">选择应用的安装方式</string>
+    <string name="setting_fallback_installer">备用安装器</string>
+    <string name="setting_fallback_installer_desc">主要方式失败时使用的安装器</string>
+    <string name="installer_none">无</string>
+    <string name="installer_app_manager">应用管理器</string>
+    <string name="fallback_triggered">主要安装器失败，改用 %1$s</string>
     <string name="setting_hide_anti">隐藏具有反特征的应用</string>
     <string name="setting_show_incompatible">显示不兼容的版本</string>
+    <string name="setting_ignore_unstable">忽略 alpha/beta 版本</string>
+    <string name="setting_ignore_unstable_desc">在更新中隐藏 alpha 和 beta 版本</string>
+    <string name="channel_beta">Beta</string>
+    <string name="channel_alpha">Alpha</string>
+    <string name="version_suggested">建议</string>
     <string name="setting_differential_sync">差分同步</string>
-    <string
-        name="setting_differential_sync_desc"
-    >使用 HTTP 缓存检查以跳过未更改的软件源</string>
+    <string name="setting_differential_sync_desc">使用 HTTP 缓存检查以跳过未更改的软件源</string>
     <string name="setting_preferred_repo">首选软件源</string>
-    <string
-        name="setting_preferred_repo_desc"
-    >当应用存在于多个软件源时的默认来源</string>
+    <string name="setting_preferred_repo_desc">当应用存在于多个软件源时的默认来源</string>
     <string name="setting_clear_cache">清除缓存</string>
-    <string
-        name="setting_clear_cache_desc"
-    >删除软件源头部信息并重置上次同步</string>
+    <string name="setting_clear_cache_desc">删除软件源头部信息并重置上次同步</string>
     <string name="theme_system">系统</string>
     <string name="theme_light">浅色</string>
     <string name="theme_dark">深色</string>
@@ -126,6 +127,7 @@
     <string name="installer_session">会话（软件包安装程序）</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku（设备所有者）</string>
     <string name="repo_auto">自动</string>
     <string name="repo_prefer_fdroid">首选 F-Droid</string>
     <string name="repo_prefer_izzy">首选 IzzyOnDroid</string>
@@ -133,26 +135,36 @@
     <string name="toggle_off">关闭</string>
     <string name="cache_cleared">缓存已清除</string>
     <string name="no_action_attached">未附加操作</string>
-    <string
-        name="no_repos_enabled"
-    >没有已启用的软件源。请在设置中至少启用一个。</string>
+    <string name="no_repos_enabled">没有已启用的软件源。请在设置中至少启用一个。</string>
     <string name="connection_timeout">连接超时。请检查您的网络连接。</string>
-    <string
-        name="sync_completed_with_errors"
-    >同步完成，但出现错误：\n%1$s</string>
-    <string name="partial_sync_completed">部分同步完成：\n%1$s</string>
+    <string name="sync_completed_with_errors">同步完成，但出现错误：\\\\n%1$s</string>
+    <string name="partial_sync_completed">部分同步完成：\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">网络或解析错误</string>
     <string name="error_unknown">未知错误</string>
     <string name="repositories_reset">Reset Repositories</string>
+    <string name="name">名称</string>
+    <string name="url">URL</string>
     <string name="mirror_strategy">Mirror Strategy</string>
     <string name="trust">Trust</string>
     <string name="trust_mode">Trust Mode</string>
     <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Plexus 兼容性</string>
+    <string name="plexus_degoogled">已去 Google 化</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Plexus 上暂无评分</string>
+    <string name="plexus_view_details">查看详情</string>
+    <string name="plexus_ratings">条评分</string>
+    <string name="plexus_open_website">在 Plexus 网站上打开</string>
     <string name="permissions">App Info</string>
     <string name="app_not_installed">App not installed</string>
     <string name="versions">Versions</string>
-    <string name="installed" />
+    <string name="installed"></string>
+    <string name="more_apps">更多</string>
+    <string name="more_apps_by_author">来自 %1$s 的更多应用</string>
+    <string name="no_apps_by_author">未找到来自 %1$s 的应用</string>
+    <string name="app_count">%1$d 个应用</string>
     <string name="incompatible">Incompatible</string>
     <string name="copied">Copied</string>
     <string name="copy_url">Copy URL</string>
@@ -166,9 +178,35 @@
     <string name="lock_to_repo">Lock to Repo</string>
     <string name="updating_count">Updating %d apps</string>
     <string name="installation_errors">%d installation error(s)</string>
+    <string name="updating">正在更新…</string>
     <string name="available_updates">Available Updates</string>
     <string name="dismiss">Dismiss</string>
     <string name="search">Search</string>
+    <string name="category_appearance">外观</string>
+    <string name="category_general">常规</string>
+    <string name="category_downloads">下载与更新</string>
+    <string name="category_filters">筛选</string>
+    <string name="category_sync">同步行为</string>
+    <string name="category_proxy">代理</string>
+    <string name="category_other">其他</string>
+    <string name="repositories">仓库</string>
+    <string name="reset_to_defaults">恢复默认设置</string>
+    <string name="reset_repositories">重置仓库</string>
+    <string name="reset_repositories_confirm">这将移除所有自定义仓库并恢复默认列表。要继续吗？</string>
+    <string name="reset">重置</string>
+    <string name="run">运行</string>
+    <string name="test_ping">测试 Ping</string>
+    <string name="forget_last_mirror">忘记上次镜像</string>
+    <string name="forgot_mirror">已忘记 %s 上次使用的镜像</string>
+    <string name="delete_repository">删除仓库</string>
+    <string name="delete_repository_confirm">要从你的仓库中删除 %s 吗？</string>
+    <string name="delete">删除</string>
+    <string name="rotate_mirrors">轮换镜像</string>
+    <string name="use_onion">使用 onion</string>
+    <string name="pins_label">固定密钥（sha256/BASE64，以逗号分隔）</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">自定义 CA PEM</string>
+    <string name="optional">可选</string>
     <string name="more_options_for">More Options Dropdown</string>
     <string name="install_from">Install from</string>
     <string name="show_less">Show less</string>
@@ -177,19 +215,109 @@
     <string name="no_favorites">No favourites yet!</string>
     <string name="remove_from_favorites">Remove from favourites</string>
     <string name="add_to_favorites">Add to Favourites</string>
-    <string
-        name="no_favorites_hint"
-    >Tap the heart icon on any app to add it to your favourites</string>
+    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
     <string name="remove_favorite">Remove Favourite</string>
-    <string
-        name="remove_favorite_confirm"
-    >Remove %1$s from your favorites?</string>
+    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
+    <string name="import_success">导入成功（%d 项）</string>
     <string name="import_failed">Import failed: %s</string>
     <string name="export_success">Export Successful</string>
     <string name="export_failed">Export failed: %s</string>
     <string name="search_settings">Search Settings</string>
     <string name="import_settings">Import settings</string>
     <string name="export_settings">Export settings</string>
+    <string name="izzy_stats_title">IzzyOnDroid 统计</string>
+    <string name="izzy_stats_monthly">每月下载量</string>
+    <string name="izzy_stats_yearly">每年下载量</string>
+    <string name="izzy_stats_unavailable">统计不可用</string>
+    <string name="dhizuku_permission_denied">Dhizuku 权限被拒绝。请在 Dhizuku 应用中授予权限。</string>
+    <string name="dhizuku_not_available">Dhizuku 不可用。请先安装 Dhizuku 并将其设置为设备所有者。</string>
+    <string name="dhizuku_fallback">回退到会话安装器</string>
+    <string name="dismiss_banner">关闭横幅</string>
+    <string name="no_browser_available">没有可用于打开链接的浏览器</string>
+    <string name="alert_keep_android_open">F-Droid 正面临威胁。Google 正在改变你在手机上安装应用的方式。我们需要你的帮助。</string>
+    <string name="category_about">关于</string>
+    <string name="support_development">支持开发</string>
+    <string name="support_development_desc">如果你觉得这个应用不错，请考虑支持它后续的开发</string>
+    <string name="donate_on_kofi">在 Ko-fi 捐赠</string>
+    <string name="insecure_http_warning">此仓库使用不安全的 HTTP。请仅对可信的本地或局域网仓库启用。</string>
+    <string name="allow_insecure_http">为此仓库允许不安全的 HTTP</string>
+    <string name="setting_theme_desc">在浅色、深色或系统主题之间选择</string>
+    <string name="setting_show_app_icons">显示应用图标</string>
+    <string name="setting_show_app_icons_desc">在列表和网格中显示应用图标</string>
+    <string name="setting_use_list_layout">使用列表布局</string>
+    <string name="setting_use_list_layout_desc">以列表而非网格显示应用</string>
+    <string name="sort_name_za">名称 (Z-A)</string>
+    <string name="setting_auto_update">自动更新</string>
+    <string name="setting_auto_update_desc">在后台自动更新应用</string>
+    <string name="setting_wifi_only_desc">仅通过 Wi-Fi 下载和同步</string>
+    <string name="setting_show_reproducible">显示可复现构建徽章</string>
+    <string name="setting_show_reproducible_desc">显示来自 IzzyOnDroid 的可复现构建徽章</string>
+    <string name="setting_fail_on_trust_errors">遇到信任错误时失败</string>
+    <string name="setting_fail_on_trust_errors_desc">严格的 SSL/TLS 验证</string>
+    <string name="setting_use_proxy">使用代理</string>
+    <string name="setting_use_proxy_desc">通过代理转发连接</string>
+    <string name="setting_proxy_url">代理 URL</string>
+    <string name="setting_show_debug_info">显示调试信息</string>
+    <string name="setting_show_debug_info_desc">在界面中显示调试信息</string>
+    <string name="mirror_sticky_last_good">优先使用上次可用的</string>
+    <string name="mirror_round_robin">轮换</string>
+    <string name="mirror_canonical_first">优先主站</string>
+    <string name="trust_https_only">仅 HTTPS</string>
+    <string name="trust_pinned">已固定的证书</string>
+    <string name="trust_custom_ca">自定义 CA</string>
+    <string name="trust_insecure_http">允许不安全的 HTTP</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

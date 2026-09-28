@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Flicky</string>
+    <string name="app_description">לקוח F-Droid (לא רשמי) לטלוויזיה</string>
+    <string name="nav_browse">עיון</string>
+    <string name="nav_categories">קטגוריות</string>
+    <string name="nav_updates">עדכונים</string>
+    <string name="nav_settings">הגדרות</string>
+    <string name="action_install">התקנה</string>
+    <string name="action_update">עדכון</string>
+    <string name="action_uninstall">הסרה</string>
+    <string name="action_open">פתיחה</string>
+    <string name="action_share">שיתוף</string>
+    <string name="action_cancel">ביטול</string>
+    <string name="action_apply">החלה</string>
+    <string name="action_add">הוספה</string>
+    <string name="action_close">סגירה</string>
+    <string name="action_confirm">אישור</string>
+    <string name="action_select">בחירה</string>
+    <string name="action_run">הרצה</string>
+    <string name="action_sync">סנכרון</string>
+    <string name="action_clear">ניקוי</string>
+    <string name="search_hint">חיפוש אפליקציות…</string>
+    <string name="voice_search">חיפוש קולי</string>
+    <string name="voice_search_prompt">דברו כדי לחפש אפליקציות</string>
+    <string name="voice_search_unavailable">החיפוש הקולי אינו זמין</string>
+    <string name="sort_by">מיון לפי</string>
+    <string name="sort_prefix">מיון: %1$s</string>
+    <string name="syncing">מסנכרן…</string>
+    <string name="sync_status">מסנכרן %1$s (%2$d/%3$d)</string>
+    <string name="sync_complete">הסנכרון הושלם: %1$d אפליקציות</string>
+    <string name="sync_failed">הסנכרון נכשל</string>
+    <string name="no_apps_found">לא נמצאו אפליקציות</string>
+    <string name="try_different_search">נסו מונח חיפוש אחר</string>
+    <string name="force_sync">סנכרון כפוי</string>
+    <string name="clear_all_apps">ניקוי כל האפליקציות</string>
+    <string name="sort_name">שם</string>
+    <string name="sort_reverse">סדר הפוך</string>
+    <string name="sort_updated">עודכן לאחרונה</string>
+    <string name="sort_size">גודל</string>
+    <string name="sort_added">נוסף לאחרונה</string>
+    <string name="category_all">הכול</string>
+    <string name="category_count">%1$s (%2$d)</string>
+    <string name="no_apps_in_category">אין אפליקציות בקטגוריה זו</string>
+    <string name="update_all">עדכון הכול (%1$d)</string>
+    <string name="show_ignored">הצג מתעלמות (%1$d)</string>
+    <string name="hide_ignored">הסתר מתעלמות (%1$d)</string>
+    <string name="no_updates">אין עדכונים זמינים</string>
+    <string name="installed_apps">אפליקציות מותקנות</string>
+    <string name="ignored_updates">עדכונים שהתעלמו מהם</string>
+    <string name="ignore_this_version">התעלם מגרסה זו</string>
+    <string name="ignore_all_updates">התעלם מכל העדכונים</string>
+    <string name="stop_ignoring">הפסק להתעלם מעדכונים</string>
+    <string name="more_options">עוד</string>
+    <string name="installing">מתקין…</string>
+    <string name="installing_progress">מתקין… %1$d%%</string>
+    <string name="installation_failed">ההתקנה נכשלה</string>
+    <string name="install_failed_message">ההתקנה נכשלה: %1$s</string>
+    <string name="version_prefix">גרסה %1$s</string>
+    <string name="version_code">קוד גרסה</string>
+    <string name="package_name">חבילה</string>
+    <string name="updated">עודכן</string>
+    <string name="added">נוסף</string>
+    <string name="overview">סקירה</string>
+    <string name="whats_new">מה חדש</string>
+    <string name="about">אודות</string>
+    <string name="screenshots">צילומי מסך</string>
+    <string name="info">מידע</string>
+    <string name="details">פרטים</string>
+    <string name="anti_features">וויטוג אנטי</string>
+    <string name="links">קישורים</string>
+    <string name="website">אתר</string>
+    <string name="source_code">קוד מקור</string>
+    <string name="read_more">קרא עוד</string>
+    <string name="unknown">לא ידוע</string>
+    <string name="installed_version">מותקן: %1$s</string>
+    <string name="new_version">חדש: %1$s</string>
+    <string name="settings_general">כללי</string>
+    <string name="settings_appearance">מראה</string>
+    <string name="settings_downloads">הורדות</string>
+    <string name="settings_filters">מסננים</string>
+    <string name="settings_system">מערכת</string>
+    <string name="settings_repositories">מאגרים</string>
+    <string name="add_repository">הוספת מאגר</string>
+    <string name="repository_name">שם</string>
+    <string name="repository_url">כתובת</string>
+    <string name="setting_default_sort">מיון ברירת מחדל</string>
+    <string name="setting_default_sort_desc">מיון ברירת מחדל לרשימת האפליקציות</string>
+    <string name="setting_theme">ערכת נושא</string>
+    <string name="setting_dynamic_colors">שימוש בצבעים דינמיים</string>
+    <string name="setting_dynamic_colors_desc">שימוש בצבעי Material You (Android 12+)</string>
+    <string name="setting_wifi_only">עדכון דרך Wi-Fi בלבד</string>
+    <string name="setting_sync_interval">מרווח סנכרון</string>
+    <string name="setting_sync_interval_desc">באיזו תדירות לסנכרן את המאגרים</string>
+    <string name="setting_keep_cache">שמור מטמון הורדות</string>
+    <string name="setting_keep_cache_desc">שמור קובצי APK להתקנה מהירה יותר</string>
+    <string name="setting_installer">מתקין</string>
+    <string name="setting_installer_desc">אופן התקנת האפליקציות</string>
+    <string name="setting_fallback_installer">מתקין חלופי</string>
+    <string name="setting_fallback_installer_desc">המתקין שייגב אם השיטה העיקרית נכשלת</string>
+    <string name="installer_none">ללא</string>
+    <string name="installer_app_manager">מנהל אפליקציות</string>
+    <string name="fallback_triggered">המתקין העיקרי נכשל; משתמש ב-%1$s</string>
+    <string name="setting_hide_anti">הסתר אפליקציות עם וויטוג אנטי</string>
+    <string name="setting_show_incompatible">הצג גרסאות שאינן תואמות</string>
+    <string name="setting_ignore_unstable">התעלם מגרסאות אלפא/בטא</string>
+    <string name="setting_ignore_unstable_desc">הסתר גרסאות אלפא ובטא מהעדכונים</string>
+    <string name="channel_beta">בטא</string>
+    <string name="channel_alpha">אלפא</string>
+    <string name="version_suggested">מוצעת</string>
+    <string name="setting_differential_sync">סנכרון דיפרנציאלי</string>
+    <string name="setting_differential_sync_desc">שימוש בבדיקות מטמון HTTP כדי לדלג על מאגרים שלא השתנו</string>
+    <string name="setting_preferred_repo">מאגר מועדף</string>
+    <string name="setting_preferred_repo_desc">מקור ברירת המחדל כשאפליקציה קיימת בכמה מאגרים</string>
+    <string name="setting_clear_cache">ניקוי מטמון</string>
+    <string name="setting_clear_cache_desc">מחיקת כותרות מאגר ואיפוס הסנכרון האחרון</string>
+    <string name="theme_system">מערכת</string>
+    <string name="theme_light">בהיר</string>
+    <string name="theme_dark">כהה</string>
+    <string name="sync_3_hours">3 שעות</string>
+    <string name="sync_6_hours">6 שעות</string>
+    <string name="sync_12_hours">12 שעות</string>
+    <string name="sync_24_hours">24 שעות</string>
+    <string name="sync_weekly">שבועי</string>
+    <string name="sync_manual">ידני בלבד</string>
+    <string name="installer_system">מערכת (ברירת מחדל)</string>
+    <string name="installer_session">הפעלה (מתקין החבילות)</string>
+    <string name="installer_root">שורש (pm)</string>
+    <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (בעל המכשיר)</string>
+    <string name="repo_auto">אוטומטי</string>
+    <string name="repo_prefer_fdroid">העדף F-Droid</string>
+    <string name="repo_prefer_izzy">העדף IzzyOnDroid</string>
+    <string name="toggle_on">פועל</string>
+    <string name="toggle_off">כבוי</string>
+    <string name="cache_cleared">המטמון נוקה</string>
+    <string name="no_action_attached">אין פעולה משויכת</string>
+    <string name="no_repos_enabled">אין מאגרים פעילים. הפעל לפחות אחד בהגדרות.</string>
+    <string name="connection_timeout">תם הזמן של החיבור. בדוק את חיבור האינטרנט שלך.</string>
+    <string name="sync_completed_with_errors">הסנכרון הושלם עם שגיאות:\\\\n%1$s</string>
+    <string name="partial_sync_completed">סנכרון חלקי הושלם:\\\\n%1$s</string>
+    <string name="image_counter">%1$d / %2$d</string>
+    <string name="error_network">שגיאת רשת או ניתוח</string>
+    <string name="error_unknown">שגיאה לא ידועה</string>
+    <string name="repositories_reset">איפוס מאגרים</string>
+    <string name="name">שם</string>
+    <string name="url">כתובת</string>
+    <string name="mirror_strategy">אסטרטגיית מראה</string>
+    <string name="trust">אמון</string>
+    <string name="trust_mode">מצב אמון</string>
+    <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">תאימות ל-Plexus</string>
+    <string name="plexus_degoogled">מנוקה מ-Google</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">ללא דירוג ב-Plexus</string>
+    <string name="plexus_view_details">הצגת פרטים</string>
+    <string name="plexus_ratings">דירוגים</string>
+    <string name="plexus_open_website">פתיחה באתר Plexus</string>
+    <string name="permissions">פרטי אפליקציה</string>
+    <string name="app_not_installed">האפליקציה אינה מותקנת</string>
+    <string name="versions">גרסאות</string>
+    <string name="installed">מותקנת</string>
+    <string name="more_apps">עוד</string>
+    <string name="more_apps_by_author">אפליקציות נוספות מאת %1$s</string>
+    <string name="no_apps_by_author">לא נמצאו אפליקציות מאת %1$s</string>
+    <string name="app_count">%1$d אפליקציות</string>
+    <string name="incompatible">לא תואמת</string>
+    <string name="copied">הועתק</string>
+    <string name="copy_url">העתקת כתובת</string>
+    <string name="no_variants_found">לא נמצאו וריאנטים</string>
+    <string name="downloading">מוריד</string>
+    <string name="verifying">מאמת</string>
+    <string name="preferred_source">מקור מועדף</string>
+    <string name="auto">אוטומטי</string>
+    <string name="locked_to_repo">נעול למאגר</string>
+    <string name="unlocked_repo">פתוח</string>
+    <string name="lock_to_repo">נעילה למאגר</string>
+    <string name="updating_count">מעדכן %d אפליקציות</string>
+    <string name="installation_errors">%d שגיאות התקנה</string>
+    <string name="updating">מעדכן…</string>
+    <string name="available_updates">עדכונים זמינים</string>
+    <string name="dismiss">סגירה</string>
+    <string name="search">חיפוש</string>
+    <string name="category_appearance">מראה</string>
+    <string name="category_general">כללי</string>
+    <string name="category_downloads">הורדות ועדכונים</string>
+    <string name="category_filters">מסננים</string>
+    <string name="category_sync">התנהגות סנכרון</string>
+    <string name="category_proxy">פרוקסי</string>
+    <string name="category_other">אחר</string>
+    <string name="repositories">מאגרים</string>
+    <string name="reset_to_defaults">איפוס לברירת המחדל</string>
+    <string name="reset_repositories">איפוס מאגרים</string>
+    <string name="reset_repositories_confirm">כל המאגרים המותאמים יוסרו ורשימת ברירת המחדל תשוחזר. להמשיך?</string>
+    <string name="reset">איפוס</string>
+    <string name="run">הרצה</string>
+    <string name="test_ping">בדיקת פינג</string>
+    <string name="forget_last_mirror">שכחת מראה אחרונה</string>
+    <string name="forgot_mirror">המראה האחרונה עבור %s נשכחה</string>
+    <string name="delete_repository">מחיקת מאגר</string>
+    <string name="delete_repository_confirm">למחוק את %s מהמאגרים שלך?</string>
+    <string name="delete">מחק</string>
+    <string name="rotate_mirrors">סיבוב מראות</string>
+    <string name="use_onion">שימוש ב-onion</string>
+    <string name="pins_label">מפתחות נעוצים (sha256/BASE64, מופרדים בפסיק)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">אישור CA מותאם</string>
+    <string name="optional">רשות</string>
+    <string name="more_options_for">תפריט אפשרויות נוספות</string>
+    <string name="install_from">התקנה מ-</string>
+    <string name="show_less">הצגה מצומצמת</string>
+    <string name="license">רישיון</string>
+    <string name="nav_favorites">מועדפים</string>
+    <string name="no_favorites">אין עדיין מועדפים!</string>
+    <string name="remove_from_favorites">הסרה מהמועדפים</string>
+    <string name="add_to_favorites">הוספה למועדפים</string>
+    <string name="no_favorites_hint">הקש על סמל הלב בכל אפליקציה כדי להוסיף אותה למועדפים</string>
+    <string name="remove_favorite">הסרה מהמועדפים</string>
+    <string name="remove_favorite_confirm">להסיר את %1$s מהמועדפים?</string>
+    <string name="remove">הסרה</string>
+    <string name="import_success">הייבוא הצליח (%d פריטים)</string>
+    <string name="import_failed">הייבוא נכשל: %s</string>
+    <string name="export_success">הייצוא הצליח</string>
+    <string name="export_failed">הייצוא נכשל: %s</string>
+    <string name="search_settings">חיפוש בהגדרות</string>
+    <string name="import_settings">ייבוא הגדרות</string>
+    <string name="export_settings">ייצוא הגדרות</string>
+    <string name="izzy_stats_title">סטטיסטיקת IzzyOnDroid</string>
+    <string name="izzy_stats_monthly">הורדות חודשיות</string>
+    <string name="izzy_stats_yearly">הורדות שנתיות</string>
+    <string name="izzy_stats_unavailable">הסטטיסטיקה אינה זמינה</string>
+    <string name="dhizuku_permission_denied">הרשאת Dhizuku נדחתה. יש לאשר את ההרשאה ביישום Dhizuku.</string>
+    <string name="dhizuku_not_available">Dhizuku אינו זמין. יש להתקין ולהגדיר את Dhizuku כבעל המכשיר תחילה.</string>
+    <string name="dhizuku_fallback">חזרה למתקין ההפעלה</string>
+    <string name="dismiss_banner">סגירת הבאנר</string>
+    <string name="no_browser_available">אין דפדפן זמין לפתיחת הקישור</string>
+    <string name="alert_keep_android_open">F-Droid נמצא באיום. Google משנה את האופן שבו מתקינים אפליקציות בטלפון. אנו זקוקים לעזרתך.</string>
+    <string name="category_about">אודות</string>
+    <string name="support_development">תמיכה בפיתוח</string>
+    <string name="support_development_desc">אם האפליקציה שימושית עבורך, שקול לתמוך בהמשך הפיתוח שלה</string>
+    <string name="donate_on_kofi">תרומה ב-Ko-fi</string>
+    <string name="insecure_http_warning">מאגר זה משתמש ב-HTTP לא מאובטח. הפעל רק עבור מאגר מקומי או מקומי-רשת מהימן.</string>
+    <string name="allow_insecure_http">אפשר HTTP לא מאובטח למאגר זה</string>
+    <string name="setting_theme_desc">בחר בין ערכת נושא בהירה, כהה או של המערכת</string>
+    <string name="setting_show_app_icons">הצגת סמלי אפליקציות</string>
+    <string name="setting_show_app_icons_desc">הצגת סמלי האפליקציות ברשימות וברשתות</string>
+    <string name="setting_use_list_layout">שימוש בפריסת רשימה</string>
+    <string name="setting_use_list_layout_desc">הצגת האפליקציות ברשימה במקום ברשת</string>
+    <string name="sort_name_za">שם (Z-A)</string>
+    <string name="setting_auto_update">עדכון אוטומטי</string>
+    <string name="setting_auto_update_desc">עדכון אוטומטי של האפליקציות ברקע</string>
+    <string name="setting_wifi_only_desc">הורדה וסנכרון דרך Wi-Fi בלבד</string>
+    <string name="setting_show_reproducible">הצגת תגי בנייה ניתנת לשחזור</string>
+    <string name="setting_show_reproducible_desc">הצגת תגי הבנייה הניתנת לשחזור מ-IzzyOnDroid</string>
+    <string name="setting_fail_on_trust_errors">כשל בשגיאות אמון</string>
+    <string name="setting_fail_on_trust_errors_desc">אימות SSL/TLS קפדני</string>
+    <string name="setting_use_proxy">שימוש בפרוקסי</string>
+    <string name="setting_use_proxy_desc">ניתוב חיבורים דרך פרוקסי</string>
+    <string name="setting_proxy_url">כתובת הפרוקסי</string>
+    <string name="setting_show_debug_info">הצגת מידע ניפוי שגיאות</string>
+    <string name="setting_show_debug_info_desc">הצגת מידע ניפוי שגיאות בממשק</string>
+    <string name="mirror_sticky_last_good">העדפת המראה התקינה האחרונה</string>
+    <string name="mirror_round_robin">מתחלף</string>
+    <string name="mirror_canonical_first">הקנונית תחילה</string>
+    <string name="trust_https_only">HTTPS בלבד</string>
+    <string name="trust_pinned">אישורים נעוצים</string>
+    <string name="trust_custom_ca">CA מותאם</string>
+    <string name="trust_insecure_http">אפשר HTTP לא מאובטח</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
+</resources>

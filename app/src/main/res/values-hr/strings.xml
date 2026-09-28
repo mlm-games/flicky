@@ -35,6 +35,7 @@
     <string name="force_sync">Prisilna sinkronizacija</string>
     <string name="clear_all_apps">Očisti sve aplikacije</string>
     <string name="sort_name">Naziv</string>
+    <string name="sort_reverse">Obrnuti poredak</string>
     <string name="sort_updated">Nedavno ažurirano</string>
     <string name="sort_size">Veličina</string>
     <string name="sort_added">Nedavno dodano</string>
@@ -95,8 +96,18 @@
     <string name="setting_keep_cache_desc">Zadrži preuzete APK datoteke za bržu ponovnu instalaciju</string>
     <string name="setting_installer">Instalacijski program</string>
     <string name="setting_installer_desc">Odaberite kako se aplikacije instaliraju</string>
+    <string name="setting_fallback_installer">Zamjenski instalater</string>
+    <string name="setting_fallback_installer_desc">Instalater koji se koristi ako glavna metoda ne uspije</string>
+    <string name="installer_none">Ništa</string>
+    <string name="installer_app_manager">Upravitelj aplikacija</string>
+    <string name="fallback_triggered">Glavni instalater nije uspio; koristi se %1$s</string>
     <string name="setting_hide_anti">Sakrij aplikacije s anti-značajkama</string>
     <string name="setting_show_incompatible">Prikaži nekompatibilne verzije</string>
+    <string name="setting_ignore_unstable">Ignoriraj alfa/beta verzije</string>
+    <string name="setting_ignore_unstable_desc">Sakrij alfa i beta izdanja pri ažuriranjima</string>
+    <string name="channel_beta">Beta</string>
+    <string name="channel_alpha">Alfa</string>
+    <string name="version_suggested">Predloženo</string>
     <string name="setting_differential_sync">Diferencijalna sinkronizacija</string>
     <string name="setting_differential_sync_desc">Koristi provjere HTTP predmemorije za preskakanje nepromijenjenih repozitorija</string>
     <string name="setting_preferred_repo">Preferirani repozitorij</string>
@@ -116,6 +127,7 @@
     <string name="installer_session">Sesija (Instalater paketa)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (vlasnik uređaja)</string>
     <string name="repo_auto">Automatski</string>
     <string name="repo_prefer_fdroid">Preferiraj F-Droid</string>
     <string name="repo_prefer_izzy">Preferiraj IzzyOnDroid</string>
@@ -125,20 +137,34 @@
     <string name="no_action_attached">Nema priložene radnje</string>
     <string name="no_repos_enabled">Nema omogućenih repozitorija. Omogućite barem jedan u Postavkama.</string>
     <string name="connection_timeout">Isteklo je vrijeme za povezivanje. Provjerite internetsku vezu.</string>
-    <string name="sync_completed_with_errors">Sinkronizacija je dovršena s pogreškama:\n%1$s</string>
-    <string name="partial_sync_completed">Djelomična sinkronizacija je dovršena:\n%1$s</string>
+    <string name="sync_completed_with_errors">Sinkronizacija je dovršena s pogreškama:\\\\n%1$s</string>
+    <string name="partial_sync_completed">Djelomična sinkronizacija je dovršena:\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Pogreška mreže ili parsiranja</string>
     <string name="error_unknown">Nepoznata pogreška</string>
     <string name="repositories_reset">Reset Repositories</string>
+    <string name="name">Naziv</string>
+    <string name="url">URL</string>
     <string name="mirror_strategy">Mirror Strategy</string>
     <string name="trust">Trust</string>
     <string name="trust_mode">Trust Mode</string>
     <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Kompatibilnost s Plexusom</string>
+    <string name="plexus_degoogled">De-googled</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Neocijenjeno na Plexusu</string>
+    <string name="plexus_view_details">Prikaži detalje</string>
+    <string name="plexus_ratings">ocjena</string>
+    <string name="plexus_open_website">Otvori na Plexus stranici</string>
     <string name="permissions">App Info</string>
     <string name="app_not_installed">App not installed</string>
     <string name="versions">Versions</string>
-    <string name="installed" />
+    <string name="installed"></string>
+    <string name="more_apps">Još</string>
+    <string name="more_apps_by_author">Još aplikacija od %1$s</string>
+    <string name="no_apps_by_author">Nema aplikacija od %1$s</string>
+    <string name="app_count">%1$d aplikacija</string>
     <string name="incompatible">Incompatible</string>
     <string name="copied">Copied</string>
     <string name="copy_url">Copy URL</string>
@@ -152,9 +178,35 @@
     <string name="lock_to_repo">Lock to Repo</string>
     <string name="updating_count">Updating %d apps</string>
     <string name="installation_errors">%d installation error(s)</string>
+    <string name="updating">Ažuriranje…</string>
     <string name="available_updates">Available Updates</string>
     <string name="dismiss">Dismiss</string>
     <string name="search">Search</string>
+    <string name="category_appearance">Izgled</string>
+    <string name="category_general">Općenito</string>
+    <string name="category_downloads">Preuzimanja i ažuriranja</string>
+    <string name="category_filters">Filtri</string>
+    <string name="category_sync">Ponašanje sinkronizacije</string>
+    <string name="category_proxy">Proxy</string>
+    <string name="category_other">Ostalo</string>
+    <string name="repositories">Spremišta</string>
+    <string name="reset_to_defaults">Vrati na zadano</string>
+    <string name="reset_repositories">Vrati spremišta</string>
+    <string name="reset_repositories_confirm">Time će se ukloniti sva prilagođena spremišta i vratiti zadani popis. Nastaviti?</string>
+    <string name="reset">Vrati</string>
+    <string name="run">Pokreni</string>
+    <string name="test_ping">Provjeri ping</string>
+    <string name="forget_last_mirror">Zaboravi posljednje zrcaljenje</string>
+    <string name="forgot_mirror">Zaboravljeno posljednje zrcaljenje za %s</string>
+    <string name="delete_repository">Izbriši spremište</string>
+    <string name="delete_repository_confirm">Izbbrisati %s iz vaših spremišta?</string>
+    <string name="delete">Izbriši</string>
+    <string name="rotate_mirrors">Rotiraj zrcaljenja</string>
+    <string name="use_onion">Koristi onion</string>
+    <string name="pins_label">Pinovi (sha256/BASE64, odvojeni zarezom)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">Vlastiti CA certifikat</string>
+    <string name="optional">Neobavezno</string>
     <string name="more_options_for">More Options Dropdown</string>
     <string name="install_from">Install from</string>
     <string name="show_less">Show less</string>
@@ -167,11 +219,105 @@
     <string name="remove_favorite">Remove Favourite</string>
     <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
+    <string name="import_success">Uvoz uspješan (%d stavki)</string>
     <string name="import_failed">Import failed: %s</string>
     <string name="export_success">Export Successful</string>
     <string name="export_failed">Export failed: %s</string>
     <string name="search_settings">Search Settings</string>
     <string name="import_settings">Import settings</string>
     <string name="export_settings">Export settings</string>
+    <string name="izzy_stats_title">IzzyOnDroid statistika</string>
+    <string name="izzy_stats_monthly">Mjesečna preuzimanja</string>
+    <string name="izzy_stats_yearly">Godišnja preuzimanja</string>
+    <string name="izzy_stats_unavailable">Statistika nije dostupna</string>
+    <string name="dhizuku_permission_denied">Dozvolu za Dhizuku odbili ste. Dodijelite dopuštenje u aplikaciji Dhizuku.</string>
+    <string name="dhizuku_not_available">Dhizuku nije dostupan. Prvo instalirajte i postavite Dhizuku kao vlasnika uređaja.</string>
+    <string name="dhizuku_fallback">Prebacivanje na instalator sesije</string>
+    <string name="dismiss_banner">Sakrij natpis</string>
+    <string name="no_browser_available">Nema preglednika za otvaranje veze</string>
+    <string name="alert_keep_android_open">F-Droid je ugrožen. Google mijenja način na koji instalirate aplikacije na telefonu. Trebamo vašu pomoć.</string>
+    <string name="category_about">O aplikaciji</string>
+    <string name="support_development">Podrži razvoj</string>
+    <string name="support_development_desc">Ako vam je ova aplikacija korisna, razmislite o potpori njezinu daljnjem razvoju</string>
+    <string name="donate_on_kofi">Donirajte na Ko-fi</string>
+    <string name="insecure_http_warning">Ovo spremište koristi nesiguran HTTP. Omogućite samo za pouzdano lokalno ili LAN spremište.</string>
+    <string name="allow_insecure_http">Dopusti nesiguran HTTP za ovo spremište</string>
+    <string name="setting_theme_desc">Odaberite svijetlu, tamnu ili sustavsku temu</string>
+    <string name="setting_show_app_icons">Prikaži ikone aplikacija</string>
+    <string name="setting_show_app_icons_desc">Prikaži ikone aplikacija na popisima i mrežama</string>
+    <string name="setting_use_list_layout">Koristi prikaz popisa</string>
+    <string name="setting_use_list_layout_desc">Prikaži aplikacije kao popis umjesto mreže</string>
+    <string name="sort_name_za">Naziv (Z-A)</string>
+    <string name="setting_auto_update">Automatsko ažuriranje</string>
+    <string name="setting_auto_update_desc">Automatski ažuriraj aplikacije u pozadini</string>
+    <string name="setting_wifi_only_desc">Preuzimaj i sinkroniziraj samo preko Wi-Fija</string>
+    <string name="setting_show_reproducible">Prikaži oznake ponovljivih izrada</string>
+    <string name="setting_show_reproducible_desc">Prikaži oznake ponovljivih izrada s IzzyOnDroida</string>
+    <string name="setting_fail_on_trust_errors">Neuspjedi kod pogrešaka pouzdanosti</string>
+    <string name="setting_fail_on_trust_errors_desc">Stroga SSL/TLS provjera</string>
+    <string name="setting_use_proxy">Koristi proxy</string>
+    <string name="setting_use_proxy_desc">Usmjeri veze putem proxyja</string>
+    <string name="setting_proxy_url">Proxy URL</string>
+    <string name="setting_show_debug_info">Prikaži informacije za otklanjanje pogrešaka</string>
+    <string name="setting_show_debug_info_desc">Prikaži informacije za otklanjanje pogrešaka u sučelju</string>
+    <string name="mirror_sticky_last_good">Preferiraj posljednji ispravni</string>
+    <string name="mirror_round_robin">Naizmjenično</string>
+    <string name="mirror_canonical_first">Najprije glavni</string>
+    <string name="trust_https_only">Samo HTTPS</string>
+    <string name="trust_pinned">Pinovani certifikati</string>
+    <string name="trust_custom_ca">Vlastiti CA</string>
+    <string name="trust_insecure_http">Dopusti nesiguran HTTP</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Flicky</string>
+    <string name="app_description">کلاینت غیررسمی F-Droid برای تلویزیون</string>
+    <string name="nav_browse">مرور</string>
+    <string name="nav_categories">دسته‌ها</string>
+    <string name="nav_updates">به‌روزرسانی‌ها</string>
+    <string name="nav_settings">تنظیمات</string>
+    <string name="action_install">نصب</string>
+    <string name="action_update">به‌روزرسانی</string>
+    <string name="action_uninstall">حذف</string>
+    <string name="action_open">باز کردن</string>
+    <string name="action_share">هم‌رسانی</string>
+    <string name="action_cancel">لغو</string>
+    <string name="action_apply">اعمال</string>
+    <string name="action_add">افزودن</string>
+    <string name="action_close">بستن</string>
+    <string name="action_confirm">تأیید</string>
+    <string name="action_select">انتخاب</string>
+    <string name="action_run">اجرا</string>
+    <string name="action_sync">همگام‌سازی</string>
+    <string name="action_clear">پاک کردن</string>
+    <string name="search_hint">جست‌وجوی برنامه‌ها…</string>
+    <string name="voice_search">جست‌وجوی صوتی</string>
+    <string name="voice_search_prompt">برای جست‌وجوی برنامه‌ها صحبت کنید</string>
+    <string name="voice_search_unavailable">جست‌وجوی صوتی در دسترس نیست</string>
+    <string name="sort_by">مرتب‌سازی بر اساس</string>
+    <string name="sort_prefix">مرتب‌سازی: %1$s</string>
+    <string name="syncing">در حال همگام‌سازی…</string>
+    <string name="sync_status">در حال همگام‌سازی %1$s (%2$d/%3$d)</string>
+    <string name="sync_complete">همگام‌سازی کامل شد: %1$d برنامه</string>
+    <string name="sync_failed">همگام‌سازی ناموفق بود</string>
+    <string name="no_apps_found">برنامه‌ای یافت نشد</string>
+    <string name="try_different_search">عبارت دیگری را جست‌وجو کنید</string>
+    <string name="force_sync">همگام‌سازی اجباری</string>
+    <string name="clear_all_apps">پاک کردن همهٔ برنامه‌ها</string>
+    <string name="sort_name">نام</string>
+    <string name="sort_reverse">ترتیب عکس</string>
+    <string name="sort_updated">آخرین به‌روزرسانی</string>
+    <string name="sort_size">حجم</string>
+    <string name="sort_added">آخرین افزوده</string>
+    <string name="category_all">همه</string>
+    <string name="category_count">%1$s (%2$d)</string>
+    <string name="no_apps_in_category">برنامه‌ای در این دسته نیست</string>
+    <string name="update_all">به‌روزرسانی همه (%1$d)</string>
+    <string name="show_ignored">نمایش نادیده‌گرفته‌شده‌ها (%1$d)</string>
+    <string name="hide_ignored">پنهان کردن نادیده‌گرفته‌شده‌ها (%1$d)</string>
+    <string name="no_updates">لا تحديث متاح</string>
+    <string name="installed_apps">برنامه‌های نصب‌شده</string>
+    <string name="ignored_updates">به‌روزرسانی‌های نادیده‌گرفته‌شده</string>
+    <string name="ignore_this_version">نادیده گرفتن این نسخه</string>
+    <string name="ignore_all_updates">نادیده گرفتن همهٔ به‌روزرسانی‌ها</string>
+    <string name="stop_ignoring">توقف از نادیده گرفتن به‌روزرسانی‌ها</string>
+    <string name="more_options">بیشتر</string>
+    <string name="installing">در حال نصب…</string>
+    <string name="installing_progress">در حال نصب… %1$d%%</string>
+    <string name="installation_failed">نصب ناموفق بود</string>
+    <string name="install_failed_message">نصب ناموفق بود: %1$s</string>
+    <string name="version_prefix">نسخهٔ %1$s</string>
+    <string name="version_code">کد نسخه</string>
+    <string name="package_name">بسته</string>
+    <string name="updated">به‌روزرسانی‌شده</string>
+    <string name="added">افزوده‌شده</string>
+    <string name="overview">نمای کلی</string>
+    <string name="whats_new">تازه چه خبر؟</string>
+    <string name="about">درباره</string>
+    <string name="screenshots">تصاویر</string>
+    <string name="info">اطلاعات</string>
+    <string name="details">جزئیات</string>
+    <string name="anti_features">ویژگی‌های ضد</string>
+    <string name="links">پیوندها</string>
+    <string name="website">وب‌سایت</string>
+    <string name="source_code">کد منبع</string>
+    <string name="read_more">بیشتر بخوانید</string>
+    <string name="unknown">نامشخص</string>
+    <string name="installed_version">نصب‌شده: %1$s</string>
+    <string name="new_version">جدید: %1$s</string>
+    <string name="settings_general">عمومی</string>
+    <string name="settings_appearance">ظاهر</string>
+    <string name="settings_downloads">دانلودها</string>
+    <string name="settings_filters">فیلترها</string>
+    <string name="settings_system">سیستم</string>
+    <string name="settings_repositories">مخازن</string>
+    <string name="add_repository">افزودن مخزن</string>
+    <string name="repository_name">نام</string>
+    <string name="repository_url">نشانی اینترنتی</string>
+    <string name="setting_default_sort">مرتب‌سازی پیش‌فرض</string>
+    <string name="setting_default_sort_desc">مرتب‌سازی پیش‌فرض فهرست برنامه‌ها</string>
+    <string name="setting_theme">پوسته</string>
+    <string name="setting_dynamic_colors">استفاده از رنگ‌های پویا</string>
+    <string name="setting_dynamic_colors_desc">استفاده از رنگ‌های Material You (اندروید ۱۲+)</string>
+    <string name="setting_wifi_only">به‌روزرسانی فقط از طریق Wi-Fi</string>
+    <string name="setting_sync_interval">بازهٔ همگام‌سازی</string>
+    <string name="setting_sync_interval_desc">هر چند وقت یک بار مخازن همگام شوند</string>
+    <string name="setting_keep_cache">نگه‌داشتن حافظهٔ نهان دانلود</string>
+    <string name="setting_keep_cache_desc">نگه‌داشتن APKها برای نصب سریع‌تر</string>
+    <string name="setting_installer">مثبِّت</string>
+    <string name="setting_installer_desc">نحوهٔ نصب برنامه‌ها</string>
+    <string name="setting_fallback_installer">مثبِّت جایگزین</string>
+    <string name="setting_fallback_installer_desc">مثبِّتی که در صورت شکست روش اصلی استفاده می‌شود</string>
+    <string name="installer_none">هیچ‌کدام</string>
+    <string name="installer_app_manager">مدیر برنامه‌ها</string>
+    <string name="fallback_triggered">مثبِّت اصلی ناموفق بود؛ استفاده از %1$s</string>
+    <string name="setting_hide_anti">پنهان کردن برنامه‌های دارای ویژگی ضد</string>
+    <string name="setting_show_incompatible">نمایش نسخه‌های ناسازگار</string>
+    <string name="setting_ignore_unstable">نادیده گرفتن نسخه‌های آلفا/بتا</string>
+    <string name="setting_ignore_unstable_desc">پنهان کردن نسخه‌های آلفا و بتا از به‌روزرسانی‌ها</string>
+    <string name="channel_beta">بتا</string>
+    <string name="channel_alpha">آلفا</string>
+    <string name="version_suggested">پیشنهادی</string>
+    <string name="setting_differential_sync">همگام‌سازی تفاضلی</string>
+    <string name="setting_differential_sync_desc">استفاده از بررسی حافظهٔ نهان HTTP برای رد کردن مخازن بدون تغییر</string>
+    <string name="setting_preferred_repo">مخزن ترجیحی</string>
+    <string name="setting_preferred_repo_desc">منبع پیش‌فرض وقتی برنامه در چند مخزن هست</string>
+    <string name="setting_clear_cache">پاک کردن حافظهٔ نهان</string>
+    <string name="setting_clear_cache_desc">حذف سرصفحه‌های مخزن و بازنشانی آخرین همگام‌سازی</string>
+    <string name="theme_system">سیستم</string>
+    <string name="theme_light">روشن</string>
+    <string name="theme_dark">تیره</string>
+    <string name="sync_3_hours">۳ ساعت</string>
+    <string name="sync_6_hours">۶ ساعت</string>
+    <string name="sync_12_hours">۱۲ ساعت</string>
+    <string name="sync_24_hours">۲۴ ساعت</string>
+    <string name="sync_weekly">هفتگی</string>
+    <string name="sync_manual">فقط دستی</string>
+    <string name="installer_system">سیستم (پیش‌فرض)</string>
+    <string name="installer_session">نشست (نصب‌کننده بسته)</string>
+    <string name="installer_root">ریشه (pm)</string>
+    <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (مالک دستگاه)</string>
+    <string name="repo_auto">خودکار</string>
+    <string name="repo_prefer_fdroid">ترجیح F-Droid</string>
+    <string name="repo_prefer_izzy">ترجیح IzzyOnDroid</string>
+    <string name="toggle_on">روشن</string>
+    <string name="toggle_off">خاموش</string>
+    <string name="cache_cleared">حافظهٔ نهان پاک شد</string>
+    <string name="no_action_attached">اقدامی متصل نیست</string>
+    <string name="no_repos_enabled">هیچ مخزنی فعال نیست. در تنظیمات دست‌کم یکی را فعال کنید.</string>
+    <string name="connection_timeout">اتمام زمان اتصال. لطفاً اتصال اینترنت خود را بررسی کنید.</string>
+    <string name="sync_completed_with_errors">همگام‌سازی با خطاها کامل شد:\\\\n%1$s</string>
+    <string name="partial_sync_completed">همگام‌سازی ناقص انجام شد:\\\\n%1$s</string>
+    <string name="image_counter">%1$d / %2$d</string>
+    <string name="error_network">خطای شبکه یا تجزیه</string>
+    <string name="error_unknown">خطای ناشناخته</string>
+    <string name="repositories_reset">بازنشانی مخازن</string>
+    <string name="name">نام</string>
+    <string name="url">نشانی اینترنتی</string>
+    <string name="mirror_strategy">راهبرد آینه</string>
+    <string name="trust">اعتماد</string>
+    <string name="trust_mode">حالت اعتماد</string>
+    <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">سازگاری Plexus</string>
+    <string name="plexus_degoogled">جداشده از گوگل</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">در Plexus امتیازی ندارد</string>
+    <string name="plexus_view_details">مشاهدهٔ جزئیات</string>
+    <string name="plexus_ratings">امتیاز</string>
+    <string name="plexus_open_website">باز کردن در وب‌سایت Plexus</string>
+    <string name="permissions">اطلاعات برنامه</string>
+    <string name="app_not_installed">برنامه نصب نیست</string>
+    <string name="versions">نسخه‌ها</string>
+    <string name="installed">نصب‌شده</string>
+    <string name="more_apps">بیشتر</string>
+    <string name="more_apps_by_author">برنامه‌های بیشتر از %1$s</string>
+    <string name="no_apps_by_author">برنامه‌ای از %1$s یافت نشد</string>
+    <string name="app_count">%1$d برنامه</string>
+    <string name="incompatible">ناسازگار</string>
+    <string name="copied">کپی شد</string>
+    <string name="copy_url">کپی نشانی</string>
+    <string name="no_variants_found">variante‌ای یافت نشد</string>
+    <string name="downloading">در حال دانلود</string>
+    <string name="verifying">در حال بررسی</string>
+    <string name="preferred_source">منبع ترجیحی</string>
+    <string name="auto">خودکار</string>
+    <string name="locked_to_repo">قفل‌شده روی مخزن</string>
+    <string name="unlocked_repo">باز</string>
+    <string name="lock_to_repo">قفل روی مخزن</string>
+    <string name="updating_count">در حال به‌روزرسانی %d برنامه</string>
+    <string name="installation_errors">%d خطای نصب</string>
+    <string name="updating">در حال به‌روزرسانی…</string>
+    <string name="available_updates">به‌روزرسانی‌های موجود</string>
+    <string name="dismiss">بستن</string>
+    <string name="search">جست‌وجو</string>
+    <string name="category_appearance">ظاهر</string>
+    <string name="category_general">عمومی</string>
+    <string name="category_downloads">دانلودها و به‌روزرسانی‌ها</string>
+    <string name="category_filters">فیلترها</string>
+    <string name="category_sync">رفتار همگام‌سازی</string>
+    <string name="category_proxy">پراکسی</string>
+    <string name="category_other">سایر</string>
+    <string name="repositories">مخازن</string>
+    <string name="reset_to_defaults">بازنشانی به پیش‌فرض‌ها</string>
+    <string name="reset_repositories">بازنشانی مخازن</string>
+    <string name="reset_repositories_confirm">همهٔ مخازن سفارشی حذف و فهرست پیش‌فرض بازیابی می‌شود. ادامه می‌دهید؟</string>
+    <string name="reset">بازنشانی</string>
+    <string name="run">اجرا</string>
+    <string name="test_ping">آزمایش پینگ</string>
+    <string name="forget_last_mirror">فراموش کردن آخرین آینه</string>
+    <string name="forgot_mirror">آخرین آینهٔ %s فراموش شد</string>
+    <string name="delete_repository">حذف مخزن</string>
+    <string name="delete_repository_confirm">%s از مخازن شما حذف شود؟</string>
+    <string name="delete">حذف</string>
+    <string name="rotate_mirrors">چرخش آینه‌ها</string>
+    <string name="use_onion">استفاده از onion</string>
+    <string name="pins_label">کلیدهای سنجاق‌شده (sha256/BASE64، جداشده با ویرگول)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">گواهی CA سفارشی</string>
+    <string name="optional">اختیاری</string>
+    <string name="more_options_for">منوی گزینه‌های بیشتر</string>
+    <string name="install_from">نصب از</string>
+    <string name="show_less">نمایش کمتر</string>
+    <string name="license">پروانه</string>
+    <string name="nav_favorites">علاقه‌مندی‌ها</string>
+    <string name="no_favorites">هنوز علاقه‌مندی‌ای ندارید!</string>
+    <string name="remove_from_favorites">حذف از علاقه‌مندی‌ها</string>
+    <string name="add_to_favorites">افزودن به علاقه‌مندی‌ها</string>
+    <string name="no_favorites_hint">برای افزودن به علاقه‌مندی‌ها، روی آیکن قلب هر برنامه ضربه بزنید</string>
+    <string name="remove_favorite">حذف از علاقه‌مندی‌ها</string>
+    <string name="remove_favorite_confirm">%1$s را از علاقه‌مندی‌ها حذف شود؟</string>
+    <string name="remove">حذف</string>
+    <string name="import_success">درون‌ریزی موفق (%d مورد)</string>
+    <string name="import_failed">درون‌ریزی ناموفق بود: %s</string>
+    <string name="export_success">برون‌ریزی موفق</string>
+    <string name="export_failed">برون‌ریزی ناموفق بود: %s</string>
+    <string name="search_settings">جست‌وجوی تنظیمات</string>
+    <string name="import_settings">درون‌ریزی تنظیمات</string>
+    <string name="export_settings">برون‌ریزی تنظیمات</string>
+    <string name="izzy_stats_title">آمار IzzyOnDroid</string>
+    <string name="izzy_stats_monthly">دانلودهای ماهانه</string>
+    <string name="izzy_stats_yearly">دانلودهای سالانه</string>
+    <string name="izzy_stats_unavailable">آمار در دسترس نیست</string>
+    <string name="dhizuku_permission_denied">مجوز Dhizuku رد شد. لطفاً مجوز را در برنامهٔ Dhizuku اعطا کنید.</string>
+    <string name="dhizuku_not_available">Dhizuku در دسترس نیست. لطفاً ابتدا Dhizuku را نصب و به‌عنوان مالک دستگاه پیکربندی کنید.</string>
+    <string name="dhizuku_fallback">بازگشت به مثبِّت نشست</string>
+    <string name="dismiss_banner">بستن بنر</string>
+    <string name="no_browser_available">مرورگری برای باز کردن پیوند در دسترس نیست</string>
+    <string name="alert_keep_android_open">F-Droid در خطر است. گوگل روش نصب برنامه‌ها روی گوشی شما را تغییر می‌دهد. به کمک شما نیاز داریم.</string>
+    <string name="category_about">درباره</string>
+    <string name="support_development">پشتیبانی از توسعه</string>
+    <string name="support_development_desc">اگر این برنامه برایتان مفید است، از ادامهٔ توسعهٔ آن پشتیبانی کنید</string>
+    <string name="donate_on_kofi">کمک مالی در Ko-fi</string>
+    <string name="insecure_http_warning">این مخزن از HTTP ناامن استفاده می‌کند. تنها برای مخزن محلی یا شبکهٔ محلی مورد اعتماد فعال کنید.</string>
+    <string name="allow_insecure_http">اجازهٔ HTTP ناامن برای این مخزن</string>
+    <string name="setting_theme_desc">میان پوستهٔ روشن، تیره یا سیستم انتخاب کنید</string>
+    <string name="setting_show_app_icons">نمایش نمادهای برنامه</string>
+    <string name="setting_show_app_icons_desc">نمایش نمادهای برنامه در فهرست‌ها و شبکه‌ها</string>
+    <string name="setting_use_list_layout">استفاده از چیدمان فهرست</string>
+    <string name="setting_use_list_layout_desc">نمایش برنامه‌ها به‌صورت فهرست به‌جای شبکه</string>
+    <string name="sort_name_za">نام (Z-A)</string>
+    <string name="setting_auto_update">به‌روزرسانی خودکار</string>
+    <string name="setting_auto_update_desc">به‌روزرسانی خودکار برنامه‌ها در پس‌زمینه</string>
+    <string name="setting_wifi_only_desc">دانلود و همگام‌سازی فقط از طریق Wi-Fi</string>
+    <string name="setting_show_reproducible">نمایش نشان‌های ساخت‌های تکرارپذیر</string>
+    <string name="setting_show_reproducible_desc">نمایش نشان‌های ساخت‌های تکرارپذیر از IzzyOnDroid</string>
+    <string name="setting_fail_on_trust_errors">شکست در خطاهای اعتماد</string>
+    <string name="setting_fail_on_trust_errors_desc">اعتبارسنجی سخت‌گیرانهٔ SSL/TLS</string>
+    <string name="setting_use_proxy">استفاده از پراکسی</string>
+    <string name="setting_use_proxy_desc">هدایت اتصالات از طریق پراکسی</string>
+    <string name="setting_proxy_url">نشانی پراکسی</string>
+    <string name="setting_show_debug_info">نمایش اطلاعات اشکال‌زدایی</string>
+    <string name="setting_show_debug_info_desc">نمایش اطلاعات اشکال‌زدایی در رابط کاربری</string>
+    <string name="mirror_sticky_last_good">ترجیح آخرین آینهٔ سالم</string>
+    <string name="mirror_round_robin">به‌تناوب</string>
+    <string name="mirror_canonical_first">ابتدای اصلی</string>
+    <string name="trust_https_only">فقط HTTPS</string>
+    <string name="trust_pinned">گواهی‌های سنجاق‌شده</string>
+    <string name="trust_custom_ca">مرجع صدور گواهی سفارشی</string>
+    <string name="trust_insecure_http">اجازهٔ HTTP ناامن</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
+</resources>

@@ -35,6 +35,7 @@
     <string name="force_sync">Tvinga synkronisering</string>
     <string name="clear_all_apps">Rensa alla appar</string>
     <string name="sort_name">Namn</string>
+    <string name="sort_reverse">Omvänd ordning</string>
     <string name="sort_updated">Nyligen uppdaterad</string>
     <string name="sort_size">Storlek</string>
     <string name="sort_added">Nyligen tillagd</string>
@@ -95,8 +96,18 @@
     <string name="setting_keep_cache_desc">Behåll nedladdade APK-filer för snabbare ominstallation</string>
     <string name="setting_installer">Installationsprogram</string>
     <string name="setting_installer_desc">Välj hur appar installeras</string>
+    <string name="setting_fallback_installer">Reservinstallerare</string>
+    <string name="setting_fallback_installer_desc">Installerare att användas om huvudmetoden misslyckas</string>
+    <string name="installer_none">Ingen</string>
+    <string name="installer_app_manager">Apphanterare</string>
+    <string name="fallback_triggered">Huvudinstallationen misslyckades; %1$s används</string>
     <string name="setting_hide_anti">Dölj appar med anti-funktioner</string>
     <string name="setting_show_incompatible">Visa inkompatibla versioner</string>
+    <string name="setting_ignore_unstable">Ignorera alpha-/betaversioner</string>
+    <string name="setting_ignore_unstable_desc">Dölj alpha- och betaversioner vid uppdateringar</string>
+    <string name="channel_beta">Beta</string>
+    <string name="channel_alpha">Alpha</string>
+    <string name="version_suggested">Föreslagen</string>
     <string name="setting_differential_sync">Differentiell synkronisering</string>
     <string name="setting_differential_sync_desc">Använd HTTP-cachekontroller för att hoppa över oförändrade arkiv</string>
     <string name="setting_preferred_repo">Föredraget arkiv</string>
@@ -116,6 +127,7 @@
     <string name="installer_session">Session (Paketinstallerare)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (enhetsägare)</string>
     <string name="repo_auto">Automatisk</string>
     <string name="repo_prefer_fdroid">Föredra F-Droid</string>
     <string name="repo_prefer_izzy">Föredra IzzyOnDroid</string>
@@ -125,20 +137,34 @@
     <string name="no_action_attached">Ingen åtgärd bifogad</string>
     <string name="no_repos_enabled">Inga arkiv aktiverade. Aktivera minst ett i Inställningar.</string>
     <string name="connection_timeout">Anslutningen tog för lång tid. Kontrollera din internetanslutning.</string>
-    <string name="sync_completed_with_errors">Synkronisering slutförd med fel:\n%1$s</string>
-    <string name="partial_sync_completed">Delvis synkronisering slutförd:\n%1$s</string>
+    <string name="sync_completed_with_errors">Synkronisering slutförd med fel:\\\\n%1$s</string>
+    <string name="partial_sync_completed">Delvis synkronisering slutförd:\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Nätverks- eller tolkningsfel</string>
     <string name="error_unknown">Okänt fel</string>
     <string name="repositories_reset">Reset Repositories</string>
+    <string name="name">Namn</string>
+    <string name="url">URL</string>
     <string name="mirror_strategy">Mirror Strategy</string>
     <string name="trust">Trust</string>
     <string name="trust_mode">Trust Mode</string>
     <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Plexus-kompatibilitet</string>
+    <string name="plexus_degoogled">Avgooglad</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Inte betygsatt på Plexus</string>
+    <string name="plexus_view_details">Visa detaljer</string>
+    <string name="plexus_ratings">betyg</string>
+    <string name="plexus_open_website">Öppna på Plexus webbplats</string>
     <string name="permissions">App Info</string>
     <string name="app_not_installed">App not installed</string>
     <string name="versions">Versions</string>
-    <string name="installed" />
+    <string name="installed"></string>
+    <string name="more_apps">Mer</string>
+    <string name="more_apps_by_author">Fler appar från %1$s</string>
+    <string name="no_apps_by_author">Inga appar hittades från %1$s</string>
+    <string name="app_count">%1$d appar</string>
     <string name="incompatible">Incompatible</string>
     <string name="copied">Copied</string>
     <string name="copy_url">Copy URL</string>
@@ -152,9 +178,35 @@
     <string name="lock_to_repo">Lock to Repo</string>
     <string name="updating_count">Updating %d apps</string>
     <string name="installation_errors">%d installation error(s)</string>
+    <string name="updating">Uppdaterar…</string>
     <string name="available_updates">Available Updates</string>
     <string name="dismiss">Dismiss</string>
     <string name="search">Search</string>
+    <string name="category_appearance">Utseende</string>
+    <string name="category_general">Allmänt</string>
+    <string name="category_downloads">Nedladdningar och uppdateringar</string>
+    <string name="category_filters">Filter</string>
+    <string name="category_sync">Synkroniseringsbeteende</string>
+    <string name="category_proxy">Proxy</string>
+    <string name="category_other">Övrigt</string>
+    <string name="repositories">Utvecklingskataloger</string>
+    <string name="reset_to_defaults">Återställ standardvärden</string>
+    <string name="reset_repositories">Återställ utvecklingskataloger</string>
+    <string name="reset_repositories_confirm">Detta tar bort alla egna utvecklingskataloger och återställer standardlistan. Fortsätta?</string>
+    <string name="reset">Återställ</string>
+    <string name="run">Kör</string>
+    <string name="test_ping">Testa ping</string>
+    <string name="forget_last_mirror">Glöm sista spegeln</string>
+    <string name="forgot_mirror">Glömde sista spegeln för %s</string>
+    <string name="delete_repository">Ta bort utvecklingskatalog</string>
+    <string name="delete_repository_confirm">Ta bort %s från dina utvecklingskataloger?</string>
+    <string name="delete">Ta bort</string>
+    <string name="rotate_mirrors">Växla speglar</string>
+    <string name="use_onion">Använd onion</string>
+    <string name="pins_label">Fästningar (sha256/BASE64, kommaseparerade)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">Eget CA-certifikat</string>
+    <string name="optional">Valfritt</string>
     <string name="more_options_for">More Options Dropdown</string>
     <string name="install_from">Install from</string>
     <string name="show_less">Show less</string>
@@ -167,11 +219,105 @@
     <string name="remove_favorite">Remove Favourite</string>
     <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
+    <string name="import_success">Importen lyckades (%d objekt)</string>
     <string name="import_failed">Import failed: %s</string>
     <string name="export_success">Export Successful</string>
     <string name="export_failed">Export failed: %s</string>
     <string name="search_settings">Search Settings</string>
     <string name="import_settings">Import settings</string>
     <string name="export_settings">Export settings</string>
+    <string name="izzy_stats_title">IzzyOnDroid-statistik</string>
+    <string name="izzy_stats_monthly">Månadsvis nedladdningar</string>
+    <string name="izzy_stats_yearly">Årsvis nedladdningar</string>
+    <string name="izzy_stats_unavailable">Statistiken är otillgänglig</string>
+    <string name="dhizuku_permission_denied">Dhizuku-behörighet nekades. Ge behörigheten i Dhizuku-appen.</string>
+    <string name="dhizuku_not_available">Dhizuku är inte tillgängligt. Installera och konfigurera Dhizuku som enhetsägare först.</string>
+    <string name="dhizuku_fallback">Återgår till sessionsinstallationsprogrammet</string>
+    <string name="dismiss_banner">Stäng banner</string>
+    <string name="no_browser_available">Ingen webbläsare tillgänglig för att öppna länken</string>
+    <string name="alert_keep_android_open">F-Droid är under hot. Google förändrar sättet du installerar appar på din telefon. Vi behöver din hjälp.</string>
+    <string name="category_about">Om</string>
+    <string name="support_development">Stöd utvecklingen</string>
+    <string name="support_development_desc">Om du tycker att den här appen är användbar, överväg att stödja dess fortsatta utveckling</string>
+    <string name="donate_on_kofi">Donera på Ko-fi</string>
+    <string name="insecure_http_warning">Den här utvecklingskatalogen använder osäker HTTP. Aktivera detta endast för en betrodd lokal eller LAN-katalog.</string>
+    <string name="allow_insecure_http">Tillåt osäker HTTP för den här utvecklingskatalogen</string>
+    <string name="setting_theme_desc">Välj mellan ljust, mörkt eller systemtema</string>
+    <string name="setting_show_app_icons">Visa appikoner</string>
+    <string name="setting_show_app_icons_desc">Visa appikoner i listor och rutnät</string>
+    <string name="setting_use_list_layout">Använd listlayout</string>
+    <string name="setting_use_list_layout_desc">Visa appar i en lista i stället för ett rutnät</string>
+    <string name="sort_name_za">Namn (Z-A)</string>
+    <string name="setting_auto_update">Automatisk uppdatering</string>
+    <string name="setting_auto_update_desc">Uppdatera appar automatiskt i bakgrunden</string>
+    <string name="setting_wifi_only_desc">Ladda ner och synka endast via Wi-Fi</string>
+    <string name="setting_show_reproducible">Visa märken för reproducerbara byggen</string>
+    <string name="setting_show_reproducible_desc">Visa märken för reproducerbara byggen från IzzyOnDroid</string>
+    <string name="setting_fail_on_trust_errors">Misslyckas vid förtroendefel</string>
+    <string name="setting_fail_on_trust_errors_desc">Strikt SSL/TLS-verifiering</string>
+    <string name="setting_use_proxy">Använd proxy</string>
+    <string name="setting_use_proxy_desc">Dirigera anslutningar via en proxy</string>
+    <string name="setting_proxy_url">Proxy-URL</string>
+    <string name="setting_show_debug_info">Visa felsökningsinformation</string>
+    <string name="setting_show_debug_info_desc">Visa felsökningsinformation i gränssnittet</string>
+    <string name="mirror_sticky_last_good">Preferera sista fungerande</string>
+    <string name="mirror_round_robin">Varvvis</string>
+    <string name="mirror_canonical_first">Kanonisk först</string>
+    <string name="trust_https_only">Endast HTTPS</string>
+    <string name="trust_pinned">Fästa certifikat</string>
+    <string name="trust_custom_ca">Eget CA</string>
+    <string name="trust_insecure_http">Tillåt osäker HTTP</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

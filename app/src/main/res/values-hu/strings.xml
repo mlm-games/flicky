@@ -35,6 +35,7 @@
     <string name="force_sync">Szinkronizálás kényszerítése</string>
     <string name="clear_all_apps">Összes alkalmazás törlése</string>
     <string name="sort_name">Név</string>
+    <string name="sort_reverse">Fordított sorrend</string>
     <string name="sort_updated">Nemrég frissített</string>
     <string name="sort_size">Méret</string>
     <string name="sort_added">Nemrég hozzáadott</string>
@@ -95,8 +96,18 @@
     <string name="setting_keep_cache_desc">Letöltött APK-k megőrzése a gyorsabb újratelepítéshez</string>
     <string name="setting_installer">Telepítő</string>
     <string name="setting_installer_desc">Válassza ki, hogyan települjenek az alkalmazások</string>
+    <string name="setting_fallback_installer">Tartalék telepítő</string>
+    <string name="setting_fallback_installer_desc">Az elsődleges módszer hibája esetén használandó telepítő</string>
+    <string name="installer_none">Nincs</string>
+    <string name="installer_app_manager">Alkalmazáskezelő</string>
+    <string name="fallback_triggered">Az elsődleges telepítő nem sikerült; a(z) %1$s használata folytatódik</string>
     <string name="setting_hide_anti">Ellenjellemzőkkel rendelkező alkalmazások elrejtése</string>
     <string name="setting_show_incompatible">Inkompatibilis verziók megjelenítése</string>
+    <string name="setting_ignore_unstable">Alfa-/bétaverziók figyelmen kívül hagyása</string>
+    <string name="setting_ignore_unstable_desc">Alfa és béta kiadások elrejtése a frissítésekben</string>
+    <string name="channel_beta">Béta</string>
+    <string name="channel_alpha">Alfa</string>
+    <string name="version_suggested">Javasolt</string>
     <string name="setting_differential_sync">Különbségi szinkronizálás</string>
     <string name="setting_differential_sync_desc">HTTP-gyorsítótár-ellenőrzések használata a változatlan tárolók kihagyásához</string>
     <string name="setting_preferred_repo">Előnyben részesített tároló</string>
@@ -116,6 +127,7 @@
     <string name="installer_session">Munkamenet (Csomagtelepítő)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (eszköztulajdonos)</string>
     <string name="repo_auto">Automatikus</string>
     <string name="repo_prefer_fdroid">F-Droid előnyben részesítése</string>
     <string name="repo_prefer_izzy">IzzyOnDroid előnyben részesítése</string>
@@ -125,20 +137,34 @@
     <string name="no_action_attached">Nincs csatolt művelet</string>
     <string name="no_repos_enabled">Nincsenek engedélyezett tárolók. Engedélyezzen legalább egyet a Beállításokban.</string>
     <string name="connection_timeout">Csatlakozási időtúllépés. Ellenőrizze az internetkapcsolatot.</string>
-    <string name="sync_completed_with_errors">A szinkronizálás hibákkal fejeződött be:\n%1$s</string>
-    <string name="partial_sync_completed">A részleges szinkronizálás befejeződött:\n%1$s</string>
+    <string name="sync_completed_with_errors">A szinkronizálás hibákkal fejeződött be:\\\\n%1$s</string>
+    <string name="partial_sync_completed">A részleges szinkronizálás befejeződött:\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Hálózati vagy elemzési hiba</string>
     <string name="error_unknown">Ismeretlen hiba</string>
     <string name="repositories_reset">Reset Repositories</string>
+    <string name="name">Név</string>
+    <string name="url">URL</string>
     <string name="mirror_strategy">Mirror Strategy</string>
     <string name="trust">Trust</string>
     <string name="trust_mode">Trust Mode</string>
     <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Plexus-kompatibilitás</string>
+    <string name="plexus_degoogled">Google-mentesített</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Nincs értékelve a Plexuson</string>
+    <string name="plexus_view_details">Részletek megtekintése</string>
+    <string name="plexus_ratings">értékelés</string>
+    <string name="plexus_open_website">Megnyitás a Plexus webhelyén</string>
     <string name="permissions">App Info</string>
     <string name="app_not_installed">App not installed</string>
     <string name="versions">Versions</string>
-    <string name="installed" />
+    <string name="installed"></string>
+    <string name="more_apps">Több</string>
+    <string name="more_apps_by_author">További alkalmazások: %1$s</string>
+    <string name="no_apps_by_author">Nem található alkalmazás innen: %1$s</string>
+    <string name="app_count">%1$d alkalmazás</string>
     <string name="incompatible">Incompatible</string>
     <string name="copied">Copied</string>
     <string name="copy_url">Copy URL</string>
@@ -152,9 +178,35 @@
     <string name="lock_to_repo">Lock to Repo</string>
     <string name="updating_count">Updating %d apps</string>
     <string name="installation_errors">%d installation error(s)</string>
+    <string name="updating">Frissítés…</string>
     <string name="available_updates">Available Updates</string>
     <string name="dismiss">Dismiss</string>
     <string name="search">Search</string>
+    <string name="category_appearance">Megjelenés</string>
+    <string name="category_general">Általános</string>
+    <string name="category_downloads">Letöltések és frissítések</string>
+    <string name="category_filters">Szűrők</string>
+    <string name="category_sync">Szinkronizálási működés</string>
+    <string name="category_proxy">Proxyszerver</string>
+    <string name="category_other">Egyéb</string>
+    <string name="repositories">Tárolók</string>
+    <string name="reset_to_defaults">Alaphelyzet visszaállítása</string>
+    <string name="reset_repositories">Tárolók visszaállítása</string>
+    <string name="reset_repositories_confirm">Ez eltávolítja az összes egyéni tárolót, és visszaállítja az alapértelmezett listát. Folytatja?</string>
+    <string name="reset">Visszaállítás</string>
+    <string name="run">Futtatás</string>
+    <string name="test_ping">Ping tesztelése</string>
+    <string name="forget_last_mirror">Utolsó tükör elfelejtése</string>
+    <string name="forgot_mirror">Utolsó tükör elfelejtve ehhez: %s</string>
+    <string name="delete_repository">Tároló törlése</string>
+    <string name="delete_repository_confirm">Törli a(z) %s elemet a tárolóiból?</string>
+    <string name="delete">Törlés</string>
+    <string name="rotate_mirrors">Tükrök váltása</string>
+    <string name="use_onion">Onion használata</string>
+    <string name="pins_label">Rögzített kulcsok (sha256/BASE64, vesszővel elválasztva)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">Egyéni CA-tanúsítvány</string>
+    <string name="optional">Opcionális</string>
     <string name="more_options_for">More Options Dropdown</string>
     <string name="install_from">Install from</string>
     <string name="show_less">Show less</string>
@@ -167,11 +219,105 @@
     <string name="remove_favorite">Remove Favourite</string>
     <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
+    <string name="import_success">Importálás sikeres (%d elem)</string>
     <string name="import_failed">Import failed: %s</string>
     <string name="export_success">Export Successful</string>
     <string name="export_failed">Export failed: %s</string>
     <string name="search_settings">Search Settings</string>
     <string name="import_settings">Import settings</string>
     <string name="export_settings">Export settings</string>
+    <string name="izzy_stats_title">IzzyOnDroid-statisztika</string>
+    <string name="izzy_stats_monthly">Havi letöltések</string>
+    <string name="izzy_stats_yearly">Éves letöltések</string>
+    <string name="izzy_stats_unavailable">A statisztika nem érhető el</string>
+    <string name="dhizuku_permission_denied">Dhizuku-engedély megtagadva. Adja meg az engedélyt a Dhizuku alkalmazásban.</string>
+    <string name="dhizuku_not_available">A Dhizuku nem érhető el. Először telepítse és állítsa be a Dhizukut eszköztulajdonosként.</string>
+    <string name="dhizuku_fallback">Visszatérés a munkamenet-telepítőre</string>
+    <string name="dismiss_banner">Banner elrejtése</string>
+    <string name="no_browser_available">Nincs böngésző a hivatkozás megnyitásához</string>
+    <string name="alert_keep_android_open">Az F-Droid veszélyben van. A Google megváltoztatja az alkalmazások telepítésének módját a telefonján. Segítségre van szükségünk.</string>
+    <string name="category_about">Névjegy</string>
+    <string name="support_development">A fejlesztés támogatása</string>
+    <string name="support_development_desc">Ha hasznosnak találja ezt az alkalmazást, fontolja meg a további fejlesztésének támogatását</string>
+    <string name="donate_on_kofi">Adomány a Ko-fin</string>
+    <string name="insecure_http_warning">Ez a tároló nem biztonságos HTTP-t használ. Csak megbízható helyi vagy LAN-tárolóhoz engedélyezze.</string>
+    <string name="allow_insecure_http">Nem biztonságos HTTP engedélyezése ehhez a tárolóhoz</string>
+    <string name="setting_theme_desc">Válasszon világos, sötét vagy rendszertéma között</string>
+    <string name="setting_show_app_icons">Alkalmazásikonok megjelenítése</string>
+    <string name="setting_show_app_icons_desc">Alkalmazásikonok megjelenítése listákban és rácsokban</string>
+    <string name="setting_use_list_layout">Listaelrendezés használata</string>
+    <string name="setting_use_list_layout_desc">Az alkalmazások megjelenítése listában rács helyett</string>
+    <string name="sort_name_za">Név (Z-A)</string>
+    <string name="setting_auto_update">Automatikus frissítés</string>
+    <string name="setting_auto_update_desc">Alkalmazások automatikus frissítése a háttérben</string>
+    <string name="setting_wifi_only_desc">Letöltés és szinkronizálás csak Wi-Fi-n keresztül</string>
+    <string name="setting_show_reproducible">Reprodukálható build jelvények megjelenítése</string>
+    <string name="setting_show_reproducible_desc">Az IzzyOnDroid reprodukálható build jelvényeinek megjelenítése</string>
+    <string name="setting_fail_on_trust_errors">Hiba megbízhatatlansági problémánál</string>
+    <string name="setting_fail_on_trust_errors_desc">Szigorú SSL/TLS-ellenőrzés</string>
+    <string name="setting_use_proxy">Proxyszerver használata</string>
+    <string name="setting_use_proxy_desc">A kapcsolatok átirányítása proxyszerveren keresztül</string>
+    <string name="setting_proxy_url">Proxyszerver URL-je</string>
+    <string name="setting_show_debug_info">Hibakerdezési adatok megjelenítése</string>
+    <string name="setting_show_debug_info_desc">Hibakerdezési adatok megjelenítése a felületen</string>
+    <string name="mirror_sticky_last_good">Az utolsó működő preferálása</string>
+    <string name="mirror_round_robin">Sorrendben</string>
+    <string name="mirror_canonical_first">Először a kanonikus</string>
+    <string name="trust_https_only">Csak HTTPS</string>
+    <string name="trust_pinned">Rögzített tanúsítványok</string>
+    <string name="trust_custom_ca">Egyéni CA</string>
+    <string name="trust_insecure_http">Nem biztonságos HTTP engedélyezése</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

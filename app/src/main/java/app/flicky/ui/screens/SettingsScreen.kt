@@ -101,6 +101,7 @@ import io.github.mlmgames.settings.core.SettingField
 import io.github.mlmgames.settings.core.annotations.CategoryDefinition
 import io.github.mlmgames.settings.core.backup.ExportResult
 import io.github.mlmgames.settings.core.backup.ImportResult
+import io.github.mlmgames.settings.core.resources.StringResourceProvider
 import io.github.mlmgames.settings.core.types.Button
 import io.github.mlmgames.settings.core.types.Dropdown
 import io.github.mlmgames.settings.core.types.Slider
@@ -124,6 +125,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
     val context = LocalContext.current
     val repoConfigDao: RepoConfigDao = koinInject()
     val mirrorPolicyProvider: MirrorPolicyProvider = koinInject()
+    val stringProvider: StringResourceProvider = koinInject()
 
     val schema = remember { AppSettingsSchema }
     val snackbarManager: SnackbarManager = koinInject()
@@ -251,8 +253,8 @@ fun SettingsScreen(vm: SettingsViewModel) {
         val query = searchQuery.lowercase()
         return fields.filter { field ->
             val meta = field.meta ?: return@filter false
-            meta.title.lowercase().contains(query) ||
-                    meta.description.lowercase().contains(query) ||
+            meta.resolvedTitle(stringProvider).lowercase().contains(query) ||
+                    meta.resolvedDescription(stringProvider).lowercase().contains(query) ||
                     field.name.lowercase().contains(query)
         }
     }
@@ -385,8 +387,9 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                 Toggle::class -> {
                                     val v = (field.get(settings) as? Boolean) ?: false
                                     SettingsToggle(
-                                        title = meta.title,
-                                        description = meta.description.takeIf { it.isNotBlank() },
+                                        title = meta.resolvedTitle(stringProvider),
+                                        description = meta.resolvedDescription(stringProvider)
+                                            .takeIf { it.isNotBlank() },
                                         isChecked = v,
                                         enabled = enabled,
                                         onCheckedChange = { vm.updateSetting(field.name, it) }
@@ -395,11 +398,12 @@ fun SettingsScreen(vm: SettingsViewModel) {
 
                                 Dropdown::class -> {
                                     val idx = (field.get(settings) as? Int) ?: 0
-                                    val options = meta.options
+                                    val options = meta.resolvedOptions(stringProvider)
                                     SettingsItem(
-                                        title = meta.title,
+                                        title = meta.resolvedTitle(stringProvider),
                                         subtitle = options.getOrNull(idx) ?: stringResource(R.string.unknown),
-                                        description = meta.description.takeIf { it.isNotBlank() },
+                                        description = meta.resolvedDescription(stringProvider)
+                                            .takeIf { it.isNotBlank() },
                                         enabled = enabled,
                                         onClick = {
                                             currentField = field
@@ -417,9 +421,10 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                         else -> ""
                                     }
                                     SettingsItem(
-                                        title = meta.title,
+                                        title = meta.resolvedTitle(stringProvider),
                                         subtitle = subtitle,
-                                        description = meta.description.takeIf { it.isNotBlank() },
+                                        description = meta.resolvedDescription(stringProvider)
+                                            .takeIf { it.isNotBlank() },
                                         enabled = enabled,
                                         onClick = {
                                             currentField = field
@@ -431,9 +436,10 @@ fun SettingsScreen(vm: SettingsViewModel) {
                                 TextInput::class -> {
                                     val cur = (field.get(settings) as? String).orEmpty()
                                     SettingsItem(
-                                        title = meta.title,
+                                        title = meta.resolvedTitle(stringProvider),
                                         subtitle = cur.ifBlank { stringResource(R.string.optional) },
-                                        description = meta.description.takeIf { it.isNotBlank() },
+                                        description = meta.resolvedDescription(stringProvider)
+                                            .takeIf { it.isNotBlank() },
                                         enabled = enabled,
                                         onClick = {
                                             currentField = field
@@ -444,8 +450,9 @@ fun SettingsScreen(vm: SettingsViewModel) {
 
                                 Button::class -> {
                                     SettingsAction(
-                                        title = meta.title,
-                                        description = meta.description.takeIf { it.isNotBlank() },
+                                        title = meta.resolvedTitle(stringProvider),
+                                        description = meta.resolvedDescription(stringProvider)
+                                            .takeIf { it.isNotBlank() },
                                         buttonText = stringResource(R.string.run),
                                         enabled = enabled,
                                         onClick = {
@@ -459,9 +466,10 @@ fun SettingsScreen(vm: SettingsViewModel) {
 
                                 else -> {
                                     SettingsItem(
-                                        title = meta.title,
+                                        title = meta.resolvedTitle(stringProvider),
                                         subtitle = stringResource(R.string.unknown),
-                                        description = meta.description.takeIf { it.isNotBlank() },
+                                        description = meta.resolvedDescription(stringProvider)
+                                            .takeIf { it.isNotBlank() },
                                         enabled = false,
                                         onClick = {}
                                     )
@@ -495,6 +503,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
                     RepoConfigCard(
                         repo = repo,
                         config = config,
+                        stringProvider = stringProvider,
                         onConfigChange = { newCfg ->
                             scope.launch {
                                 vm.upsertRepoConfig(newCfg)
@@ -562,8 +571,8 @@ fun SettingsScreen(vm: SettingsViewModel) {
         if (field != null && meta != null) {
             val idx = (field.get(settings) as? Int) ?: 0
             DropdownSettingDialog(
-                title = meta.title,
-                options = meta.options,
+                title = meta.resolvedTitle(stringProvider),
+                options = meta.resolvedOptions(stringProvider),
                 selectedIndex = idx,
                 onDismiss = { showDropdown = false },
                 onOptionSelected = { i ->
@@ -587,7 +596,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
             }
 
             SliderSettingDialog(
-                title = meta.title,
+                title = meta.resolvedTitle(stringProvider),
                 currentValue = cur,
                 min = meta.min,
                 max = meta.max,
@@ -613,8 +622,8 @@ fun SettingsScreen(vm: SettingsViewModel) {
             val current = (field.get(settings) as? String).orEmpty()
 
             InputDialog(
-                title = meta.title,
-                label = meta.title,
+                title = meta.resolvedTitle(stringProvider),
+                label = meta.resolvedTitle(stringProvider),
                 value = current,
                 placeholder = "",
                 confirmText = stringResource(R.string.action_confirm),
@@ -681,6 +690,7 @@ fun SettingsScreen(vm: SettingsViewModel) {
 private fun RepoConfigCard(
     repo: RepositoryInfo,
     config: RepoConfig,
+    stringProvider: StringResourceProvider,
     onConfigChange: (RepoConfig) -> Unit,
     onToggle: () -> Unit,
     onTestMirrors: () -> Unit,
@@ -833,13 +843,15 @@ private fun RepoConfigCard(
                 // Mirror strategy dropdown
                 val strategies = listOf("StickyLastGood", "RoundRobin", "CanonicalFirst")
                 val strategyIdx = strategies.indexOf(localConfig.strategy).coerceAtLeast(0)
+                val strategyLabels = stringProvider.getStringArray(R.array.setting_mirror_strategy_options)
 
                 ExposedDropdownMenuBox(
                     expanded = openStrategy,
                     onExpandedChange = { openStrategy = it },
                 ) {
                     OutlinedTextField(
-                        value = strategies[strategyIdx],
+                        value = strategyLabels.getOrNull(strategyIdx)
+                            ?: strategies[strategyIdx],
                         onValueChange = {},
                         readOnly = true,
                         singleLine = true,
@@ -859,9 +871,9 @@ private fun RepoConfigCard(
                             strategyFocusRequester.requestFocus()
                         },
                     ) {
-                        strategies.forEach { s ->
+                        strategies.forEachIndexed { index, s ->
                             DropdownMenuItem(
-                                text = { Text(s) },
+                                text = { Text(strategyLabels.getOrNull(index) ?: s) },
                                 onClick = {
                                     openStrategy = false
                                     updateConfig(localConfig.copy(strategy = s))
@@ -884,13 +896,14 @@ private fun RepoConfigCard(
 
                 val trustModes = listOf("HttpsOnly", "Pinned", "CustomCA", "InsecureHttp")
                 val trustIdx = trustModes.indexOf(localConfig.trustMode).coerceAtLeast(0)
+                val trustLabels = stringProvider.getStringArray(R.array.setting_trust_mode_options)
 
                 ExposedDropdownMenuBox(
                     expanded = openTrust,
                     onExpandedChange = { openTrust = !openTrust },
                 ) {
                     OutlinedTextField(
-                        value = trustModes[trustIdx],
+                        value = trustLabels.getOrNull(trustIdx) ?: trustModes[trustIdx],
                         onValueChange = {},
                         readOnly = true,
                         singleLine = true,
@@ -912,9 +925,9 @@ private fun RepoConfigCard(
                             trustFocusRequester.requestFocus()
                         }
                     ) {
-                        trustModes.forEach { s ->
+                        trustModes.forEachIndexed { index, s ->
                             DropdownMenuItem(
-                                text = { Text(s) },
+                                text = { Text(trustLabels.getOrNull(index) ?: s) },
                                 onClick = {
                                     openTrust = false
                                     updateConfig(config.copy(trustMode = s))

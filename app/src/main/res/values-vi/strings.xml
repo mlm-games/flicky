@@ -1,177 +1,323 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Flicky</string>
-    <string name="app_description">F-Droid (ανεπίσημος) πελάτης για TV</string>
-    <string name="nav_browse">Περιήγηση</string>
-    <string name="nav_categories">Κατηγορίες</string>
-    <string name="nav_updates">Ενημερώσεις</string>
-    <string name="nav_settings">Ρυθμίσεις</string>
-    <string name="action_install">Εγκατάσταση</string>
-    <string name="action_update">Ενημέρωση</string>
-    <string name="action_uninstall">Απεγκατάσταση</string>
-    <string name="action_open">Άνοιγμα</string>
-    <string name="action_share">Κοινή χρήση</string>
-    <string name="action_cancel">Ακύρωση</string>
-    <string name="action_apply">Εφαρμογή</string>
-    <string name="action_add">Προσθήκη</string>
-    <string name="action_close">Κλείσιμο</string>
-    <string name="action_confirm">Επιβεβαίωση</string>
-    <string name="action_select">Επιλογή</string>
-    <string name="action_run">Εκτέλεση</string>
-    <string name="action_sync">Συγχρονισμός</string>
-    <string name="action_clear">Εκκαθάριση</string>
-    <string name="search_hint">Αναζήτηση εφαρμογών…</string>
-    <string name="voice_search">Φωνητική αναζήτηση</string>
-    <string name="voice_search_prompt">Μιλήστε για αναζήτηση εφαρμογών</string>
-    <string name="voice_search_unavailable">Η φωνητική αναζήτηση δεν είναι διαθέσιμη</string>
-    <string name="sort_by">Ταξινόμηση κατά</string>
-    <string name="sort_prefix">Ταξινόμηση: %1$s</string>
-    <string name="syncing">Συγχρονισμός…</string>
-    <string name="sync_status">Συγχρονισμός %1$s (%2$d/%3$d)</string>
-    <string name="sync_complete">Ο συγχρονισμός ολοκληρώθηκε: %1$d εφαρμογές</string>
-    <string name="sync_failed">Ο συγχρονισμός απέτυχε</string>
-    <string name="no_apps_found">Δεν βρέθηκαν εφαρμογές</string>
-    <string name="try_different_search">Δοκιμάστε έναν διαφορετικό όρο αναζήτησης</string>
-    <string name="force_sync">Εξαναγκασμένος συγχρονισμός</string>
-    <string name="clear_all_apps">Εκκαθάριση όλων των εφαρμογών</string>
-    <string name="sort_name">Όνομα</string>
-    <string name="sort_updated">Πρόσφατα ενημερωμένα</string>
-    <string name="sort_size">Μέγεθος</string>
-    <string name="sort_added">Πρόσφατα προστιθέμενα</string>
-    <string name="category_all">Όλα</string>
+    <string name="app_description">Ứng dụng F-Droid không chính thức cho TV</string>
+    <string name="nav_browse">Trình duyệt</string>
+    <string name="nav_categories">Danh mục</string>
+    <string name="nav_updates">Cập nhật</string>
+    <string name="nav_settings">Cài đặt</string>
+    <string name="action_install">Cài đặt ứng dụng</string>
+    <string name="action_update">Cập nhật</string>
+    <string name="action_uninstall">Gỡ cài đặt</string>
+    <string name="action_open">Mở</string>
+    <string name="action_share">Chia sẻ</string>
+    <string name="action_cancel">Hủy</string>
+    <string name="action_apply">Áp dụng</string>
+    <string name="action_add">Thêm</string>
+    <string name="action_close">Đóng</string>
+    <string name="action_confirm">Xác nhận</string>
+    <string name="action_select">Chọn</string>
+    <string name="action_run">Chạy</string>
+    <string name="action_sync">Đồng bộ</string>
+    <string name="action_clear">Xóa</string>
+    <string name="search_hint">Tìm ứng dụng…</string>
+    <string name="voice_search">Tìm kiếm bằng giọng nói</string>
+    <string name="voice_search_prompt">Hãy nói để tìm ứng dụng</string>
+    <string name="voice_search_unavailable">Tìm kiếm bằng giọng nói không khả dụng</string>
+    <string name="sort_by">Sắp xếp theo</string>
+    <string name="sort_prefix">Sắp xếp: %1$s</string>
+    <string name="syncing">Đang đồng bộ…</string>
+    <string name="sync_status">Đang đồng bộ %1$s (%2$d/%3$d)</string>
+    <string name="sync_complete">Đồng bộ hoàn tất: %1$d ứng dụng</string>
+    <string name="sync_failed">Đồng bộ thất bại</string>
+    <string name="no_apps_found">Không tìm thấy ứng dụng nào</string>
+    <string name="try_different_search">Thử từ khoá tìm kiếm khác</string>
+    <string name="force_sync">Buộc đồng bộ</string>
+    <string name="clear_all_apps">Xóa tất cả ứng dụng</string>
+    <string name="sort_name">Tên</string>
+    <string name="sort_reverse">Thứ tự đảo ngược</string>
+    <string name="sort_updated">Mới cập nhật</string>
+    <string name="sort_size">Kích thước</string>
+    <string name="sort_added">Mới thêm</string>
+    <string name="category_all">Tất cả</string>
     <string name="category_count">%1$s (%2$d)</string>
-    <string name="no_apps_in_category">Δεν υπάρχουν εφαρμογές σε αυτήν την κατηγορία</string>
-    <string name="update_all">Ενημέρωση όλων (%1$d)</string>
-    <string name="show_ignored">Εμφάνιση αγνοημένων (%1$d)</string>
-    <string name="hide_ignored">Απόκρυψη αγνοημένων (%1$d)</string>
-    <string name="no_updates">Δεν υπάρχουν διαθέσιμες ενημερώσεις</string>
-    <string name="installed_apps">Εγκατεστημένες εφαρμογές</string>
-    <string name="ignored_updates">Αγνοημένες ενημερώσεις</string>
-    <string name="ignore_this_version">Αγνόηση αυτής της έκδοσης</string>
-    <string name="ignore_all_updates">Αγνόηση όλων των ενημερώσεων</string>
-    <string name="stop_ignoring">Διακοπή αγνόησης ενημερώσεων</string>
-    <string name="more_options">Περισσότερα</string>
-    <string name="installing">Εγκατάσταση…</string>
-    <string name="installing_progress">Εγκατάσταση… %1$d%%</string>
-    <string name="installation_failed">Η εγκατάσταση απέτυχε</string>
-    <string name="install_failed_message">Σφάλμα εγκατάστασης: %1$s</string>
+    <string name="no_apps_in_category">Không có ứng dụng nào trong danh mục này</string>
+    <string name="update_all">Cập nhật tất cả (%1$d)</string>
+    <string name="show_ignored">Hiện ứng dụng bị bỏ qua (%1$d)</string>
+    <string name="hide_ignored">Ẩn ứng dụng bị bỏ qua (%1$d)</string>
+    <string name="no_updates">Không có bản cập nhật nào</string>
+    <string name="installed_apps">Ứng dụng đã cài</string>
+    <string name="ignored_updates">Bản cập nhật bị bỏ qua</string>
+    <string name="ignore_this_version">Bỏ qua phiên bản này</string>
+    <string name="ignore_all_updates">Bỏ qua mọi bản cập nhật</string>
+    <string name="stop_ignoring">Ngừng bỏ qua cập nhật</string>
+    <string name="more_options">Thêm</string>
+    <string name="installing">Đang cài…</string>
+    <string name="installing_progress">Đang cài… %1$d%%</string>
+    <string name="installation_failed">Cài đặt thất bại</string>
+    <string name="install_failed_message">Cài đặt thất bại: %1$s</string>
     <string name="version_prefix">v%1$s</string>
-    <string name="version_code">Κωδικός έκδοσης</string>
-    <string name="package_name">Πακέτο</string>
-    <string name="updated">Ενημερώθηκε</string>
-    <string name="added">Προστέθηκε</string>
-    <string name="overview">Επισκόπηση</string>
-    <string name="whats_new">Τι νέο υπάρχει</string>
-    <string name="about">Σχετικά</string>
-    <string name="screenshots">Στιγμιότυπα</string>
-    <string name="info">Πληροφορίες</string>
-    <string name="details">Λεπτομέρειες</string>
-    <string name="anti_features">Αντι-χαρακτηριστικά</string>
-    <string name="links">Σύνδεσμοι</string>
-    <string name="website">Ιστοσελίδα</string>
-    <string name="source_code">Πηγαίος κώδικας</string>
-    <string name="read_more">Διαβάστε περισσότερα</string>
-    <string name="unknown">Άγνωστο</string>
-    <string name="installed_version">Εγκατεστημένο: %1$s</string>
-    <string name="new_version">Νέο: %1$s</string>
-    <string name="settings_general">Γενικά</string>
-    <string name="settings_appearance">Εμφάνιση</string>
-    <string name="settings_downloads">Λήψεις</string>
-    <string name="settings_filters">Φίλτρα</string>
-    <string name="settings_system">Σύστημα</string>
-    <string name="settings_repositories">Αποθετήρια</string>
-    <string name="add_repository">Προσθήκη αποθετηρίου</string>
-    <string name="repository_name">Όνομα</string>
+    <string name="version_code">Mã phiên bản</string>
+    <string name="package_name">Gói</string>
+    <string name="updated">Đã cập nhật</string>
+    <string name="added">Đã thêm</string>
+    <string name="overview">Tổng quan</string>
+    <string name="whats_new">Có gì mới</string>
+    <string name="about">Giới thiệu</string>
+    <string name="screenshots">Ảnh chụp màn hình</string>
+    <string name="info">Thông tin</string>
+    <string name="details">Chi tiết</string>
+    <string name="anti_features">Tính năng phản cảm</string>
+    <string name="links">Liên kết</string>
+    <string name="website">Trang web</string>
+    <string name="source_code">Mã nguồn</string>
+    <string name="read_more">Đọc thêm</string>
+    <string name="unknown">Không rõ</string>
+    <string name="installed_version">Đã cài: %1$s</string>
+    <string name="new_version">Mới: %1$s</string>
+    <string name="settings_general">Chung</string>
+    <string name="settings_appearance">Giao diện</string>
+    <string name="settings_downloads">Tải xuống</string>
+    <string name="settings_filters">Bộ lọc</string>
+    <string name="settings_system">Hệ thống</string>
+    <string name="settings_repositories">Kho lưu trữ</string>
+    <string name="add_repository">Thêm kho lưu trữ</string>
+    <string name="repository_name">Tên</string>
     <string name="repository_url">URL</string>
-    <string name="setting_default_sort">Προεπιλεγμένη ταξινόμηση</string>
-    <string name="setting_default_sort_desc">Προεπιλεγμένη ταξινόμηση για λίστες εφαρμογών</string>
-    <string name="setting_theme">Θέμα</string>
-    <string name="setting_dynamic_colors">Χρήση δυναμικών χρωμάτων</string>
-    <string name="setting_dynamic_colors_desc">Χρήση χρωμάτων Material You (Android 12+)</string>
-    <string name="setting_wifi_only">Ενημέρωση μόνο μέσω Wi-Fi</string>
-    <string name="setting_sync_interval">Διάστημα συγχρονισμού</string>
-    <string name="setting_sync_interval_desc">Πόσο συχνά να συγχρονίζονται τα αποθετήρια</string>
-    <string name="setting_keep_cache">Διατήρηση προσωρινής μνήμης λήψεων</string>
-    <string name="setting_keep_cache_desc">Διατήρηση ληφθέντων APK για ταχύτερη επανεγκατάσταση</string>
-    <string name="setting_installer">Εγκαταστάτης</string>
-    <string name="setting_installer_desc">Επιλέξτε πώς εγκαθίστανται οι εφαρμογές</string>
-    <string name="setting_hide_anti">Απόκρυψη εφαρμογών με αντι-χαρακτηριστικά</string>
-    <string name="setting_show_incompatible">Εμφάνιση μη συμβατών εκδόσεων</string>
-    <string name="setting_differential_sync">Διαφορικός συγχρονισμός</string>
-    <string name="setting_differential_sync_desc">Χρήση ελέγχων προσωρινής μνήμης HTTP για παράλειψη αμετάβλητων αποθετηρίων</string>
-    <string name="setting_preferred_repo">Προτιμώμενο αποθετήριο</string>
-    <string name="setting_preferred_repo_desc">Προεπιλεγμένη πηγή όταν μια εφαρμογή υπάρχει σε πολλαπλά αποθετήρια</string>
-    <string name="setting_clear_cache">Εκκαθάριση προσωρινής μνήμης</string>
-    <string name="setting_clear_cache_desc">Διαγραφή κεφαλίδων αποθετηρίου και επαναφορά του τελευταίου συγχρονισμού</string>
-    <string name="theme_system">Σύστημα</string>
-    <string name="theme_light">Φωτεινό</string>
-    <string name="theme_dark">Σκοτεινό</string>
-    <string name="sync_3_hours">3 ώρες</string>
-    <string name="sync_6_hours">6 ώρες</string>
-    <string name="sync_12_hours">12 ώρες</string>
-    <string name="sync_24_hours">24 ώρες</string>
-    <string name="sync_weekly">Εβδομαδιαίως</string>
-    <string name="sync_manual">Μόνο χειροκίνητα</string>
-    <string name="installer_system">Σύστημα (προεπιλογή)</string>
-    <string name="installer_session">Συνεδρία (Πρόγραμμα εγκατάστασης πακέτων)</string>
+    <string name="setting_default_sort">Thứ tự mặc định</string>
+    <string name="setting_default_sort_desc">Thứ tự mặc định cho danh sách ứng dụng</string>
+    <string name="setting_theme">Chủ đề</string>
+    <string name="setting_dynamic_colors">Dùng màu động</string>
+    <string name="setting_dynamic_colors_desc">Dùng màu Material You (Android 12+)</string>
+    <string name="setting_wifi_only">Chỉ cập nhật qua Wi-Fi</string>
+    <string name="setting_sync_interval">Chu kỳ đồng bộ</string>
+    <string name="setting_sync_interval_desc">Tần suất đồng bộ kho lưu trữ</string>
+    <string name="setting_keep_cache">Giữ bộ nhớ đệm tải xuống</string>
+    <string name="setting_keep_cache_desc">Giữ tệp APK đã tải để cài lại nhanh hơn</string>
+    <string name="setting_installer">Trình cài đặt</string>
+    <string name="setting_installer_desc">Cách cài đặt ứng dụng</string>
+    <string name="setting_fallback_installer">Trình cài đặt dự phòng</string>
+    <string name="setting_fallback_installer_desc">Trình cài đặt dùng khi phương thức chính thất bại</string>
+    <string name="installer_none">Không có</string>
+    <string name="installer_app_manager">Trình quản lý ứng dụng</string>
+    <string name="fallback_triggered">Trình cài đặt chính thất bại; sẽ dùng %1$s</string>
+    <string name="setting_hide_anti">Ẩn ứng dụng có tính năng phản cảm</string>
+    <string name="setting_show_incompatible">Hiện phiên bản không tương thích</string>
+    <string name="setting_ignore_unstable">Bỏ qua bản alpha/beta</string>
+    <string name="setting_ignore_unstable_desc">Ẩn bản alpha và beta trong cập nhật</string>
+    <string name="channel_beta">Beta</string>
+    <string name="channel_alpha">Alpha</string>
+    <string name="version_suggested">Đề xuất</string>
+    <string name="setting_differential_sync">Đồng bộ vi sai</string>
+    <string name="setting_differential_sync_desc">Dùng kiểm tra bộ nhớ đệm HTTP để bỏ qua kho không thay đổi</string>
+    <string name="setting_preferred_repo">Kho ưu tiên</string>
+    <string name="setting_preferred_repo_desc">Nguồn mặc định khi ứng dụng có ở nhiều kho</string>
+    <string name="setting_clear_cache">Xóa bộ nhớ đệm</string>
+    <string name="setting_clear_cache_desc">Xóa tiêu đề kho và đặt lại lần đồng bộ cuối</string>
+    <string name="theme_system">Hệ thống</string>
+    <string name="theme_light">Sáng</string>
+    <string name="theme_dark">Tối</string>
+    <string name="sync_3_hours">3 giờ</string>
+    <string name="sync_6_hours">6 giờ</string>
+    <string name="sync_12_hours">12 giờ</string>
+    <string name="sync_24_hours">24 giờ</string>
+    <string name="sync_weekly">Hàng tuần</string>
+    <string name="sync_manual">Chỉ thủ công</string>
+    <string name="installer_system">Hệ thống (mặc định)</string>
+    <string name="installer_session">Phiên (Trình cài đặt gói)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
-    <string name="repo_auto">Αυτόματο</string>
-    <string name="repo_prefer_fdroid">Προτίμηση F-Droid</string>
-    <string name="repo_prefer_izzy">Προτίμηση IzzyOnDroid</string>
-    <string name="toggle_on">Ενεργό</string>
-    <string name="toggle_off">Ανενεργό</string>
-    <string name="cache_cleared">Η προσωρινή μνήμη εκκαθαρίστηκε</string>
-    <string name="no_action_attached">Δεν υπάρχει συνημμένη ενέργεια</string>
-    <string name="no_repos_enabled">Δεν υπάρχουν ενεργοποιημένα αποθετήρια. Ενεργοποιήστε τουλάχιστον ένα στις Ρυθμίσεις.</string>
-    <string name="connection_timeout">Το χρονικό όριο σύνδεσης έληξε. Ελέγξτε τη σύνδεσή σας στο διαδίκτυο.</string>
-    <string name="sync_completed_with_errors">Ο συγχρονισμός ολοκληρώθηκε με σφάλματα:\n%1$s</string>
-    <string name="partial_sync_completed">Ο μερικός συγχρονισμός ολοκληρώθηκε:\n%1$s</string>
+    <string name="installer_dhizuku">Dhizuku (chủ sở hữu thiết bị)</string>
+    <string name="repo_auto">Tự động</string>
+    <string name="repo_prefer_fdroid">Ưu tiên F-Droid</string>
+    <string name="repo_prefer_izzy">Ưu tiên IzzyOnDroid</string>
+    <string name="toggle_on">Bật</string>
+    <string name="toggle_off">Tắt</string>
+    <string name="cache_cleared">Đã xóa bộ nhớ đệm</string>
+    <string name="no_action_attached">Không có hành động nào được gắn</string>
+    <string name="no_repos_enabled">Chưa bật kho lưu trữ nào. Hãy bật ít nhất một kho trong Cài đặt.</string>
+    <string name="connection_timeout">Quá thời gian kết nối. Vui lòng kiểm tra kết nối mạng của bạn.</string>
+    <string name="sync_completed_with_errors">Đồng bộ hoàn tất kèm lỗi:\\\\n%1$s</string>
+    <string name="partial_sync_completed">Đồng bộ một phần hoàn tất:\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
-    <string name="error_network">Σφάλμα δικτύου ή ανάλυσης</string>
-    <string name="error_unknown">Άγνωστο σφάλμα</string>
-    <string name="repositories_reset">Reset Repositories</string>
-    <string name="mirror_strategy">Mirror Strategy</string>
-    <string name="trust">Trust</string>
-    <string name="trust_mode">Trust Mode</string>
+    <string name="error_network">Lỗi mạng hoặc phân tích</string>
+    <string name="error_unknown">Lỗi không xác định</string>
+    <string name="repositories_reset">Đặt lại kho lưu trữ</string>
+    <string name="name">Tên</string>
+    <string name="url">URL</string>
+    <string name="mirror_strategy">Chiến lược gương</string>
+    <string name="trust">Tin cậy</string>
+    <string name="trust_mode">Chế độ tin cậy</string>
     <string name="exodus_privacy">Exodus Privacy</string>
-    <string name="permissions">App Info</string>
-    <string name="app_not_installed">App not installed</string>
-    <string name="versions">Versions</string>
-    <string name="installed" />
-    <string name="incompatible">Incompatible</string>
-    <string name="copied">Copied</string>
-    <string name="copy_url">Copy URL</string>
-    <string name="no_variants_found">No variants found</string>
-    <string name="downloading">Downloading</string>
-    <string name="verifying">Verifying</string>
-    <string name="preferred_source">Preferred Source</string>
-    <string name="auto">Auto</string>
-    <string name="locked_to_repo">Locked to Repo</string>
-    <string name="unlocked_repo">Unlocked</string>
-    <string name="lock_to_repo">Lock to Repo</string>
-    <string name="updating_count">Updating %d apps</string>
-    <string name="installation_errors">%d installation error(s)</string>
-    <string name="available_updates">Available Updates</string>
-    <string name="dismiss">Dismiss</string>
-    <string name="search">Search</string>
-    <string name="more_options_for">More Options Dropdown</string>
-    <string name="install_from">Install from</string>
-    <string name="show_less">Show less</string>
-    <string name="license">License</string>
-    <string name="nav_favorites">Favourites</string>
-    <string name="no_favorites">No favourites yet!</string>
-    <string name="remove_from_favorites">Remove from favourites</string>
-    <string name="add_to_favorites">Add to Favourites</string>
-    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
-    <string name="remove_favorite">Remove Favourite</string>
-    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
-    <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
-    <string name="import_failed">Import failed: %s</string>
-    <string name="export_success">Export Successful</string>
-    <string name="export_failed">Export failed: %s</string>
-    <string name="search_settings">Search Settings</string>
-    <string name="import_settings">Import settings</string>
-    <string name="export_settings">Export settings</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Tương thích Plexus</string>
+    <string name="plexus_degoogled">Đã khử Google</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Chưa được đánh giá trên Plexus</string>
+    <string name="plexus_view_details">Xem chi tiết</string>
+    <string name="plexus_ratings">lượt đánh giá</string>
+    <string name="plexus_open_website">Mở trên trang Plexus</string>
+    <string name="permissions">Thông tin ứng dụng</string>
+    <string name="app_not_installed">Ứng dụng chưa được cài</string>
+    <string name="versions">Phiên bản</string>
+    <string name="installed">Đã cài</string>
+    <string name="more_apps">Thêm</string>
+    <string name="more_apps_by_author">Thêm ứng dụng từ %1$s</string>
+    <string name="no_apps_by_author">Không tìm thấy ứng dụng nào từ %1$s</string>
+    <string name="app_count">%1$d ứng dụng</string>
+    <string name="incompatible">Không tương thích</string>
+    <string name="copied">Đã sao chép</string>
+    <string name="copy_url">Sao chép URL</string>
+    <string name="no_variants_found">Không tìm thấy biến thể nào</string>
+    <string name="downloading">Đang tải xuống</string>
+    <string name="verifying">Đang xác minh</string>
+    <string name="preferred_source">Nguồn ưu tiên</string>
+    <string name="auto">Tự động</string>
+    <string name="locked_to_repo">Đã ghim vào kho</string>
+    <string name="unlocked_repo">Đã bỏ ghim</string>
+    <string name="lock_to_repo">Ghim vào kho</string>
+    <string name="updating_count">Đang cập nhật %d ứng dụng</string>
+    <string name="installation_errors">%d lỗi cài đặt</string>
+    <string name="updating">Đang cập nhật…</string>
+    <string name="available_updates">Bản cập nhật có sẵn</string>
+    <string name="dismiss">Bỏ qua</string>
+    <string name="search">Tìm kiếm</string>
+    <string name="category_appearance">Giao diện</string>
+    <string name="category_general">Chung</string>
+    <string name="category_downloads">Tải xuống và cập nhật</string>
+    <string name="category_filters">Bộ lọc</string>
+    <string name="category_sync">Hành vi đồng bộ</string>
+    <string name="category_proxy">Proxy</string>
+    <string name="category_other">Khác</string>
+    <string name="repositories">Kho lưu trữ</string>
+    <string name="reset_to_defaults">Đặt lại mặc định</string>
+    <string name="reset_repositories">Đặt lại kho lưu trữ</string>
+    <string name="reset_repositories_confirm">Thao tác này sẽ xoá mọi kho tuỳ chỉnh và khôi phục danh sách mặc định. Bạn có muốn tiếp tục không?</string>
+    <string name="reset">Đặt lại</string>
+    <string name="run">Chạy</string>
+    <string name="test_ping">Kiểm tra ping</string>
+    <string name="forget_last_mirror">Quên gương gần nhất</string>
+    <string name="forgot_mirror">Đã quên gương gần nhất của %s</string>
+    <string name="delete_repository">Xóa kho lưu trữ</string>
+    <string name="delete_repository_confirm">Xóa %s khỏi các kho của bạn?</string>
+    <string name="delete">Xóa</string>
+    <string name="rotate_mirrors">Luân phiên gương</string>
+    <string name="use_onion">Dùng onion</string>
+    <string name="pins_label">Khoá ghim (sha256/BASE64, phân tách bằng dấu phẩy)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">Chứng thư CA tuỳ chỉnh</string>
+    <string name="optional">Tuỳ chọn</string>
+    <string name="more_options_for">Menu tuỳ chọn khác</string>
+    <string name="install_from">Cài từ</string>
+    <string name="show_less">Hiện ít hơn</string>
+    <string name="license">Giấy phép</string>
+    <string name="nav_favorites">Yêu thích</string>
+    <string name="no_favorites">Chưa có mục yêu thích nào!</string>
+    <string name="remove_from_favorites">Xóa khỏi yêu thích</string>
+    <string name="add_to_favorites">Thêm vào yêu thích</string>
+    <string name="no_favorites_hint">Nhấn vào biểu tượng trái tim ở bất kỳ ứng dụng nào để thêm vào yêu thích</string>
+    <string name="remove_favorite">Xóa khỏi yêu thích</string>
+    <string name="remove_favorite_confirm">Xóa %1$s khỏi yêu thích?</string>
+    <string name="remove">Xóa</string>
+    <string name="import_success">Nhập thành công (%d mục)</string>
+    <string name="import_failed">Nhập thất bại: %s</string>
+    <string name="export_success">Xuất thành công</string>
+    <string name="export_failed">Xuất thất bại: %s</string>
+    <string name="search_settings">Tìm trong cài đặt</string>
+    <string name="import_settings">Nhập cài đặt</string>
+    <string name="export_settings">Xuất cài đặt</string>
+    <string name="izzy_stats_title">Thống kê IzzyOnDroid</string>
+    <string name="izzy_stats_monthly">Lượt tải theo tháng</string>
+    <string name="izzy_stats_yearly">Lượt tải theo năm</string>
+    <string name="izzy_stats_unavailable">Không có thống kê</string>
+    <string name="dhizuku_permission_denied">Quyền Dhizuku bị từ chối. Vui lòng cấp quyền trong ứng dụng Dhizuku.</string>
+    <string name="dhizuku_not_available">Dhizuku không khả dụng. Vui lòng cài đặt và thiết lập Dhizuku làm Chủ sở hữu thiết bị trước.</string>
+    <string name="dhizuku_fallback">Chuyển về trình cài đặt theo phiên</string>
+    <string name="dismiss_banner">Đóng biểu ngữ</string>
+    <string name="no_browser_available">Không có trình duyệt để mở liên kết</string>
+    <string name="alert_keep_android_open">F-Droid đang gặp nguy. Google đang thay đổi cách bạn cài ứng dụng trên điện thoại. Chúng tôi cần bạn giúp.</string>
+    <string name="category_about">Giới thiệu</string>
+    <string name="support_development">Ủng hộ phát triển</string>
+    <string name="support_development_desc">Nếu bạn thấy ứng dụng này hữu ích, hãy cân nhắc hỗ trợ để nó tiếp tục phát triển</string>
+    <string name="donate_on_kofi">Quyên góp trên Ko-fi</string>
+    <string name="insecure_http_warning">Kho này dùng HTTP không an toàn. Chỉ bật cho kho cục bộ hoặc LAN đáng tin cậy.</string>
+    <string name="allow_insecure_http">Cho phép HTTP không an toàn cho kho này</string>
+    <string name="setting_theme_desc">Chọn giữa chủ đề sáng, tối hoặc theo hệ thống</string>
+    <string name="setting_show_app_icons">Hiện biểu tượng ứng dụng</string>
+    <string name="setting_show_app_icons_desc">Hiện biểu tượng ứng dụng trong danh sách và lưới</string>
+    <string name="setting_use_list_layout">Dùng bố cục danh sách</string>
+    <string name="setting_use_list_layout_desc">Hiện ứng dụng theo danh sách thay vì lưới</string>
+    <string name="sort_name_za">Tên (Z-A)</string>
+    <string name="setting_auto_update">Tự động cập nhật</string>
+    <string name="setting_auto_update_desc">Tự động cập nhật ứng dụng ở chế độ nền</string>
+    <string name="setting_wifi_only_desc">Chỉ tải xuống và đồng bộ qua Wi-Fi</string>
+    <string name="setting_show_reproducible">Hiện huy hiệu bản dựng tái lập được</string>
+    <string name="setting_show_reproducible_desc">Hiện huy hiệu bản dựng tái lập được từ IzzyOnDroid</string>
+    <string name="setting_fail_on_trust_errors">Thất bại khi gặp lỗi tin cậy</string>
+    <string name="setting_fail_on_trust_errors_desc">Xác minh SSL/TLS nghiêm ngặt</string>
+    <string name="setting_use_proxy">Dùng proxy</string>
+    <string name="setting_use_proxy_desc">Định tuyến kết nối qua proxy</string>
+    <string name="setting_proxy_url">URL proxy</string>
+    <string name="setting_show_debug_info">Hiện thông tin gỡ lỗi</string>
+    <string name="setting_show_debug_info_desc">Hiện thông tin gỡ lỗi trong giao diện</string>
+    <string name="mirror_sticky_last_good">Ưu tiên bản hợp lệ gần nhất</string>
+    <string name="mirror_round_robin">Luân phiên</string>
+    <string name="mirror_canonical_first">Ưu tiên bản chính</string>
+    <string name="trust_https_only">Chỉ HTTPS</string>
+    <string name="trust_pinned">Chứng thư đã ghim</string>
+    <string name="trust_custom_ca">CA tuỳ chỉnh</string>
+    <string name="trust_insecure_http">Cho phép HTTP không an toàn</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

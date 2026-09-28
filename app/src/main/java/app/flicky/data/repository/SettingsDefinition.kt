@@ -66,44 +66,51 @@ data class AppUpdatePreferencesMap(
 @SchemaVersion(5)
 data class AppSettings(
     @Setting(
-        title = "Theme Mode",
+        titleRes = R.string.setting_theme,
         description = "Choose between light, dark, or system theme",
+        descriptionRes = R.string.setting_theme_desc,
         category = Appearance::class,
         type = Dropdown::class,
-        options = ["System", "Light", "Dark"]
+        options = ["System", "Light", "Dark"],
+        optionsRes = R.array.setting_theme_options,
     )
     val themeMode: Int = 2,
 
     @Setting(
-        title = "Dynamic Theme",
+        titleRes = R.string.setting_dynamic_colors,
         description = "Use Material You dynamic colors (Android 12+)",
+        descriptionRes = R.string.setting_dynamic_colors_desc,
         category = Appearance::class,
         type = Toggle::class
     )
     val dynamicTheme: Boolean = false,
 
     @Setting(
-        title = "Show App Icons",
+        titleRes = R.string.setting_show_app_icons,
         description = "Display app icons in lists and grids",
+        descriptionRes = R.string.setting_show_app_icons_desc,
         category = Appearance::class,
         type = Toggle::class
     )
     val showAppIcons: Boolean = true,
 
     @Setting(
-        title = "Use List Layout",
+        titleRes = R.string.setting_use_list_layout,
         description = "Show apps in a list instead of grid",
+        descriptionRes = R.string.setting_use_list_layout_desc,
         category = Appearance::class,
         type = Toggle::class
     )
     val useListLayout: Boolean = false,
 
     @Setting(
-        title = "Default Sort",
+        titleRes = R.string.setting_default_sort,
         description = "How to sort apps by default",
+        descriptionRes = R.string.setting_default_sort_desc,
         category = General::class,
         type = Dropdown::class,
-        options = ["Name", "Name (Z-A)", "Updated", "Size", "Added"]
+        options = ["Name", "Name (Z-A)", "Updated", "Size", "Added"],
+        optionsRes = R.array.setting_default_sort_options,
     )
     val defaultSort: Int = 1,
 
@@ -111,68 +118,79 @@ data class AppSettings(
     val reverseSort: Boolean = false,
 
     @Setting(
-        title = "Auto Update",
+        titleRes = R.string.setting_auto_update,
         description = "Automatically update apps in the background",
+        descriptionRes = R.string.setting_auto_update_desc,
         category = Downloads::class,
         type = Toggle::class
     )
     val autoUpdate: Boolean = false,
 
     @Setting(
-        title = "Wi-Fi Only",
+        titleRes = R.string.setting_wifi_only,
         description = "Only download and sync over Wi-Fi",
+        descriptionRes = R.string.setting_wifi_only_desc,
         category = Downloads::class,
         type = Toggle::class
     )
     val wifiOnly: Boolean = true,
 
     @Setting(
-        title = "Sync Interval",
+        titleRes = R.string.setting_sync_interval,
         description = "How often to check for updates",
+        descriptionRes = R.string.setting_sync_interval_desc,
         category = Downloads::class,
         type = Dropdown::class,
         options = ["3 hours", "6 hours", "12 hours", "Daily", "Weekly", "Never"],
+        optionsRes = R.array.setting_sync_interval_options,
         key = "sync_interval_idx"
     )
     val syncIntervalIndex: Int = 1,
 
     @Setting(
-        title = "Keep Download Cache",
+        titleRes = R.string.setting_keep_cache,
         description = "Keep downloaded APKs after installation",
+        descriptionRes = R.string.setting_keep_cache_desc,
         category = Downloads::class,
         type = Toggle::class
     )
     val keepCache: Boolean = false,
 
     @Setting(
-        title = "Installer Mode",
+        titleRes = R.string.setting_installer,
         description = "Method to use for installing apps",
+        descriptionRes = R.string.setting_installer_desc,
         category = Downloads::class,
         type = Dropdown::class,
-        options = ["System", "Session", "Root", "Shizuku", "App Manager", "Dhizuku"]
+        options = ["System", "Session", "Root", "Shizuku", "App Manager", "Dhizuku"],
+        optionsRes = R.array.setting_installer_options,
     )
     val installerMode: Int = 1,
 
     @Setting(
-        title = "Fallback Installer Mode",
+        titleRes = R.string.setting_fallback_installer,
         description = "Used if the primary installer fails, set to None to disable",
+        descriptionRes = R.string.setting_fallback_installer_desc,
         category = Downloads::class,
         type = Dropdown::class,
-        options = ["None", "System", "Session", "Root", "Shizuku", "App Manager", "Dhizuku"]
+        options = ["None", "System", "Session", "Root", "Shizuku", "App Manager", "Dhizuku"],
+        optionsRes = R.array.setting_fallback_installer_options,
     )
     val fallbackInstallerMode: Int = 2,
 
     @Setting(
-        title = "Preferred Repository",
+        titleRes = R.string.setting_preferred_repo,
         description = "Prefer updates from specific repository",
+        descriptionRes = R.string.setting_preferred_repo_desc,
         category = Downloads::class,
         type = Dropdown::class,
-        options = ["Auto", "F-Droid", "IzzyOnDroid"]
+        options = ["Auto", "F-Droid", "IzzyOnDroid"],
+        optionsRes = R.array.setting_preferred_repo_options,
     )
     val preferredRepo: Int = 0,
 
     @Setting(
-        title = "Hide Anti-Features",
+        titleRes = R.string.setting_hide_anti,
         description = "Hide apps with anti-features",
         category = Filters::class,
         type = Toggle::class
@@ -180,7 +198,7 @@ data class AppSettings(
     val hideAntiFeatures: Boolean = false,
 
     @Setting(
-        title = "Show Incompatible",
+        titleRes = R.string.setting_show_incompatible,
         description = "Show apps that are incompatible with your device",
         category = Filters::class,
         type = Toggle::class
@@ -188,24 +206,27 @@ data class AppSettings(
     val showIncompatible: Boolean = false,
 
     @Setting(
-        title = "Show Reproducible Badges",
+        titleRes = R.string.setting_show_reproducible,
         description = "Display reproducible build badges from IzzyOnDroid",
+        descriptionRes = R.string.setting_show_reproducible_desc,
         category = Filters::class,
         type = Toggle::class
     )
     val showReproducibleBadges: Boolean = false,
 
     @Setting(
-        title = "Ignore Alpha/Beta Builds",
+        titleRes = R.string.setting_ignore_unstable,
         description = "Hide alpha and beta releases from updates",
+        descriptionRes = R.string.setting_ignore_unstable_desc,
         category = Filters::class,
         type = Toggle::class
     )
     val ignoreUnstable: Boolean = false,
 
     @Setting(
-        title = "Differential Sync",
+        titleRes = R.string.setting_differential_sync,
         description = "Only fetch changes since last sync",
+        descriptionRes = R.string.setting_differential_sync_desc,
         category = Sync::class,
         type = Toggle::class
     )
@@ -215,23 +236,25 @@ data class AppSettings(
     val useEntryJson: Boolean = false,
 
     @Setting(
-        title = "Fail on Trust Errors",
+        titleRes = R.string.setting_fail_on_trust_errors,
         description = "Strict SSL/TLS verification",
+        descriptionRes = R.string.setting_fail_on_trust_errors_desc,
         category = Sync::class,
         type = Toggle::class
     )
     val failOnTrustErrors: Boolean = false,
 
     @Setting(
-        title = "Use Proxy",
+        titleRes = R.string.setting_use_proxy,
         description = "Route connections through a proxy",
+        descriptionRes = R.string.setting_use_proxy_desc,
         category = Proxy::class,
         type = Toggle::class
     )
     val useProxy: Boolean = false,
 
     @Setting(
-        title = "Proxy URL",
+        titleRes = R.string.setting_proxy_url,
         description = "",
         category = Proxy::class,
         type = TextInput::class,
@@ -249,8 +272,9 @@ data class AppSettings(
     val proxyPort: Int = 9050,
 
     @Setting(
-        title = "Clear Cache",
+        titleRes = R.string.setting_show_debug_info,
         description = "Clear all cached data and images",
+        descriptionRes = R.string.setting_show_debug_info_desc,
         category = Other::class,
         type = Button::class
     )
@@ -259,8 +283,9 @@ data class AppSettings(
     val clearCache: Unit = Unit,
 
     @Setting(
-        title = "Show Debug Info",
+        titleRes = R.string.setting_show_debug_info,
         description = "Display debug information in the UI",
+        descriptionRes = R.string.setting_show_debug_info_desc,
         category = Other::class,
         type = Toggle::class
     )

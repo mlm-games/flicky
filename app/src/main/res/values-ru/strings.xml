@@ -137,8 +137,8 @@
     <string name="no_action_attached">Действие не прикреплено</string>
     <string name="no_repos_enabled">Нет включенных репозиториев. Включите хотя бы один в Настройках.</string>
     <string name="connection_timeout">Время ожидания соединения истекло. Проверьте подключение к интернету.</string>
-    <string name="sync_completed_with_errors">Синхронизация завершена с ошибками:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\n%1$s</string>
-    <string name="partial_sync_completed">Частичная синхронизация завершена:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">Синхронизация завершена с ошибками:\\\\\\\\\\\\\\\\n%1$s</string>
+    <string name="partial_sync_completed">Частичная синхронизация завершена:\\\\\\\\\\\\\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Ошибка сети или анализа</string>
     <string name="error_unknown">Неизвестная ошибка</string>

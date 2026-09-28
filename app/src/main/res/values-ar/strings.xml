@@ -35,6 +35,7 @@
     <string name="force_sync">فرض المزامنة</string>
     <string name="clear_all_apps">مسح كل التطبيقات</string>
     <string name="sort_name">الاسم</string>
+    <string name="sort_reverse">ترتيب عكسي</string>
     <string name="sort_updated">المحدثة مؤخراً</string>
     <string name="sort_size">الحجم</string>
     <string name="sort_added">المضافة مؤخراً</string>
@@ -95,8 +96,18 @@
     <string name="setting_keep_cache_desc">الاحتفاظ بملفات APK التي تم تنزيلها لإعادة التثبيت بشكل أسرع</string>
     <string name="setting_installer">المُثبِّت</string>
     <string name="setting_installer_desc">اختر كيفية تثبيت التطبيقات</string>
+    <string name="setting_fallback_installer">المثبِّت الاحتياطي</string>
+    <string name="setting_fallback_installer_desc">المثبِّت المستخدَم إذا فشلت الطريقة الأساسية</string>
+    <string name="installer_none">لا شيء</string>
+    <string name="installer_app_manager">مدير التطبيقات</string>
+    <string name="fallback_triggered">فشل المثبِّت الأساسي؛ سيتم استخدام %1$s</string>
     <string name="setting_hide_anti">إخفاء التطبيقات ذات الميزات المضادة</string>
     <string name="setting_show_incompatible">إظهار الإصدارات غير المتوافقة</string>
+    <string name="setting_ignore_unstable">تجاهل إصدارات ألفا/بيتا</string>
+    <string name="setting_ignore_unstable_desc">إخفاء إصدارات ألفا وبيتا من التحديثات</string>
+    <string name="channel_beta">بيتا</string>
+    <string name="channel_alpha">ألفا</string>
+    <string name="version_suggested">مقترحة</string>
     <string name="setting_differential_sync">المزامنة التفاضلية</string>
     <string name="setting_differential_sync_desc">استخدام فحوصات ذاكرة التخزين المؤقت لـ HTTP لتخطي المستودعات التي لم تتغير</string>
     <string name="setting_preferred_repo">المستودع المفضل</string>
@@ -116,6 +127,7 @@
     <string name="installer_session">الجلسة (مثبت الحزم)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (مالك الجهاز)</string>
     <string name="repo_auto">تلقائي</string>
     <string name="repo_prefer_fdroid">تفضيل F-Droid</string>
     <string name="repo_prefer_izzy">تفضيل IzzyOnDroid</string>
@@ -125,20 +137,34 @@
     <string name="no_action_attached">لا يوجد إجراء مرفق</string>
     <string name="no_repos_enabled">لا توجد مستودعات ممكّنة. قم بتمكين مستودع واحد على الأقل في الإعدادات.</string>
     <string name="connection_timeout">انتهت مهلة الاتصال. يرجى التحقق من اتصالك بالإنترنت.</string>
-    <string name="sync_completed_with_errors">اكتملت المزامنة مع وجود أخطاء:\n%1$s</string>
-    <string name="partial_sync_completed">اكتملت المزامنة الجزئية:\n%1$s</string>
+    <string name="sync_completed_with_errors">اكتملت المزامنة مع وجود أخطاء:\\\\n%1$s</string>
+    <string name="partial_sync_completed">اكتملت المزامنة الجزئية:\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">خطأ في الشبكة أو التحليل</string>
     <string name="error_unknown">خطأ غير معروف</string>
     <string name="repositories_reset">Reset Repositories</string>
+    <string name="name">الاسم</string>
+    <string name="url">الرابط</string>
     <string name="mirror_strategy">Mirror Strategy</string>
     <string name="trust">Trust</string>
     <string name="trust_mode">Trust Mode</string>
     <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">توافق Plexus</string>
+    <string name="plexus_degoogled">مجرَّدة من خدمات Google</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">غير مقيمة على Plexus</string>
+    <string name="plexus_view_details">عرض التفاصيل</string>
+    <string name="plexus_ratings">تقييمات</string>
+    <string name="plexus_open_website">فتح في موقع Plexus</string>
     <string name="permissions">App Info</string>
     <string name="app_not_installed">App not installed</string>
     <string name="versions">Versions</string>
-    <string name="installed" />
+    <string name="installed"></string>
+    <string name="more_apps">المزيد</string>
+    <string name="more_apps_by_author">مزيد من تطبيقات %1$s</string>
+    <string name="no_apps_by_author">لم يُعثر على تطبيقات من %1$s</string>
+    <string name="app_count">%1$d تطبيق</string>
     <string name="incompatible">Incompatible</string>
     <string name="copied">Copied</string>
     <string name="copy_url">Copy URL</string>
@@ -152,9 +178,35 @@
     <string name="lock_to_repo">Lock to Repo</string>
     <string name="updating_count">Updating %d apps</string>
     <string name="installation_errors">%d installation error(s)</string>
+    <string name="updating">جارٍ التحديث…</string>
     <string name="available_updates">Available Updates</string>
     <string name="dismiss">Dismiss</string>
     <string name="search">Search</string>
+    <string name="category_appearance">المظهر</string>
+    <string name="category_general">عام</string>
+    <string name="category_downloads">التنزيلات والتحديثات</string>
+    <string name="category_filters">عوامل التصفية</string>
+    <string name="category_sync">سلوك المزامنة</string>
+    <string name="category_proxy">وكيل</string>
+    <string name="category_other">أخرى</string>
+    <string name="repositories">المستودعات</string>
+    <string name="reset_to_defaults">إعادة الضبط إلى الإعدادات الافتراضية</string>
+    <string name="reset_repositories">إعادة ضبط المستودعات</string>
+    <string name="reset_repositories_confirm">سيؤدي هذا إلى إزالة جميع المستودعات المخصصة واستعادة القائمة الافتراضية. هل تريد المتابعة؟</string>
+    <string name="reset">إعادة الضبط</string>
+    <string name="run">تشغيل</string>
+    <string name="test_ping">اختبار الاستجابة</string>
+    <string name="forget_last_mirror">نسيان آخر مرآة</string>
+    <string name="forgot_mirror">تم نسيان آخر مرآة لـ %s</string>
+    <string name="delete_repository">حذف المستودع</string>
+    <string name="delete_repository_confirm">هل تريد حذف %s من مستودعاتك؟</string>
+    <string name="delete">حذف</string>
+    <string name="rotate_mirrors">تبديل المرايا</string>
+    <string name="use_onion">استخدام onion</string>
+    <string name="pins_label">دبابيس (sha256/BASE64، مفصولة بفواصل)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">شهادة CA مخصّصة</string>
+    <string name="optional">اختياري</string>
     <string name="more_options_for">More Options Dropdown</string>
     <string name="install_from">Install from</string>
     <string name="show_less">Show less</string>
@@ -167,11 +219,105 @@
     <string name="remove_favorite">Remove Favourite</string>
     <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
+    <string name="import_success">تم الاستيراد بنجاح (%d عنصر)</string>
     <string name="import_failed">Import failed: %s</string>
     <string name="export_success">Export Successful</string>
     <string name="export_failed">Export failed: %s</string>
     <string name="search_settings">Search Settings</string>
     <string name="import_settings">Import settings</string>
     <string name="export_settings">Export settings</string>
+    <string name="izzy_stats_title">إحصاءات IzzyOnDroid</string>
+    <string name="izzy_stats_monthly">التنزيلات الشهرية</string>
+    <string name="izzy_stats_yearly">التنزيلات السنوية</string>
+    <string name="izzy_stats_unavailable">الإحصاءات غير متاحة</string>
+    <string name="dhizuku_permission_denied">تم رفض إذن Dhizuku. يرجى منح الإذن في تطبيق Dhizuku.</string>
+    <string name="dhizuku_not_available">Dhizuku غير متاح. يرجى تثبيت Dhizuku وإعداده كمالك للجهاز أولًا.</string>
+    <string name="dhizuku_fallback">الرجوع إلى مثبّت الجلسة</string>
+    <string name="dismiss_banner">إخفاء الشريط</string>
+    <string name="no_browser_available">لا يوجد متصفح متاح لفتح الرابط</string>
+    <string name="alert_keep_android_open">F-Droid مهدد. تعمل Google على تغيير طريقة تثبيت التطبيقات على هاتفك. نحتاج إلى مساعدتك.</string>
+    <string name="category_about">حول</string>
+    <string name="support_development">ادعم التطوير</string>
+    <string name="support_development_desc">إذا وجدت هذا التطبيق مفيدًا، فكّر في دعم تطويره المستمر</string>
+    <string name="donate_on_kofi">تبرّع على Ko-fi</string>
+    <string name="insecure_http_warning">يستخدم هذا المستودع HTTP غير الآمن. فعّله فقط لمستودع محلي أو شبكة محلية موثوق.</string>
+    <string name="allow_insecure_http">السماح بـ HTTP غير الآمن لهذا المستودع</string>
+    <string name="setting_theme_desc">اختر بين المظهر الفاتح والداكن ومظهر النظام</string>
+    <string name="setting_show_app_icons">إظهار أيقونات التطبيقات</string>
+    <string name="setting_show_app_icons_desc">عرض أيقونات التطبيقات في القوائم والشبكات</string>
+    <string name="setting_use_list_layout">استخدام تخطيط القائمة</string>
+    <string name="setting_use_list_layout_desc">عرض التطبيقات في قائمة بدلًا من شبكة</string>
+    <string name="sort_name_za">الاسم (ي-أ)</string>
+    <string name="setting_auto_update">تحديث تلقائي</string>
+    <string name="setting_auto_update_desc">تحديث التطبيقات تلقائيًا في الخلفية</string>
+    <string name="setting_wifi_only_desc">التنزيل والمزامنة عبر Wi-Fi فقط</string>
+    <string name="setting_show_reproducible">إظهار شارات البناء القابل للتكرار</string>
+    <string name="setting_show_reproducible_desc">عرض شارات البناء القابل للتكرار من IzzyOnDroid</string>
+    <string name="setting_fail_on_trust_errors">الفشل عند أخطاء الثقة</string>
+    <string name="setting_fail_on_trust_errors_desc">تحقق صارم من SSL/TLS</string>
+    <string name="setting_use_proxy">استخدام وكيل</string>
+    <string name="setting_use_proxy_desc">توجيه الاتصالات عبر وكيل</string>
+    <string name="setting_proxy_url">رابط الوكيل</string>
+    <string name="setting_show_debug_info">إظهار معلومات التصحيح</string>
+    <string name="setting_show_debug_info_desc">عرض معلومات التصحيح في الواجهة</string>
+    <string name="mirror_sticky_last_good">تفضيل آخر مرآة صالحة</string>
+    <string name="mirror_round_robin">بالتناوب</string>
+    <string name="mirror_canonical_first">الأساسية أولًا</string>
+    <string name="trust_https_only">HTTPS فقط</string>
+    <string name="trust_pinned">شهادات مثبّتة</string>
+    <string name="trust_custom_ca">مرجع توقيع مخصّص</string>
+    <string name="trust_insecure_http">السماح بـ HTTP غير الآمن</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

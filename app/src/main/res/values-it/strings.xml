@@ -1,9 +1,7 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Flicky</string>
-    <string
-        name="app_description"
-    >Client F-Droid (non ufficiale) per TV</string>
+    <string name="app_description">Client F-Droid (non ufficiale) per TV</string>
     <string name="nav_browse">Sfoglia</string>
     <string name="nav_categories">Categorie</string>
     <string name="nav_updates">Aggiornamenti</string>
@@ -25,9 +23,7 @@
     <string name="search_hint">Cerca app…</string>
     <string name="voice_search">Ricerca vocale</string>
     <string name="voice_search_prompt">Parla per cercare le app</string>
-    <string
-        name="voice_search_unavailable"
-    >Ricerca vocale non disponibile</string>
+    <string name="voice_search_unavailable">Ricerca vocale non disponibile</string>
     <string name="sort_by">Ordina per</string>
     <string name="sort_prefix">Ordina: %1$s</string>
     <string name="syncing">Sincronizzazione…</string>
@@ -35,12 +31,11 @@
     <string name="sync_complete">Sincronizzazione completata: %1$d app</string>
     <string name="sync_failed">Sincronizzazione fallita</string>
     <string name="no_apps_found">Nessuna app trovata</string>
-    <string
-        name="try_different_search"
-    >Prova un termine di ricerca diverso</string>
+    <string name="try_different_search">Prova un termine di ricerca diverso</string>
     <string name="force_sync">Forza sincronizzazione</string>
     <string name="clear_all_apps">Svuota tutte le app</string>
     <string name="sort_name">Nome</string>
+    <string name="sort_reverse">Ordine inverso</string>
     <string name="sort_updated">Aggiornati di recente</string>
     <string name="sort_size">Dimensione</string>
     <string name="sort_added">Aggiunti di recente</string>
@@ -90,45 +85,35 @@
     <string name="repository_name">Nome</string>
     <string name="repository_url">URL</string>
     <string name="setting_default_sort">Ordinamento predefinito</string>
-    <string
-        name="setting_default_sort_desc"
-    >Ordinamento predefinito per gli elenchi di app</string>
+    <string name="setting_default_sort_desc">Ordinamento predefinito per gli elenchi di app</string>
     <string name="setting_theme">Tema</string>
     <string name="setting_dynamic_colors">Usa colori dinamici</string>
-    <string
-        name="setting_dynamic_colors_desc"
-    >Usa i colori di Material You (Android 12+)</string>
+    <string name="setting_dynamic_colors_desc">Usa i colori di Material You (Android 12+)</string>
     <string name="setting_wifi_only">Aggiorna solo tramite Wi-Fi</string>
     <string name="setting_sync_interval">Intervallo di sincronizzazione</string>
-    <string
-        name="setting_sync_interval_desc"
-    >Frequenza di sincronizzazione dei repository</string>
+    <string name="setting_sync_interval_desc">Frequenza di sincronizzazione dei repository</string>
     <string name="setting_keep_cache">Conserva la cache dei download</string>
-    <string
-        name="setting_keep_cache_desc"
-    >Conserva gli APK scaricati per una reinstallazione più rapida</string>
+    <string name="setting_keep_cache_desc">Conserva gli APK scaricati per una reinstallazione più rapida</string>
     <string name="setting_installer">Installer</string>
-    <string
-        name="setting_installer_desc"
-    >Scegli come vengono installate le app</string>
+    <string name="setting_installer_desc">Scegli come vengono installate le app</string>
+    <string name="setting_fallback_installer">Installer di riserva</string>
+    <string name="setting_fallback_installer_desc">Installer da usare se il metodo principale non riesce</string>
+    <string name="installer_none">Nessuno</string>
+    <string name="installer_app_manager">Gestore app</string>
+    <string name="fallback_triggered">Installer principale non riuscito; verrà usato %1$s</string>
     <string name="setting_hide_anti">Nascondi app con anti-funzionalità</string>
-    <string
-        name="setting_show_incompatible"
-    >Mostra versioni incompatibili</string>
-    <string
-        name="setting_differential_sync"
-    >Sincronizzazione differenziale</string>
-    <string
-        name="setting_differential_sync_desc"
-    >Usa i controlli della cache HTTP per saltare i repository non modificati</string>
+    <string name="setting_show_incompatible">Mostra versioni incompatibili</string>
+    <string name="setting_ignore_unstable">Ignora le versioni alpha/beta</string>
+    <string name="setting_ignore_unstable_desc">Nascondi le versioni alpha e beta dagli aggiornamenti</string>
+    <string name="channel_beta">Beta</string>
+    <string name="channel_alpha">Alfa</string>
+    <string name="version_suggested">Suggerita</string>
+    <string name="setting_differential_sync">Sincronizzazione differenziale</string>
+    <string name="setting_differential_sync_desc">Usa i controlli della cache HTTP per saltare i repository non modificati</string>
     <string name="setting_preferred_repo">Repository preferito</string>
-    <string
-        name="setting_preferred_repo_desc"
-    >Fonte predefinita quando un\'app esiste in più repository</string>
+    <string name="setting_preferred_repo_desc">Fonte predefinita quando un\\\\\\\'app esiste in più repository</string>
     <string name="setting_clear_cache">Svuota cache</string>
-    <string
-        name="setting_clear_cache_desc"
-    >Elimina gli header dei repository e reimposta l\'ultima sincronizzazione</string>
+    <string name="setting_clear_cache_desc">Elimina gli header dei repository e reimposta l\\\\\\\'ultima sincronizzazione</string>
     <string name="theme_system">Sistema</string>
     <string name="theme_light">Chiaro</string>
     <string name="theme_dark">Scuro</string>
@@ -142,6 +127,7 @@
     <string name="installer_session">Sessione (Installer pacchetti)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (proprietario del dispositivo)</string>
     <string name="repo_auto">Automatico</string>
     <string name="repo_prefer_fdroid">Preferisci F-Droid</string>
     <string name="repo_prefer_izzy">Preferisci IzzyOnDroid</string>
@@ -149,30 +135,36 @@
     <string name="toggle_off">Disattivo</string>
     <string name="cache_cleared">Cache svuotata</string>
     <string name="no_action_attached">Nessuna azione collegata</string>
-    <string
-        name="no_repos_enabled"
-    >Nessun repository abilitato. Abilitane almeno uno nelle Impostazioni.</string>
-    <string
-        name="connection_timeout"
-    >Timeout della connessione. Controlla la tua connessione internet.</string>
-    <string
-        name="sync_completed_with_errors"
-    >Sincronizzazione completata con errori:\n%1$s</string>
-    <string
-        name="partial_sync_completed"
-    >Sincronizzazione parziale completata:\n%1$s</string>
+    <string name="no_repos_enabled">Nessun repository abilitato. Abilitane almeno uno nelle Impostazioni.</string>
+    <string name="connection_timeout">Timeout della connessione. Controlla la tua connessione internet.</string>
+    <string name="sync_completed_with_errors">Sincronizzazione completata con errori:\\\\n%1$s</string>
+    <string name="partial_sync_completed">Sincronizzazione parziale completata:\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Errore di rete o di analisi</string>
     <string name="error_unknown">Errore sconosciuto</string>
     <string name="repositories_reset">Reset Repositories</string>
+    <string name="name">Nome</string>
+    <string name="url">URL</string>
     <string name="mirror_strategy">Mirror Strategy</string>
     <string name="trust">Trust</string>
     <string name="trust_mode">Trust Mode</string>
     <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Compatibilità con Plexus</string>
+    <string name="plexus_degoogled">De-Googleizzata</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Non valutata su Plexus</string>
+    <string name="plexus_view_details">Vedi dettagli</string>
+    <string name="plexus_ratings">valutazioni</string>
+    <string name="plexus_open_website">Apri sul sito di Plexus</string>
     <string name="permissions">App Info</string>
     <string name="app_not_installed">App not installed</string>
     <string name="versions">Versions</string>
-    <string name="installed" />
+    <string name="installed"></string>
+    <string name="more_apps">Altro</string>
+    <string name="more_apps_by_author">Altre app di %1$s</string>
+    <string name="no_apps_by_author">Nessuna app trovata per %1$s</string>
+    <string name="app_count">%1$d app</string>
     <string name="incompatible">Incompatible</string>
     <string name="copied">Copied</string>
     <string name="copy_url">Copy URL</string>
@@ -186,9 +178,35 @@
     <string name="lock_to_repo">Lock to Repo</string>
     <string name="updating_count">Updating %d apps</string>
     <string name="installation_errors">%d installation error(s)</string>
+    <string name="updating">Aggiornamento…</string>
     <string name="available_updates">Available Updates</string>
     <string name="dismiss">Dismiss</string>
     <string name="search">Search</string>
+    <string name="category_appearance">Aspetto</string>
+    <string name="category_general">Generale</string>
+    <string name="category_downloads">Download e aggiornamenti</string>
+    <string name="category_filters">Filtri</string>
+    <string name="category_sync">Comportamento della sincronizzazione</string>
+    <string name="category_proxy">Proxy</string>
+    <string name="category_other">Altro</string>
+    <string name="repositories">Repository</string>
+    <string name="reset_to_defaults">Ripristina impostazioni predefinite</string>
+    <string name="reset_repositories">Ripristina repository</string>
+    <string name="reset_repositories_confirm">Verranno rimossi tutti i repository personalizzati e ripristinato l\\\'elenco predefinito. Continuare?</string>
+    <string name="reset">Ripristina</string>
+    <string name="run">Esegui</string>
+    <string name="test_ping">Prova ping</string>
+    <string name="forget_last_mirror">Dimentica l\\\'ultimo mirror</string>
+    <string name="forgot_mirror">Ultimo mirror dimenticato per %s</string>
+    <string name="delete_repository">Elimina repository</string>
+    <string name="delete_repository_confirm">Eliminare %s dai tuoi repository?</string>
+    <string name="delete">Elimina</string>
+    <string name="rotate_mirrors">Ruota i mirror</string>
+    <string name="use_onion">Usa onion</string>
+    <string name="pins_label">Pin (sha256/BASE64, separati da virgola)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">Certificato CA personalizzato</string>
+    <string name="optional">Facoltativo</string>
     <string name="more_options_for">More Options Dropdown</string>
     <string name="install_from">Install from</string>
     <string name="show_less">Show less</string>
@@ -197,19 +215,109 @@
     <string name="no_favorites">No favourites yet!</string>
     <string name="remove_from_favorites">Remove from favourites</string>
     <string name="add_to_favorites">Add to Favourites</string>
-    <string
-        name="no_favorites_hint"
-    >Tap the heart icon on any app to add it to your favourites</string>
+    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
     <string name="remove_favorite">Remove Favourite</string>
-    <string
-        name="remove_favorite_confirm"
-    >Remove %1$s from your favorites?</string>
+    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
+    <string name="import_success">Importazione riuscita (%d elementi)</string>
     <string name="import_failed">Import failed: %s</string>
     <string name="export_success">Export Successful</string>
     <string name="export_failed">Export failed: %s</string>
     <string name="search_settings">Search Settings</string>
     <string name="import_settings">Import settings</string>
     <string name="export_settings">Export settings</string>
+    <string name="izzy_stats_title">Statistiche IzzyOnDroid</string>
+    <string name="izzy_stats_monthly">Download mensili</string>
+    <string name="izzy_stats_yearly">Download annuali</string>
+    <string name="izzy_stats_unavailable">Statistiche non disponibili</string>
+    <string name="dhizuku_permission_denied">Autorizzazione Dhizuku negata. Concedi il permesso nell\\\'app Dhizuku.</string>
+    <string name="dhizuku_not_available">Dhizuku non è disponibile. Installa e configura Dhizuku come proprietario del dispositivo prima.</string>
+    <string name="dhizuku_fallback">Torno all\\\'installer di sessione</string>
+    <string name="dismiss_banner">Ignora il banner</string>
+    <string name="no_browser_available">Nessun browser disponibile per aprire il link</string>
+    <string name="alert_keep_android_open">F-Droid è sotto minaccia. Google sta cambiando il modo in cui installi le app sul telefono. Ci serve il tuo aiuto.</string>
+    <string name="category_about">Informazioni</string>
+    <string name="support_development">Sostieni lo sviluppo</string>
+    <string name="support_development_desc">Se questa app ti è utile, valuta di sostenerne lo sviluppo continuo</string>
+    <string name="donate_on_kofi">Donazione su Ko-fi</string>
+    <string name="insecure_http_warning">Questo repository usa HTTP non sicuro. Attivalo solo per un repository locale o LAN attendibile.</string>
+    <string name="allow_insecure_http">Consenti HTTP non sicuro per questo repository</string>
+    <string name="setting_theme_desc">Scegli tra tema chiaro, scuro o di sistema</string>
+    <string name="setting_show_app_icons">Mostra le icone delle app</string>
+    <string name="setting_show_app_icons_desc">Mostra le icone delle app in elenchi e griglie</string>
+    <string name="setting_use_list_layout">Usa layout a elenco</string>
+    <string name="setting_use_list_layout_desc">Mostra le app in elenco invece che in griglia</string>
+    <string name="sort_name_za">Nome (Z-A)</string>
+    <string name="setting_auto_update">Aggiornamento automatico</string>
+    <string name="setting_auto_update_desc">Aggiorna automaticamente le app in background</string>
+    <string name="setting_wifi_only_desc">Scarica e sincronizza solo tramite Wi-Fi</string>
+    <string name="setting_show_reproducible">Mostra i badge delle build riproducibili</string>
+    <string name="setting_show_reproducible_desc">Mostra i badge delle build riproducibili di IzzyOnDroid</string>
+    <string name="setting_fail_on_trust_errors">Interrompi in caso di errori di attendibilità</string>
+    <string name="setting_fail_on_trust_errors_desc">Verifica rigorosa SSL/TLS</string>
+    <string name="setting_use_proxy">Usa proxy</string>
+    <string name="setting_use_proxy_desc">Instrada le connessioni tramite un proxy</string>
+    <string name="setting_proxy_url">URL del proxy</string>
+    <string name="setting_show_debug_info">Mostra informazioni di debug</string>
+    <string name="setting_show_debug_info_desc">Mostra le informazioni di debug nell\\\'interfaccia</string>
+    <string name="mirror_sticky_last_good">Preferisci l\\\'ultimo valido</string>
+    <string name="mirror_round_robin">A rotazione</string>
+    <string name="mirror_canonical_first">Prima il canonico</string>
+    <string name="trust_https_only">Solo HTTPS</string>
+    <string name="trust_pinned">Certificati bloccati</string>
+    <string name="trust_custom_ca">CA personalizzata</string>
+    <string name="trust_insecure_http">Consenti HTTP non sicuro</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

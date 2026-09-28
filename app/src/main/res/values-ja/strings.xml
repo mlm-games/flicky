@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Flicky</string>
     <string name="app_description">F-Droid（非公式）TV用クライアント</string>
@@ -35,14 +35,13 @@
     <string name="force_sync">強制同期</string>
     <string name="clear_all_apps">すべてのアプリをクリア</string>
     <string name="sort_name">名前</string>
+    <string name="sort_reverse">逆順</string>
     <string name="sort_updated">最近更新</string>
     <string name="sort_size">サイズ</string>
     <string name="sort_added">最近追加</string>
     <string name="category_all">すべて</string>
     <string name="category_count">%1$s (%2$d)</string>
-    <string
-        name="no_apps_in_category"
-    >このカテゴリーにアプリはありません</string>
+    <string name="no_apps_in_category">このカテゴリーにアプリはありません</string>
     <string name="update_all">すべて更新 (%1$d)</string>
     <string name="show_ignored">無視した項目を表示 (%1$d)</string>
     <string name="hide_ignored">無視した項目を非表示 (%1$d)</string>
@@ -56,9 +55,7 @@
     <string name="installing">インストール中…</string>
     <string name="installing_progress">インストール中… %1$d%%</string>
     <string name="installation_failed">インストールに失敗しました</string>
-    <string
-        name="install_failed_message"
-    >インストールに失敗しました: %1$s</string>
+    <string name="install_failed_message">インストールに失敗しました: %1$s</string>
     <string name="version_prefix">v%1$s</string>
     <string name="version_code">バージョンコード</string>
     <string name="package_name">パッケージ</string>
@@ -88,41 +85,35 @@
     <string name="repository_name">名前</string>
     <string name="repository_url">URL</string>
     <string name="setting_default_sort">デフォルトの並べ替え</string>
-    <string
-        name="setting_default_sort_desc"
-    >アプリリストのデフォルトの並べ替え</string>
+    <string name="setting_default_sort_desc">アプリリストのデフォルトの並べ替え</string>
     <string name="setting_theme">テーマ</string>
     <string name="setting_dynamic_colors">ダイナミックカラーを使用</string>
-    <string
-        name="setting_dynamic_colors_desc"
-    >Material You カラーを使用 (Android 12+)</string>
+    <string name="setting_dynamic_colors_desc">Material You カラーを使用 (Android 12+)</string>
     <string name="setting_wifi_only">Wi-Fi経由でのみ更新</string>
     <string name="setting_sync_interval">同期間隔</string>
     <string name="setting_sync_interval_desc">リポジトリを同期する頻度</string>
     <string name="setting_keep_cache">ダウンロードキャッシュを保持</string>
-    <string
-        name="setting_keep_cache_desc"
-    >ダウンロードしたAPKを保持して再インストールを高速化</string>
+    <string name="setting_keep_cache_desc">ダウンロードしたAPKを保持して再インストールを高速化</string>
     <string name="setting_installer">インストーラー</string>
-    <string
-        name="setting_installer_desc"
-    >アプリのインストール方法を選択</string>
+    <string name="setting_installer_desc">アプリのインストール方法を選択</string>
+    <string name="setting_fallback_installer">代替インストーラー</string>
+    <string name="setting_fallback_installer_desc">主 の方法が失敗したときに使うインストーラー</string>
+    <string name="installer_none">なし</string>
+    <string name="installer_app_manager">アプリマネージャー</string>
+    <string name="fallback_triggered">メインのインストーラーが失敗しました。%1$s を使用します</string>
     <string name="setting_hide_anti">アンチ機能を持つアプリを非表示</string>
-    <string
-        name="setting_show_incompatible"
-    >互換性のないバージョンを表示</string>
+    <string name="setting_show_incompatible">互換性のないバージョンを表示</string>
+    <string name="setting_ignore_unstable">アルファ/ベータ版を無視</string>
+    <string name="setting_ignore_unstable_desc">更新時にアルファ版とベータ版を非表示にする</string>
+    <string name="channel_beta">ベータ</string>
+    <string name="channel_alpha">アルファ</string>
+    <string name="version_suggested">推奨</string>
     <string name="setting_differential_sync">差分同期</string>
-    <string
-        name="setting_differential_sync_desc"
-    >HTTPキャッシュチェックを使用して変更のないリポジトリをスキップ</string>
+    <string name="setting_differential_sync_desc">HTTPキャッシュチェックを使用して変更のないリポジトリをスキップ</string>
     <string name="setting_preferred_repo">優先リポジトリ</string>
-    <string
-        name="setting_preferred_repo_desc"
-    >アプリが複数のリポジトリに存在する場合のデフォルトソース</string>
+    <string name="setting_preferred_repo_desc">アプリが複数のリポジトリに存在する場合のデフォルトソース</string>
     <string name="setting_clear_cache">キャッシュをクリア</string>
-    <string
-        name="setting_clear_cache_desc"
-    >リポジトリのヘッダーを削除し、最終同期をリセット</string>
+    <string name="setting_clear_cache_desc">リポジトリのヘッダーを削除し、最終同期をリセット</string>
     <string name="theme_system">システム</string>
     <string name="theme_light">ライト</string>
     <string name="theme_dark">ダーク</string>
@@ -133,11 +124,10 @@
     <string name="sync_weekly">毎週</string>
     <string name="sync_manual">手動のみ</string>
     <string name="installer_system">システム (デフォルト)</string>
-    <string
-        name="installer_session"
-    >セッション (パッケージインストーラー)</string>
+    <string name="installer_session">セッション (パッケージインストーラー)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku（デバイスオーナー）</string>
     <string name="repo_auto">自動</string>
     <string name="repo_prefer_fdroid">F-Droidを優先</string>
     <string name="repo_prefer_izzy">IzzyOnDroidを優先</string>
@@ -145,30 +135,36 @@
     <string name="toggle_off">オフ</string>
     <string name="cache_cleared">キャッシュがクリアされました</string>
     <string name="no_action_attached">アクションがありません</string>
-    <string
-        name="no_repos_enabled"
-    >有効なリポジトリがありません。設定で少なくとも1つ有効にしてください。</string>
-    <string
-        name="connection_timeout"
-    >接続がタイムアウトしました。インターネット接続を確認してください。</string>
-    <string
-        name="sync_completed_with_errors"
-    >エラーありで同期が完了しました:\n%1$s</string>
-    <string
-        name="partial_sync_completed"
-    >部分的な同期が完了しました:\n%1$s</string>
+    <string name="no_repos_enabled">有効なリポジトリがありません。設定で少なくとも1つ有効にしてください。</string>
+    <string name="connection_timeout">接続がタイムアウトしました。インターネット接続を確認してください。</string>
+    <string name="sync_completed_with_errors">エラーありで同期が完了しました:\\\\n%1$s</string>
+    <string name="partial_sync_completed">部分的な同期が完了しました:\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">ネットワークまたは解析エラー</string>
     <string name="error_unknown">不明なエラー</string>
     <string name="repositories_reset">Reset Repositories</string>
+    <string name="name">名前</string>
+    <string name="url">URL</string>
     <string name="mirror_strategy">Mirror Strategy</string>
     <string name="trust">Trust</string>
     <string name="trust_mode">Trust Mode</string>
     <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Plexus 互換性</string>
+    <string name="plexus_degoogled">デ/google化済み</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Plexus では評価なし</string>
+    <string name="plexus_view_details">詳細を表示</string>
+    <string name="plexus_ratings">件の評価</string>
+    <string name="plexus_open_website">Plexus のウェブサイトで開く</string>
     <string name="permissions">App Info</string>
     <string name="app_not_installed">App not installed</string>
     <string name="versions">Versions</string>
-    <string name="installed" />
+    <string name="installed"></string>
+    <string name="more_apps">もっと見る</string>
+    <string name="more_apps_by_author">%1$s の他のアプリ</string>
+    <string name="no_apps_by_author">%1$s のアプリが見つかりません</string>
+    <string name="app_count">%1$d 個のアプリ</string>
     <string name="incompatible">Incompatible</string>
     <string name="copied">Copied</string>
     <string name="copy_url">Copy URL</string>
@@ -182,9 +178,35 @@
     <string name="lock_to_repo">Lock to Repo</string>
     <string name="updating_count">Updating %d apps</string>
     <string name="installation_errors">%d installation error(s)</string>
+    <string name="updating">更新中…</string>
     <string name="available_updates">Available Updates</string>
     <string name="dismiss">Dismiss</string>
     <string name="search">Search</string>
+    <string name="category_appearance">外観</string>
+    <string name="category_general">一般</string>
+    <string name="category_downloads">ダウンロードと更新</string>
+    <string name="category_filters">フィルター</string>
+    <string name="category_sync">同期の動作</string>
+    <string name="category_proxy">プロキシ</string>
+    <string name="category_other">その他</string>
+    <string name="repositories">リポジトリ</string>
+    <string name="reset_to_defaults">既定値にリセット</string>
+    <string name="reset_repositories">リポジトリをリセット</string>
+    <string name="reset_repositories_confirm">すべてのカスタムリポジトリが削除され、既定の一覧に戻ります。続行しますか？</string>
+    <string name="reset">リセット</string>
+    <string name="run">実行</string>
+    <string name="test_ping">Ping をテスト</string>
+    <string name="forget_last_mirror">最後のミラーを忘れる</string>
+    <string name="forgot_mirror">%s の最後のミラーを忘れた</string>
+    <string name="delete_repository">リポジトリを削除</string>
+    <string name="delete_repository_confirm">リポジトリから %s を削除しますか？</string>
+    <string name="delete">削除</string>
+    <string name="rotate_mirrors">ミラーを切り替える</string>
+    <string name="use_onion">オニオンを使用</string>
+    <string name="pins_label">ピン留め（sha256/BASE64、カンマ区切り）</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">カスタム CA PEM</string>
+    <string name="optional">任意</string>
     <string name="more_options_for">More Options Dropdown</string>
     <string name="install_from">Install from</string>
     <string name="show_less">Show less</string>
@@ -193,19 +215,109 @@
     <string name="no_favorites">No favourites yet!</string>
     <string name="remove_from_favorites">Remove from favourites</string>
     <string name="add_to_favorites">Add to Favourites</string>
-    <string
-        name="no_favorites_hint"
-    >Tap the heart icon on any app to add it to your favourites</string>
+    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
     <string name="remove_favorite">Remove Favourite</string>
-    <string
-        name="remove_favorite_confirm"
-    >Remove %1$s from your favorites?</string>
+    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
+    <string name="import_success">インポート成功（%d 件）</string>
     <string name="import_failed">Import failed: %s</string>
     <string name="export_success">Export Successful</string>
     <string name="export_failed">Export failed: %s</string>
     <string name="search_settings">Search Settings</string>
     <string name="import_settings">Import settings</string>
     <string name="export_settings">Export settings</string>
+    <string name="izzy_stats_title">IzzyOnDroid の統計</string>
+    <string name="izzy_stats_monthly">月間ダウンロード数</string>
+    <string name="izzy_stats_yearly">年間ダウンロード数</string>
+    <string name="izzy_stats_unavailable">統計を取得できません</string>
+    <string name="dhizuku_permission_denied">Dhizuku の権限が拒否されました。Dhizuku アプリで権限を許可してください。</string>
+    <string name="dhizuku_not_available">Dhizuku を利用できません。まず Dhizuku をインストールしてデバイスオーナーとして設定してください。</string>
+    <string name="dhizuku_fallback">セッションインストーラーに戻ります</string>
+    <string name="dismiss_banner">バナーを閉じる</string>
+    <string name="no_browser_available">リンクを開くブラウザーがありません</string>
+    <string name="alert_keep_android_open">F-Droid は脅かされています。Google はアプリのインストール方法を変えています。ご協力が必要です。</string>
+    <string name="category_about">このアプリについて</string>
+    <string name="support_development">開発を支援する</string>
+    <string name="support_development_desc">このアプリが役に立ったなら、今後の開発への支援をご検討ください</string>
+    <string name="donate_on_kofi">Ko-fi で寄付</string>
+    <string name="insecure_http_warning">このリポジトリは安全でない HTTP を使用しています。信頼できるローカルまたは LAN リポジトリの場合のみ有効にしてください。</string>
+    <string name="allow_insecure_http">このリポジトリで安全でない HTTP を許可</string>
+    <string name="setting_theme_desc">ライト、ダーク、またはシステムテーマから選択</string>
+    <string name="setting_show_app_icons">アプリアイコンを表示</string>
+    <string name="setting_show_app_icons_desc">リストとグリッドでアプリアイコンを表示</string>
+    <string name="setting_use_list_layout">リスト表示を使用</string>
+    <string name="setting_use_list_layout_desc">グリッドではなくリストでアプリを表示</string>
+    <string name="sort_name_za">名前 (Z-A)</string>
+    <string name="setting_auto_update">自動更新</string>
+    <string name="setting_auto_update_desc">バックグラウンドでアプリを自動的に更新</string>
+    <string name="setting_wifi_only_desc">Wi-Fi のみでダウンロードと同期</string>
+    <string name="setting_show_reproducible">再現可能なビルドのバッジを表示</string>
+    <string name="setting_show_reproducible_desc">IzzyOnDroid の再現可能なビルドのバッジを表示</string>
+    <string name="setting_fail_on_trust_errors">信頼性のエラーで失敗</string>
+    <string name="setting_fail_on_trust_errors_desc">厳格な SSL/TLS 検証</string>
+    <string name="setting_use_proxy">プロキシを使用</string>
+    <string name="setting_use_proxy_desc">プロキシ経由で接続をルーティング</string>
+    <string name="setting_proxy_url">プロキシ URL</string>
+    <string name="setting_show_debug_info">デバッグ情報を表示</string>
+    <string name="setting_show_debug_info_desc">UI にデバッグ情報を表示</string>
+    <string name="mirror_sticky_last_good">直前の正常なものを優先</string>
+    <string name="mirror_round_robin">順番に使用</string>
+    <string name="mirror_canonical_first">正規を先に</string>
+    <string name="trust_https_only">HTTPS のみ</string>
+    <string name="trust_pinned">固定した証明書</string>
+    <string name="trust_custom_ca">カスタム CA</string>
+    <string name="trust_insecure_http">安全でない HTTP を許可</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

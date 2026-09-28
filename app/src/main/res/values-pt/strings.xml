@@ -137,8 +137,8 @@
     <string name="no_action_attached">Nenhuma ação anexada</string>
     <string name="no_repos_enabled">Nenhum repositório ativado. Ative pelo menos um nas Configurações.</string>
     <string name="connection_timeout">Tempo de conexão esgotado. Verifique sua conexão com a internet.</string>
-    <string name="sync_completed_with_errors">Sincronização concluída com erros:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\n%1$s</string>
-    <string name="partial_sync_completed">Sincronização parcial concluída:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">Sincronização concluída com erros:\\\\\\\\\\\\\\\\n%1$s</string>
+    <string name="partial_sync_completed">Sincronização parcial concluída:\\\\\\\\\\\\\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Erro de rede ou de análise</string>
     <string name="error_unknown">Erro desconhecido</string>

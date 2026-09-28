@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Flicky</string>
-    <string name="app_description">F-Droid (epävirallinen) asiakasohjelma TV:lle</string>
+    <string name="app_description">Epävirallinen F-Droid-asiakas TV:lle</string>
     <string name="nav_browse">Selaa</string>
-    <string name="nav_categories">Kategoriat</string>
+    <string name="nav_categories">Luokat</string>
     <string name="nav_updates">Päivitykset</string>
     <string name="nav_settings">Asetukset</string>
     <string name="action_install">Asenna</string>
     <string name="action_update">Päivitä</string>
-    <string name="action_uninstall">Poista</string>
+    <string name="action_uninstall">Poista asennus</string>
     <string name="action_open">Avaa</string>
     <string name="action_share">Jaa</string>
     <string name="action_cancel">Peruuta</string>
@@ -21,11 +21,11 @@
     <string name="action_sync">Synkronoi</string>
     <string name="action_clear">Tyhjennä</string>
     <string name="search_hint">Hae sovelluksia…</string>
-    <string name="voice_search">Puhehaku</string>
-    <string name="voice_search_prompt">Puhu hakeaksesi sovelluksia</string>
-    <string name="voice_search_unavailable">Puhehaku ei ole käytettävissä</string>
-    <string name="sort_by">Järjestä</string>
-    <string name="sort_prefix">Järjestys: %1$s</string>
+    <string name="voice_search">Äänihaku</string>
+    <string name="voice_search_prompt">Puhu hakua varten</string>
+    <string name="voice_search_unavailable">Äänihaku ei ole käytettävissä</string>
+    <string name="sort_by">Lajittele</string>
+    <string name="sort_prefix">Lajittelu: %1$s</string>
     <string name="syncing">Synkronoidaan…</string>
     <string name="sync_status">Synkronoidaan %1$s (%2$d/%3$d)</string>
     <string name="sync_complete">Synkronointi valmis: %1$d sovellusta</string>
@@ -35,38 +35,39 @@
     <string name="force_sync">Pakota synkronointi</string>
     <string name="clear_all_apps">Tyhjennä kaikki sovellukset</string>
     <string name="sort_name">Nimi</string>
-    <string name="sort_updated">Äskettäin päivitetty</string>
+    <string name="sort_reverse">Käänteinen järjestys</string>
+    <string name="sort_updated">Viimeksi päivitetty</string>
     <string name="sort_size">Koko</string>
-    <string name="sort_added">Äskettäin lisätty</string>
+    <string name="sort_added">Viimeksi lisätty</string>
     <string name="category_all">Kaikki</string>
     <string name="category_count">%1$s (%2$d)</string>
-    <string name="no_apps_in_category">Tässä kategoriassa ei ole sovelluksia</string>
+    <string name="no_apps_in_category">Tässä luokassa ei ole sovelluksia</string>
     <string name="update_all">Päivitä kaikki (%1$d)</string>
     <string name="show_ignored">Näytä ohitetut (%1$d)</string>
     <string name="hide_ignored">Piilota ohitetut (%1$d)</string>
-    <string name="no_updates">Ei saatavilla olevia päivityksiä</string>
+    <string name="no_updates">Päivityksiä ei ole saatavilla</string>
     <string name="installed_apps">Asennetut sovellukset</string>
     <string name="ignored_updates">Ohitetut päivitykset</string>
     <string name="ignore_this_version">Ohita tämä versio</string>
     <string name="ignore_all_updates">Ohita kaikki päivitykset</string>
-    <string name="stop_ignoring">Lopeta päivitysten ohittaminen</string>
+    <string name="stop_ignoring">Lopeta päivitysten ohitus</string>
     <string name="more_options">Lisää</string>
     <string name="installing">Asennetaan…</string>
     <string name="installing_progress">Asennetaan… %1$d%%</string>
     <string name="installation_failed">Asennus epäonnistui</string>
-    <string name="install_failed_message">Asennusvirhe: %1$s</string>
+    <string name="install_failed_message">Asennus epäonnistui: %1$s</string>
     <string name="version_prefix">v%1$s</string>
     <string name="version_code">Versiokoodi</string>
     <string name="package_name">Paketti</string>
     <string name="updated">Päivitetty</string>
     <string name="added">Lisätty</string>
     <string name="overview">Yleiskatsaus</string>
-    <string name="whats_new">Uutta</string>
+    <string name="whats_new">Mitä uutta</string>
     <string name="about">Tietoja</string>
-    <string name="screenshots">Kuvakaappaukset</string>
+    <string name="screenshots">Näytteet</string>
     <string name="info">Tiedot</string>
-    <string name="details">Tarkemmat tiedot</string>
-    <string name="anti_features">Epäominaisuudet</string>
+    <string name="details">Tiedot</string>
+    <string name="anti_features">Anti-ominaisuudet</string>
     <string name="links">Linkit</string>
     <string name="website">Verkkosivusto</string>
     <string name="source_code">Lähdekoodi</string>
@@ -79,30 +80,40 @@
     <string name="settings_downloads">Lataukset</string>
     <string name="settings_filters">Suodattimet</string>
     <string name="settings_system">Järjestelmä</string>
-    <string name="settings_repositories">Latauslähteet</string>
-    <string name="add_repository">Lisää latauslähde</string>
+    <string name="settings_repositories">Repositoriot</string>
+    <string name="add_repository">Lisää repositorio</string>
     <string name="repository_name">Nimi</string>
     <string name="repository_url">URL</string>
     <string name="setting_default_sort">Oletusjärjestys</string>
-    <string name="setting_default_sort_desc">Sovelluslistojen oletusjärjestys</string>
+    <string name="setting_default_sort_desc">Oletusjärjestys sovellusluettelolle</string>
     <string name="setting_theme">Teema</string>
     <string name="setting_dynamic_colors">Käytä dynaamisia värejä</string>
     <string name="setting_dynamic_colors_desc">Käytä Material You -värejä (Android 12+)</string>
-    <string name="setting_wifi_only">Päivitä vain Wi-Fi-yhteydellä</string>
+    <string name="setting_wifi_only">Päivitä vain Wi-Fin kautta</string>
     <string name="setting_sync_interval">Synkronointiväli</string>
-    <string name="setting_sync_interval_desc">Kuinka usein latauslähteet synkronoidaan</string>
+    <string name="setting_sync_interval_desc">Kuinka usein repositoriot synkronoidaan</string>
     <string name="setting_keep_cache">Säilytä latausvälimuisti</string>
-    <string name="setting_keep_cache_desc">Säilytä ladatut APK-tiedostot nopeampaa uudelleenasennusta varten</string>
+    <string name="setting_keep_cache_desc">Säilytä ladatut APK:t nopeuttaaksesi uudelleenasennusta</string>
     <string name="setting_installer">Asennusohjelma</string>
-    <string name="setting_installer_desc">Valitse, miten sovellukset asennetaan</string>
-    <string name="setting_hide_anti">Piilota sovellukset, joissa on epäominaisuuksia</string>
+    <string name="setting_installer_desc">Miten sovellukset asennetaan</string>
+    <string name="setting_fallback_installer">Varasennusohjelma</string>
+    <string name="setting_fallback_installer_desc">Asennusohjelma, jota käytetään, jos päämenetelmä epäonnistuu</string>
+    <string name="installer_none">Ei mitään</string>
+    <string name="installer_app_manager">Sovellushallinta</string>
+    <string name="fallback_triggered">Pääasennusohjelma epäonnistui; käytetään %1$s</string>
+    <string name="setting_hide_anti">Piilota sovellukset, joissa on anti-ominaisuuksia</string>
     <string name="setting_show_incompatible">Näytä yhteensopimattomat versiot</string>
-    <string name="setting_differential_sync">Erotteleva synkronointi</string>
-    <string name="setting_differential_sync_desc">Käytä HTTP-välimuistitarkistuksia ohittaaksesi muuttumattomat latauslähteet</string>
-    <string name="setting_preferred_repo">Ensisijainen latauslähde</string>
-    <string name="setting_preferred_repo_desc">Oletuslähde, kun sovellus on saatavilla useammasta lähteestä</string>
+    <string name="setting_ignore_unstable">Ohita alfa-/beetaversiot</string>
+    <string name="setting_ignore_unstable_desc">Piilota alfa- ja beeta-versiot päivityksissä</string>
+    <string name="channel_beta">Beeta</string>
+    <string name="channel_alpha">Alfa</string>
+    <string name="version_suggested">Ehdotettu</string>
+    <string name="setting_differential_sync">Differensiaalinen synkronointi</string>
+    <string name="setting_differential_sync_desc">Ohita muuttumattomat repositoriot HTTP-välimuistitarkistuksella</string>
+    <string name="setting_preferred_repo">Ensisijainen repositorio</string>
+    <string name="setting_preferred_repo_desc">Oletuslähde, kun sovellus on useissa repositorioissa</string>
     <string name="setting_clear_cache">Tyhjennä välimuisti</string>
-    <string name="setting_clear_cache_desc">Poista latauslähteiden otsikkotiedot ja nollaa viimeinen synkronointi</string>
+    <string name="setting_clear_cache_desc">Poista repositorion otsakkeet ja nollaa viimeisin synkronointi</string>
     <string name="theme_system">Järjestelmä</string>
     <string name="theme_light">Vaalea</string>
     <string name="theme_dark">Tumma</string>
@@ -110,68 +121,203 @@
     <string name="sync_6_hours">6 tuntia</string>
     <string name="sync_12_hours">12 tuntia</string>
     <string name="sync_24_hours">24 tuntia</string>
-    <string name="sync_weekly">Viikoittain</string>
+    <string name="sync_weekly">Viikittain</string>
     <string name="sync_manual">Vain manuaalisesti</string>
     <string name="installer_system">Järjestelmä (oletus)</string>
-    <string name="installer_session">Istunto (Pakettien asennusohjelma)</string>
-    <string name="installer_root">Root (pm)</string>
+    <string name="installer_session">Session (pakettien asennusohjelma)</string>
+    <string name="installer_root">Juuri (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (laitteen omistaja)</string>
     <string name="repo_auto">Automaattinen</string>
-    <string name="repo_prefer_fdroid">Suosi F-Droidia</string>
-    <string name="repo_prefer_izzy">Suosi IzzyOnDroidia</string>
+    <string name="repo_prefer_fdroid">Suosi F-Droid</string>
+    <string name="repo_prefer_izzy">Suosi IzzyOnDroid</string>
     <string name="toggle_on">Päällä</string>
-    <string name="toggle_off">Pois</string>
+    <string name="toggle_off">Poissa</string>
     <string name="cache_cleared">Välimuisti tyhjennetty</string>
-    <string name="no_action_attached">Toimintoa ei ole liitetty</string>
-    <string name="no_repos_enabled">Ei aktivoituja latauslähteitä. Aktivoi vähintään yksi asetuksista.</string>
-    <string name="connection_timeout">Yhteyden aikakatkaisu. Tarkista internet-yhteytesi.</string>
-    <string name="sync_completed_with_errors">Synkronointi valmistui virheiden kera:\n%1$s</string>
-    <string name="partial_sync_completed">Osittainen synkronointi valmistui:\n%1$s</string>
+    <string name="no_action_attached">Ei toimintoa liitetty</string>
+    <string name="no_repos_enabled">Yhtään repositoriaa ei ole käytössä. Ota käyttöön vähintään yksi asetuksista.</string>
+    <string name="connection_timeout">Yhteyden aikakatkaisu. Tarkista internetyhteytesi.</string>
+    <string name="sync_completed_with_errors">Synkronointi valmis virheiden kanssa:\\\\n%1$s</string>
+    <string name="partial_sync_completed">Osittainen synkronointi valmis:\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Verkko- tai jäsennysvirhe</string>
     <string name="error_unknown">Tuntematon virhe</string>
-    <string name="repositories_reset">Reset Repositories</string>
-    <string name="mirror_strategy">Mirror Strategy</string>
-    <string name="trust">Trust</string>
-    <string name="trust_mode">Trust Mode</string>
+    <string name="repositories_reset">Nollaa repositoriot</string>
+    <string name="name">Nimi</string>
+    <string name="url">URL</string>
+    <string name="mirror_strategy">Peilistrategia</string>
+    <string name="trust">Luottamus</string>
+    <string name="trust_mode">Luottamustila</string>
     <string name="exodus_privacy">Exodus Privacy</string>
-    <string name="permissions">App Info</string>
-    <string name="app_not_installed">App not installed</string>
-    <string name="versions">Versions</string>
-    <string name="installed" />
-    <string name="incompatible">Incompatible</string>
-    <string name="copied">Copied</string>
-    <string name="copy_url">Copy URL</string>
-    <string name="no_variants_found">No variants found</string>
-    <string name="downloading">Downloading</string>
-    <string name="verifying">Verifying</string>
-    <string name="preferred_source">Preferred Source</string>
-    <string name="auto">Auto</string>
-    <string name="locked_to_repo">Locked to Repo</string>
-    <string name="unlocked_repo">Unlocked</string>
-    <string name="lock_to_repo">Lock to Repo</string>
-    <string name="updating_count">Updating %d apps</string>
-    <string name="installation_errors">%d installation error(s)</string>
-    <string name="available_updates">Available Updates</string>
-    <string name="dismiss">Dismiss</string>
-    <string name="search">Search</string>
-    <string name="more_options_for">More Options Dropdown</string>
-    <string name="install_from">Install from</string>
-    <string name="show_less">Show less</string>
-    <string name="license">License</string>
-    <string name="nav_favorites">Favourites</string>
-    <string name="no_favorites">No favourites yet!</string>
-    <string name="remove_from_favorites">Remove from favourites</string>
-    <string name="add_to_favorites">Add to Favourites</string>
-    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
-    <string name="remove_favorite">Remove Favourite</string>
-    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
-    <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
-    <string name="import_failed">Import failed: %s</string>
-    <string name="export_success">Export Successful</string>
-    <string name="export_failed">Export failed: %s</string>
-    <string name="search_settings">Search Settings</string>
-    <string name="import_settings">Import settings</string>
-    <string name="export_settings">Export settings</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Plexus-yhteensopivuus</string>
+    <string name="plexus_degoogled">Google-poistettu</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Arvioimatta Plexuksessa</string>
+    <string name="plexus_view_details">Näytä tiedot</string>
+    <string name="plexus_ratings">arviota</string>
+    <string name="plexus_open_website">Avaa Plexus-verkkosivustolla</string>
+    <string name="permissions">Sovelluksen tiedot</string>
+    <string name="app_not_installed">Sovellusta ei ole asennettu</string>
+    <string name="versions">Versiot</string>
+    <string name="installed">Asennettu</string>
+    <string name="more_apps">Lisää</string>
+    <string name="more_apps_by_author">Lisää sovelluksia tekijältä %1$s</string>
+    <string name="no_apps_by_author">Tekijän %1$s sovelluksia ei löytynyt</string>
+    <string name="app_count">%1$d sovellusta</string>
+    <string name="incompatible">Yhteensopimaton</string>
+    <string name="copied">Kopioitu</string>
+    <string name="copy_url">Kopioi URL</string>
+    <string name="no_variants_found">Varianteja ei löytynyt</string>
+    <string name="downloading">Ladataan</string>
+    <string name="verifying">Varmennetaan</string>
+    <string name="preferred_source">Ensisijainen lähde</string>
+    <string name="auto">Automaattinen</string>
+    <string name="locked_to_repo">Kiinnitetty repositorioon</string>
+    <string name="unlocked_repo">Auki lukittu</string>
+    <string name="lock_to_repo">Lukitse repositorioon</string>
+    <string name="updating_count">Päivitetään %d sovellusta</string>
+    <string name="installation_errors">%d asennusvirhettä</string>
+    <string name="updating">Päivitetään…</string>
+    <string name="available_updates">Saatavilla olevat päivitykset</string>
+    <string name="dismiss">Sulje</string>
+    <string name="search">Haku</string>
+    <string name="category_appearance">Ulkoasu</string>
+    <string name="category_general">Yleiset</string>
+    <string name="category_downloads">Lataukset ja päivitykset</string>
+    <string name="category_filters">Suodattimet</string>
+    <string name="category_sync">Synkronoinnin toiminta</string>
+    <string name="category_proxy">Proxy</string>
+    <string name="category_other">Muut</string>
+    <string name="repositories">Repositoriot</string>
+    <string name="reset_to_defaults">Palauta oletukset</string>
+    <string name="reset_repositories">Nollaa repositoriot</string>
+    <string name="reset_repositories_confirm">Poistaa kaikki mukautetut repositoriot ja palauttaa oletusluettelon. Jatketaanko?</string>
+    <string name="reset">Nollaa</string>
+    <string name="run">Suorita</string>
+    <string name="test_ping">Testaa ping</string>
+    <string name="forget_last_mirror">Unohda viimeisin peili</string>
+    <string name="forgot_mirror">Viimeisin peili unohtui kohteelle %s</string>
+    <string name="delete_repository">Poista repositorio</string>
+    <string name="delete_repository_confirm">Poistetaanko %s repositorioistasi?</string>
+    <string name="delete">Poista</string>
+    <string name="rotate_mirrors">Vaihda peilejä</string>
+    <string name="use_onion">Käytä onionia</string>
+    <string name="pins_label">Kiinnitykset (sha256/BASE64, pilkulla erotettuina)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">Oma CA-varmente</string>
+    <string name="optional">Valinnainen</string>
+    <string name="more_options_for">Lisävalintojen valikko</string>
+    <string name="install_from">Asenna lähteestä</string>
+    <string name="show_less">Näytä vähemmän</string>
+    <string name="license">Lisenssi</string>
+    <string name="nav_favorites">Suosikit</string>
+    <string name="no_favorites">Ei vielä suosikkeja!</string>
+    <string name="remove_from_favorites">Poista suosikeista</string>
+    <string name="add_to_favorites">Lisää suosikkeihin</string>
+    <string name="no_favorites_hint">Napauta jotakin sovelluksen sydänlaitetta lisätäksesi sen suosikkeihin</string>
+    <string name="remove_favorite">Poista suosikeista</string>
+    <string name="remove_favorite_confirm">Poista %1$s suosikeista?</string>
+    <string name="remove">Poista</string>
+    <string name="import_success">Tuonti onnistui (%d kohdetta)</string>
+    <string name="import_failed">Tuonti epäonnistui: %s</string>
+    <string name="export_success">Vienti onnistui</string>
+    <string name="export_failed">Vienti epäonnistui: %s</string>
+    <string name="search_settings">Hae asetuksista</string>
+    <string name="import_settings">Tuou asetukset</string>
+    <string name="export_settings">Vie asetukset</string>
+    <string name="izzy_stats_title">IzzyOnDroid-tilastot</string>
+    <string name="izzy_stats_monthly">Kuukausittaiset lataukset</string>
+    <string name="izzy_stats_yearly">Vuosittaiset lataukset</string>
+    <string name="izzy_stats_unavailable">Tilastot eivät ole käytettävissä</string>
+    <string name="dhizuku_permission_denied">Dhizuku lupa evättiin. Anna lupa Dhizuku-sovelluksessa.</string>
+    <string name="dhizuku_not_available">Dhizuku ei ole käytettävissä. Asenna ja määritä Dhizuku ensin laitteen omistajaksi.</string>
+    <string name="dhizuku_fallback">Siirrytään istunnon asennusohjelmaan</string>
+    <string name="dismiss_banner">Piilota banneri</string>
+    <string name="no_browser_available">Linkin avaamiseen ei ole selainta</string>
+    <string name="alert_keep_android_open">F-Droid on uhattuna. Google muuttaa tapaa, jolla asennat sovelluksia puhelimeesi. Tarvitsemme apuasi.</string>
+    <string name="category_about">Tietoja</string>
+    <string name="support_development">Tue kehitystä</string>
+    <string name="support_development_desc">Jos tämä sovellus on hyödyllinen, harkitse sen jatkokehityksen tukemista</string>
+    <string name="donate_on_kofi">Lahjoita Ko-fissa</string>
+    <string name="insecure_http_warning">Tämä repositorio käyttää turvatonta HTTP:tä. Ota se käyttöön vain luotetulle paikalliselle tai LAN-repositorioille.</string>
+    <string name="allow_insecure_http">Salli turvaton HTTP tälle repositoriole</string>
+    <string name="setting_theme_desc">Valitse vaalea, tumma tai järjestelmän teema</string>
+    <string name="setting_show_app_icons">Näytä sovelluskuvakkeet</string>
+    <string name="setting_show_app_icons_desc">Näytä sovelluskuvakkeet luetteloissa ja ruudukoissa</string>
+    <string name="setting_use_list_layout">Käytä luetteloruokitusta</string>
+    <string name="setting_use_list_layout_desc">Näytä sovellukset luettelona ruudukon sijaan</string>
+    <string name="sort_name_za">Nimi (Z-A)</string>
+    <string name="setting_auto_update">Automaattinen päivitys</string>
+    <string name="setting_auto_update_desc">Päivitä sovellukset automaattisesti taustalla</string>
+    <string name="setting_wifi_only_desc">Lataa ja synkronoi vain Wi-Fin kautta</string>
+    <string name="setting_show_reproducible">Näytä toistettavien rakenteiden tunnukset</string>
+    <string name="setting_show_reproducible_desc">Näytä IzzyOnDroidin toistettavien rakenteiden tunnukset</string>
+    <string name="setting_fail_on_trust_errors">Epäonnistu luottamusvirheissä</string>
+    <string name="setting_fail_on_trust_errors_desc">Strict SSL/TLS-varmennus</string>
+    <string name="setting_use_proxy">Käytä välityspalvelinta</string>
+    <string name="setting_use_proxy_desc">Reititä yhteydet välityspalvelimen kautta</string>
+    <string name="setting_proxy_url">Välityspalvelimen URL</string>
+    <string name="setting_show_debug_info">Näytä virheenjäljitystiedot</string>
+    <string name="setting_show_debug_info_desc">Näytä virheenjäljitystiedot käyttöliittymässä</string>
+    <string name="mirror_sticky_last_good">Suosi viimeisin toimiva</string>
+    <string name="mirror_round_robin">Vuorotellen</string>
+    <string name="mirror_canonical_first">Kanoninen ensin</string>
+    <string name="trust_https_only">Vain HTTPS</string>
+    <string name="trust_pinned">Kiinnitetyt varmenteet</string>
+    <string name="trust_custom_ca">Oma CA</string>
+    <string name="trust_insecure_http">Salli turvaton HTTP</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

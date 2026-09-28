@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Flicky</string>
-    <string name="app_description">F-Droid (onofficiële) client voor TV</string>
+    <string name="app_description">Onofficiële F-Droid-client voor tv</string>
     <string name="nav_browse">Bladeren</string>
     <string name="nav_categories">Categorieën</string>
     <string name="nav_updates">Updates</string>
     <string name="nav_settings">Instellingen</string>
     <string name="action_install">Installeren</string>
-    <string name="action_update">Updaten</string>
+    <string name="action_update">Bijwerken</string>
     <string name="action_uninstall">Verwijderen</string>
     <string name="action_open">Openen</string>
     <string name="action_share">Delen</string>
@@ -21,50 +21,51 @@
     <string name="action_sync">Synchroniseren</string>
     <string name="action_clear">Wissen</string>
     <string name="search_hint">Apps zoeken…</string>
-    <string name="voice_search">Spraakgestuurd zoeken</string>
+    <string name="voice_search">Spraakzoeken</string>
     <string name="voice_search_prompt">Spreek om apps te zoeken</string>
-    <string name="voice_search_unavailable">Spraakgestuurd zoeken is niet beschikbaar</string>
+    <string name="voice_search_unavailable">Spraakzoeken niet beschikbaar</string>
     <string name="sort_by">Sorteren op</string>
-    <string name="sort_prefix">Sortering: %1$s</string>
+    <string name="sort_prefix">Sorteren: %1$s</string>
     <string name="syncing">Synchroniseren…</string>
-    <string name="sync_status">%1$s synchroniseren (%2$d/%3$d)</string>
+    <string name="sync_status">Synchroniseren %1$s (%2$d/%3$d)</string>
     <string name="sync_complete">Synchronisatie voltooid: %1$d apps</string>
     <string name="sync_failed">Synchronisatie mislukt</string>
     <string name="no_apps_found">Geen apps gevonden</string>
     <string name="try_different_search">Probeer een andere zoekterm</string>
-    <string name="force_sync">Synchronisatie forceren</string>
+    <string name="force_sync">Forceren</string>
     <string name="clear_all_apps">Alle apps wissen</string>
     <string name="sort_name">Naam</string>
+    <string name="sort_reverse">Omgekeerde volgorde</string>
     <string name="sort_updated">Recent bijgewerkt</string>
     <string name="sort_size">Grootte</string>
     <string name="sort_added">Recent toegevoegd</string>
     <string name="category_all">Alles</string>
     <string name="category_count">%1$s (%2$d)</string>
     <string name="no_apps_in_category">Geen apps in deze categorie</string>
-    <string name="update_all">Alles updaten (%1$d)</string>
-    <string name="show_ignored">Genegeerde tonen (%1$d)</string>
+    <string name="update_all">Alles bijwerken (%1$d)</string>
+    <string name="show_ignored">Genegeerde weergeven (%1$d)</string>
     <string name="hide_ignored">Genegeerde verbergen (%1$d)</string>
     <string name="no_updates">Geen updates beschikbaar</string>
     <string name="installed_apps">Geïnstalleerde apps</string>
     <string name="ignored_updates">Genegeerde updates</string>
     <string name="ignore_this_version">Deze versie negeren</string>
     <string name="ignore_all_updates">Alle updates negeren</string>
-    <string name="stop_ignoring">Updates niet meer negeren</string>
+    <string name="stop_ignoring">Niet meer negeren</string>
     <string name="more_options">Meer</string>
     <string name="installing">Installeren…</string>
     <string name="installing_progress">Installeren… %1$d%%</string>
     <string name="installation_failed">Installatie mislukt</string>
-    <string name="install_failed_message">Installatiefout: %1$s</string>
+    <string name="install_failed_message">Installatie mislukt: %1$s</string>
     <string name="version_prefix">v%1$s</string>
     <string name="version_code">Versiecode</string>
     <string name="package_name">Pakket</string>
     <string name="updated">Bijgewerkt</string>
     <string name="added">Toegevoegd</string>
     <string name="overview">Overzicht</string>
-    <string name="whats_new">Wat is nieuw</string>
+    <string name="whats_new">Wat is er nieuw</string>
     <string name="about">Over</string>
     <string name="screenshots">Schermafbeeldingen</string>
-    <string name="info">Informatie</string>
+    <string name="info">Info</string>
     <string name="details">Details</string>
     <string name="anti_features">Anti-functies</string>
     <string name="links">Links</string>
@@ -75,34 +76,44 @@
     <string name="installed_version">Geïnstalleerd: %1$s</string>
     <string name="new_version">Nieuw: %1$s</string>
     <string name="settings_general">Algemeen</string>
-    <string name="settings_appearance">Uiterlijk</string>
+    <string name="settings_appearance">Weergave</string>
     <string name="settings_downloads">Downloads</string>
     <string name="settings_filters">Filters</string>
     <string name="settings_system">Systeem</string>
-    <string name="settings_repositories">Repository\'s</string>
+    <string name="settings_repositories">Repository\\\'s</string>
     <string name="add_repository">Repository toevoegen</string>
     <string name="repository_name">Naam</string>
     <string name="repository_url">URL</string>
-    <string name="setting_default_sort">Standaardsortering</string>
-    <string name="setting_default_sort_desc">Standaardsortering voor app-lijsten</string>
+    <string name="setting_default_sort">Standaard sortering</string>
+    <string name="setting_default_sort_desc">Standaard sortering voor de applijst</string>
     <string name="setting_theme">Thema</string>
     <string name="setting_dynamic_colors">Dynamische kleuren gebruiken</string>
-    <string name="setting_dynamic_colors_desc">Gebruik Material You-kleuren (Android 12+)</string>
-    <string name="setting_wifi_only">Alleen updaten via Wi-Fi</string>
+    <string name="setting_dynamic_colors_desc">Material You-kleuren gebruiken (Android 12+)</string>
+    <string name="setting_wifi_only">Alleen via wifi bijwerken</string>
     <string name="setting_sync_interval">Synchronisatie-interval</string>
-    <string name="setting_sync_interval_desc">Hoe vaak de repository\'s moeten worden gesynchroniseerd</string>
+    <string name="setting_sync_interval_desc">Hoe vaak de repository\\\'s worden gesynchroniseerd</string>
     <string name="setting_keep_cache">Downloadcache bewaren</string>
-    <string name="setting_keep_cache_desc">Gedownloade APK\'s bewaren voor snellere herinstallatie</string>
-    <string name="setting_installer">Installatieprogramma</string>
-    <string name="setting_installer_desc">Kies hoe apps worden geïnstalleerd</string>
+    <string name="setting_keep_cache_desc">Gedownloade APK\\\'s bewaren voor sneller herinstalleren</string>
+    <string name="setting_installer">Installateur</string>
+    <string name="setting_installer_desc">Hoe apps worden geïnstalleerd</string>
+    <string name="setting_fallback_installer">Terugvalinstallateur</string>
+    <string name="setting_fallback_installer_desc">Installateur die wordt gebruikt als de primaire methode mislukt</string>
+    <string name="installer_none">Geen</string>
+    <string name="installer_app_manager">Appbeheer</string>
+    <string name="fallback_triggered">Primaire installateur mislukt; %1$s wordt gebruikt</string>
     <string name="setting_hide_anti">Apps met anti-functies verbergen</string>
     <string name="setting_show_incompatible">Incompatibele versies tonen</string>
+    <string name="setting_ignore_unstable">Alfa-/bèta-versies negeren</string>
+    <string name="setting_ignore_unstable_desc">Alfa- en bètaversies verbergen bij updates</string>
+    <string name="channel_beta">Bèta</string>
+    <string name="channel_alpha">Alfa</string>
+    <string name="version_suggested">Voorgesteld</string>
     <string name="setting_differential_sync">Differentiële synchronisatie</string>
-    <string name="setting_differential_sync_desc">Gebruik HTTP-cachecontroles om ongewijzigde repository\'s over te slaan</string>
+    <string name="setting_differential_sync_desc">HTTP-cachecontrole gebruiken om ongewijzigde repository\\\'s over te slaan</string>
     <string name="setting_preferred_repo">Voorkeursrepository</string>
-    <string name="setting_preferred_repo_desc">Standaardbron wanneer een app in meerdere repository\'s bestaat</string>
+    <string name="setting_preferred_repo_desc">Standaardbron wanneer een app in meerdere repository\\\'s staat</string>
     <string name="setting_clear_cache">Cache wissen</string>
-    <string name="setting_clear_cache_desc">Repository-headers verwijderen en laatste synchronisatie resetten</string>
+    <string name="setting_clear_cache_desc">Repositorykoppen verwijderen en laatste synchronisatie herstellen</string>
     <string name="theme_system">Systeem</string>
     <string name="theme_light">Licht</string>
     <string name="theme_dark">Donker</string>
@@ -113,65 +124,200 @@
     <string name="sync_weekly">Wekelijks</string>
     <string name="sync_manual">Alleen handmatig</string>
     <string name="installer_system">Systeem (standaard)</string>
-    <string name="installer_session">Sessie (Pakketinstallatieprogramma)</string>
+    <string name="installer_session">Sessie (Pakketinstallateur)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (apparaateigenaar)</string>
     <string name="repo_auto">Automatisch</string>
-    <string name="repo_prefer_fdroid">Voorkeur voor F-Droid</string>
-    <string name="repo_prefer_izzy">Voorkeur voor IzzyOnDroid</string>
+    <string name="repo_prefer_fdroid">F-Droid verkiezen</string>
+    <string name="repo_prefer_izzy">IzzyOnDroid verkiezen</string>
     <string name="toggle_on">Aan</string>
     <string name="toggle_off">Uit</string>
     <string name="cache_cleared">Cache gewist</string>
     <string name="no_action_attached">Geen actie gekoppeld</string>
-    <string name="no_repos_enabled">Geen repository\'s ingeschakeld. Schakel er ten minste één in via Instellingen.</string>
-    <string name="connection_timeout">Time-out voor verbinding. Controleer uw internetverbinding.</string>
-    <string name="sync_completed_with_errors">Synchronisatie voltooid met fouten:\n%1$s</string>
-    <string name="partial_sync_completed">Gedeeltelijke synchronisatie voltooid:\n%1$s</string>
+    <string name="no_repos_enabled">Geen repository\\\'s ingeschakeld. Schakel er minstens één in bij Instellingen.</string>
+    <string name="connection_timeout">Verbindingstime-out. Controleer je internetverbinding.</string>
+    <string name="sync_completed_with_errors">Synchronisatie voltooid met fouten:\\\\n%1$s</string>
+    <string name="partial_sync_completed">Gedeeltelijke synchronisatie voltooid:\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
-    <string name="error_network">Netwerk- of parseerfout</string>
+    <string name="error_network">Netwerk- of parsefout</string>
     <string name="error_unknown">Onbekende fout</string>
-    <string name="repositories_reset">Reset Repositories</string>
-    <string name="mirror_strategy">Mirror Strategy</string>
-    <string name="trust">Trust</string>
-    <string name="trust_mode">Trust Mode</string>
+    <string name="repositories_reset">Repository\\\'s herstellen</string>
+    <string name="name">Naam</string>
+    <string name="url">URL</string>
+    <string name="mirror_strategy">Spiegelstrategie</string>
+    <string name="trust">Vertrouwen</string>
+    <string name="trust_mode">Vertrouwensmodus</string>
     <string name="exodus_privacy">Exodus Privacy</string>
-    <string name="permissions">App Info</string>
-    <string name="app_not_installed">App not installed</string>
-    <string name="versions">Versions</string>
-    <string name="installed" />
-    <string name="incompatible">Incompatible</string>
-    <string name="copied">Copied</string>
-    <string name="copy_url">Copy URL</string>
-    <string name="no_variants_found">No variants found</string>
-    <string name="downloading">Downloading</string>
-    <string name="verifying">Verifying</string>
-    <string name="preferred_source">Preferred Source</string>
-    <string name="auto">Auto</string>
-    <string name="locked_to_repo">Locked to Repo</string>
-    <string name="unlocked_repo">Unlocked</string>
-    <string name="lock_to_repo">Lock to Repo</string>
-    <string name="updating_count">Updating %d apps</string>
-    <string name="installation_errors">%d installation error(s)</string>
-    <string name="available_updates">Available Updates</string>
-    <string name="dismiss">Dismiss</string>
-    <string name="search">Search</string>
-    <string name="more_options_for">More Options Dropdown</string>
-    <string name="install_from">Install from</string>
-    <string name="show_less">Show less</string>
-    <string name="license">License</string>
-    <string name="nav_favorites">Favourites</string>
-    <string name="no_favorites">No favourites yet!</string>
-    <string name="remove_from_favorites">Remove from favourites</string>
-    <string name="add_to_favorites">Add to Favourites</string>
-    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
-    <string name="remove_favorite">Remove Favourite</string>
-    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
-    <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
-    <string name="import_failed">Import failed: %s</string>
-    <string name="export_success">Export Successful</string>
-    <string name="export_failed">Export failed: %s</string>
-    <string name="search_settings">Search Settings</string>
-    <string name="import_settings">Import settings</string>
-    <string name="export_settings">Export settings</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Plexus-compatibiliteit</string>
+    <string name="plexus_degoogled">De-Google\\\'d</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Niet beoordeeld op Plexus</string>
+    <string name="plexus_view_details">Details bekijken</string>
+    <string name="plexus_ratings">beoordelingen</string>
+    <string name="plexus_open_website">Openen op de Plexus-website</string>
+    <string name="permissions">App-info</string>
+    <string name="app_not_installed">App niet geïnstalleerd</string>
+    <string name="versions">Versies</string>
+    <string name="installed">Geïnstalleerd</string>
+    <string name="more_apps">Meer</string>
+    <string name="more_apps_by_author">Meer apps van %1$s</string>
+    <string name="no_apps_by_author">Geen apps van %1$s gevonden</string>
+    <string name="app_count">%1$d apps</string>
+    <string name="incompatible">Incompatibel</string>
+    <string name="copied">Gekopieerd</string>
+    <string name="copy_url">URL kopiëren</string>
+    <string name="no_variants_found">Geen varianten gevonden</string>
+    <string name="downloading">Bezig met downloaden</string>
+    <string name="verifying">Bezig met verifiëren</string>
+    <string name="preferred_source">Voorkeursbron</string>
+    <string name="auto">Automatisch</string>
+    <string name="locked_to_repo">Vastgezet op repository</string>
+    <string name="unlocked_repo">Vrijgegeven</string>
+    <string name="lock_to_repo">Vastzetten op repository</string>
+    <string name="updating_count">%d apps bijwerken</string>
+    <string name="installation_errors">%d installatiefouten</string>
+    <string name="updating">Bezig met bijwerken…</string>
+    <string name="available_updates">Beschikbare updates</string>
+    <string name="dismiss">Sluiten</string>
+    <string name="search">Zoeken</string>
+    <string name="category_appearance">Weergave</string>
+    <string name="category_general">Algemeen</string>
+    <string name="category_downloads">Downloads en updates</string>
+    <string name="category_filters">Filters</string>
+    <string name="category_sync">Synchronisatiegedrag</string>
+    <string name="category_proxy">Proxy</string>
+    <string name="category_other">Overig</string>
+    <string name="repositories">Repository\\\'s</string>
+    <string name="reset_to_defaults">Standaardwaarden herstellen</string>
+    <string name="reset_repositories">Repository\\\'s herstellen</string>
+    <string name="reset_repositories_confirm">Dit verwijdert alle aangepaste repository\\\'s en herstelt de standaardlijst. Doorgaan?</string>
+    <string name="reset">Herstellen</string>
+    <string name="run">Uitvoeren</string>
+    <string name="test_ping">Ping testen</string>
+    <string name="forget_last_mirror">Laatste spiegel vergeten</string>
+    <string name="forgot_mirror">Laatste spiegel voor %s vergeten</string>
+    <string name="delete_repository">Repository verwijderen</string>
+    <string name="delete_repository_confirm">%s uit je repository\\\'s verwijderen?</string>
+    <string name="delete">Verwijderen</string>
+    <string name="rotate_mirrors">Spiegels wisselen</string>
+    <string name="use_onion">Onion gebruiken</string>
+    <string name="pins_label">Pins (sha256/BASE64, komma-gescheiden)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">Aangepast CA-certificaat</string>
+    <string name="optional">Optioneel</string>
+    <string name="more_options_for">Menu met meer opties</string>
+    <string name="install_from">Installeren van</string>
+    <string name="show_less">Minder weergeven</string>
+    <string name="license">Licentie</string>
+    <string name="nav_favorites">Favorieten</string>
+    <string name="no_favorites">Nog geen favorieten!</string>
+    <string name="remove_from_favorites">Uit favorieten verwijderen</string>
+    <string name="add_to_favorites">Aan favorieten toevoegen</string>
+    <string name="no_favorites_hint">Tik op het hartje bij een app om die aan je favorieten toe te voegen</string>
+    <string name="remove_favorite">Uit favorieten verwijderen</string>
+    <string name="remove_favorite_confirm">%1$s uit je favorieten verwijderen?</string>
+    <string name="remove">Verwijderen</string>
+    <string name="import_success">Import geslaagd (%d items)</string>
+    <string name="import_failed">Import mislukt: %s</string>
+    <string name="export_success">Export geslaagd</string>
+    <string name="export_failed">Export mislukt: %s</string>
+    <string name="search_settings">Instellingen zoeken</string>
+    <string name="import_settings">Instellingen importeren</string>
+    <string name="export_settings">Instellingen exporteren</string>
+    <string name="izzy_stats_title">IzzyOnDroid-statistieken</string>
+    <string name="izzy_stats_monthly">Maandelijkse downloads</string>
+    <string name="izzy_stats_yearly">Jaarlijkse downloads</string>
+    <string name="izzy_stats_unavailable">Statistieken niet beschikbaar</string>
+    <string name="dhizuku_permission_denied">Dhizuku-toestemming geweigerd. Geef de toestemming in de Dhizuku-app.</string>
+    <string name="dhizuku_not_available">Dhizuku is niet beschikbaar. Installeer en stel Dhizuku eerst in als apparaateigenaar.</string>
+    <string name="dhizuku_fallback">Terug naar sessie-installateur</string>
+    <string name="dismiss_banner">Banner sluiten</string>
+    <string name="no_browser_available">Geen browser beschikbaar om de link te openen</string>
+    <string name="alert_keep_android_open">F-Droid wordt bedreigd. Google verandert de manier waarop je apps op je telefoon installeert. We hebben je hulp nodig.</string>
+    <string name="category_about">Over</string>
+    <string name="support_development">Ontwikkeling steunen</string>
+    <string name="support_development_desc">Als deze app je bevalt, overweeg dan om de verdere ontwikkeling ervan te steunen</string>
+    <string name="donate_on_kofi">Doneren via Ko-fi</string>
+    <string name="insecure_http_warning">Dit repository gebruikt onveilige HTTP. Schakel dit alleen in voor een vertrouwd lokaal of LAN-repository.</string>
+    <string name="allow_insecure_http">Onveilige HTTP toestaan voor dit repository</string>
+    <string name="setting_theme_desc">Kies tussen licht, donker en het systeemthema</string>
+    <string name="setting_show_app_icons">Apppictogrammen tonen</string>
+    <string name="setting_show_app_icons_desc">Apppictogrammen tonen in lijsten en rasters</string>
+    <string name="setting_use_list_layout">Lijstindeling gebruiken</string>
+    <string name="setting_use_list_layout_desc">Apps in een lijst in plaats van een raster tonen</string>
+    <string name="sort_name_za">Naam (Z-A)</string>
+    <string name="setting_auto_update">Automatisch bijwerken</string>
+    <string name="setting_auto_update_desc">Apps automatisch op de achtergrond bijwerken</string>
+    <string name="setting_wifi_only_desc">Alleen via wifi downloaden en synchroniseren</string>
+    <string name="setting_show_reproducible">Badges voor reproduceerbare builds tonen</string>
+    <string name="setting_show_reproducible_desc">Badges voor reproduceerbare builds van IzzyOnDroid tonen</string>
+    <string name="setting_fail_on_trust_errors">Mislukken bij vertrouwsfouten</string>
+    <string name="setting_fail_on_trust_errors_desc">Strikte SSL/TLS-verificatie</string>
+    <string name="setting_use_proxy">Proxy gebruiken</string>
+    <string name="setting_use_proxy_desc">Verbindingen via een proxy routeren</string>
+    <string name="setting_proxy_url">Proxy-URL</string>
+    <string name="setting_show_debug_info">Debuginformatie tonen</string>
+    <string name="setting_show_debug_info_desc">Debuginformatie in de interface tonen</string>
+    <string name="mirror_sticky_last_good">Laatst goede verkiezen</string>
+    <string name="mirror_round_robin">Om de beurt</string>
+    <string name="mirror_canonical_first">Canonieke eerst</string>
+    <string name="trust_https_only">Alleen HTTPS</string>
+    <string name="trust_pinned">Vastgezette certificaten</string>
+    <string name="trust_custom_ca">Aangepast CA</string>
+    <string name="trust_insecure_http">Onveilige HTTP toestaan</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

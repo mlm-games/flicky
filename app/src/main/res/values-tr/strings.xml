@@ -35,6 +35,7 @@
     <string name="force_sync">Senkronizasyonu Zorla</string>
     <string name="clear_all_apps">Tüm Uygulamaları Temizle</string>
     <string name="sort_name">Ad</string>
+    <string name="sort_reverse">Ters sıralama</string>
     <string name="sort_updated">Son Güncellenenler</string>
     <string name="sort_size">Boyut</string>
     <string name="sort_added">Son Eklenenler</string>
@@ -92,11 +93,21 @@
     <string name="setting_sync_interval">Senkronizasyon aralığı</string>
     <string name="setting_sync_interval_desc">Depoların ne sıklıkla senkronize edileceği</string>
     <string name="setting_keep_cache">İndirme önbelleğini tut</string>
-    <string name="setting_keep_cache_desc">Daha hızlı yeniden yükleme için indirilen APK\'ları sakla</string>
+    <string name="setting_keep_cache_desc">Daha hızlı yeniden yükleme için indirilen APK\\\\\\\'ları sakla</string>
     <string name="setting_installer">Yükleyici</string>
     <string name="setting_installer_desc">Uygulamaların nasıl yükleneceğini seçin</string>
+    <string name="setting_fallback_installer">Yedek kurucu</string>
+    <string name="setting_fallback_installer_desc">Birincil yöntem başarısız olursa kullanılacak kurucu</string>
+    <string name="installer_none">Yok</string>
+    <string name="installer_app_manager">Uygulama yöneticisi</string>
+    <string name="fallback_triggered">Birincil kurucu başarısız oldu; %1$s kullanılıyor</string>
     <string name="setting_hide_anti">Anti-özelliklere sahip uygulamaları gizle</string>
     <string name="setting_show_incompatible">Uyumsuz sürümleri göster</string>
+    <string name="setting_ignore_unstable">Alfa/beta sürümleri yoksay</string>
+    <string name="setting_ignore_unstable_desc">Güncellemelerde alfa ve beta sürümlerini gizle</string>
+    <string name="channel_beta">Beta</string>
+    <string name="channel_alpha">Alfa</string>
+    <string name="version_suggested">Önerilen</string>
     <string name="setting_differential_sync">Farklı senkronizasyon</string>
     <string name="setting_differential_sync_desc">Değişmeyen depoları atlamak için HTTP önbellek kontrollerini kullan</string>
     <string name="setting_preferred_repo">Tercih edilen depo</string>
@@ -116,29 +127,44 @@
     <string name="installer_session">Oturum (Paket Yükleyici)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (cihaz sahibi)</string>
     <string name="repo_auto">Otomatik</string>
-    <string name="repo_prefer_fdroid">F-Droid\'i tercih et</string>
-    <string name="repo_prefer_izzy">IzzyOnDroid\'i tercih et</string>
+    <string name="repo_prefer_fdroid">F-Droid\\\\\\\'i tercih et</string>
+    <string name="repo_prefer_izzy">IzzyOnDroid\\\\\\\'i tercih et</string>
     <string name="toggle_on">Açık</string>
     <string name="toggle_off">Kapalı</string>
     <string name="cache_cleared">Önbellek temizlendi</string>
     <string name="no_action_attached">Eylem eklenmemiş</string>
-    <string name="no_repos_enabled">Etkin depo yok. Ayarlar\'dan en az birini etkinleştirin.</string>
+    <string name="no_repos_enabled">Etkin depo yok. Ayarlar\\\\\\\'dan en az birini etkinleştirin.</string>
     <string name="connection_timeout">Bağlantı zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edin.</string>
-    <string name="sync_completed_with_errors">Senkronizasyon hatalarla tamamlandı:\n%1$s</string>
-    <string name="partial_sync_completed">Kısmi senkronizasyon tamamlandı:\n%1$s</string>
+    <string name="sync_completed_with_errors">Senkronizasyon hatalarla tamamlandı:\\\\n%1$s</string>
+    <string name="partial_sync_completed">Kısmi senkronizasyon tamamlandı:\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Ağ veya ayrıştırma hatası</string>
     <string name="error_unknown">Bilinmeyen hata</string>
     <string name="repositories_reset">Reset Repositories</string>
+    <string name="name">Ad</string>
+    <string name="url">URL</string>
     <string name="mirror_strategy">Mirror Strategy</string>
     <string name="trust">Trust</string>
     <string name="trust_mode">Trust Mode</string>
     <string name="exodus_privacy">Exodus Privacy</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Plexus uyumluluğu</string>
+    <string name="plexus_degoogled">Google\\\'dan arındırılmış</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Plexus\\\'ta puanlanmamış</string>
+    <string name="plexus_view_details">Ayrıntıları görüntüle</string>
+    <string name="plexus_ratings">puan</string>
+    <string name="plexus_open_website">Plexus web sitesinde aç</string>
     <string name="permissions">App Info</string>
     <string name="app_not_installed">App not installed</string>
     <string name="versions">Versions</string>
-    <string name="installed" />
+    <string name="installed"></string>
+    <string name="more_apps">Daha fazla</string>
+    <string name="more_apps_by_author">%1$s uygulamasından daha fazlası</string>
+    <string name="no_apps_by_author">%1$s tarafından hiç uygulama bulunamadı</string>
+    <string name="app_count">%1$d uygulama</string>
     <string name="incompatible">Incompatible</string>
     <string name="copied">Copied</string>
     <string name="copy_url">Copy URL</string>
@@ -152,9 +178,35 @@
     <string name="lock_to_repo">Lock to Repo</string>
     <string name="updating_count">Updating %d apps</string>
     <string name="installation_errors">%d installation error(s)</string>
+    <string name="updating">Güncelleniyor…</string>
     <string name="available_updates">Available Updates</string>
     <string name="dismiss">Dismiss</string>
     <string name="search">Search</string>
+    <string name="category_appearance">Görünüm</string>
+    <string name="category_general">Genel</string>
+    <string name="category_downloads">İndirmeler ve güncellemeler</string>
+    <string name="category_filters">Filtreler</string>
+    <string name="category_sync">Senkronizasyon davranışı</string>
+    <string name="category_proxy">Proxy</string>
+    <string name="category_other">Diğer</string>
+    <string name="repositories">Depolar</string>
+    <string name="reset_to_defaults">Varsayılanlara sıfırla</string>
+    <string name="reset_repositories">Depoları sıfırla</string>
+    <string name="reset_repositories_confirm">Tüm özel depolar kaldırılacak ve varsayılan liste geri yüklenecek. Devam edilsin mi?</string>
+    <string name="reset">Sıfırla</string>
+    <string name="run">Çalıştır</string>
+    <string name="test_ping">Ping\\\'i test et</string>
+    <string name="forget_last_mirror">Son aynayı unut</string>
+    <string name="forgot_mirror">%s için son ayna unutuldu</string>
+    <string name="delete_repository">Depoyu sil</string>
+    <string name="delete_repository_confirm">%s deposundan silinsin mi?</string>
+    <string name="delete">Sil</string>
+    <string name="rotate_mirrors">Aynaları değiştir</string>
+    <string name="use_onion">Onion kullan</string>
+    <string name="pins_label">Sabitlenmiş anahtarlar (sha256/BASE64, virgülle ayrılmış)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">Özel CA PEM</string>
+    <string name="optional">İsteğe bağlı</string>
     <string name="more_options_for">More Options Dropdown</string>
     <string name="install_from">Install from</string>
     <string name="show_less">Show less</string>
@@ -167,11 +219,105 @@
     <string name="remove_favorite">Remove Favourite</string>
     <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
     <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
+    <string name="import_success">İçe aktarma başarılı (%d öğe)</string>
     <string name="import_failed">Import failed: %s</string>
     <string name="export_success">Export Successful</string>
     <string name="export_failed">Export failed: %s</string>
     <string name="search_settings">Search Settings</string>
     <string name="import_settings">Import settings</string>
     <string name="export_settings">Export settings</string>
+    <string name="izzy_stats_title">IzzyOnDroid istatistikleri</string>
+    <string name="izzy_stats_monthly">Aylık indirmeler</string>
+    <string name="izzy_stats_yearly">Yıllık indirmeler</string>
+    <string name="izzy_stats_unavailable">İstatistikler kullanılamıyor</string>
+    <string name="dhizuku_permission_denied">Dhizuku izni reddedildi. Lütfen izni Dhizuku uygulamasından verin.</string>
+    <string name="dhizuku_not_available">Dhizuku kullanılamıyor. Lütfen önce Dhizuku\\\'yu yükleyin ve cihaz sahibi olarak ayarlayın.</string>
+    <string name="dhizuku_fallback">Oturum kurucusuna geri dönülüyor</string>
+    <string name="dismiss_banner">Afişi kapat</string>
+    <string name="no_browser_available">Bağlantıyı açmak için tarayıcı yok</string>
+    <string name="alert_keep_android_open">F-Droid tehdit altında. Google, telefonunuzda uygulama yükleme biçimini değiştiriyor. Yardımınıza ihtiyacımız var.</string>
+    <string name="category_about">Hakkında</string>
+    <string name="support_development">Geliştirmeyi destekle</string>
+    <string name="support_development_desc">Bu uygulama işinize yarıyorsa, gelişimini desteklemeyi düşünün</string>
+    <string name="donate_on_kofi">Ko-fi\\\'da bağış yap</string>
+    <string name="insecure_http_warning">Bu depo güvenli olmayan HTTP kullanıyor. Bunu yalnızca güvendiğiniz yerel veya LAN deposu için etkinleştirin.</string>
+    <string name="allow_insecure_http">Bu depo için güvenli olmayan HTTP\\\'ye izin ver</string>
+    <string name="setting_theme_desc">Açık, koyu veya sistem teması arasında seçim yapın</string>
+    <string name="setting_show_app_icons">Uygulama simgelerini göster</string>
+    <string name="setting_show_app_icons_desc">Uygulama simgelerini listelerde ve ızgaralarda göster</string>
+    <string name="setting_use_list_layout">Liste düzenini kullan</string>
+    <string name="setting_use_list_layout_desc">Uygulamaları ızgara yerine liste olarak göster</string>
+    <string name="sort_name_za">Ad (Z-A)</string>
+    <string name="setting_auto_update">Otomatik güncelleme</string>
+    <string name="setting_auto_update_desc">Uygulamaları arka planda otomatik güncelle</string>
+    <string name="setting_wifi_only_desc">Yalnızca Wi-Fi üzerinden indir ve eşitle</string>
+    <string name="setting_show_reproducible">Yeniden üretilebilir derleme rozetlerini göster</string>
+    <string name="setting_show_reproducible_desc">IzzyOnDroid\\\'den gelen yeniden üretilebilir derleme rozetlerini göster</string>
+    <string name="setting_fail_on_trust_errors">Güven hatalarında başarısız ol</string>
+    <string name="setting_fail_on_trust_errors_desc">Katı SSL/TLS doğrulaması</string>
+    <string name="setting_use_proxy">Proxy kullan</string>
+    <string name="setting_use_proxy_desc">Bağlantıları bir proxy üzerinden yönlendir</string>
+    <string name="setting_proxy_url">Proxy URL\\\'si</string>
+    <string name="setting_show_debug_info">Hata ayıklama bilgilerini göster</string>
+    <string name="setting_show_debug_info_desc">Arayüzde hata ayıklama bilgilerini göster</string>
+    <string name="mirror_sticky_last_good">Son geçerli olana öncelik ver</string>
+    <string name="mirror_round_robin">Sırayla</string>
+    <string name="mirror_canonical_first">Önce kanonik</string>
+    <string name="trust_https_only">Yalnızca HTTPS</string>
+    <string name="trust_pinned">Sabitlenmiş sertifikalar</string>
+    <string name="trust_custom_ca">Özel CA</string>
+    <string name="trust_insecure_http">Güvenli olmayan HTTP\\\'ye izin ver</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

@@ -35,6 +35,7 @@
     <string name="force_sync">Vynutit synchronizaci</string>
     <string name="clear_all_apps">Vymazat všechny aplikace</string>
     <string name="sort_name">Název</string>
+    <string name="sort_reverse">Obrácené pořadí</string>
     <string name="sort_updated">Nedávno aktualizované</string>
     <string name="sort_size">Velikost</string>
     <string name="sort_added">Nedávno přidané</string>
@@ -55,7 +56,7 @@
     <string name="installing_progress">Instalace… %1$d%%</string>
     <string name="installation_failed">Instalace se nezdařila</string>
     <string name="install_failed_message">Chyba instalace: %1$s</string>
-    <string name="version_prefix">v%1$s</string>
+    <string name="version_prefix">verze %1$s</string>
     <string name="version_code">Kód verze</string>
     <string name="package_name">Balíček</string>
     <string name="updated">Aktualizováno</string>
@@ -95,8 +96,18 @@
     <string name="setting_keep_cache_desc">Uchovat stažené soubory APK pro rychlejší opětovnou instalaci</string>
     <string name="setting_installer">Instalátor</string>
     <string name="setting_installer_desc">Zvolte způsob instalace aplikací</string>
+    <string name="setting_fallback_installer">Záložní instalátor</string>
+    <string name="setting_fallback_installer_desc">Instalátor použitý, pokud primární metoda selže</string>
+    <string name="installer_none">Žádný</string>
+    <string name="installer_app_manager">Správce aplikací</string>
+    <string name="fallback_triggered">Primární instalátor selhal; používá se %1$s</string>
     <string name="setting_hide_anti">Skrýt aplikace s anti-funkcemi</string>
     <string name="setting_show_incompatible">Zobrazit nekompatibilní verze</string>
+    <string name="setting_ignore_unstable">Ignorovat verze alfa/beta</string>
+    <string name="setting_ignore_unstable_desc">Skrýt verze alfa a beta v aktualizacích</string>
+    <string name="channel_beta">Beta</string>
+    <string name="channel_alpha">Alfa</string>
+    <string name="version_suggested">Navrženo</string>
     <string name="setting_differential_sync">Diferenciální synchronizace</string>
     <string name="setting_differential_sync_desc">Použít kontroly mezipaměti HTTP k přeskočení nezměněných repozitářů</string>
     <string name="setting_preferred_repo">Preferovaný repozitář</string>
@@ -116,6 +127,7 @@
     <string name="installer_session">Relace (Instalátor balíčků)</string>
     <string name="installer_root">Root (pm)</string>
     <string name="installer_shizuku">Shizuku (pm)</string>
+    <string name="installer_dhizuku">Dhizuku (vlastník zařízení)</string>
     <string name="repo_auto">Automaticky</string>
     <string name="repo_prefer_fdroid">Preferovat F-Droid</string>
     <string name="repo_prefer_izzy">Preferovat IzzyOnDroid</string>
@@ -125,53 +137,187 @@
     <string name="no_action_attached">Není připojena žádná akce</string>
     <string name="no_repos_enabled">Nejsou povoleny žádné repozitáře. Povolte alespoň jeden v Nastavení.</string>
     <string name="connection_timeout">Časový limit připojení vypršel. Zkontrolujte připojení k internetu.</string>
-    <string name="sync_completed_with_errors">Synchronizace dokončena s chybami:\n%1$s</string>
-    <string name="partial_sync_completed">Částečná synchronizace dokončena:\n%1$s</string>
+    <string name="sync_completed_with_errors">Synchronizace dokončena s chybami:\\\\\\\\\\\\\\\\n%1$s</string>
+    <string name="partial_sync_completed">Částečná synchronizace dokončena:\\\\\\\\\\\\\\\\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Chyba sítě nebo analýzy</string>
     <string name="error_unknown">Neznámá chyba</string>
-    <string name="repositories_reset">Reset Repositories</string>
-    <string name="mirror_strategy">Mirror Strategy</string>
-    <string name="trust">Trust</string>
-    <string name="trust_mode">Trust Mode</string>
+    <string name="repositories_reset">Resetovat repozitáře</string>
+    <string name="name">Název</string>
+    <string name="url">URL</string>
+    <string name="mirror_strategy">Strategie zrcadla</string>
+    <string name="trust">Důvěra</string>
+    <string name="trust_mode">Režim důvěry</string>
     <string name="exodus_privacy">Exodus Privacy</string>
-    <string name="permissions">App Info</string>
-    <string name="app_not_installed">App not installed</string>
-    <string name="versions">Versions</string>
-    <string name="installed" />
-    <string name="incompatible">Incompatible</string>
-    <string name="copied">Copied</string>
-    <string name="copy_url">Copy URL</string>
-    <string name="no_variants_found">No variants found</string>
-    <string name="downloading">Downloading</string>
-    <string name="verifying">Verifying</string>
-    <string name="preferred_source">Preferred Source</string>
-    <string name="auto">Auto</string>
-    <string name="locked_to_repo">Locked to Repo</string>
-    <string name="unlocked_repo">Unlocked</string>
-    <string name="lock_to_repo">Lock to Repo</string>
-    <string name="updating_count">Updating %d apps</string>
-    <string name="installation_errors">%d installation error(s)</string>
-    <string name="available_updates">Available Updates</string>
-    <string name="dismiss">Dismiss</string>
-    <string name="search">Search</string>
-    <string name="more_options_for">More Options Dropdown</string>
-    <string name="install_from">Install from</string>
-    <string name="show_less">Show less</string>
-    <string name="license">License</string>
-    <string name="nav_favorites">Favourites</string>
-    <string name="no_favorites">No favourites yet!</string>
-    <string name="remove_from_favorites">Remove from favourites</string>
-    <string name="add_to_favorites">Add to Favourites</string>
-    <string name="no_favorites_hint">Tap the heart icon on any app to add it to your favourites</string>
-    <string name="remove_favorite">Remove Favourite</string>
-    <string name="remove_favorite_confirm">Remove %1$s from your favorites?</string>
-    <string name="remove">Remove</string>
-    <string name="import_success">Import Successful</string>
-    <string name="import_failed">Import failed: %s</string>
-    <string name="export_success">Export Successful</string>
-    <string name="export_failed">Export failed: %s</string>
-    <string name="search_settings">Search Settings</string>
-    <string name="import_settings">Import settings</string>
-    <string name="export_settings">Export settings</string>
+    <string name="plexus">Plexus</string>
+    <string name="plexus_compatibility">Kompatibilita s Plexus</string>
+    <string name="plexus_degoogled">Odgooglovaná</string>
+    <string name="plexus_microg">microG</string>
+    <string name="plexus_unrated">Ohodnocena na Plexusu</string>
+    <string name="plexus_view_details">Zobrazit podrobnosti</string>
+    <string name="plexus_ratings">hodnocení</string>
+    <string name="plexus_open_website">Otevřít na webu Plexus</string>
+    <string name="permissions">Informace o aplikaci</string>
+    <string name="app_not_installed">Aplikace není nainstalována</string>
+    <string name="versions">Verze</string>
+    <string name="installed"></string>
+    <string name="more_apps">Více</string>
+    <string name="more_apps_by_author">Další aplikace od %1$s</string>
+    <string name="no_apps_by_author">Žádné aplikace od %1$s nenalezeny</string>
+    <string name="app_count">%1$d aplikací</string>
+    <string name="incompatible">Nekompatibilní</string>
+    <string name="copied">Zkopírováno</string>
+    <string name="copy_url">Kopírovat URL</string>
+    <string name="no_variants_found">Nenalezeny žádné varianty</string>
+    <string name="downloading">Stahování</string>
+    <string name="verifying">Ověřování</string>
+    <string name="preferred_source">Preferovaný zdroj</string>
+    <string name="auto">Automaticky</string>
+    <string name="locked_to_repo">Uzamčeno na repozitář</string>
+    <string name="unlocked_repo">Odemčeno</string>
+    <string name="lock_to_repo">Uzamknout na repozitář</string>
+    <string name="updating_count">Aktualizace %d aplikací</string>
+    <string name="installation_errors">%d chyb při instalaci</string>
+    <string name="updating">Aktualizace…</string>
+    <string name="available_updates">Dostupné aktualizace</string>
+    <string name="dismiss">Zavřít</string>
+    <string name="search">Hledat</string>
+    <string name="category_appearance">Vzhled</string>
+    <string name="category_general">Obecné</string>
+    <string name="category_downloads">Stahování a aktualizace</string>
+    <string name="category_filters">Filtry</string>
+    <string name="category_sync">Chování synchronizace</string>
+    <string name="category_proxy">Proxy</string>
+    <string name="category_other">Ostatní</string>
+    <string name="repositories">Repozitáře</string>
+    <string name="reset_to_defaults">Obnovit výchozí nastavení</string>
+    <string name="reset_repositories">Resetovat repozitáře</string>
+    <string name="reset_repositories_confirm">Tímto odeberete všechny vlastní repozitáře a obnovíte výchozí seznam. Pokračovat?</string>
+    <string name="reset">Resetovat</string>
+    <string name="run">Spustit</string>
+    <string name="test_ping">Otestovat ping</string>
+    <string name="forget_last_mirror">Zapomenout poslední zrcadlo</string>
+    <string name="forgot_mirror">Zapomenuto poslední zrcadlo pro %s</string>
+    <string name="delete_repository">Smazat repozitář</string>
+    <string name="delete_repository_confirm">Odstranit %s z vašich repozitářů?</string>
+    <string name="delete">Smazat</string>
+    <string name="rotate_mirrors">Střídat zrcadla</string>
+    <string name="use_onion">Použít onion</string>
+    <string name="pins_label">Špendlíky (sha256/BASE64, oddělené čárkou)</string>
+    <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="custom_ca_pem">Vlastní certifikát CA</string>
+    <string name="optional">Volitelné</string>
+    <string name="more_options_for">Menu dalších možností</string>
+    <string name="install_from">Instalovat z</string>
+    <string name="show_less">Zobrazit méně</string>
+    <string name="license">Licence</string>
+    <string name="nav_favorites">Oblíbené</string>
+    <string name="no_favorites">Zatím žádné oblíbené!</string>
+    <string name="remove_from_favorites">Odebrat z oblíbených</string>
+    <string name="add_to_favorites">Přidat do oblíbených</string>
+    <string name="no_favorites_hint">Klepnutím na ikonu srdce u aplikace ji přidáte do oblíbených</string>
+    <string name="remove_favorite">Odebrat z oblíbených</string>
+    <string name="remove_favorite_confirm">Odebrat %1$s z oblíbených?</string>
+    <string name="remove">Odebrat</string>
+    <string name="import_success">Import úspěšný (%d položek)</string>
+    <string name="import_failed">Import selhal: %s</string>
+    <string name="export_success">Export úspěšný</string>
+    <string name="export_failed">Export selhal: %s</string>
+    <string name="search_settings">Hledat v nastavení</string>
+    <string name="import_settings">Importovat nastavení</string>
+    <string name="export_settings">Exportovat nastavení</string>
+    <string name="izzy_stats_title">Statistiky IzzyOnDroid</string>
+    <string name="izzy_stats_monthly">Měsíční stažení</string>
+    <string name="izzy_stats_yearly">Roční stažení</string>
+    <string name="izzy_stats_unavailable">Statistiky nedostupné</string>
+    <string name="dhizuku_permission_denied">Oprávnění Dhizuku bylo odepřeno. Udělte oprávnění v aplikaci Dhizuku.</string>
+    <string name="dhizuku_not_available">Dhizuku není dostupný. Nejprve nainstalujte a nastavte Dhizuku jako vlastníka zařízení.</string>
+    <string name="dhizuku_fallback">Přechod na instalátor relace</string>
+    <string name="dismiss_banner">Skrýt banner</string>
+    <string name="no_browser_available">Žádný prohlížeč pro otevření odkazu</string>
+    <string name="alert_keep_android_open">F-Droid je v ohrožení. Google mění způsob instalace aplikací na vašem telefonu. Potřebujeme vaši pomoc.</string>
+    <string name="category_about">O aplikaci</string>
+    <string name="support_development">Podpořit vývoj</string>
+    <string name="support_development_desc">Pokud vám tato aplikace pomáhá, zvažte podporu jejího dalšího vývoje</string>
+    <string name="donate_on_kofi">Přispět na Ko-fi</string>
+    <string name="insecure_http_warning">Tento repozitář používá nezabezpečené HTTP. Povolte pouze pro důvěryhodný místní nebo LAN repozitář.</string>
+    <string name="allow_insecure_http">Povolit nezabezpečené HTTP pro tento repozitář</string>
+    <string name="setting_theme_desc">Vyberte mezi světlým, tmavým a systémovým motivem</string>
+    <string name="setting_show_app_icons">Zobrazit ikony aplikací</string>
+    <string name="setting_show_app_icons_desc">Zobrazit ikony aplikací v seznamech a mřížkách</string>
+    <string name="setting_use_list_layout">Použít rozvržení seznamu</string>
+    <string name="setting_use_list_layout_desc">Zobrazovat aplikace v seznamu místo mřížky</string>
+    <string name="sort_name_za">Jméno (Z→A)</string>
+    <string name="setting_auto_update">Automatická aktualizace</string>
+    <string name="setting_auto_update_desc">Automaticky aktualizovat aplikace na pozadí</string>
+    <string name="setting_wifi_only_desc">Stahovat a synchronizovat pouze přes Wi-Fi</string>
+    <string name="setting_show_reproducible">Zobrazit odznaky reprodukovatelných sestavení</string>
+    <string name="setting_show_reproducible_desc">Zobrazit odznaky reprodukovatelných sestavení z IzzyOnDroid</string>
+    <string name="setting_fail_on_trust_errors">Selhat při chybách důvěry</string>
+    <string name="setting_fail_on_trust_errors_desc">Přísné ověření SSL/TLS</string>
+    <string name="setting_use_proxy">Použít proxy</string>
+    <string name="setting_use_proxy_desc">Směrovat připojení přes proxy</string>
+    <string name="setting_proxy_url">URL proxy</string>
+    <string name="setting_show_debug_info">Zobrazit ladicí informace</string>
+    <string name="setting_show_debug_info_desc">Zobrazit ladicí informace v rozhraní</string>
+    <string name="mirror_sticky_last_good">Upřednostnit poslední funkční</string>
+    <string name="mirror_round_robin">Postupně</string>
+    <string name="mirror_canonical_first">Nejdřív kanonické</string>
+    <string name="trust_https_only">Pouze HTTPS</string>
+    <string name="trust_pinned">Připnuté certifikáty</string>
+    <string name="trust_custom_ca">Vlastní CA</string>
+    <string name="trust_insecure_http">Povolit nezabezpečené HTTP</string>
+    <string-array name="setting_theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string-array name="setting_default_sort_options">
+        <item>@string/sort_name</item>
+        <item>@string/sort_name_za</item>
+        <item>@string/sort_updated</item>
+        <item>@string/sort_size</item>
+        <item>@string/sort_added</item>
+    </string-array>
+    <string-array name="setting_sync_interval_options">
+        <item>@string/sync_3_hours</item>
+        <item>@string/sync_6_hours</item>
+        <item>@string/sync_12_hours</item>
+        <item>@string/sync_24_hours</item>
+        <item>@string/sync_weekly</item>
+        <item>@string/sync_manual</item>
+    </string-array>
+    <string-array name="setting_installer_options">
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_fallback_installer_options">
+        <item>@string/installer_none</item>
+        <item>@string/installer_system</item>
+        <item>@string/installer_session</item>
+        <item>@string/installer_root</item>
+        <item>@string/installer_shizuku</item>
+        <item>@string/installer_app_manager</item>
+        <item>@string/installer_dhizuku</item>
+    </string-array>
+    <string-array name="setting_preferred_repo_options">
+        <item>@string/repo_auto</item>
+        <item>@string/repo_prefer_fdroid</item>
+        <item>@string/repo_prefer_izzy</item>
+    </string-array>
+    <string-array name="setting_mirror_strategy_options">
+        <item>@string/mirror_sticky_last_good</item>
+        <item>@string/mirror_round_robin</item>
+        <item>@string/mirror_canonical_first</item>
+    </string-array>
+    <string-array name="setting_trust_mode_options">
+        <item>@string/trust_https_only</item>
+        <item>@string/trust_pinned</item>
+        <item>@string/trust_custom_ca</item>
+        <item>@string/trust_insecure_http</item>
+    </string-array>
 </resources>

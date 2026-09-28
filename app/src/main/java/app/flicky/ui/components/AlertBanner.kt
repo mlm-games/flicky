@@ -57,7 +57,7 @@ fun AlertBanner(
     ) {
         val annotatedText = buildAnnotatedString {
             withStyle(SpanStyle(color = AlertBannerTextColor)) {
-                append(banner.message)
+                append(stringResource(banner.messageRes))
                 append(" ")
             }
             pushStringAnnotation(tag = "URL", annotation = banner.linkUrl)
@@ -68,7 +68,7 @@ fun AlertBanner(
                     fontWeight = FontWeight.Medium
                 )
             ) {
-                append(banner.linkText)
+                append(stringResource(banner.linkTextRes))
             }
             pop()
         }
