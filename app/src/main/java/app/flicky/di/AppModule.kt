@@ -20,6 +20,7 @@ import app.flicky.data.repository.InstalledAppsRepository
 import app.flicky.data.repository.RepoHeadersStore
 import app.flicky.data.repository.RepositorySyncManager
 import app.flicky.data.repository.SettingsActions
+import app.flicky.data.repository.flickyStringResourceProvider
 import app.flicky.R
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.install.Installer
@@ -31,7 +32,6 @@ import app.flicky.viewmodel.FavoritesViewModel
 import app.flicky.viewmodel.SettingsViewModel
 import app.flicky.viewmodel.UpdatesViewModel
 import io.github.mlmgames.settings.core.datastore.createSettingsDataStore
-import io.github.mlmgames.settings.core.resources.AndroidStringResourceProvider
 import io.github.mlmgames.settings.core.resources.StringResourceProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +46,7 @@ val appModule = module {
 
     single<DataStore<Preferences>> { createSettingsDataStore(androidContext(), name = "flicky.settings") }
 
-    single<StringResourceProvider> { AndroidStringResourceProvider(androidContext()) }
+    single<StringResourceProvider> { flickyStringResourceProvider(androidContext()) }
 
     single {
         val context = androidContext()

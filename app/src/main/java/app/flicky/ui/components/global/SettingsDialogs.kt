@@ -1,6 +1,8 @@
 package app.flicky.ui.components.global
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.res.stringResource
+import app.flicky.R
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -65,7 +67,7 @@ fun SliderSettingDialog(
                     contentColor = colorScheme.primary
                 )
             ) {
-                Text("Apply")
+                Text(stringResource(R.string.action_apply))
             }
         },
         dismissButton = {
@@ -75,7 +77,7 @@ fun SliderSettingDialog(
                     contentColor = colorScheme.onSurfaceVariant
                 )
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     ) {

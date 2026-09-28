@@ -1,6 +1,8 @@
 package app.flicky.ui.components
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import app.flicky.R
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -36,7 +38,7 @@ fun AppTexts(
 ) {
     Text(name, style = typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
     installedLabel?.let {
-        Text("Installed: $it", style = typography.bodySmall, color = colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.installed_label, it), style = typography.bodySmall, color = colorScheme.onSurfaceVariant)
     }
     newLabel?.let {
         Text(it, style = typography.bodySmall, color = colorScheme.primary)

@@ -320,4 +320,15 @@
         <item>@string/trust_custom_ca</item>
         <item>@string/trust_insecure_http</item>
     </string-array>
+    <string name="setting_support_development">Υποστήριξη ανάπτυξης</string>
+    <string name="setting_support_development_desc">Αν βρίσκετε την εφαρμογή χρήσιμη, σκεφτείτε να υποστηρίξετε την περαιτέρω ανάπτυξή της</string>
+    <string name="setting_hide_anti_features_desc">Απόκρυψη εφαρμογών με αντιχαρακτηριστικά</string>
+    <string name="setting_show_incompatible_desc">Εμφάνιση εφαρμογών που δεν είναι συμβατές με τη συσκευή σας</string>
+    <string name="reverse_order">Αντίστροφη σειρά</string>
+    <string name="app_not_found">Η εφαρμογή δεν βρέθηκε</string>
+    <string name="installed_badge">Εγκατεστημένο</string>
+    <string name="installed_label">Εγκατεστημένο: %1$s</string>
+    <string name="more_options_desc">Περισσότερες επιλογές</string>
+    <string name="share_subject_package">Πακέτο: %1$s</string>
+    <string name="share_subject_source">Βρέθηκε σε: %1$s</string>
 </resources>

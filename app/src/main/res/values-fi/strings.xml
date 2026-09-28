@@ -320,4 +320,15 @@
         <item>@string/trust_custom_ca</item>
         <item>@string/trust_insecure_http</item>
     </string-array>
+    <string name="setting_support_development">Tuke kehitystä</string>
+    <string name="setting_support_development_desc">Jos tämä sovellus on sinulle hyödyllinen, harkitse sen jatkokehityksen tukemista</string>
+    <string name="setting_hide_anti_features_desc">Piilota sovellukset, joissa on vastustuskykyisiä ominaisuuksia</string>
+    <string name="setting_show_incompatible_desc">Näytä sovellukset, jotka eivät sovi laitteeseesi</string>
+    <string name="reverse_order">Käännä järjestys</string>
+    <string name="app_not_found">Sovellusta ei löytynyt</string>
+    <string name="installed_badge">Asennettu</string>
+    <string name="installed_label">Asennettu: %1$s</string>
+    <string name="more_options_desc">Lisää vaihtoehtoja</string>
+    <string name="share_subject_package">Paketti: %1$s</string>
+    <string name="share_subject_source">Löytyi lähteestä: %1$s</string>
 </resources>

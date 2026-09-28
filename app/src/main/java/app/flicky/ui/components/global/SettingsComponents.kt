@@ -1,6 +1,8 @@
 package app.flicky.ui.components.global
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.res.stringResource
+import app.flicky.R
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -333,7 +335,7 @@ fun <T> SelectionDialog(
                     contentColor = colorScheme.primary
                 )
             ) {
-                Text("Select")
+                Text(stringResource(R.string.action_select))
             }
         },
         dismissButton = {
@@ -343,7 +345,7 @@ fun <T> SelectionDialog(
                     contentColor = colorScheme.onSurfaceVariant
                 )
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     ) {

@@ -320,4 +320,15 @@
         <item>@string/trust_custom_ca</item>
         <item>@string/trust_insecure_http</item>
     </string-array>
+    <string name="setting_support_development">Ontwikkeling ondersteunen</string>
+    <string name="setting_support_development_desc">Als deze app nuttig voor je is, overweeg dan steun van de verdere ontwikkeling</string>
+    <string name="setting_hide_anti_features_desc">Apps met antieigenschappen verbergen</string>
+    <string name="setting_show_incompatible_desc">Apps tonen die niet compatibel zijn met je apparaat</string>
+    <string name="reverse_order">Volgorde omkeren</string>
+    <string name="app_not_found">App niet gevonden</string>
+    <string name="installed_badge">Geïnstalleerd</string>
+    <string name="installed_label">Geïnstalleerd: %1$s</string>
+    <string name="more_options_desc">Meer opties</string>
+    <string name="share_subject_package">Pakket: %1$s</string>
+    <string name="share_subject_source">Gevonden in: %1$s</string>
 </resources>

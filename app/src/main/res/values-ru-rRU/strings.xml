@@ -320,4 +320,15 @@
         <item>@string/trust_custom_ca</item>
         <item>@string/trust_insecure_http</item>
     </string-array>
+    <string name="setting_support_development">Поддержать разработку</string>
+    <string name="setting_support_development_desc">Если это приложение полезно для вас, поддержите его дальнейшую разработку</string>
+    <string name="setting_hide_anti_features_desc">Скрывать приложения с антифункциями</string>
+    <string name="setting_show_incompatible_desc">Показывать приложения, несовместимые с устройством</string>
+    <string name="reverse_order">Обратный порядок</string>
+    <string name="app_not_found">Приложение не найдено</string>
+    <string name="installed_badge">Установлено</string>
+    <string name="installed_label">Установлено: %1$s</string>
+    <string name="more_options_desc">Другие параметры</string>
+    <string name="share_subject_package">Пакет: %1$s</string>
+    <string name="share_subject_source">Найдено в: %1$s</string>
 </resources>

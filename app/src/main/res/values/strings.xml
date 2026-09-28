@@ -131,7 +131,15 @@
     <string
         name="setting_clear_cache_desc"
     >Delete repo headers and reset last sync</string>
-    <string name="theme_system">System</string>
+    <string name="setting_support_development">Support Development</string>
+    <string name="setting_support_development_desc">If you find this app useful, consider supporting its continued development</string>
+    <string name="setting_hide_anti_features_desc">Hide apps with anti-features</string>
+    <string name="setting_show_incompatible_desc">Show apps that are incompatible with your device</string>
+    <string name="reverse_order">Reverse order</string>
+    <string name="app_not_found">App not found</string>
+    <string name="installed_badge">✓ Installed</string>
+    <string name="installed_label">Installed: %1$s</string>
+    <string name="more_options_desc">More options</string>    <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="sync_3_hours">3 hours</string>
@@ -173,11 +181,9 @@
     >%1$s → %2$s</string>
     <string
         name="share_subject_package"
-        translatable="false"
     >Package: %1$s</string>
     <string
         name="share_subject_source"
-        translatable="false"
     >Found in: %1$s</string>
     <string name="repositories_reset">Reset Repositories</string>
     <string name="name">Name</string>

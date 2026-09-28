@@ -127,7 +127,7 @@ fun CategoriesScreen(
                     if (filtered.isEmpty()) {
                         item {
                             Text(
-                                "No apps in this category",
+                                stringResource(R.string.no_apps_in_category),
                                 style = typography.bodyMedium,
                                 color = colorScheme.onSurfaceVariant
                             )
@@ -195,7 +195,7 @@ fun CategoriesScreen(
                     if (filtered.isEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             Text(
-                                "No apps in this category",
+                                stringResource(R.string.no_apps_in_category),
                                 style = typography.bodyMedium,
                                 color = colorScheme.onSurfaceVariant
                             )

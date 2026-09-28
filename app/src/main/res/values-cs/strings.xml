@@ -320,4 +320,15 @@
         <item>@string/trust_custom_ca</item>
         <item>@string/trust_insecure_http</item>
     </string-array>
+    <string name="setting_support_development">Podpoří vývoj</string>
+    <string name="setting_support_development_desc">Pokud vám tato aplikace pomáhá, zvažte podporu jejího dalšího vývoje</string>
+    <string name="setting_hide_anti_features_desc">Skrýt aplikace s funkcemi proti</string>
+    <string name="setting_show_incompatible_desc">Zobrazit aplikace nekompatibilní s vaším zařízením</string>
+    <string name="reverse_order">Obrátit pořadí</string>
+    <string name="app_not_found">Aplikace nenalezena</string>
+    <string name="installed_badge">Nainstalováno</string>
+    <string name="installed_label">Nainstalováno: %1$s</string>
+    <string name="more_options_desc">Další možnosti</string>
+    <string name="share_subject_package">Balíček: %1$s</string>
+    <string name="share_subject_source">Nalezeno v: %1$s</string>
 </resources>

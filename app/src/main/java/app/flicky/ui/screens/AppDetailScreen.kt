@@ -1149,7 +1149,7 @@ private fun VersionsSection(
                         )
                         if (installed) {
                             Text(
-                                "✓ Installed",
+                                stringResource(R.string.installed_badge),
                                 style = typography.labelSmall,
                                 color = colorScheme.primary
                             )
@@ -1170,7 +1170,7 @@ private fun VersionsSection(
                             ) {
                                 Icon(
                                     Icons.Default.MoreVert,
-                                    contentDescription = "More options",
+                                    contentDescription = stringResource(R.string.more_options_desc),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -1180,7 +1180,7 @@ private fun VersionsSection(
                                 onDismissRequest = { showMenu = false }
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Copy URL") },
+                                    text = { Text(stringResource(R.string.copy_url)) },
                                     leadingIcon = {
                                         Icon(
                                             Icons.Default.ContentCopy,
@@ -1195,7 +1195,7 @@ private fun VersionsSection(
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Share") },
+                                    text = { Text(stringResource(R.string.action_share)) },
                                     leadingIcon = {
                                         Icon(
                                             Icons.Default.Share,

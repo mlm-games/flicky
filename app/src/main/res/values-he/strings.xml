@@ -320,4 +320,15 @@
         <item>@string/trust_custom_ca</item>
         <item>@string/trust_insecure_http</item>
     </string-array>
+    <string name="setting_support_development">תמיכה בפיתוח</string>
+    <string name="setting_support_development_desc">אם האפליקציה הזו מועילה לך, שקול לתמוך בהמשך הפיתוח שלה</string>
+    <string name="setting_hide_anti_features_desc">הסתרת אפליקציות עם תכונות נגד</string>
+    <string name="setting_show_incompatible_desc">הצגת אפליקציות שאינן תואמות למכשיר שלך</string>
+    <string name="reverse_order">היפוך סדר</string>
+    <string name="app_not_found">האפליקציה לא נמצאה</string>
+    <string name="installed_badge">מותקן</string>
+    <string name="installed_label">מותקן: %1$s</string>
+    <string name="more_options_desc">אפשרויות נוספות</string>
+    <string name="share_subject_package">חבילה: %1$s</string>
+    <string name="share_subject_source">נמצא ב: %1$s</string>
 </resources>

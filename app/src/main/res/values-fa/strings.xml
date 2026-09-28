@@ -320,4 +320,15 @@
         <item>@string/trust_custom_ca</item>
         <item>@string/trust_insecure_http</item>
     </string-array>
+    <string name="setting_support_development">پشتیبانی از توسعه</string>
+    <string name="setting_support_development_desc">اگر این برنامه برایتان مفید است، از توسعه مستمر آن پشتیبانی کنید</string>
+    <string name="setting_hide_anti_features_desc">پنهان کردن برنامه‌های دارای ویژگی‌های ضد</string>
+    <string name="setting_show_incompatible_desc">نمایش برنامه‌های ناسازگار با دستگاه شما</string>
+    <string name="reverse_order">معکوس کردن ترتیب</string>
+    <string name="app_not_found">برنامه یافت نشد</string>
+    <string name="installed_badge">نصب‌شده</string>
+    <string name="installed_label">نصب‌شده: %1$s</string>
+    <string name="more_options_desc">گزینه‌های بیشتر</string>
+    <string name="share_subject_package">بسته: %1$s</string>
+    <string name="share_subject_source">یافت شده در: %1$s</string>
 </resources>

@@ -320,4 +320,15 @@
         <item>@string/trust_custom_ca</item>
         <item>@string/trust_insecure_http</item>
     </string-array>
+    <string name="setting_support_development">개발 후원</string>
+    <string name="setting_support_development_desc">이 앱이 유용하다면 지속적인 개발을 후원해 보세요</string>
+    <string name="setting_hide_anti_features_desc">안티 기능이 있는 앱 숨기기</string>
+    <string name="setting_show_incompatible_desc">기기와 호환되지 않는 앱 표시</string>
+    <string name="reverse_order">순서 반전</string>
+    <string name="app_not_found">앱을 찾을 수 없음</string>
+    <string name="installed_badge">설치됨</string>
+    <string name="installed_label">설치됨: %1$s</string>
+    <string name="more_options_desc">기타 옵션</string>
+    <string name="share_subject_package">패키지: %1$s</string>
+    <string name="share_subject_source">발견 위치: %1$s</string>
 </resources>

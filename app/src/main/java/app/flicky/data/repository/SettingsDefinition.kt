@@ -1,6 +1,5 @@
 package app.flicky.data.repository
 
-import app.flicky.R
 import io.github.mlmgames.settings.core.annotations.ActionHandler
 import io.github.mlmgames.settings.core.annotations.CategoryDefinition
 import io.github.mlmgames.settings.core.annotations.NoReset
@@ -66,51 +65,51 @@ data class AppUpdatePreferencesMap(
 @SchemaVersion(5)
 data class AppSettings(
     @Setting(
-        titleRes = R.string.setting_theme,
+        titleKey = FlickySettingsKeys.SETTING_THEME,
         description = "Choose between light, dark, or system theme",
-        descriptionRes = R.string.setting_theme_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_THEME_DESCRIPTION,
         category = Appearance::class,
         type = Dropdown::class,
         options = ["System", "Light", "Dark"],
-        optionsRes = R.array.setting_theme_options,
+        optionsKey = FlickySettingsKeys.SETTING_THEME_OPTIONS,
     )
     val themeMode: Int = 2,
 
     @Setting(
-        titleRes = R.string.setting_dynamic_colors,
+        titleKey = FlickySettingsKeys.SETTING_DYNAMIC_COLORS,
         description = "Use Material You dynamic colors (Android 12+)",
-        descriptionRes = R.string.setting_dynamic_colors_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_DYNAMIC_COLORS_DESCRIPTION,
         category = Appearance::class,
         type = Toggle::class
     )
     val dynamicTheme: Boolean = false,
 
     @Setting(
-        titleRes = R.string.setting_show_app_icons,
+        titleKey = FlickySettingsKeys.SETTING_SHOW_APP_ICONS,
         description = "Display app icons in lists and grids",
-        descriptionRes = R.string.setting_show_app_icons_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_SHOW_APP_ICONS_DESCRIPTION,
         category = Appearance::class,
         type = Toggle::class
     )
     val showAppIcons: Boolean = true,
 
     @Setting(
-        titleRes = R.string.setting_use_list_layout,
+        titleKey = FlickySettingsKeys.SETTING_USE_LIST_LAYOUT,
         description = "Show apps in a list instead of grid",
-        descriptionRes = R.string.setting_use_list_layout_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_USE_LIST_LAYOUT_DESCRIPTION,
         category = Appearance::class,
         type = Toggle::class
     )
     val useListLayout: Boolean = false,
 
     @Setting(
-        titleRes = R.string.setting_default_sort,
+        titleKey = FlickySettingsKeys.SETTING_DEFAULT_SORT,
         description = "How to sort apps by default",
-        descriptionRes = R.string.setting_default_sort_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_DEFAULT_SORT_DESCRIPTION,
         category = General::class,
         type = Dropdown::class,
         options = ["Name", "Name (Z-A)", "Updated", "Size", "Added"],
-        optionsRes = R.array.setting_default_sort_options,
+        optionsKey = FlickySettingsKeys.SETTING_DEFAULT_SORT_OPTIONS,
     )
     val defaultSort: Int = 1,
 
@@ -118,115 +117,117 @@ data class AppSettings(
     val reverseSort: Boolean = false,
 
     @Setting(
-        titleRes = R.string.setting_auto_update,
+        titleKey = FlickySettingsKeys.SETTING_AUTO_UPDATE,
         description = "Automatically update apps in the background",
-        descriptionRes = R.string.setting_auto_update_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_AUTO_UPDATE_DESCRIPTION,
         category = Downloads::class,
         type = Toggle::class
     )
     val autoUpdate: Boolean = false,
 
     @Setting(
-        titleRes = R.string.setting_wifi_only,
+        titleKey = FlickySettingsKeys.SETTING_WIFI_ONLY,
         description = "Only download and sync over Wi-Fi",
-        descriptionRes = R.string.setting_wifi_only_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_WIFI_ONLY_DESCRIPTION,
         category = Downloads::class,
         type = Toggle::class
     )
     val wifiOnly: Boolean = true,
 
     @Setting(
-        titleRes = R.string.setting_sync_interval,
+        titleKey = FlickySettingsKeys.SETTING_SYNC_INTERVAL,
         description = "How often to check for updates",
-        descriptionRes = R.string.setting_sync_interval_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_SYNC_INTERVAL_DESCRIPTION,
         category = Downloads::class,
         type = Dropdown::class,
         options = ["3 hours", "6 hours", "12 hours", "Daily", "Weekly", "Never"],
-        optionsRes = R.array.setting_sync_interval_options,
+        optionsKey = FlickySettingsKeys.SETTING_SYNC_INTERVAL_OPTIONS,
         key = "sync_interval_idx"
     )
     val syncIntervalIndex: Int = 1,
 
     @Setting(
-        titleRes = R.string.setting_keep_cache,
+        titleKey = FlickySettingsKeys.SETTING_KEEP_CACHE,
         description = "Keep downloaded APKs after installation",
-        descriptionRes = R.string.setting_keep_cache_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_KEEP_CACHE_DESCRIPTION,
         category = Downloads::class,
         type = Toggle::class
     )
     val keepCache: Boolean = false,
 
     @Setting(
-        titleRes = R.string.setting_installer,
+        titleKey = FlickySettingsKeys.SETTING_INSTALLER,
         description = "Method to use for installing apps",
-        descriptionRes = R.string.setting_installer_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_INSTALLER_DESCRIPTION,
         category = Downloads::class,
         type = Dropdown::class,
         options = ["System", "Session", "Root", "Shizuku", "App Manager", "Dhizuku"],
-        optionsRes = R.array.setting_installer_options,
+        optionsKey = FlickySettingsKeys.SETTING_INSTALLER_OPTIONS,
     )
     val installerMode: Int = 1,
 
     @Setting(
-        titleRes = R.string.setting_fallback_installer,
+        titleKey = FlickySettingsKeys.SETTING_FALLBACK_INSTALLER,
         description = "Used if the primary installer fails, set to None to disable",
-        descriptionRes = R.string.setting_fallback_installer_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_FALLBACK_INSTALLER_DESCRIPTION,
         category = Downloads::class,
         type = Dropdown::class,
         options = ["None", "System", "Session", "Root", "Shizuku", "App Manager", "Dhizuku"],
-        optionsRes = R.array.setting_fallback_installer_options,
+        optionsKey = FlickySettingsKeys.SETTING_FALLBACK_INSTALLER_OPTIONS,
     )
     val fallbackInstallerMode: Int = 2,
 
     @Setting(
-        titleRes = R.string.setting_preferred_repo,
+        titleKey = FlickySettingsKeys.SETTING_PREFERRED_REPO,
         description = "Prefer updates from specific repository",
-        descriptionRes = R.string.setting_preferred_repo_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_PREFERRED_REPO_DESCRIPTION,
         category = Downloads::class,
         type = Dropdown::class,
         options = ["Auto", "F-Droid", "IzzyOnDroid"],
-        optionsRes = R.array.setting_preferred_repo_options,
+        optionsKey = FlickySettingsKeys.SETTING_PREFERRED_REPO_OPTIONS,
     )
     val preferredRepo: Int = 0,
 
     @Setting(
-        titleRes = R.string.setting_hide_anti,
+        titleKey = FlickySettingsKeys.SETTING_HIDE_ANTI,
         description = "Hide apps with anti-features",
+        descriptionKey = FlickySettingsKeys.SETTING_HIDE_ANTI_FEATURES_DESCRIPTION,
         category = Filters::class,
         type = Toggle::class
     )
     val hideAntiFeatures: Boolean = false,
 
     @Setting(
-        titleRes = R.string.setting_show_incompatible,
+        titleKey = FlickySettingsKeys.SETTING_SHOW_INCOMPATIBLE,
         description = "Show apps that are incompatible with your device",
+        descriptionKey = FlickySettingsKeys.SETTING_SHOW_INCOMPATIBLE_DESCRIPTION,
         category = Filters::class,
         type = Toggle::class
     )
     val showIncompatible: Boolean = false,
 
     @Setting(
-        titleRes = R.string.setting_show_reproducible,
+        titleKey = FlickySettingsKeys.SETTING_SHOW_REPRODUCIBLE,
         description = "Display reproducible build badges from IzzyOnDroid",
-        descriptionRes = R.string.setting_show_reproducible_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_SHOW_REPRODUCIBLE_DESCRIPTION,
         category = Filters::class,
         type = Toggle::class
     )
     val showReproducibleBadges: Boolean = false,
 
     @Setting(
-        titleRes = R.string.setting_ignore_unstable,
+        titleKey = FlickySettingsKeys.SETTING_IGNORE_UNSTABLE,
         description = "Hide alpha and beta releases from updates",
-        descriptionRes = R.string.setting_ignore_unstable_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_IGNORE_UNSTABLE_DESCRIPTION,
         category = Filters::class,
         type = Toggle::class
     )
     val ignoreUnstable: Boolean = false,
 
     @Setting(
-        titleRes = R.string.setting_differential_sync,
+        titleKey = FlickySettingsKeys.SETTING_DIFFERENTIAL_SYNC,
         description = "Only fetch changes since last sync",
-        descriptionRes = R.string.setting_differential_sync_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_DIFFERENTIAL_SYNC_DESCRIPTION,
         category = Sync::class,
         type = Toggle::class
     )
@@ -236,25 +237,25 @@ data class AppSettings(
     val useEntryJson: Boolean = false,
 
     @Setting(
-        titleRes = R.string.setting_fail_on_trust_errors,
+        titleKey = FlickySettingsKeys.SETTING_FAIL_ON_TRUST_ERRORS,
         description = "Strict SSL/TLS verification",
-        descriptionRes = R.string.setting_fail_on_trust_errors_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_FAIL_ON_TRUST_ERRORS_DESCRIPTION,
         category = Sync::class,
         type = Toggle::class
     )
     val failOnTrustErrors: Boolean = false,
 
     @Setting(
-        titleRes = R.string.setting_use_proxy,
+        titleKey = FlickySettingsKeys.SETTING_USE_PROXY,
         description = "Route connections through a proxy",
-        descriptionRes = R.string.setting_use_proxy_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_USE_PROXY_DESCRIPTION,
         category = Proxy::class,
         type = Toggle::class
     )
     val useProxy: Boolean = false,
 
     @Setting(
-        titleRes = R.string.setting_proxy_url,
+        titleKey = FlickySettingsKeys.SETTING_PROXY_URL,
         description = "",
         category = Proxy::class,
         type = TextInput::class,
@@ -272,9 +273,9 @@ data class AppSettings(
     val proxyPort: Int = 9050,
 
     @Setting(
-        titleRes = R.string.setting_show_debug_info,
+        titleKey = FlickySettingsKeys.SETTING_CLEAR_CACHE,
         description = "Clear all cached data and images",
-        descriptionRes = R.string.setting_show_debug_info_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_CLEAR_CACHE_DESCRIPTION,
         category = Other::class,
         type = Button::class
     )
@@ -283,9 +284,9 @@ data class AppSettings(
     val clearCache: Unit = Unit,
 
     @Setting(
-        titleRes = R.string.setting_show_debug_info,
+        titleKey = FlickySettingsKeys.SETTING_SHOW_DEBUG_INFO,
         description = "Display debug information in the UI",
-        descriptionRes = R.string.setting_show_debug_info_desc,
+        descriptionKey = FlickySettingsKeys.SETTING_SHOW_DEBUG_INFO_DESCRIPTION,
         category = Other::class,
         type = Toggle::class
     )
@@ -293,7 +294,9 @@ data class AppSettings(
 
     @Setting(
         title = "Support Development",
+        titleKey = FlickySettingsKeys.SETTING_SUPPORT_DEVELOPMENT,
         description = "If you find this app useful, consider supporting its continued development",
+        descriptionKey = FlickySettingsKeys.SETTING_SUPPORT_DEVELOPMENT_DESCRIPTION,
         category = Other::class,
         type = Button::class
     )
@@ -322,28 +325,28 @@ data class AppSettings(
 )
 
 
-@CategoryDefinition(order = 0, titleRes = R.string.category_appearance)
+@CategoryDefinition(order = 0, titleKey = FlickySettingsKeys.CATEGORY_APPEARANCE)
 object Appearance
 
-@CategoryDefinition(order = 1, titleRes = R.string.category_general)
+@CategoryDefinition(order = 1, titleKey = FlickySettingsKeys.CATEGORY_GENERAL)
 object General
 
-@CategoryDefinition(order = 2, titleRes = R.string.category_downloads)
+@CategoryDefinition(order = 2, titleKey = FlickySettingsKeys.CATEGORY_DOWNLOADS)
 object Downloads
 
-@CategoryDefinition(order = 3, titleRes = R.string.category_filters)
+@CategoryDefinition(order = 3, titleKey = FlickySettingsKeys.CATEGORY_FILTERS)
 object Filters
 
-@CategoryDefinition(order = 4, titleRes = R.string.category_sync)
+@CategoryDefinition(order = 4, titleKey = FlickySettingsKeys.CATEGORY_SYNC)
 object Sync
 
-@CategoryDefinition(order = 5, titleRes = R.string.category_proxy)
+@CategoryDefinition(order = 5, titleKey = FlickySettingsKeys.CATEGORY_PROXY)
 object Proxy
 
-@CategoryDefinition(order = 6, titleRes = R.string.category_other)
+@CategoryDefinition(order = 6, titleKey = FlickySettingsKeys.CATEGORY_OTHER)
 object Other
 
-//@CategoryDefinition(order = 7, titleRes = R.string.category_about)
+//@CategoryDefinition(order = 7, titleKey = FlickySettingsKeys.CATEGORY_ABOUT)
 //object About
 
 object ClearCacheAction : SettingAction

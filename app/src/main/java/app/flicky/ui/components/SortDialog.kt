@@ -1,6 +1,8 @@
 package app.flicky.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.res.stringResource
+import app.flicky.R
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,7 +35,7 @@ fun SortDialog(
 ) {
     FlickyDialog(
         onDismissRequest = onDismiss,
-        title = "Sort by",
+        title = stringResource(R.string.sort_by),
         confirmButton = {
             TextButton(
                 onClick = onDismiss,
@@ -41,7 +43,7 @@ fun SortDialog(
                     contentColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text("Close")
+                Text(stringResource(R.string.action_close))
             }
         }
     ) {
@@ -94,7 +96,7 @@ fun SortDialog(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "Reverse order",
+                    stringResource(R.string.reverse_order),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )

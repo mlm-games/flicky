@@ -320,4 +320,15 @@
         <item>@string/trust_custom_ca</item>
         <item>@string/trust_insecure_http</item>
     </string-array>
+    <string name="setting_support_development">支持開發</string>
+    <string name="setting_support_development_desc">如果您覺得這個應用程式很有用，歡迎支持它後續的開發</string>
+    <string name="setting_hide_anti_features_desc">隱藏具有反功能的應用程式</string>
+    <string name="setting_show_incompatible_desc">顯示與您裝置不相容的應用程式</string>
+    <string name="reverse_order">反向排序</string>
+    <string name="app_not_found">找不到應用程式</string>
+    <string name="installed_badge">已安裝</string>
+    <string name="installed_label">已安裝：%1$s</string>
+    <string name="more_options_desc">更多選項</string>
+    <string name="share_subject_package">套件：%1$s</string>
+    <string name="share_subject_source">發現於：%1$s</string>
 </resources>

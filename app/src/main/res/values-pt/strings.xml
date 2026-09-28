@@ -320,4 +320,15 @@
         <item>@string/trust_custom_ca</item>
         <item>@string/trust_insecure_http</item>
     </string-array>
+    <string name="setting_support_development">Apoiar o desenvolvimento</string>
+    <string name="setting_support_development_desc">Se este aplicativo for útil para você, considere apoiar o desenvolvimento contínuo</string>
+    <string name="setting_hide_anti_features_desc">Ocultar aplicativos com recursos antiactividade</string>
+    <string name="setting_show_incompatible_desc">Mostrar aplicativos incompatíveis com seu dispositivo</string>
+    <string name="reverse_order">Inverter ordem</string>
+    <string name="app_not_found">Aplicativo não encontrado</string>
+    <string name="installed_badge">Instalado</string>
+    <string name="installed_label">Instalado: %1$s</string>
+    <string name="more_options_desc">Mais opções</string>
+    <string name="share_subject_package">Pacote: %1$s</string>
+    <string name="share_subject_source">Encontrado em: %1$s</string>
 </resources>

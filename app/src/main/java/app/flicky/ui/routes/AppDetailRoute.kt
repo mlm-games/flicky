@@ -9,8 +9,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.flicky.R
 import app.flicky.viewmodel.AppDetailViewModel
 import app.flicky.ui.screens.AppDetailScreen
 import org.koin.androidx.compose.koinViewModel
@@ -34,7 +36,7 @@ fun AppDetailRoute(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "App not found",
+                        text = stringResource(R.string.app_not_found),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
