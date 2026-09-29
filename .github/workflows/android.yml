@@ -2,8 +2,8 @@ name: Android App Releases
 on:
   workflow_dispatch:
     inputs:
-      upload_releases:
-        description: 'Upload releases'
+      publish_github_release:
+        description: 'Publish GitHub release'
         required: true
         default: true
         type: boolean
@@ -37,6 +37,7 @@ jobs:
   release:
     uses: mlm-games/ci/.github/workflows/android-release.yml@v1
     with:
+      publish-release: ${{ inputs.publish_github_release }}
       app-name: Flicky
       app-slug: flicky
       application-id: app.flicky
