@@ -1,18 +1,18 @@
 version: 2
 updates:
-  - package-ecosystem: "gradle"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    target-branch: "kotlin"
-    # 1.13+ needs minSdk 24
-    ignore:
-      - dependency-name: "androidx.compose:compose-bom-alpha"
-    groups:
-      gradle-dependencies:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
+  # - package-ecosystem: "gradle"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "daily"
+  #   open-pull-requests-limit: 10
+  #   target-branch: "kotlin"
+  #   # 1.13+ needs minSdk 24
+  #   ignore:
+  #     - dependency-name: "androidx.compose:compose-bom-alpha"
+  #   groups:
+  #     gradle-dependencies:
+  #       patterns: ["*"]
+  #       update-types: ["minor", "patch"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
