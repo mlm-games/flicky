@@ -31,14 +31,6 @@ android {
         versionCode = 980
         versionName = "4.5.3"
 
-        androidResources {
-            generateLocaleConfig = true
-            localeFilters += setOf(
-                "ar", "cs", "de", "el", "en", "es", "es-rES", "es-rUS", "fa", "fi", "fr", "he", "hr", "hu",
-                "id", "it", "ja", "ko", "nl", "pl", "pt", "pt-rBR", "ru", "ru-rRU", "sv", "tr", "uk", "vi",
-                "zh", "zh-rTW",
-            )
-        }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }

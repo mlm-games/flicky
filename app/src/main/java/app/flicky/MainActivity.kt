@@ -4,8 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -16,9 +16,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.core.util.Consumer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation3.runtime.rememberNavBackStack
 import app.flicky.data.remote.HttpClientProvider
 import app.flicky.data.repository.AppSettings
+import app.flicky.data.repository.SettingsRepository
+import app.flicky.data.repository.applyAppLocale
 import app.flicky.navigation.NavScreen
 import app.flicky.navigation.Nav3Host
 import app.flicky.network.CoilCallFactory
@@ -32,13 +35,16 @@ import app.flicky.viewmodel.SettingsViewModel
 import app.flicky.work.SyncScheduler
 import coil.Coil
 import coil.ImageLoader
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.compose.koinInject
 import org.koin.androidx.compose.koinViewModel
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val httpClients: HttpClientProvider by inject()
+
+    private val settingsRepository: SettingsRepository by inject()
 
     private fun configureCoil(failOnTrustErrors: Boolean = false) {
         runCatching {
@@ -73,6 +79,12 @@ class MainActivity : ComponentActivity() {
         val initialPackage = intent.deepLinkPackageName()
 
         configureCoil()
+
+        lifecycleScope.launch {
+            settingsRepository.settingsFlow.collect { settings ->
+                applyAppLocale(settings.language.languageTag)
+            }
+        }
 
         setContent {
             val browseViewModel: BrowseViewModel = koinViewModel()
