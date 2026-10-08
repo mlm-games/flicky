@@ -995,6 +995,13 @@ class Installer(
                     return false
                 }
                 emitStage(packageName, TaskStage.NeedsConfirmation(confirm))
+                val sent = runCatching { confirm.send() }
+                if (sent.isFailure) {
+                    DebugLog.log("Installer", "Confirmation launch failed for $packageName: ${sent.exceptionOrNull()?.message}")
+                    setError(packageName, "Couldn't open the system confirmation dialog.")
+                    emitStage(packageName, TaskStage.Finished(false))
+                    return false
+                }
                 val finalEvt = try {
                     withTimeout(300_000L) {
                         SessionInstallBus.events.first {

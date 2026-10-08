@@ -547,6 +547,7 @@ private fun AppHeader(
             is TaskStage.Downloading -> stage.progress.coerceIn(0f, 0.999f)
             is TaskStage.Verifying -> 0.995f
             is TaskStage.Installing -> (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f)
+            is TaskStage.NeedsConfirmation -> 1f
             else -> -1f
         }
         val showBar =
@@ -578,6 +579,7 @@ private fun AppHeader(
                 is TaskStage.Downloading -> "Downloading"
                 is TaskStage.Verifying -> "Verifying"
                 is TaskStage.Installing -> "Installing"
+                is TaskStage.NeedsConfirmation -> "Waiting for confirmation"
                 is TaskStage.Finished -> if (stage.success) "Completed" else "Failed"
                 is TaskStage.Cancelled -> "Cancelled"
                 else -> "Working"

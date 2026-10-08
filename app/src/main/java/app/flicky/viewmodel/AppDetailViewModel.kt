@@ -101,6 +101,9 @@ class AppDetailViewModel(
                                 error = null
                             )
                         }
+                        is TaskStage.NeedsConfirmation -> _ui.update {
+                            it.copy(isInstalling = true, stage = stage, progress = 1f, error = null)
+                        }
                         is TaskStage.Cancelled -> _ui.update {
                             it.copy(isInstalling = false, stage = stage, error = null)
                         }

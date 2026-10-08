@@ -425,7 +425,7 @@ private fun UpdateCard(
                     is TaskStage.Downloading -> "Downloading ${(animatedProgress * 100).toInt()}%"
                     is TaskStage.Verifying -> "Verifying"
                     is TaskStage.Installing -> "Installing ${(animatedProgress * 100).toInt()}%"
-                    is TaskStage.NeedsConfirmation -> "Tap Confirm to install"
+                    is TaskStage.NeedsConfirmation -> "Waiting for confirmation"
                     is TaskStage.Finished -> if (stage.success) "Completed" else "Failed"
                     is TaskStage.Cancelled -> "Cancelled"
                     else -> ""

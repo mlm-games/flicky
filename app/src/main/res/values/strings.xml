@@ -55,6 +55,7 @@
     <string name="installing">Installing…</string>
     <string name="installing_progress">Installing… %1$d%%</string>
     <string name="installation_failed">Installation failed</string>
+    <string name="waiting_confirmation">Waiting for your confirmation</string>
     <string name="install_failed_message">Install failed: %1$s</string>
     <string name="version_prefix">v%1$s</string>
     <string name="version_code">Version code</string>

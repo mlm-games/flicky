@@ -110,14 +110,6 @@ fun UpdatesRoute(
                                                     val stage = tasks[app.packageName]
                                                     when {
                                                         stage == null -> false
-                                                        stage is TaskStage.NeedsConfirmation -> {
-                                                            runCatching {
-                                                                stage.intent.send()
-                                                            }.onFailure {
-                                                                installer.cancel(app.packageName)
-                                                            }
-                                                            false
-                                                        }
                                                         stage is TaskStage.Finished ||
                                                                 stage is TaskStage.Cancelled -> true
                                                         else -> false
