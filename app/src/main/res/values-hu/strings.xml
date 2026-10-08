@@ -171,6 +171,7 @@
     <string name="no_variants_found">Nem található változat</string>
     <string name="downloading">Letöltés</string>
     <string name="verifying">Ellenőrzés</string>
+    <string name="waiting_queue">Várakozás a sorban</string>
     <string name="preferred_source">Elsődleges forrás</string>
     <string name="auto">Automatikus</string>
     <string name="locked_to_repo">Rögzítve a tárolón</string>

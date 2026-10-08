@@ -171,6 +171,7 @@
     <string name="no_variants_found">No se encontraron variantes</string>
     <string name="downloading">Descargando</string>
     <string name="verifying">Verificando</string>
+    <string name="waiting_queue">Esperando en cola</string>
     <string name="preferred_source">Fuente preferida</string>
     <string name="auto">Automático</string>
     <string name="locked_to_repo">Fijado al repositorio</string>

@@ -171,6 +171,7 @@
     <string name="no_variants_found">Inga varianter hittades</string>
     <string name="downloading">Laddar ner</string>
     <string name="verifying">Verifierar</string>
+    <string name="waiting_queue">Väntar i kön</string>
     <string name="preferred_source">Föredragen källa</string>
     <string name="auto">Automatiskt</string>
     <string name="locked_to_repo">Låst till förvaringsplatsen</string>

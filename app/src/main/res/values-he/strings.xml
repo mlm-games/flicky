@@ -171,6 +171,7 @@
     <string name="no_variants_found">לא נמצאו וריאנטים</string>
     <string name="downloading">מוריד</string>
     <string name="verifying">מאמת</string>
+    <string name="waiting_queue">ממתין בתור</string>
     <string name="preferred_source">מקור מועדף</string>
     <string name="auto">אוטומטי</string>
     <string name="locked_to_repo">נעול למאגר</string>

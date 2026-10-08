@@ -171,6 +171,7 @@
     <string name="no_variants_found">Geen varianten gevonden</string>
     <string name="downloading">Bezig met downloaden</string>
     <string name="verifying">Bezig met verifiëren</string>
+    <string name="waiting_queue">Wachten in de wachtrij</string>
     <string name="preferred_source">Voorkeursbron</string>
     <string name="auto">Automatisch</string>
     <string name="locked_to_repo">Vastgezet op repository</string>

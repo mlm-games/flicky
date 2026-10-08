@@ -171,6 +171,7 @@
     <string name="no_variants_found">Nije pronađena nijedna varijanta</string>
     <string name="downloading">Preuzimanje</string>
     <string name="verifying">Provjera</string>
+    <string name="waiting_queue">Čekanje u redu</string>
     <string name="preferred_source">Preferirani izvor</string>
     <string name="auto">Automatski</string>
     <string name="locked_to_repo">Zaključano na repozitorij</string>

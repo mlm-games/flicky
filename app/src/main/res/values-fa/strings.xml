@@ -171,6 +171,7 @@
     <string name="no_variants_found">variante‌ای یافت نشد</string>
     <string name="downloading">در حال دانلود</string>
     <string name="verifying">در حال بررسی</string>
+    <string name="waiting_queue">در انتظار نوبت</string>
     <string name="preferred_source">منبع ترجیحی</string>
     <string name="auto">خودکار</string>
     <string name="locked_to_repo">قفل‌شده روی مخزن</string>

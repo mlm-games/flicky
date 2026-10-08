@@ -171,6 +171,7 @@
     <string name="no_variants_found">변형을 찾을 수 없습니다</string>
     <string name="downloading">다운로드 중</string>
     <string name="verifying">확인 중</string>
+    <string name="waiting_queue">대기 중</string>
     <string name="preferred_source">선호 소스</string>
     <string name="auto">자동</string>
     <string name="locked_to_repo">저장소에 고정됨</string>

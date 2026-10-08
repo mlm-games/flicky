@@ -171,6 +171,7 @@
     <string name="no_variants_found">لم يتم العثور على متغيرات</string>
     <string name="downloading">جارٍ التنزيل</string>
     <string name="verifying">جارٍ التحقق</string>
+    <string name="waiting_queue">في انتظار الدور</string>
     <string name="preferred_source">المصدر المفضل</string>
     <string name="auto">تلقائي</string>
     <string name="locked_to_repo">مثبَّت على المستودع</string>

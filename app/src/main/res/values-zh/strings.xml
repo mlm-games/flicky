@@ -171,6 +171,7 @@
     <string name="no_variants_found">未找到变体</string>
     <string name="downloading">正在下载</string>
     <string name="verifying">正在验证</string>
+    <string name="waiting_queue">正在排队</string>
     <string name="preferred_source">首选来源</string>
     <string name="auto">自动</string>
     <string name="locked_to_repo">已锁定到仓库</string>

@@ -171,6 +171,7 @@
     <string name="no_variants_found">バリアントが見つかりません</string>
     <string name="downloading">ダウンロード中</string>
     <string name="verifying">確認中</string>
+    <string name="waiting_queue">順番待ち中</string>
     <string name="preferred_source">優先するソース</string>
     <string name="auto">自動</string>
     <string name="locked_to_repo">リポジトリに固定済み</string>

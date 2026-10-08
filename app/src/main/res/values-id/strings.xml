@@ -171,6 +171,7 @@
     <string name="no_variants_found">Tidak ada varian ditemukan</string>
     <string name="downloading">Mengunduh</string>
     <string name="verifying">Memverifikasi</string>
+    <string name="waiting_queue">Menunggu antrean</string>
     <string name="preferred_source">Sumber pilihan</string>
     <string name="auto">Otomatis</string>
     <string name="locked_to_repo">Terkunci ke repositori</string>

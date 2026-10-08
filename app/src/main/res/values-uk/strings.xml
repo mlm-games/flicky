@@ -171,6 +171,7 @@
     <string name="no_variants_found">Варіантів не знайдено</string>
     <string name="downloading">Завантаження</string>
     <string name="verifying">Перевірка</string>
+    <string name="waiting_queue">Очікування в черзі</string>
     <string name="preferred_source">Бажане джерело</string>
     <string name="auto">Автоматично</string>
     <string name="locked_to_repo">Закріплено в репозиторії</string>

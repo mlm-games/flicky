@@ -171,6 +171,7 @@
     <string name="no_variants_found">Δεν βρέθηκαν παραλλαγές</string>
     <string name="downloading">Λήψη</string>
     <string name="verifying">Επαλήθευση</string>
+    <string name="waiting_queue">Σε αναμονή στην ουρά</string>
     <string name="preferred_source">Προτιμώμενη πηγή</string>
     <string name="auto">Αυτόματο</string>
     <string name="locked_to_repo">Κλειδωμένο στο αποθετήριο</string>

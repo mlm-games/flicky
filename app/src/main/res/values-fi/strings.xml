@@ -171,6 +171,7 @@
     <string name="no_variants_found">Varianteja ei löytynyt</string>
     <string name="downloading">Ladataan</string>
     <string name="verifying">Varmennetaan</string>
+    <string name="waiting_queue">Odotetaan vuoroa</string>
     <string name="preferred_source">Ensisijainen lähde</string>
     <string name="auto">Automaattinen</string>
     <string name="locked_to_repo">Kiinnitetty repositorioon</string>

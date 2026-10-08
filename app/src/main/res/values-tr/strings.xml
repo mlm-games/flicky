@@ -171,6 +171,7 @@
     <string name="no_variants_found">Varyant bulunamadı</string>
     <string name="downloading">İndiriliyor</string>
     <string name="verifying">Doğrulanıyor</string>
+    <string name="waiting_queue">Sırada bekliyor</string>
     <string name="preferred_source">Tercih edilen kaynak</string>
     <string name="auto">Otomatik</string>
     <string name="locked_to_repo">Depoya kilitlendi</string>

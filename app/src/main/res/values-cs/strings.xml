@@ -171,6 +171,7 @@
     <string name="no_variants_found">Nenalezeny žádné varianty</string>
     <string name="downloading">Stahování</string>
     <string name="verifying">Ověřování</string>
+    <string name="waiting_queue">Čekání ve frontě</string>
     <string name="preferred_source">Preferovaný zdroj</string>
     <string name="auto">Automaticky</string>
     <string name="locked_to_repo">Uzamčeno na repozitář</string>

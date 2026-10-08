@@ -171,6 +171,7 @@
     <string name="no_variants_found">Không tìm thấy biến thể nào</string>
     <string name="downloading">Đang tải xuống</string>
     <string name="verifying">Đang xác minh</string>
+    <string name="waiting_queue">Đang chờ trong hàng đợi</string>
     <string name="preferred_source">Nguồn ưu tiên</string>
     <string name="auto">Tự động</string>
     <string name="locked_to_repo">Đã ghim vào kho</string>
