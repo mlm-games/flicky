@@ -1,3 +1,10 @@
+## v4.5.4
+
+- Add back parallelism, but only for downloads part
+- Show the needs confirmation state in App Details too
+- Fix android 6 issues
+
+
 ## v4.5.3
 
 - Installer bug fixes

@@ -1,0 +1,3 @@
+- Add back parallelism, but only for downloads part
+- Show the needs confirmation state in App Details too
+- Fix android 6 issues
