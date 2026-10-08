@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import app.flicky.data.model.FDroidApp
-import app.flicky.data.repository.SettingsRepository
 import app.flicky.install.Installer
 import app.flicky.install.TaskStage
 import app.flicky.ui.screens.UpdatesScreen
@@ -31,7 +30,6 @@ interface UpdatesActions {
 fun UpdatesRoute(
     vm: UpdatesViewModel = koinViewModel(),
     installer: Installer = koinInject(),
-    settings: SettingsRepository = koinInject(),
     onOpenDetails: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -56,6 +54,7 @@ fun UpdatesRoute(
                 when (val stage = installerTasks[app.packageName]) {
                     is TaskStage.Downloading -> stage.progress * 0.33
                     is TaskStage.Verifying -> 0.33 + 0.33
+                    is TaskStage.Queued -> 0.33 + 0.33
                     is TaskStage.Installing -> 0.66 + stage.progress * 0.34
                     is TaskStage.NeedsConfirmation -> 0.66
                     is TaskStage.Finished if stage.success -> 1.0
@@ -66,7 +65,7 @@ fun UpdatesRoute(
         }
     }
 
-    val actions = remember(vm, installer, settings, context, isBatchUpdating) {
+    val actions = remember(vm, installer, context, isBatchUpdating) {
         object : UpdatesActions {
             override fun updateAll() {
                 if (isBatchUpdating) return
@@ -78,12 +77,7 @@ fun UpdatesRoute(
                 isBatchUpdating = true
 
                 batchUpdateJob = scope.launch {
-                    val installerMode = runCatching { settings.settingsFlow.first().installerMode }.getOrDefault(0)
-                    // forgot the test... keeping 2 to avoid ROM-specific races.
-                    val parallelism = when (installerMode) {
-                        2, 3 -> 2
-                        else -> 1
-                    }
+                    val parallelism = Installer.BATCH_WORKERS
                     Log.d("UpdatesRoute", "Starting batch update with parallelism: $parallelism")
 
                     val queue = Channel<FDroidApp>(updatesToRun.size)

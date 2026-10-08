@@ -215,6 +215,7 @@
     <string name="no_variants_found">No variants found</string>
     <string name="downloading">Downloading</string>
     <string name="verifying">Verifying</string>
+    <string name="waiting_queue">Waiting in queue</string>
     <string name="preferred_source">Preferred Source</string>
     <string name="auto">Auto</string>
     <string name="locked_to_repo">Locked to Repo</string>

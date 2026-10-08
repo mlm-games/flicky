@@ -424,6 +424,7 @@ private fun UpdateCard(
                 val label = when (stage) {
                     is TaskStage.Downloading -> "Downloading ${(animatedProgress * 100).toInt()}%"
                     is TaskStage.Verifying -> "Verifying"
+                    is TaskStage.Queued -> "Waiting in queue"
                     is TaskStage.Installing -> "Installing ${(animatedProgress * 100).toInt()}%"
                     is TaskStage.NeedsConfirmation -> "Waiting for confirmation"
                     is TaskStage.Finished -> if (stage.success) "Completed" else "Failed"

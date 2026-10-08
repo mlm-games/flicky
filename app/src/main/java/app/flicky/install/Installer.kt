@@ -32,7 +32,9 @@ import app.flicky.helper.DebugLog
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -77,7 +79,8 @@ class Installer(
     private val cancelFlags = ConcurrentHashMap<String, Boolean>()
     private val activeCalls = ConcurrentHashMap<String, Call>()
     private val activeProcs = ConcurrentHashMap<String, Process>()
-    private val sessionMutex = Mutex()
+    private val downloadPermits = Semaphore(DOWNLOAD_PARALLELISM)
+    private val commitMutex = Mutex()
     private val sessionsCleaned = AtomicBoolean(false)
 
     private val _tasks = MutableStateFlow<Map<String, TaskStage>>(emptyMap())
@@ -93,6 +96,8 @@ class Installer(
         private const val CACHE_DIR = "flicky_downloads"
         private const val CACHE_EXPIRY_HOURS = 1
         private const val STREAM_BUF = 64 * 1024
+        const val DOWNLOAD_PARALLELISM = 3
+        const val BATCH_WORKERS = DOWNLOAD_PARALLELISM + 1
     }
 
     private val _errors = MutableStateFlow<Map<String, String>>(emptyMap())
@@ -265,77 +270,17 @@ class Installer(
                 (if (fallbackMode >= 0) ", fallback=$fallbackMode" else ""))
 
         emitStage(req.packageName, TaskStage.Downloading(0f))
-        val file = download(req) ?: run {
-            if (isCancelled(req.packageName))
-                emitStage(req.packageName, TaskStage.Cancelled)
-            else
-                emitStage(req.packageName, TaskStage.Finished(false))
-            if (showDebug) DebugLog.log("Installer", "Download failed for ${req.packageName}")
-            clearCancel(req.packageName)
-            return@withContext false
-        }
-
-        emitStage(req.packageName, TaskStage.Verifying)
-        if (isCancelled(req.packageName)) {
-            emitStage(req.packageName, TaskStage.Cancelled); clearCancel(req.packageName)
-            return@withContext false
-        }
-        if (req.sha256.isNotBlank() && !verifySha256File(file, req.sha256)) {
-            if (showDebug) DebugLog.log("Installer", "SHA256 mismatch for ${req.packageName}")
-            file.delete()
-            emitStage(req.packageName, TaskStage.Finished(false))
-            clearCancel(req.packageName)
-            return@withContext false
-        }
-
-        val pm = context.packageManager
-        val installed = Signatures.installedCertDigests(pm, req.packageName)
-        val incoming = Signatures.archiveCertDigests(pm, file)
-
-        if (!Signatures.isReplaceAllowed(installed, incoming)) {
-            val msg = "Update blocked: the installed app is signed with a different key. " +
-                    "Android doesn’t allow updating across different signatures. " +
-                    "Uninstall the current app first to install this build (this will delete its data)."
-            DebugLog.log("Installer", "Signature mismatch for ${req.packageName}")
-            setError(req.packageName, msg)
-            emitStage(req.packageName, TaskStage.Finished(false))
-            clearCancel(req.packageName)
-            return@withContext false
-        } else {
-            clearError(req.packageName)
-        }
+        val file = downloadPermits.withPermit { prepare(req, showDebug) } ?: return@withContext false
 
         val modesToTry = buildList {
             add(primaryMode)
             if (fallbackMode >= 0 && fallbackMode != primaryMode) add(fallbackMode)
         }
 
-        var result = InstallSessionResult(success = false)
-        for ((attempt, mode) in modesToTry.withIndex()) {
-            if (isCancelled(req.packageName)) break
-
-            if (attempt > 0) {
-                clearError(req.packageName)
-                val modeName = when (mode) {
-                    0 -> "System"
-                    1 -> "Session"
-                    2 -> "Root"
-                    3 -> "Shizuku"
-                    4 -> "App Manager"
-                    5 -> "Dhizuku"
-                    else -> "System"
-                }
-                DebugLog.log("Installer", "Primary failed; trying fallback mode=$mode ($modeName) for ${req.packageName}")
-                Toast.makeText(context, "Primary installer failed; trying $modeName", Toast.LENGTH_SHORT).show()
-                setError(req.packageName, "Primary installer failed; trying fallback method")
-            }
-
-            result = tryInstallWithMode(mode, file, req.packageName, req.sha256)
-
-            if (result.success || result.wasCancelledByUser || isCancelled(req.packageName)) {
-                if (result.success) clearError(req.packageName)
-                break
-            }
+        emitStage(req.packageName, TaskStage.Queued)
+        val result = commitMutex.withLock {
+            emitStage(req.packageName, TaskStage.Installing(0f))
+            attemptModes(modesToTry, file, req.packageName, req.sha256)
         }
 
         if (isCancelled(req.packageName)) {
@@ -355,6 +300,84 @@ class Installer(
         return@withContext result.success && !result.wasCancelledByUser
     }
 
+    private suspend fun prepare(req: ResolvedApk, showDebug: Boolean): File? {
+        val file = download(req) ?: run {
+            if (isCancelled(req.packageName))
+                emitStage(req.packageName, TaskStage.Cancelled)
+            else
+                emitStage(req.packageName, TaskStage.Finished(false))
+            if (showDebug) DebugLog.log("Installer", "Download failed for ${req.packageName}")
+            clearCancel(req.packageName)
+            return null
+        }
+
+        emitStage(req.packageName, TaskStage.Verifying)
+        if (isCancelled(req.packageName)) {
+            emitStage(req.packageName, TaskStage.Cancelled); clearCancel(req.packageName)
+            return null
+        }
+        if (req.sha256.isNotBlank() && !verifySha256File(file, req.sha256)) {
+            if (showDebug) DebugLog.log("Installer", "SHA256 mismatch for ${req.packageName}")
+            file.delete()
+            emitStage(req.packageName, TaskStage.Finished(false))
+            clearCancel(req.packageName)
+            return null
+        }
+
+        val pm = context.packageManager
+        val installed = Signatures.installedCertDigests(pm, req.packageName)
+        val incoming = Signatures.archiveCertDigests(pm, file)
+
+        if (!Signatures.isReplaceAllowed(installed, incoming)) {
+            val msg = "Update blocked: the installed app is signed with a different key. " +
+                    "Android doesn’t allow updating across different signatures. " +
+                    "Uninstall the current app first to install this build (this will delete its data)."
+            DebugLog.log("Installer", "Signature mismatch for ${req.packageName}")
+            setError(req.packageName, msg)
+            emitStage(req.packageName, TaskStage.Finished(false))
+            clearCancel(req.packageName)
+            return null
+        }
+        clearError(req.packageName)
+        return file
+    }
+
+    private suspend fun attemptModes(
+        modesToTry: List<Int>,
+        file: File,
+        packageName: String,
+        sha256: String
+    ): InstallSessionResult {
+        var result = InstallSessionResult(success = false)
+        for ((attempt, mode) in modesToTry.withIndex()) {
+            if (isCancelled(packageName)) break
+
+            if (attempt > 0) {
+                clearError(packageName)
+                val modeName = when (mode) {
+                    0 -> "System"
+                    1 -> "Session"
+                    2 -> "Root"
+                    3 -> "Shizuku"
+                    4 -> "App Manager"
+                    5 -> "Dhizuku"
+                    else -> "System"
+                }
+                DebugLog.log("Installer", "Primary failed; trying fallback mode=$mode ($modeName) for $packageName")
+                Toast.makeText(context, "Primary installer failed; trying $modeName", Toast.LENGTH_SHORT).show()
+                setError(packageName, "Primary installer failed; trying fallback method")
+            }
+
+            result = tryInstallWithMode(mode, file, packageName, sha256)
+
+            if (result.success || result.wasCancelledByUser || isCancelled(packageName)) {
+                if (result.success) clearError(packageName)
+                break
+            }
+        }
+        return result
+    }
+
     private suspend fun tryInstallWithMode(
         mode: Int,
         file: File,
@@ -363,11 +386,11 @@ class Installer(
     ): InstallSessionResult {
         return when (mode) {
             0 -> InstallSessionResult(installSystem(file, packageName))
-            1 -> InstallSessionResult(sessionMutex.withLock { installViaSession(file, packageName, sha256) })
+            1 -> InstallSessionResult(installViaSession(file, packageName, sha256))
             2 -> InstallSessionResult(installRootStream(file, packageName))
             3 -> InstallSessionResult(installShizukuStream(file, packageName))
             4 -> InstallSessionResult(installAppManager(file, packageName))
-            5 -> InstallSessionResult(sessionMutex.withLock { installViaDhizukuSession(file, packageName, sha256) })
+            5 -> InstallSessionResult(installViaDhizukuSession(file, packageName, sha256))
             else -> InstallSessionResult(installSystem(file, packageName))
         }
     }
@@ -964,11 +987,7 @@ class Installer(
                 emitStage(packageName, TaskStage.Cancelled)
                 return false
             }
-            val result = CompletableDeferred<InstallEvent>()
-            val waitJob = CoroutineScope(Dispatchers.Default).launch {
-                val evt = SessionInstallBus.events.first { it.sessionId == sessionId }
-                result.complete(evt)
-            }
+            val bus = SessionInstallBus.events(sessionId)
 
             val intent = Intent(context, InstallResultReceiver::class.java)
             val pendingFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
@@ -982,11 +1001,10 @@ class Installer(
             } catch (e: Exception) {
                 DebugLog.log("Installer", "Session commit() unexpected error: ${e.message}")
                 runCatching { sess.abandon() }
-                waitJob.cancel()
                 return false
             }
 
-            val evt = try { withTimeout(180_000) { result.await() } } finally { waitJob.cancel() }
+            val evt = withTimeout(180_000) { bus.first() }
 
             if (evt.status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
                 val confirm = evt.confirmIntent ?: run {
@@ -1004,9 +1022,7 @@ class Installer(
                 }
                 val finalEvt = try {
                     withTimeout(300_000L) {
-                        SessionInstallBus.events.first {
-                            it.sessionId == sessionId && it.status != PackageInstaller.STATUS_PENDING_USER_ACTION
-                        }
+                        bus.first { it.status != PackageInstaller.STATUS_PENDING_USER_ACTION }
                     }
                 } catch (_: TimeoutCancellationException) {
                     DebugLog.log("Installer", "Timed out waiting for user confirmation for $packageName")
@@ -1054,6 +1070,7 @@ class Installer(
             }
         } finally {
             runCatching { sess.close() }
+            SessionInstallBus.release(sessionId)
         }
     }
 

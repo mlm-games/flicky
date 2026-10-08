@@ -93,6 +93,9 @@ class AppDetailViewModel(
                         is TaskStage.Verifying -> _ui.update {
                             it.copy(isInstalling = true, stage = stage, progress = 0.995f, error = null)
                         }
+                        is TaskStage.Queued -> _ui.update {
+                            it.copy(isInstalling = true, stage = stage, progress = 0.995f, error = null)
+                        }
                         is TaskStage.Installing -> _ui.update {
                             it.copy(
                                 isInstalling = true,

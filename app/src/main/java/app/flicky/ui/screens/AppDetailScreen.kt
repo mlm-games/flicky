@@ -546,6 +546,7 @@ private fun AppHeader(
         val progressValue = when (stage) {
             is TaskStage.Downloading -> stage.progress.coerceIn(0f, 0.999f)
             is TaskStage.Verifying -> 0.995f
+            is TaskStage.Queued -> 0.995f
             is TaskStage.Installing -> (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f)
             is TaskStage.NeedsConfirmation -> 1f
             else -> -1f
@@ -578,6 +579,7 @@ private fun AppHeader(
             val label = when (stage) {
                 is TaskStage.Downloading -> "Downloading"
                 is TaskStage.Verifying -> "Verifying"
+                is TaskStage.Queued -> "Waiting in queue"
                 is TaskStage.Installing -> "Installing"
                 is TaskStage.NeedsConfirmation -> "Waiting for confirmation"
                 is TaskStage.Finished -> if (stage.success) "Completed" else "Failed"

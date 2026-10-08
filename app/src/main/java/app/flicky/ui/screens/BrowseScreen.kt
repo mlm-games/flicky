@@ -446,6 +446,7 @@ private fun InstallFromDialog(
     val progress = when (stage) {
         is TaskStage.Downloading -> stage.progress.coerceIn(0f, 0.99f)
         is TaskStage.Verifying -> 0.995f
+        is TaskStage.Queued -> 0.995f
         is TaskStage.Installing -> (0.99f + 0.01f * stage.progress).coerceIn(0.99f, 1f)
         is TaskStage.NeedsConfirmation -> 1f
         else -> 0f
@@ -547,6 +548,7 @@ private fun InstallFromDialog(
                         text = when (stage) {
                             is TaskStage.Downloading -> stringResource(R.string.downloading)
                             is TaskStage.Verifying -> stringResource(R.string.verifying)
+                            is TaskStage.Queued -> stringResource(R.string.waiting_queue)
                             is TaskStage.Installing -> stringResource(R.string.installing)
                             is TaskStage.NeedsConfirmation -> stringResource(R.string.waiting_confirmation)
                             else -> ""

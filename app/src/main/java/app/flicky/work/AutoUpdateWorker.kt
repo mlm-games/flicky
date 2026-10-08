@@ -5,6 +5,7 @@ import android.content.pm.PackageInstaller
 import android.os.Build
 import androidx.work.*
 import app.flicky.data.local.AppDatabase
+import app.flicky.data.local.AppVariant
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.repository.AppUpdatePreference
 import app.flicky.data.repository.AppUpdatePreferencesMap
@@ -14,7 +15,10 @@ import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.VariantSelector
 import app.flicky.install.Installer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
@@ -70,8 +74,17 @@ class AutoUpdateWorker(
             }
 
             gentleDelay(candidates.map { it.first.packageName })
-            for ((_, chosen) in candidates) {
-                installer.install(chosen)
+            val queue = Channel<AppVariant>(Channel.UNLIMITED)
+            candidates.forEach { (_, chosen) -> queue.trySend(chosen) }
+            queue.close()
+            coroutineScope {
+                repeat(Installer.BATCH_WORKERS) {
+                    launch {
+                        for (chosen in queue) {
+                            installer.install(chosen)
+                        }
+                    }
+                }
             }
             Result.success()
         } catch (e: Exception) {

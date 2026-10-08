@@ -6,9 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.os.Build
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class InstallResultReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -19,7 +16,8 @@ class InstallResultReceiver : BroadcastReceiver() {
             val confirm: Intent? = if (Build.VERSION.SDK_INT >= 33) {
                 intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
             } else {
-                @Suppress("DEPRECATION") intent.getParcelableExtra(Intent.EXTRA_INTENT)
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra(Intent.EXTRA_INTENT)
             }
             val pending = confirm?.let {
                 PendingIntent.getActivity(
@@ -29,17 +27,15 @@ class InstallResultReceiver : BroadcastReceiver() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             }
-            CoroutineScope(Dispatchers.Default).launch {
-                SessionInstallBus.publish(InstallEvent(sessionId, status, confirmIntent = pending))
-            }
+            SessionInstallBus.publish(InstallEvent(sessionId, status, confirmIntent = pending))
             return
         }
 
-        val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
-        val other = intent.getStringExtra(PackageInstaller.EXTRA_OTHER_PACKAGE_NAME)
-
-        CoroutineScope(Dispatchers.Default).launch {
-            SessionInstallBus.publish(sessionId, status, msg, other)
-        }
+        SessionInstallBus.publish(
+            sessionId,
+            status,
+            intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE),
+            intent.getStringExtra(PackageInstaller.EXTRA_OTHER_PACKAGE_NAME)
+        )
     }
 }
