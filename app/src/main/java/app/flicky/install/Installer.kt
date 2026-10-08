@@ -277,9 +277,10 @@ class Installer(
             if (fallbackMode >= 0 && fallbackMode != primaryMode) add(fallbackMode)
         }
 
-        emitStage(req.packageName, TaskStage.Queued)
+        val queued = commitMutex.isLocked
+        if (queued) emitStage(req.packageName, TaskStage.Queued)
         val result = commitMutex.withLock {
-            emitStage(req.packageName, TaskStage.Installing(0f))
+            if (queued) emitStage(req.packageName, TaskStage.Installing(0f))
             attemptModes(modesToTry, file, req.packageName, req.sha256)
         }
 
@@ -643,17 +644,15 @@ class Installer(
                     throw e
                 } else defaultStreamingClient()
             }
-            if (client != null) {
-                val ok = streamWithOkHttp(
-                    client = client, url = url, dest = out, userAgent = userAgent, referer = req.repoBase,
-                    expectedSize = req.size, packageName = req.packageName,
-                )
-                if (ok && out.exists()) {
-                    MirrorRegistry.markHealthy(req.repoBase, url)
-                    return@withContext out
-                } else {
-                    runCatching { if (out.exists()) out.delete() }
-                }
+            val ok = streamWithOkHttp(
+                client = client, url = url, dest = out, userAgent = userAgent, referer = req.repoBase,
+                expectedSize = req.size, packageName = req.packageName,
+            )
+            if (ok && out.exists()) {
+                MirrorRegistry.markHealthy(req.repoBase, url)
+                return@withContext out
+            } else {
+                runCatching { if (out.exists()) out.delete() }
             }
         }
         null
