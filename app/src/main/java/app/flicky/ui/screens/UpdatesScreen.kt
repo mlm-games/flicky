@@ -400,6 +400,7 @@ private fun UpdateCard(
                 val progress = when (stage) {
                     is TaskStage.Downloading -> stage.progress
                     is TaskStage.Verifying -> 0.995f
+                    is TaskStage.Queued -> 0.995f
                     is TaskStage.Installing -> stage.progress
                     is TaskStage.NeedsConfirmation -> 1f
                     else -> 0f

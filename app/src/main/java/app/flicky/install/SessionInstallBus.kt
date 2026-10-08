@@ -3,6 +3,7 @@ package app.flicky.install
 import android.app.PendingIntent
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import java.util.concurrent.ConcurrentHashMap
 
 data class InstallEvent(
@@ -16,7 +17,7 @@ data class InstallEvent(
 object SessionInstallBus {
     private val flows = ConcurrentHashMap<Int, MutableSharedFlow<InstallEvent>>()
 
-    fun events(sessionId: Int): MutableSharedFlow<InstallEvent> =
+    fun events(sessionId: Int): SharedFlow<InstallEvent> =
         flows.computeIfAbsent(sessionId) {
             MutableSharedFlow(
                 replay = 1,
@@ -26,7 +27,7 @@ object SessionInstallBus {
         }
 
     fun publish(event: InstallEvent) {
-        events(event.sessionId).tryEmit(event)
+        flows[event.sessionId]?.tryEmit(event)
     }
 
     fun publish(sessionId: Int, resultCode: Int, message: String? = null, other: String? = null) {
