@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -156,7 +157,9 @@ fun BrowseScreen(
     val resolvedError = errorMessage?.asString()
     val activity = LocalContext.current as? android.app.Activity
     val popupOffset = with(LocalDensity.current) {
-        IntOffset(-8.dp.roundToPx(), -54.dp.roundToPx())
+        // Browse is laid out above Flicky's 64 dp bottom navigation bar.
+        // Shift the popup through that bar so its bottom meets Yapchik's bar.
+        IntOffset(-8.dp.roundToPx(), 64.dp.roundToPx())
     }
 
     DisposableEffect(activity) {
@@ -427,6 +430,7 @@ fun BrowseScreen(
             properties = PopupProperties(focusable = true)
         ) {
             Surface(
+                modifier = Modifier.width(176.dp),
                 color = MaterialTheme.colorScheme.background,
                 shape = MaterialTheme.shapes.medium,
                 tonalElevation = 6.dp,
