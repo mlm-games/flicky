@@ -70,6 +70,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
@@ -163,17 +164,22 @@ fun BrowseScreen(
         IntOffset(-8.dp.roundToPx(), 64.dp.roundToPx())
     }
 
-    DisposableEffect(activity) {
+    DisposableEffect(activity, searchOpen) {
         val softkeys = activity?.let { Softkeys.of(it) }
         softkeys?.set {
             screenMode = SoftkeyMode.ON
-            left("Search") {
-                searchOpen = true
-                menuOpen = false
-            }
-            right("Options") {
-                menuOpen = !menuOpen
-                searchOpen = false
+            if (searchOpen) {
+                left("Close") { searchOpen = false }
+                right("Clear") { onSearchChange("") }
+            } else {
+                left("Search") {
+                    searchOpen = true
+                    menuOpen = false
+                }
+                right("Options") {
+                    menuOpen = !menuOpen
+                    searchOpen = false
+                }
             }
         }
         onDispose { softkeys?.clear() }
@@ -731,6 +737,18 @@ private fun TvAwareDockedSearchBar(
                 when {
                     isTv && !active && e.type == KeyEventType.KeyDown && e.key in okKeys -> {
                         active = true; keyboard?.show(); true
+                    }
+
+                    e.type == KeyEventType.KeyDown && e.key in okKeys -> {
+                        onCommit(localQuery)
+                        keyboard?.hide()
+                        true
+                    }
+
+                    e.type == KeyEventType.KeyDown && e.key == Key.DirectionDown -> {
+                        focusManager.moveFocus(FocusDirection.Down)
+                        onClose()
+                        true
                     }
 
                     e.type == KeyEventType.KeyDown && e.key == Key.Back -> {
