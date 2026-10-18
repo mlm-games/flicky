@@ -1,3 +1,8 @@
+## v4.5.5
+
+- Fix TV focus ring and default focus
+
+
 ## v4.5.4
 
 - Add back parallelism, but only for downloads part

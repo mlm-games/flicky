@@ -28,8 +28,8 @@ android {
         applicationId = "app.flicky"
         minSdk = 23
         targetSdk = 37
-        versionCode = 990
-        versionName = "4.5.4"
+        versionCode = 1000
+        versionName = "4.5.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
