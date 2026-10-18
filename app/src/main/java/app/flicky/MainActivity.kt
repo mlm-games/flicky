@@ -1,12 +1,16 @@
 package app.flicky
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -72,7 +76,6 @@ class MainActivity : AppCompatActivity() {
         else -> null
     }
 
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -175,20 +178,22 @@ class MainActivity : AppCompatActivity() {
                             manager = snackbarManager
                         )
                     }
-                ) {
-                    if (isTV) {
-                        TvMainScreen(
-                            selectedIndex = selectedIndexForTop(),
-                            contentKey = contentKeyForFocus(),
-                            onSelect = ::switchTab,
-                            content = content
-                        )
-                    } else {
-                        MobileMainScaffold(
-                            selectedIndex = selectedIndexForTop(),
-                            onSelect = ::switchTab,
-                            content = content
-                        )
+                ) { scaffoldPadding ->
+                    Box(Modifier.fillMaxSize().padding(scaffoldPadding).consumeWindowInsets(scaffoldPadding)) {
+                        if (isTV) {
+                            TvMainScreen(
+                                selectedIndex = selectedIndexForTop(),
+                                contentKey = contentKeyForFocus(),
+                                onSelect = ::switchTab,
+                                content = content
+                            )
+                        } else {
+                            MobileMainScaffold(
+                                selectedIndex = selectedIndexForTop(),
+                                onSelect = ::switchTab,
+                                content = content
+                            )
+                        }
                     }
                 }
             }

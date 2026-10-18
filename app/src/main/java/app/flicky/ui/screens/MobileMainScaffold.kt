@@ -5,8 +5,11 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
@@ -135,6 +138,8 @@ fun MobileMainScaffold(
         Scaffold(
             bottomBar = {
                 NavigationBar(
+                    modifier = Modifier.height(72.dp),
+                    windowInsets = WindowInsets(0),
                     containerColor =
                         colorScheme.surfaceContainerLow,
                     contentColor =
@@ -164,7 +169,7 @@ fun MobileMainScaffold(
                 }
             }
         ) { padding ->
-            Column(Modifier.fillMaxSize().padding(padding)) {
+            Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
                 currentBanner?.let { banner ->
                     AlertBanner(
                         banner = banner,
