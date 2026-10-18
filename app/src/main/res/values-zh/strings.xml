@@ -332,4 +332,14 @@
     <string name="more_options_desc">更多选项</string>
     <string name="share_subject_package">包：%1$s</string>
     <string name="share_subject_source">发现于：%1$s</string>
+
+    <string name="waiting_confirmation">等待你的确认</string>
+    <string name="error_not_enough_storage">存储空间不足。请腾出约 %1$s 以安装。</string>
+    <string name="update_over_metered">通过移动数据更新</string>
+    <string name="notification_channel_updates">应用更新</string>
+    <string name="notification_channel_updates_desc">自动更新的结果</string>
+    <string name="notification_updated">已更新 %1$d 个应用</string>
+    <string name="notification_updated_and_failed">已更新 %1$d 个应用，%2$d 个失败</string>
+    <string name="notification_update_failed">%1$d 个应用更新失败</string>
+    <string name="waiting_for_wifi">有 Wi-Fi 时将安装更新</string>
 </resources>

@@ -332,4 +332,14 @@
     <string name="more_options_desc">Más opciones</string>
     <string name="share_subject_package">Paquete: %1$s</string>
     <string name="share_subject_source">Encontrado en: %1$s</string>
+
+    <string name="waiting_confirmation">Esperando tu confirmación</string>
+    <string name="error_not_enough_storage">No hay suficiente espacio. Libera unos %1$s para instalar.</string>
+    <string name="update_over_metered">Actualizar con datos móviles</string>
+    <string name="notification_channel_updates">Actualizaciones de apps</string>
+    <string name="notification_channel_updates_desc">Resultados de las actualizaciones automáticas</string>
+    <string name="notification_updated">Se actualizaron %1$d apps</string>
+    <string name="notification_updated_and_failed">Se actualizaron %1$d apps, %2$d fallaron</string>
+    <string name="notification_update_failed">Error al actualizar %1$d apps</string>
+    <string name="waiting_for_wifi">Las actualizaciones se instalarán cuando haya Wi-Fi</string>
 </resources>

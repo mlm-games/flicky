@@ -332,4 +332,14 @@
     <string name="more_options_desc">Другие параметры</string>
     <string name="share_subject_package">Пакет: %1$s</string>
     <string name="share_subject_source">Найдено в: %1$s</string>
+
+    <string name="waiting_confirmation">Ожидание подтверждения</string>
+    <string name="error_not_enough_storage">Недостаточно места. Освободите около %1$s для установки.</string>
+    <string name="update_over_metered">Обновлять через мобильные данные</string>
+    <string name="notification_channel_updates">Обновления приложений</string>
+    <string name="notification_channel_updates_desc">Результаты автоматических обновлений</string>
+    <string name="notification_updated">Обновлено приложений: %1$d</string>
+    <string name="notification_updated_and_failed">Обновлено приложений: %1$d, ошибок: %2$d</string>
+    <string name="notification_update_failed">Не удалось обновить приложений: %1$d</string>
+    <string name="waiting_for_wifi">Обновления установятся, когда появится Wi-Fi</string>
 </resources>

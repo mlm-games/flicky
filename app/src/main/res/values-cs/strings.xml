@@ -332,4 +332,14 @@
     <string name="more_options_desc">Další možnosti</string>
     <string name="share_subject_package">Balíček: %1$s</string>
     <string name="share_subject_source">Nalezeno v: %1$s</string>
+
+    <string name="waiting_confirmation">Čeká se na potvrzení</string>
+    <string name="error_not_enough_storage">Nedostatek úložiště. Uvolněte přibližně %1$s pro instalaci.</string>
+    <string name="update_over_metered">Aktualizovat přes mobilní data</string>
+    <string name="notification_channel_updates">Aktualizace aplikací</string>
+    <string name="notification_channel_updates_desc">Výsledky automatických aktualizací aplikací</string>
+    <string name="notification_updated">Aktualizováno %1$d aplikací</string>
+    <string name="notification_updated_and_failed">Aktualizováno %1$d aplikací, %2$d selhalo</string>
+    <string name="notification_update_failed">Aktualizace %1$d aplikací se nezdařila</string>
+    <string name="waiting_for_wifi">Aktualizace se nainstalují, až bude k dispozici Wi-Fi</string>
 </resources>

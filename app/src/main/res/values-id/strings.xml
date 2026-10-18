@@ -332,4 +332,14 @@
     <string name="more_options_desc">Opsi lainnya</string>
     <string name="share_subject_package">Paket: %1$s</string>
     <string name="share_subject_source">Ditemukan di: %1$s</string>
+
+    <string name="waiting_confirmation">Menunggu konfirmasi Anda</string>
+    <string name="error_not_enough_storage">Penyimpanan tidak cukup. Kosongkan sekitar %1$s untuk memasang.</string>
+    <string name="update_over_metered">Perbarui melalui data seluler</string>
+    <string name="notification_channel_updates">Pembaruan aplikasi</string>
+    <string name="notification_channel_updates_desc">Hasil pembaruan aplikasi otomatis</string>
+    <string name="notification_updated">%1$d aplikasi diperbarui</string>
+    <string name="notification_updated_and_failed">%1$d aplikasi diperbarui, %2$d gagal</string>
+    <string name="notification_update_failed">Pembaruan %1$d aplikasi gagal</string>
+    <string name="waiting_for_wifi">Pembaruan akan dipasang saat Wi-Fi tersedia</string>
 </resources>

@@ -332,4 +332,14 @@
     <string name="more_options_desc">その他のオプション</string>
     <string name="share_subject_package">パッケージ: %1$s</string>
     <string name="share_subject_source">見つかった場所: %1$s</string>
+
+    <string name="waiting_confirmation">確認をお待ちしています</string>
+    <string name="error_not_enough_storage">ストレージが不足しています。インストールには約 %1$s の空き容量が必要です。</string>
+    <string name="update_over_metered">モバイルデータ通信で更新</string>
+    <string name="notification_channel_updates">アプリの更新</string>
+    <string name="notification_channel_updates_desc">自動更新の結果</string>
+    <string name="notification_updated">%1$d 件のアプリを更新しました</string>
+    <string name="notification_updated_and_failed">%1$d 件のアプリを更新、%2$d 件が失敗</string>
+    <string name="notification_update_failed">%1$d 件のアプリの更新に失敗しました</string>
+    <string name="waiting_for_wifi">Wi-Fi に接続すると更新がインストールされます</string>
 </resources>

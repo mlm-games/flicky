@@ -332,4 +332,14 @@
     <string name="more_options_desc">Περισσότερες επιλογές</string>
     <string name="share_subject_package">Πακέτο: %1$s</string>
     <string name="share_subject_source">Βρέθηκε σε: %1$s</string>
+
+    <string name="waiting_confirmation">Αναμονή για επιβεβαίωση</string>
+    <string name="error_not_enough_storage">Δεν υπάρχει αρκετός χώρος. Ελευθερώστε περίπου %1$s για εγκατάσταση.</string>
+    <string name="update_over_metered">Ενημέρωση μέσω δεδομένων κινητής</string>
+    <string name="notification_channel_updates">Ενημερώσεις εφαρμογών</string>
+    <string name="notification_channel_updates_desc">Αποτελέσματα αυτόματων ενημερώσεων εφαρμογών</string>
+    <string name="notification_updated">Ενημερώθηκαν %1$d εφαρμογές</string>
+    <string name="notification_updated_and_failed">Ενημερώθηκαν %1$d εφαρμογές, απέτυχαν %2$d</string>
+    <string name="notification_update_failed">Αποτυχία ενημέρωσης για %1$d εφαρμογές</string>
+    <string name="waiting_for_wifi">Οι ενημερώσεις θα εγκατασταθούν όταν υπάρχει Wi-Fi</string>
 </resources>

@@ -332,4 +332,14 @@
     <string name="more_options_desc">Tùy chọn khác</string>
     <string name="share_subject_package">Gói: %1$s</string>
     <string name="share_subject_source">Tìm thấy trong: %1$s</string>
+
+    <string name="waiting_confirmation">Đang chờ xác nhận của bạn</string>
+    <string name="error_not_enough_storage">Không đủ dung lượng. Hãy giải phóng khoảng %1$s để cài đặt.</string>
+    <string name="update_over_metered">Cập nhật qua dữ liệu di động</string>
+    <string name="notification_channel_updates">Cập nhật ứng dụng</string>
+    <string name="notification_channel_updates_desc">Kết quả cập nhật tự động</string>
+    <string name="notification_updated">Đã cập nhật %1$d ứng dụng</string>
+    <string name="notification_updated_and_failed">Đã cập nhật %1$d ứng dụng, %2$d thất bại</string>
+    <string name="notification_update_failed">Cập nhật %1$d ứng dụng thất bại</string>
+    <string name="waiting_for_wifi">Các bản cập nhật sẽ được cài khi có Wi-Fi</string>
 </resources>

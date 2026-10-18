@@ -332,4 +332,14 @@
     <string name="more_options_desc">خيارات أخرى</string>
     <string name="share_subject_package">الحزمة: %1$s</string>
     <string name="share_subject_source">موجود في: %1$s</string>
+
+    <string name="waiting_confirmation">بانتظار تأكيدك</string>
+    <string name="error_not_enough_storage">المساحة غير كافية. حرِّر حوالي %1$s للتثبيت.</string>
+    <string name="update_over_metered">التحديث عبر بيانات الجوال</string>
+    <string name="notification_channel_updates">تحديثات التطبيقات</string>
+    <string name="notification_channel_updates_desc">نتائج تحديثات التطبيقات التلقائية</string>
+    <string name="notification_updated">تم تحديث %1$d من التطبيقات</string>
+    <string name="notification_updated_and_failed">تم تحديث %1$d من التطبيقات، فشل %2$d</string>
+    <string name="notification_update_failed">فشل تحديث %1$d من التطبيقات</string>
+    <string name="waiting_for_wifi">سيتم تثبيت التحديثات عند توفر Wi-Fi</string>
 </resources>

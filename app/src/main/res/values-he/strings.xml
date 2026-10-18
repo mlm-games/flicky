@@ -332,4 +332,14 @@
     <string name="more_options_desc">אפשרויות נוספות</string>
     <string name="share_subject_package">חבילה: %1$s</string>
     <string name="share_subject_source">נמצא ב: %1$s</string>
+
+    <string name="waiting_confirmation">ממתין לאישור שלך</string>
+    <string name="error_not_enough_storage">אין מספיק מקום אחסון. יש לפנות כ-%1$s כדי להתקין.</string>
+    <string name="update_over_metered">עדכון באמצעות נתונים סלולריים</string>
+    <string name="notification_channel_updates">עדכוני אפליקציות</string>
+    <string name="notification_channel_updates_desc">תוצאות עדכונים אוטומטיים של אפליקציות</string>
+    <string name="notification_updated">%1$d אפליקציות עודכנו</string>
+    <string name="notification_updated_and_failed">%1$d אפליקציות עודכנו, %2$d נכשלו</string>
+    <string name="notification_update_failed">עדכון %1$d אפליקציות נכשל</string>
+    <string name="waiting_for_wifi">העדכונים יותקנו כשיהיה Wi-Fi זמין</string>
 </resources>

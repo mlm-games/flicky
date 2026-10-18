@@ -332,4 +332,14 @@
     <string name="more_options_desc">Lisää vaihtoehtoja</string>
     <string name="share_subject_package">Paketti: %1$s</string>
     <string name="share_subject_source">Löytyi lähteestä: %1$s</string>
+
+    <string name="waiting_confirmation">Odotetaan vahvistustasi</string>
+    <string name="error_not_enough_storage">Tallennustila ei riitä. Vapauta noin %1$s asennusta varten.</string>
+    <string name="update_over_metered">Päivitä mobiilidatalla</string>
+    <string name="notification_channel_updates">Sovelluspäivitykset</string>
+    <string name="notification_channel_updates_desc">Automaattisten päivitysten tulokset</string>
+    <string name="notification_updated">%1$d sovellusta päivitetty</string>
+    <string name="notification_updated_and_failed">%1$d sovellusta päivitetty, %2$d epäonnistui</string>
+    <string name="notification_update_failed">%1$d sovelluksen päivitys epäonnistui</string>
+    <string name="waiting_for_wifi">Päivitykset asennetaan, kun Wi-Fi on käytettävissä</string>
 </resources>

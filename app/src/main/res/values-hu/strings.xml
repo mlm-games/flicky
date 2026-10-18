@@ -332,4 +332,14 @@
     <string name="more_options_desc">További lehetőségek</string>
     <string name="share_subject_package">Csomag: %1$s</string>
     <string name="share_subject_source">Található itt: %1$s</string>
+
+    <string name="waiting_confirmation">Várakozás a megerősítésre</string>
+    <string name="error_not_enough_storage">Nincs elég tárhely. Szabadítson fel körülbelül %1$s-ot a telepítéshez.</string>
+    <string name="update_over_metered">Frissítés mobiladattal</string>
+    <string name="notification_channel_updates">Alkalmazásfrissítések</string>
+    <string name="notification_channel_updates_desc">Az automatikus frissítések eredményei</string>
+    <string name="notification_updated">%1$d alkalmazás frissítve</string>
+    <string name="notification_updated_and_failed">%1$d alkalmazás frissítve, %2$d sikertelen</string>
+    <string name="notification_update_failed">%1$d alkalmazás frissítése sikertelen</string>
+    <string name="waiting_for_wifi">A frissítések telepítése Wi-Fi elérhetősége esetén történik</string>
 </resources>

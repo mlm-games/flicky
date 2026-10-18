@@ -332,4 +332,14 @@
     <string name="more_options_desc">Diğer seçenekler</string>
     <string name="share_subject_package">Paket: %1$s</string>
     <string name="share_subject_source">Şurada bulundu: %1$s</string>
+
+    <string name="waiting_confirmation">Onayınız bekleniyor</string>
+    <string name="error_not_enough_storage">Yeterli depolama yok. Yüklemek için yaklaşık %1$s boş alan açın.</string>
+    <string name="update_over_metered">Mobil veriyle güncelle</string>
+    <string name="notification_channel_updates">Uygulama güncellemeleri</string>
+    <string name="notification_channel_updates_desc">Otomatik uygulama güncellemelerinin sonuçları</string>
+    <string name="notification_updated">%1$d uygulama güncellendi</string>
+    <string name="notification_updated_and_failed">%1$d uygulama güncellendi, %2$d başarısız</string>
+    <string name="notification_update_failed">%1$d uygulama güncellenemedi</string>
+    <string name="waiting_for_wifi">Güncellemeler Wi-Fi kullanılabilir olduğunda yüklenecek</string>
 </resources>

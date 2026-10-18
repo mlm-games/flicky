@@ -332,4 +332,14 @@
     <string name="more_options_desc">Meer opties</string>
     <string name="share_subject_package">Pakket: %1$s</string>
     <string name="share_subject_source">Gevonden in: %1$s</string>
+
+    <string name="waiting_confirmation">Wachten op je bevestiging</string>
+    <string name="error_not_enough_storage">Onvoldoende opslag. Maak ongeveer %1$s vrij om te installeren.</string>
+    <string name="update_over_metered">Bijwerken via mobiele data</string>
+    <string name="notification_channel_updates">App-updates</string>
+    <string name="notification_channel_updates_desc">Resultaten van automatische app-updates</string>
+    <string name="notification_updated">%1$d apps bijgewerkt</string>
+    <string name="notification_updated_and_failed">%1$d apps bijgewerkt, %2$d mislukt</string>
+    <string name="notification_update_failed">Bijwerken van %1$d apps mislukt</string>
+    <string name="waiting_for_wifi">Updates worden geïnstalleerd zodra Wi-Fi beschikbaar is</string>
 </resources>

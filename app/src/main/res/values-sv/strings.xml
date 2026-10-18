@@ -332,4 +332,14 @@
     <string name="more_options_desc">Fler alternativ</string>
     <string name="share_subject_package">Paket: %1$s</string>
     <string name="share_subject_source">Hittad i: %1$s</string>
+
+    <string name="waiting_confirmation">Väntar på din bekräftelse</string>
+    <string name="error_not_enough_storage">Otillräckligt lagringsutrymme. Frigör cirka %1$s för att installera.</string>
+    <string name="update_over_metered">Uppdatera via mobildata</string>
+    <string name="notification_channel_updates">Appuppdateringar</string>
+    <string name="notification_channel_updates_desc">Resultat av automatiska appuppdateringar</string>
+    <string name="notification_updated">%1$d appar uppdaterade</string>
+    <string name="notification_updated_and_failed">%1$d appar uppdaterade, %2$d misslyckades</string>
+    <string name="notification_update_failed">Uppdatering misslyckades för %1$d appar</string>
+    <string name="waiting_for_wifi">Uppdateringar installeras när Wi-Fi är tillgängligt</string>
 </resources>

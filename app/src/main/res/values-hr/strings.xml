@@ -332,4 +332,14 @@
     <string name="more_options_desc">Više mogućnosti</string>
     <string name="share_subject_package">Paket: %1$s</string>
     <string name="share_subject_source">Pronađeno u: %1$s</string>
+
+    <string name="waiting_confirmation">Čeka se vaša potvrda</string>
+    <string name="error_not_enough_storage">Nema dovoljno prostora. Oslobodite oko %1$s za instalaciju.</string>
+    <string name="update_over_metered">Ažuriraj putem mobilnih podataka</string>
+    <string name="notification_channel_updates">Ažuriranja aplikacija</string>
+    <string name="notification_channel_updates_desc">Rezultati automatskih ažuriranja aplikacija</string>
+    <string name="notification_updated">Ažurirano %1$d aplikacija</string>
+    <string name="notification_updated_and_failed">Ažurirano %1$d aplikacija, %2$d nije uspjelo</string>
+    <string name="notification_update_failed">Ažuriranje %1$d aplikacija nije uspjelo</string>
+    <string name="waiting_for_wifi">Ažuriranja će se instalirati kad Wi-Fi bude dostupan</string>
 </resources>

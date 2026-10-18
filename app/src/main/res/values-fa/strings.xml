@@ -332,4 +332,14 @@
     <string name="more_options_desc">گزینه‌های بیشتر</string>
     <string name="share_subject_package">بسته: %1$s</string>
     <string name="share_subject_source">یافت شده در: %1$s</string>
+
+    <string name="waiting_confirmation">در انتظار تأیید شما</string>
+    <string name="error_not_enough_storage">فضای کافی نیست. حدود %1$s برای نصب آزاد کنید.</string>
+    <string name="update_over_metered">به‌روزرسانی با داده همراه</string>
+    <string name="notification_channel_updates">به‌روزرسانی‌های برنامه‌ها</string>
+    <string name="notification_channel_updates_desc">نتایج به‌روزرسانی خودکار برنامه‌ها</string>
+    <string name="notification_updated">%1$d برنامه به‌روزرسانی شد</string>
+    <string name="notification_updated_and_failed">%1$d برنامه به‌روزرسانی شد، %2$d ناموفق</string>
+    <string name="notification_update_failed">به‌روزرسانی %1$d برنامه ناموفق بود</string>
+    <string name="waiting_for_wifi">به‌روزرسانی‌ها هنگام دسترس بودن Wi-Fi نصب می‌شوند</string>
 </resources>

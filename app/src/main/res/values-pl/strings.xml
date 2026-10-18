@@ -332,4 +332,14 @@
     <string name="more_options_desc">Więcej opcji</string>
     <string name="share_subject_package">Pakiet: %1$s</string>
     <string name="share_subject_source">Znaleziono w: %1$s</string>
+
+    <string name="waiting_confirmation">Oczekiwanie na potwierdzenie</string>
+    <string name="error_not_enough_storage">Za mało miejsca. Zwolnij około %1$s, aby zainstalować.</string>
+    <string name="update_over_metered">Aktualizuj przez dane komórkowe</string>
+    <string name="notification_channel_updates">Aktualizacje aplikacji</string>
+    <string name="notification_channel_updates_desc">Wyniki automatycznych aktualizacji aplikacji</string>
+    <string name="notification_updated">Zaktualizowano %1$d aplikacji</string>
+    <string name="notification_updated_and_failed">Zaktualizowano %1$d aplikacji, %2$d niepowodzeń</string>
+    <string name="notification_update_failed">Aktualizacja %1$d aplikacji nie powiodła się</string>
+    <string name="waiting_for_wifi">Aktualizacje zostaną zainstalowane, gdy będzie dostępne Wi-Fi</string>
 </resources>

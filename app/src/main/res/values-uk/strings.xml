@@ -332,4 +332,14 @@
     <string name="more_options_desc">Інші параметри</string>
     <string name="share_subject_package">Пакет: %1$s</string>
     <string name="share_subject_source">Знайдено в: %1$s</string>
+
+    <string name="waiting_confirmation">Очікування підтвердження</string>
+    <string name="error_not_enough_storage">Недостатньо місця. Звільніть близько %1$s для встановлення.</string>
+    <string name="update_over_metered">Оновлювати через мобільні дані</string>
+    <string name="notification_channel_updates">Оновлення застосунків</string>
+    <string name="notification_channel_updates_desc">Результати автоматичних оновлень</string>
+    <string name="notification_updated">Оновлено застосунків: %1$d</string>
+    <string name="notification_updated_and_failed">Оновлено застосунків: %1$d, помилок: %2$d</string>
+    <string name="notification_update_failed">Не вдалося оновити застосунків: %1$d</string>
+    <string name="waiting_for_wifi">Оновлення встановляться, коли буде доступний Wi-Fi</string>
 </resources>
