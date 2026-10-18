@@ -124,6 +124,7 @@ class MainActivity : AppCompatActivity() {
                     is NavScreen.Updates -> 1
                     is NavScreen.Favorites -> 2
                     is NavScreen.Settings -> 3
+                    is NavScreen.Repositories -> 3
                     else -> 0
                 }
             }
@@ -137,6 +138,7 @@ class MainActivity : AppCompatActivity() {
                     is NavScreen.Updates -> "updates"
                     is NavScreen.Favorites -> "favorites"
                     is NavScreen.Settings -> "settings"
+                    is NavScreen.Repositories -> "repositories"
                     else -> top?.toString() ?: "root"
                 }
             }

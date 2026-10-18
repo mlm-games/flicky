@@ -118,13 +118,13 @@ import kotlin.reflect.KClass
 
 @Composable
 @Suppress("NonObservableLocale")
-fun SettingsScreen(vm: SettingsViewModel) {
+fun SettingsScreen(
+    vm: SettingsViewModel,
+    onRepositoriesClick: () -> Unit,
+) {
     val settings by vm.settings.collectAsStateWithLifecycle()
-    val repos by vm.repositories.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val repoConfigDao: RepoConfigDao = koinInject()
-    val mirrorPolicyProvider: MirrorPolicyProvider = koinInject()
     val stringProvider: StringResourceProvider = koinInject()
 
     val schema = remember { AppSettingsSchema }
@@ -140,27 +140,9 @@ fun SettingsScreen(vm: SettingsViewModel) {
     var showTextInput by remember { mutableStateOf(false) }
     var currentField by remember { mutableStateOf<SettingField<AppSettings, *>?>(null) }
 
-    var showResetConfirm by remember { mutableStateOf(false) }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
-    var repoToDelete by remember { mutableStateOf<RepositoryInfo?>(null) }
-    var showAddRepo by remember { mutableStateOf(false) }
     var showImportDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
     var showMoreMenu by remember { mutableStateOf(false) }
-
-    val cfg = LocalConfiguration.current
-
-    val repoConfigs by produceState(
-        initialValue = emptyMap(),
-        key1 = repos
-    ) {
-        value = withContext(Dispatchers.IO) {
-            repos.associate { repo ->
-                val base = repo.url.trimEnd('/')
-                base to (repoConfigDao.get(base) ?: RepoConfig(baseUrl = base, enabled = repo.enabled))
-            }
-        }
-    }
 
     val importLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -480,85 +462,20 @@ fun SettingsScreen(vm: SettingsViewModel) {
                 }
             }
 
-            // Only shows if not searching / if "repo" matches
+            // Keep repository configuration as a focused subpage rather than
+            // mixing its per-repository controls into the general settings list.
             val showRepos = searchQuery.isBlank() ||
                     "repository".contains(searchQuery.lowercase()) ||
                     "repo".contains(searchQuery.lowercase())
 
             if (showRepos) {
-                item(key = "repos_header") {
-                    Text(
-                        text = stringResource(R.string.repositories),
-                        style = typography.titleMedium,
-                        color = colorScheme.primary,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                // Repository cards
-                items(repos, key = { it.url }) { repo ->
-                    val base = repo.url.trimEnd('/')
-                    val config = repoConfigs[base] ?: RepoConfig(baseUrl = base, enabled = repo.enabled)
-
-                    RepoConfigCard(
-                        repo = repo,
-                        config = config,
-                        stringProvider = stringProvider,
-                        onConfigChange = { newCfg ->
-                            scope.launch {
-                                vm.upsertRepoConfig(newCfg)
-                            }
-                        },
-                        onToggle = { vm.toggleRepository(repo.url) },
-                        onTestMirrors = {
-                            scope.launch {
-                                val results = vm.testRepoMirrors(base)
-                                val message = buildString {
-                                    results.forEach { (url, ok, code, ms) ->
-                                        append(if (ok) "✓" else "✗")
-                                        append(" ").append(url).append("\n")
-                                        append(" ")
-                                        append(if (ok) "${ms}ms (HTTP $code)" else "HTTP $code / fail")
-                                        append("\n")
-                                    }
-                                }
-                                snackbarManager.show(message)
-                            }
-                        },
-                        onForgetMirror = {
-                            MirrorRegistry.clear(base)
-                            snackbarManager.show(context.getString(R.string.forgot_mirror, repo.name))
-                        },
-                        onDelete = {
-                            repoToDelete = repo
-                            showDeleteConfirm = true
-                        }
-                    )
-                }
-
-                item(key = "repo_actions") {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Button(
-                            onClick = { showAddRepo = true },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null)
-                            Spacer(Modifier.width(4.dp))
-                            Text(stringResource(R.string.add_repository))
-                        }
-
-                        OutlinedButton(
-                            onClick = { showResetConfirm = true },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = colorScheme.error)
-                        ) {
-                            Icon(Icons.Default.RestartAlt, contentDescription = null)
-                            Spacer(Modifier.width(4.dp))
-                            Text(stringResource(R.string.reset_to_defaults))
-                        }
+                item(key = "repositories") {
+                    SettingsSection(title = stringResource(R.string.repositories)) {
+                        SettingsItem(
+                            title = stringResource(R.string.manage_repositories),
+                            description = stringResource(R.string.manage_repositories_desc),
+                            onClick = onRepositoriesClick
+                        )
                     }
                 }
             }
@@ -638,56 +555,10 @@ fun SettingsScreen(vm: SettingsViewModel) {
         }
     }
 
-    if (showAddRepo) {
-        AddRepoDialog(
-            onDismiss = { showAddRepo = false },
-            onAdd = { name, url, trustMode ->
-                scope.launch {
-                    vm.addRepository(name, url, trustMode)
-                    mirrorPolicyProvider.ensureDefault(url.trimEnd('/'))
-                }
-                showAddRepo = false
-            }
-        )
-    }
-
-    if (showResetConfirm) {
-        ConfirmationDialog(
-            title = stringResource(R.string.reset_repositories),
-            message = stringResource(R.string.reset_repositories_confirm),
-            confirmText = stringResource(R.string.reset),
-            dismissText = stringResource(R.string.action_cancel),
-            isDangerous = true,
-            onConfirm = {
-                showResetConfirm = false
-                vm.resetRepositoriesToDefaults()
-            },
-            onDismiss = { showResetConfirm = false }
-        )
-    }
-
-    if (showDeleteConfirm && repoToDelete != null) {
-        ConfirmationDialog(
-            title = stringResource(R.string.delete_repository),
-            message = stringResource(R.string.delete_repository_confirm, repoToDelete!!.name),
-            confirmText = stringResource(R.string.delete),
-            dismissText = stringResource(R.string.action_cancel),
-            isDangerous = true,
-            onConfirm = {
-                repoToDelete?.let { vm.deleteRepository(it.url) }
-                showDeleteConfirm = false
-                repoToDelete = null
-            },
-            onDismiss = {
-                showDeleteConfirm = false
-                repoToDelete = null
-            }
-        )
-    }
 }
 
 @Composable
-private fun RepoConfigCard(
+internal fun RepoConfigCard(
     repo: RepositoryInfo,
     config: RepoConfig,
     stringProvider: StringResourceProvider,
@@ -699,7 +570,7 @@ private fun RepoConfigCard(
 ) {
     var localConfig by remember(config) { mutableStateOf(config) }
     var showMenu by remember { mutableStateOf(false) }
-    var openStrategy by remember { mutableStateOf(false) }
+    var showStrategyDialog by remember { mutableStateOf(false) }
     var openTrust by remember { mutableStateOf(false) }
 
     val strategyFocusRequester = remember { FocusRequester() }
@@ -752,6 +623,23 @@ private fun RepoConfigCard(
                             containerColor = colorScheme.background,
                             onDismissRequest = { showMenu = false }
                         ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.mirror_strategy)) },
+                                trailingIcon = {
+                                    val strategies = listOf("StickyLastGood", "RoundRobin", "CanonicalFirst")
+                                    val labels = stringProvider.getStringArray(R.array.setting_mirror_strategy_options)
+                                    Text(
+                                        labels.getOrNull(strategies.indexOf(localConfig.strategy))
+                                            ?: localConfig.strategy,
+                                        style = typography.labelSmall
+                                    )
+                                },
+                                onClick = {
+                                    showMenu = false
+                                    showStrategyDialog = true
+                                }
+                            )
+
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.test_ping)) },
                                 leadingIcon = {
@@ -836,52 +724,6 @@ private fun RepoConfigCard(
                         },
                         label = { Text(stringResource(R.string.use_onion)) }
                     )
-                }
-
-                Spacer(Modifier.height(8.dp))
-
-                // Mirror strategy dropdown
-                val strategies = listOf("StickyLastGood", "RoundRobin", "CanonicalFirst")
-                val strategyIdx = strategies.indexOf(localConfig.strategy).coerceAtLeast(0)
-                val strategyLabels = stringProvider.getStringArray(R.array.setting_mirror_strategy_options)
-
-                ExposedDropdownMenuBox(
-                    expanded = openStrategy,
-                    onExpandedChange = { openStrategy = it },
-                ) {
-                    OutlinedTextField(
-                        value = strategyLabels.getOrNull(strategyIdx)
-                            ?: strategies[strategyIdx],
-                        onValueChange = {},
-                        readOnly = true,
-                        singleLine = true,
-                        label = { Text(stringResource(R.string.mirror_strategy)) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = openStrategy) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                            .focusRequester(strategyFocusRequester)
-                    )
-
-                    ExposedDropdownMenu(
-                        expanded = openStrategy,
-                        containerColor = colorScheme.background,
-                        onDismissRequest = {
-                            openStrategy = false
-                            strategyFocusRequester.requestFocus()
-                        },
-                    ) {
-                        strategies.forEachIndexed { index, s ->
-                            DropdownMenuItem(
-                                text = { Text(strategyLabels.getOrNull(index) ?: s) },
-                                onClick = {
-                                    openStrategy = false
-                                    updateConfig(localConfig.copy(strategy = s))
-                                    strategyFocusRequester.requestFocus()
-                                }
-                            )
-                        }
-                    }
                 }
 
                 Spacer(Modifier.height(12.dp))
@@ -972,10 +814,24 @@ private fun RepoConfigCard(
             }
         }
     }
+
+    if (showStrategyDialog) {
+        val strategies = listOf("StickyLastGood", "RoundRobin", "CanonicalFirst")
+        DropdownSettingDialog(
+            title = stringResource(R.string.mirror_strategy),
+            options = stringProvider.getStringArray(R.array.setting_mirror_strategy_options),
+            selectedIndex = strategies.indexOf(localConfig.strategy).coerceAtLeast(0),
+            onDismiss = { showStrategyDialog = false },
+            onOptionSelected = { index ->
+                updateConfig(localConfig.copy(strategy = strategies[index]))
+                showStrategyDialog = false
+            }
+        )
+    }
 }
 
 @Composable
-private fun AddRepoDialog(
+internal fun AddRepoDialog(
     onDismiss: () -> Unit,
     onAdd: (String, String, String) -> Unit
 ) {

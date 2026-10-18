@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.WindowInsets
 @Composable
 fun MyScreenScaffold(
     title: String,
+    navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable (RowScope.() -> Unit) = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
@@ -32,6 +33,7 @@ fun MyScreenScaffold(
                         containerColor = colorScheme.surfaceContainerLow,
                         titleContentColor = colorScheme.onSurface
                     ),
+                    navigationIcon = { navigationIcon?.invoke() },
                     actions = actions,
                     windowInsets = WindowInsets(0)
                 )
@@ -48,5 +50,4 @@ fun MyScreenScaffold(
         }
     }
 }
-
 

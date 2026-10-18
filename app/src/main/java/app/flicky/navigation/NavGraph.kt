@@ -19,6 +19,7 @@ import app.flicky.ui.routes.UpdatesRoute
 import app.flicky.ui.screens.BrowseScreen
 import app.flicky.ui.screens.CategoriesScreen
 import app.flicky.ui.screens.SettingsScreen
+import app.flicky.ui.screens.RepositorySettingsScreen
 import app.flicky.viewmodel.BrowseViewModel
 import app.flicky.viewmodel.SettingsViewModel
 
@@ -90,7 +91,17 @@ fun Nav3Host(
             }
 
             entry<NavScreen.Settings> {
-                SettingsScreen(vm = settingsViewModel)
+                SettingsScreen(
+                    vm = settingsViewModel,
+                    onRepositoriesClick = { backStack.add(NavScreen.Repositories) }
+                )
+            }
+
+            entry<NavScreen.Repositories> {
+                RepositorySettingsScreen(
+                    vm = settingsViewModel,
+                    onBack = { backStack.removeAt(backStack.lastIndex) }
+                )
             }
 
             entry<NavScreen.Detail> { args ->
@@ -135,6 +146,9 @@ sealed interface NavScreen : NavKey {
 
     @Serializable
     data object Settings : NavScreen
+
+    @Serializable
+    data object Repositories : NavScreen
 
     @Serializable
     data class Detail(val pkg: String) : NavScreen
