@@ -9,6 +9,7 @@ import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.StatFs
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -49,6 +50,7 @@ import android.os.RemoteException
 import java.io.*
 import java.lang.reflect.Method
 import java.security.MessageDigest
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.SSLHandshakeException
@@ -95,6 +97,7 @@ class Installer(
     companion object {
         private const val CACHE_DIR = "flicky_downloads"
         private const val CACHE_EXPIRY_HOURS = 1
+        private const val CACHE_MAX_BYTES = 256L * 1024L * 1024L
         private const val STREAM_BUF = 64 * 1024
         const val DOWNLOAD_PARALLELISM = 3
         const val BATCH_WORKERS = DOWNLOAD_PARALLELISM + 1
@@ -111,7 +114,7 @@ class Installer(
     }
 
     init {
-        cleanOldCache()
+        pruneCache()
         scope.launch {
             if (sessionsCleaned.compareAndSet(false, true)) {
                 val pi = context.packageManager.packageInstaller
@@ -302,6 +305,16 @@ class Installer(
     }
 
     private suspend fun prepare(req: ResolvedApk, showDebug: Boolean): File? {
+        if (!hasSpaceForDownload(req.size)) {
+            val needed = requiredCacheBytes(req.size)
+            val msg = context.getString(R.string.error_not_enough_storage, formatMegabytes(needed))
+            DebugLog.log("Installer", "Not enough storage for ${req.packageName}: need $needed bytes")
+            setError(req.packageName, msg)
+            emitStage(req.packageName, TaskStage.Finished(false))
+            clearCancel(req.packageName)
+            return null
+        }
+
         val file = download(req) ?: run {
             if (isCancelled(req.packageName))
                 emitStage(req.packageName, TaskStage.Cancelled)
@@ -519,6 +532,22 @@ class Installer(
     private fun getBaseCacheDir(): File {
         val base = context.externalCacheDir ?: context.cacheDir
         return File(base, CACHE_DIR).apply { mkdirs() }
+    }
+
+    private fun requiredCacheBytes(size: Long): Long = size + size / 10 + 16L * 1024 * 1024
+
+    private fun hasSpaceForDownload(size: Long): Boolean {
+        if (size <= 0) return true
+        val available = runCatching {
+            StatFs(getBaseCacheDir().absolutePath).availableBytes
+        }.getOrDefault(Long.MAX_VALUE)
+        return available >= requiredCacheBytes(size)
+    }
+
+    private fun formatMegabytes(bytes: Long): String {
+        val mb = bytes / (1024L * 1024L)
+        return if (mb >= 1024) "%.1f GB".format(Locale.US, mb / 1024f)
+        else "${mb.coerceAtLeast(1)} MB"
     }
 
     private fun cacheFileFor(req: ResolvedApk): File {
@@ -1257,10 +1286,20 @@ class Installer(
         scope.launch { delay(120_000); runCatching { if (file.exists()) file.delete() } }
     }
 
-    private fun cleanOldCache() {
+    fun pruneCache() {
         scope.launch {
             val cutoff = System.currentTimeMillis() - CACHE_EXPIRY_HOURS * 60L * 60L * 1000L
-            getBaseCacheDir().listFiles()?.forEach { f -> if (f.lastModified() < cutoff) runCatching { f.delete() } }
+            val files = getBaseCacheDir().listFiles()?.sortedByDescending { it.lastModified() } ?: return@launch
+            var kept = 0L
+            files.forEach { f ->
+                val expired = f.lastModified() < cutoff
+                val overCap = kept + f.length() > CACHE_MAX_BYTES
+                if (expired || overCap) {
+                    runCatching { f.delete() }
+                } else {
+                    kept += f.length()
+                }
+            }
         }
     }
 }

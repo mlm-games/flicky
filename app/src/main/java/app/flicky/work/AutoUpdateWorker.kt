@@ -14,6 +14,8 @@ import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.VariantSelector
 import app.flicky.install.Installer
+import app.flicky.install.TaskStage
+import app.flicky.notify.UpdateNotifications
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -25,6 +27,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.resume
 
 class AutoUpdateWorker(
@@ -39,9 +42,11 @@ class AutoUpdateWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
+            val overridesOnly = inputData.getBoolean(KEY_OVERRIDES_ONLY, false)
             val settingsState = settings.settingsFlow.first()
 
             if (!settingsState.autoUpdate) return@withContext Result.success()
+            if (overridesOnly && !settingsState.wifiOnly) return@withContext Result.success()
 
             val installed = installedRepo.getInstalledDetailed()
             val installedVc = installed.associate { it.packageName to it.versionCode }
@@ -55,6 +60,12 @@ class AutoUpdateWorker(
                 val cur = installedVc[app.packageName] ?: return@mapNotNull null
                 val pref = allPrefs[app.packageName] ?: AppUpdatePreference()
                 if (pref.ignoreUpdates) return@mapNotNull null
+
+                if (overridesOnly) {
+                    if (!pref.updateOverMetered) return@mapNotNull null
+                } else if (settingsState.wifiOnly && pref.updateOverMetered) {
+                    return@mapNotNull null
+                }
 
                 val variants = db.appDao().variantsFor(app.packageName)
                 val effectiveIgnoreUnstable = pref.ignoreUnstable ?: settingsState.ignoreUnstable
@@ -77,15 +88,24 @@ class AutoUpdateWorker(
             val queue = Channel<AppVariant>(Channel.UNLIMITED)
             candidates.forEach { (_, chosen) -> queue.trySend(chosen) }
             queue.close()
+            val updated = AtomicInteger()
+            val failed = AtomicInteger()
             coroutineScope {
                 repeat(Installer.BATCH_WORKERS) {
                     launch {
                         for (chosen in queue) {
-                            installer.install(chosen)
+                            val installed = installer.install(chosen)
+                            when {
+                                installed -> updated.incrementAndGet()
+                                installer.tasks.value[chosen.packageName] is TaskStage.NeedsConfirmation -> Unit
+                                else -> failed.incrementAndGet()
+                            }
                         }
                     }
                 }
             }
+            UpdateNotifications.notifyResult(applicationContext, updated.get(), failed.get())
+            installer.pruneCache()
             Result.success()
         } catch (e: Exception) {
             android.util.Log.e("AutoUpdateWorker", "Auto update failed", e)
@@ -114,18 +134,37 @@ class AutoUpdateWorker(
     }
 
     companion object {
-        private const val UNIQUE = "auto_update_worker"
+        private const val BULK_UNIQUE = "auto_update_worker"
+        private const val OVERRIDES_UNIQUE = "auto_update_metered_overrides"
+        private const val KEY_OVERRIDES_ONLY = "overrides_only"
 
-        fun enqueue(context: Context, wifiOnly: Boolean) {
+        fun enqueue(context: Context, wifiOnly: Boolean, hasMeteredOverrides: Boolean = false) {
+            val wm = WorkManager.getInstance(context)
+            val bulkNetwork = if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED
+            enqueueWork(wm, BULK_UNIQUE, bulkNetwork, overridesOnly = false)
+            if (wifiOnly && hasMeteredOverrides) {
+                enqueueWork(wm, OVERRIDES_UNIQUE, NetworkType.CONNECTED, overridesOnly = true)
+            } else {
+                wm.cancelUniqueWork(OVERRIDES_UNIQUE)
+            }
+        }
+
+        private fun enqueueWork(
+            wm: WorkManager,
+            unique: String,
+            network: NetworkType,
+            overridesOnly: Boolean
+        ) {
             val constraints = Constraints.Builder()
-                .setRequiredNetworkType(if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED)
+                .setRequiredNetworkType(network)
                 .setRequiresBatteryNotLow(true)
                 .build()
             val work = OneTimeWorkRequestBuilder<AutoUpdateWorker>()
                 .setConstraints(constraints)
+                .setInputData(workDataOf(KEY_OVERRIDES_ONLY to overridesOnly))
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
                 .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(UNIQUE, ExistingWorkPolicy.REPLACE, work)
+            wm.enqueueUniqueWork(unique, ExistingWorkPolicy.REPLACE, work)
         }
     }
 }

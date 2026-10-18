@@ -24,6 +24,7 @@ data class AppUpdatePreference(
     val preferredRepoUrl: String? = null,
     val lockToRepo: Boolean = true,
     val ignoreUnstable: Boolean? = null,
+    val updateOverMetered: Boolean = false,
 )
 
 @Serializable

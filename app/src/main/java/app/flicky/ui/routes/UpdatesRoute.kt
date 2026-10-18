@@ -20,9 +20,11 @@ interface UpdatesActions {
     fun confirmOne(packageName: String)
     fun cancelOne(packageName: String)
     fun openDetails(app: FDroidApp)
+    fun openApp(app: FDroidApp)
     fun ignoreThisVersion(packageName: String, versionCode: Long)
     fun ignoreAll(app: FDroidApp)
     fun stopIgnoring(app: FDroidApp)
+    fun setUpdateOverMetered(packageName: String, enabled: Boolean)
     fun cancelBatch()
 }
 
@@ -157,12 +159,17 @@ fun UpdatesRoute(
 
             override fun openDetails(app: FDroidApp) = onOpenDetails(app.packageName)
 
+            override fun openApp(app: FDroidApp) = installer.open(app.packageName)
+
             override fun ignoreThisVersion(packageName: String, versionCode: Long) =
                 vm.ignoreThisVersion(packageName, versionCode)
 
             override fun ignoreAll(app: FDroidApp) = vm.ignoreAllUpdates(app)
 
             override fun stopIgnoring(app: FDroidApp) = vm.stopIgnoring(app)
+
+            override fun setUpdateOverMetered(packageName: String, enabled: Boolean) =
+                vm.setUpdateOverMetered(packageName, enabled)
 
             override fun cancelBatch() {
                 batchUpdateJob?.cancel()

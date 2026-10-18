@@ -28,6 +28,7 @@ import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.AppUpdatePreference
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.helper.DeviceUtils
+import app.flicky.helper.rememberUnmeteredConnection
 import app.flicky.install.Installer
 import org.koin.compose.koinInject
 import app.flicky.install.TaskStage
@@ -59,6 +60,11 @@ fun UpdatesScreen(
     val suppressed = ui.suppressed
     var showIgnored by rememberSaveable { mutableStateOf(false) }
     var showInstalled by rememberSaveable { mutableStateOf(false) }
+
+    val settingsState by settings.settingsFlow.collectAsState(initial = AppSettings())
+    val unmetered = rememberUnmeteredConnection()
+    val waitingForWifi = settingsState.autoUpdate && settingsState.wifiOnly &&
+            !unmetered && ui.updates.isNotEmpty()
 
     LaunchedEffect(suppressed) {
         if (suppressed.isEmpty() && showIgnored) showIgnored = false
@@ -145,6 +151,12 @@ fun UpdatesScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize()
         ) {
+            if (waitingForWifi) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    WaitingForWifiBanner()
+                }
+            }
+
             if (errorCount > 0 && !dismissedErrors) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     ErrorBanner(
@@ -293,7 +305,6 @@ fun UpdatesScreen(
         }
     }
 
-    val settingsState by settings.settingsFlow.collectAsState(initial = AppSettings())
     Box(Modifier.fillMaxSize()) {
         DebugOverlay(visible = settingsState.showDebugInfo)
     }
@@ -378,6 +389,9 @@ private fun UpdateCard(
                         },
                         onIgnoreAll = { actions.ignoreAll(app) },
                         onStopIgnoring = { actions.stopIgnoring(app) },
+                        onToggleUpdateOverMetered = {
+                            actions.setUpdateOverMetered(app.packageName, it)
+                        },
                         isTV = isTV
                     )
                 } else {
@@ -464,20 +478,58 @@ private fun UpdateCard(
                     }
                 }
             } else if (!isIgnored) {
-                Button(
-                    onClick = { actions.updateOne(app) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusProperties { canFocus = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorScheme.primary,
-                        contentColor = colorScheme.onPrimary
-                    ),
-                    enabled = stage !is TaskStage.Finished || !stage.success
-                ) {
-                    Text(stringResource(R.string.action_update))
+                if (stage is TaskStage.Finished && stage.success) {
+                    OutlinedButton(
+                        onClick = { actions.openApp(app) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusProperties { canFocus = true }
+                    ) {
+                        Text(stringResource(R.string.action_open))
+                    }
+                } else {
+                    Button(
+                        onClick = { actions.updateOne(app) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusProperties { canFocus = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorScheme.primary,
+                            contentColor = colorScheme.onPrimary
+                        ),
+                        enabled = stage !is TaskStage.Finished || !stage.success
+                    ) {
+                        Text(stringResource(R.string.action_update))
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun WaitingForWifiBanner() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = colorScheme.surfaceVariant.copy(alpha = 0.6f),
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                Icons.Default.WifiOff,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = colorScheme.onSurfaceVariant
+            )
+            Text(
+                stringResource(R.string.waiting_for_wifi),
+                style = typography.bodySmall,
+                color = colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -531,6 +583,7 @@ private fun IgnoreMenu(
     onIgnoreThisVersion: () -> Unit,
     onIgnoreAll: () -> Unit,
     onStopIgnoring: () -> Unit,
+    onToggleUpdateOverMetered: (Boolean) -> Unit,
     isTV: Boolean
 ) {
     var open by remember { mutableStateOf(false) }
@@ -580,6 +633,17 @@ private fun IgnoreMenu(
                     }
                 )
             }
+
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.update_over_metered)) },
+                trailingIcon = if (pref?.updateOverMetered == true) {
+                    { Icon(Icons.Default.Check, contentDescription = null) }
+                } else null,
+                onClick = {
+                    open = false
+                    onToggleUpdateOverMetered(pref?.updateOverMetered != true)
+                }
+            )
         }
     }
 }

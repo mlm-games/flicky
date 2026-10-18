@@ -220,4 +220,12 @@ class UpdatesViewModel(
             }
         }
     }
+
+    fun setUpdateOverMetered(packageName: String, enabled: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            settings.updateAppUpdatePreference(packageName) {
+                it.copy(updateOverMetered = enabled)
+            }
+        }
+    }
 }

@@ -7,6 +7,7 @@ import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.SupportDevelopmentAction
 import app.flicky.di.appModule
 import app.flicky.migration.PreferencesMigration
+import app.flicky.notify.UpdateNotifications
 import app.flicky.work.SyncScheduler
 import io.github.mlmgames.settings.core.actions.ActionRegistry
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +33,8 @@ class FlickyApplication : Application() {
         ActionRegistry.register(SupportDevelopmentAction::class) {
             koin.get<SettingsActions>().openSupportDevelopment()
         }
+
+        UpdateNotifications.ensureChannel(this)
 
         CoroutineScope(Dispatchers.IO).launch {
             delay(500)

@@ -391,4 +391,13 @@
         <item>@string/trust_custom_ca</item>
         <item>@string/trust_insecure_http</item>
     </string-array>
+
+    <string name="notification_channel_updates">App updates</string>
+    <string name="notification_channel_updates_desc">Results of automatic app updates</string>
+    <string name="notification_updated">Updated %1$d apps</string>
+    <string name="notification_updated_and_failed">Updated %1$d apps, %2$d failed</string>
+    <string name="notification_update_failed">Update failed for %1$d apps</string>
+    <string name="waiting_for_wifi">Updates will install when Wi-Fi is available</string>
+    <string name="error_not_enough_storage">Not enough storage. Free up about %1$s to install.</string>
+    <string name="update_over_metered">Update over mobile data</string>
 </resources>

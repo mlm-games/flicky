@@ -1,10 +1,14 @@
 package app.flicky
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Scaffold
@@ -35,6 +39,7 @@ import app.flicky.viewmodel.SettingsViewModel
 import app.flicky.work.SyncScheduler
 import coil.Coil
 import coil.ImageLoader
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.compose.koinInject
@@ -45,6 +50,17 @@ class MainActivity : AppCompatActivity() {
     private val httpClients: HttpClientProvider by inject()
 
     private val settingsRepository: SettingsRepository by inject()
+
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    private fun maybeRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     private fun configureCoil(failOnTrustErrors: Boolean = false) {
         runCatching {
@@ -59,6 +75,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun Intent.deepLinkPackageName(): String? = data?.deepLinkPackageName()
 
+    private fun Intent.isUpdatesDeepLink(): Boolean {
+        val uri = data ?: return false
+        return uri.scheme.equals("flicky", ignoreCase = true) &&
+            uri.host.equals("updates", ignoreCase = true)
+    }
+
     private fun Uri.deepLinkPackageName(): String? = when {
         scheme.equals("https", ignoreCase = true) &&
             host.equals("f-droid.org", ignoreCase = true) -> {
@@ -69,6 +91,13 @@ class MainActivity : AppCompatActivity() {
         scheme.equals("fdroidrepos", ignoreCase = true) ->
             host?.takeIf { it.isNotBlank() }
 
+        scheme.equals("market", ignoreCase = true) ->
+            getQueryParameter("id")?.takeIf { it.isNotBlank() }
+
+        scheme.equals("https", ignoreCase = true) &&
+            host.equals("play.google.com", ignoreCase = true) ->
+            getQueryParameter("id")?.takeIf { it.isNotBlank() }
+
         else -> null
     }
 
@@ -77,6 +106,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val initialPackage = intent.deepLinkPackageName()
+        val initialUpdates = intent.isUpdatesDeepLink()
 
         configureCoil()
 
@@ -84,6 +114,11 @@ class MainActivity : AppCompatActivity() {
             settingsRepository.settingsFlow.collect { settings ->
                 applyAppLocale(settings.language.languageTag)
             }
+        }
+
+        lifecycleScope.launch {
+            val settings = settingsRepository.settingsFlow.first()
+            if (settings.autoUpdate) maybeRequestNotificationPermission()
         }
 
         setContent {
@@ -102,13 +137,20 @@ class MainActivity : AppCompatActivity() {
             val dynamicColors = settingsState.dynamicTheme
 
             val backStack = rememberNavBackStack(
-                if (initialPackage != null) NavScreen.Detail(initialPackage) else NavScreen.Browse
+                when {
+                    initialUpdates -> NavScreen.Updates
+                    initialPackage != null -> NavScreen.Detail(initialPackage)
+                    else -> NavScreen.Browse
+                }
             )
 
             DisposableEffect(Unit) {
                 val listener = Consumer<Intent> { newIntent ->
-                    val pkg = newIntent.deepLinkPackageName()
-                    pkg?.let { backStack.add(NavScreen.Detail(it)) }
+                    when {
+                        newIntent.isUpdatesDeepLink() -> backStack.add(NavScreen.Updates)
+                        else -> newIntent.deepLinkPackageName()
+                            ?.let { backStack.add(NavScreen.Detail(it)) }
+                    }
                 }
                 addOnNewIntentListener(listener)
                 onDispose { removeOnNewIntentListener(listener) }
