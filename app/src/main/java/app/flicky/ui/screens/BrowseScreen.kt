@@ -57,6 +57,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -67,12 +68,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -80,6 +85,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.paging.compose.LazyPagingItems
 import app.flicky.R
 import app.flicky.data.local.AppDao
@@ -99,6 +107,8 @@ import app.flicky.ui.components.VoiceSearchButton
 import app.flicky.ui.components.AdaptiveAppCard
 import app.flicky.ui.components.global.FlickyDialog
 import app.flicky.viewmodel.UiText
+import com.theonionsarewatching.yapchik.SoftkeyMode
+import com.theonionsarewatching.yapchik.Softkeys
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -132,6 +142,7 @@ fun BrowseScreen(
     val widthDp = LocalConfiguration.current.screenWidthDp
     val animatedProgress by animateFloatAsState(targetValue = progress, label = "sync_progress_anim")
     var menuOpen by remember { mutableStateOf(false) }
+    var searchOpen by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     var showSortDialog by remember { mutableStateOf(false) }
     val s by settings.settingsFlow.collectAsState(initial = AppSettings())
@@ -143,6 +154,26 @@ fun BrowseScreen(
     var installVariants by remember { mutableStateOf<List<AppVariant>>(emptyList()) }
 
     val resolvedError = errorMessage?.asString()
+    val activity = LocalContext.current as? android.app.Activity
+    val popupOffset = with(LocalDensity.current) {
+        IntOffset(-8.dp.roundToPx(), -54.dp.roundToPx())
+    }
+
+    DisposableEffect(activity) {
+        val softkeys = activity?.let { Softkeys.of(it) }
+        softkeys?.set {
+            screenMode = SoftkeyMode.ON
+            left("Search") {
+                searchOpen = true
+                menuOpen = false
+            }
+            right("Options") {
+                menuOpen = !menuOpen
+                searchOpen = false
+            }
+        }
+        onDispose { softkeys?.clear() }
+    }
 
     fun onShowInstallFrom(app: FDroidApp) {
         installFromTarget = app
@@ -165,30 +196,30 @@ fun BrowseScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             Column {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                if (searchOpen) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.surfaceContainerLow
                     ) {
-                        TvAwareDockedSearchBar(
-                            query = query,
-                            isTv = isTv,
-                            onImmediateChange = onSearchChange,
-                            onCommit = onSearchChange,
-                            // (focus) hide nested mic on TV; show external one
-                            includeVoiceTrailing = !isTv,
-                            modifier = Modifier.weight(1f),
-                        )
-                        if (isTv) {
-                            VoiceSearchButton(
-                                onResult = { onSearchChange(it) }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            TvAwareDockedSearchBar(
+                                query = query,
+                                isTv = isTv,
+                                onImmediateChange = onSearchChange,
+                                onCommit = onSearchChange,
+                                onClose = { searchOpen = false },
+                                includeVoiceTrailing = !isTv,
+                                modifier = Modifier.weight(1f),
                             )
+                            if (isTv) {
+                                VoiceSearchButton(onResult = { onSearchChange(it) })
+                            }
                         }
                     }
                 }
@@ -247,36 +278,6 @@ fun BrowseScreen(
                         Box {
                             IconButton(onClick = { menuOpen = true }) {
                                 Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
-                            }
-                            DropdownMenu(
-                                expanded = menuOpen,
-                                containerColor = MaterialTheme.colorScheme.background,
-                                onDismissRequest = { menuOpen = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.force_sync)) },
-                                    onClick = {
-                                        menuOpen = false
-                                        onForceSyncClick()
-                                    },
-                                    leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null) }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.clear_all_apps)) },
-                                    onClick = {
-                                        menuOpen = false
-                                        onClearAppsClick()
-                                    },
-                                    leadingIcon = { Icon(Icons.Default.ClearAll, contentDescription = null) }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.nav_categories)) },
-                                    onClick = {
-                                        menuOpen = false
-                                        onCategoriesClick(null)
-                                    },
-                                    leadingIcon = { Icon(Icons.Default.Category, contentDescription = null) }
-                                )
                             }
                         }
                     }
@@ -415,6 +416,40 @@ fun BrowseScreen(
                     installer.cancel(pkg)
                 }
             )
+        }
+    }
+
+    if (menuOpen) {
+        Popup(
+            alignment = Alignment.BottomEnd,
+            offset = popupOffset,
+            onDismissRequest = { menuOpen = false },
+            properties = PopupProperties(focusable = true)
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.background,
+                shape = MaterialTheme.shapes.medium,
+                tonalElevation = 6.dp,
+                shadowElevation = 6.dp
+            ) {
+                Column {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.force_sync)) },
+                        onClick = { menuOpen = false; onForceSyncClick() },
+                        leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.clear_all_apps)) },
+                        onClick = { menuOpen = false; onClearAppsClick() },
+                        leadingIcon = { Icon(Icons.Default.ClearAll, contentDescription = null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.nav_categories)) },
+                        onClick = { menuOpen = false; onCategoriesClick(null) },
+                        leadingIcon = { Icon(Icons.Default.Category, contentDescription = null) }
+                    )
+                }
+            }
         }
     }
 
@@ -581,6 +616,7 @@ private fun TvAwareDockedSearchBar(
     isTv: Boolean,
     onImmediateChange: (String) -> Unit,
     onCommit: (String) -> Unit,
+    onClose: () -> Unit,
     includeVoiceTrailing: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
@@ -588,9 +624,16 @@ private fun TvAwareDockedSearchBar(
     LaunchedEffect(query) { if (query != localQuery) localQuery = query }
 
     var active by rememberSaveable { mutableStateOf(false) }
+    val searchFocusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val okKeys = remember { setOf(Key.Enter, Key.NumPadEnter, Key.DirectionCenter) }
+
+    LaunchedEffect(Unit) {
+        active = true
+        searchFocusRequester.requestFocus()
+        keyboard?.show()
+    }
 
     val onActiveChange: (Boolean) -> Unit = { isActive ->
         active = isActive
@@ -618,6 +661,7 @@ private fun TvAwareDockedSearchBar(
                     active = false
                     keyboard?.hide()
                     focusManager.clearFocus()
+                    onClose()
                 },
                 expanded = false,
                 onExpandedChange = onActiveChange,
@@ -666,7 +710,9 @@ private fun TvAwareDockedSearchBar(
                     focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
-                modifier = Modifier.fillMaxWidth(1f)
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .focusRequester(searchFocusRequester)
             )
         },
         expanded = false,
@@ -679,8 +725,8 @@ private fun TvAwareDockedSearchBar(
                         active = true; keyboard?.show(); true
                     }
 
-                    isTv && active && e.type == KeyEventType.KeyDown && e.key == Key.Back -> {
-                        active = false; keyboard?.hide(); true
+                    e.type == KeyEventType.KeyDown && e.key == Key.Back -> {
+                        active = false; keyboard?.hide(); onClose(); true
                     }
 
                     else -> false
