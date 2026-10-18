@@ -138,7 +138,7 @@ fun MobileMainScaffold(
         Scaffold(
             bottomBar = {
                 NavigationBar(
-                    modifier = Modifier.height(72.dp),
+                    modifier = Modifier.height(64.dp),
                     windowInsets = WindowInsets(0),
                     containerColor =
                         colorScheme.surfaceContainerLow,
