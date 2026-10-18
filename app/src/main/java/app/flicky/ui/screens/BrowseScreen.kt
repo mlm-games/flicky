@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Category
@@ -67,13 +68,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -99,6 +102,9 @@ import app.flicky.ui.components.VoiceSearchButton
 import app.flicky.ui.components.AdaptiveAppCard
 import app.flicky.ui.components.global.FlickyDialog
 import app.flicky.viewmodel.UiText
+import app.flicky.helper.RequestFocusOnKey
+import app.flicky.helper.TvFocusConfig
+import app.flicky.helper.tvFocusRing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -137,6 +143,17 @@ fun BrowseScreen(
     val s by settings.settingsFlow.collectAsState(initial = AppSettings())
 
     var lastFocusedKey by rememberSaveable { mutableStateOf<String?>(null) }
+    var tvSearchActive by remember { mutableStateOf(false) }
+    val sortChipFocusRequester = remember { FocusRequester() }
+
+    if (isTv) {
+        RequestFocusOnKey(
+            key = apps.itemCount,
+            focusRequester = sortChipFocusRequester,
+            enabled = lastFocusedKey == null && !tvSearchActive && query.isEmpty() && apps.itemCount == 0,
+            delayMs = TvFocusConfig.PRIMARY_FOCUS_DELAY
+        )
+    }
 
     val scope = rememberCoroutineScope()
     var installFromTarget by remember { mutableStateOf<FDroidApp?>(null) }
@@ -181,9 +198,9 @@ fun BrowseScreen(
                             isTv = isTv,
                             onImmediateChange = onSearchChange,
                             onCommit = onSearchChange,
-                            // (focus) hide nested mic on TV; show external one
                             includeVoiceTrailing = !isTv,
                             modifier = Modifier.weight(1f),
+                            onActiveChangeExternal = { tvSearchActive = it }
                         )
                         if (isTv) {
                             VoiceSearchButton(
@@ -228,14 +245,18 @@ fun BrowseScreen(
                                         )
                                     }
                                 }
-                            }
+                            },
+                            modifier = Modifier
+                                .focusRequester(sortChipFocusRequester)
+                                .tvFocusRing()
                         )
 
                         Spacer(Modifier.weight(1f))
 
                         IconButton(
                             onClick = onSyncClick,
-                            enabled = !isSyncing
+                            enabled = !isSyncing,
+                            modifier = Modifier.tvFocusRing(shape = CircleShape)
                         ) {
                             if (isSyncing) {
                                 LoadingIndicator(modifier = Modifier.size(24.dp))
@@ -245,7 +266,10 @@ fun BrowseScreen(
                         }
 
                         Box {
-                            IconButton(onClick = { menuOpen = true }) {
+                            IconButton(
+                                onClick = { menuOpen = true },
+                                modifier = Modifier.tvFocusRing(shape = CircleShape)
+                            ) {
                                 Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
                             }
                             DropdownMenu(
@@ -337,9 +361,17 @@ fun BrowseScreen(
                     ) {
                         items(apps.itemCount, key = { idx -> apps[idx]?.packageName ?: "placeholder_$idx" }) { idx ->
                             apps[idx]?.let { app ->
+                                val key = app.packageName
                                 AppListRow(
                                     app = app,
-                                    onClick = { onAppClick(app) },
+                                    autofocus = isTv && !tvSearchActive && query.isEmpty() && (
+                                        lastFocusedKey == key ||
+                                            (lastFocusedKey == null && idx == 0)
+                                        ),
+                                    onClick = {
+                                        lastFocusedKey = key
+                                        onAppClick(app)
+                                    },
                                     onLongClick = { onShowInstallFrom(app) }
                                 )
                             }
@@ -367,7 +399,10 @@ fun BrowseScreen(
                                 val key = app.packageName
                                 AdaptiveAppCard(
                                     app = app,
-                                    autofocus = (lastFocusedKey == key),
+                                    autofocus = isTv && !tvSearchActive && query.isEmpty() && (
+                                        lastFocusedKey == key ||
+                                            (lastFocusedKey == null && idx == 0)
+                                        ),
                                     onClick = {
                                         lastFocusedKey = key
                                         onAppClick(app)
@@ -583,20 +618,20 @@ private fun TvAwareDockedSearchBar(
     onCommit: (String) -> Unit,
     includeVoiceTrailing: Boolean = true,
     modifier: Modifier = Modifier,
+    onActiveChangeExternal: (Boolean) -> Unit = {},
 ) {
     var localQuery by rememberSaveable { mutableStateOf(query) }
     LaunchedEffect(query) { if (query != localQuery) localQuery = query }
 
     var active by rememberSaveable { mutableStateOf(false) }
     val keyboard = LocalSoftwareKeyboardController.current
-    val focusManager = LocalFocusManager.current
     val okKeys = remember { setOf(Key.Enter, Key.NumPadEnter, Key.DirectionCenter) }
 
     val onActiveChange: (Boolean) -> Unit = { isActive ->
         active = isActive
+        onActiveChangeExternal(isActive)
         if (!isActive) {
             keyboard?.hide()
-            focusManager.clearFocus()
         }
     }
 
@@ -616,8 +651,8 @@ private fun TvAwareDockedSearchBar(
                 onSearch = {
                     onCommit(localQuery)
                     active = false
+                    onActiveChangeExternal(false)
                     keyboard?.hide()
-                    focusManager.clearFocus()
                 },
                 expanded = false,
                 onExpandedChange = onActiveChange,
@@ -673,14 +708,25 @@ private fun TvAwareDockedSearchBar(
         onExpandedChange = onActiveChange,
         modifier = modifier
             .fillMaxWidth()
+            .onFocusChanged { state ->
+                if (isTv && !active && (state.isFocused || state.hasFocus)) {
+                    keyboard?.hide()
+                }
+            }
             .onPreviewKeyEvent { e ->
                 when {
                     isTv && !active && e.type == KeyEventType.KeyDown && e.key in okKeys -> {
-                        active = true; keyboard?.show(); true
+                        active = true
+                        onActiveChangeExternal(true)
+                        keyboard?.show()
+                        true
                     }
 
                     isTv && active && e.type == KeyEventType.KeyDown && e.key == Key.Back -> {
-                        active = false; keyboard?.hide(); true
+                        active = false
+                        onActiveChangeExternal(false)
+                        keyboard?.hide()
+                        true
                     }
 
                     else -> false
@@ -695,16 +741,32 @@ private fun TvAwareDockedSearchBar(
 }
 
 @Composable
-private fun AppListRow(app: FDroidApp, onClick: () -> Unit, onLongClick: () -> Unit) {
+private fun AppListRow(
+    app: FDroidApp,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    autofocus: Boolean = false
+) {
     val installedRepo: InstalledAppsRepository = koinInject()
+    val focusRequester = remember { FocusRequester() }
+    var focused by remember { mutableStateOf(false) }
+
+    RequestFocusOnKey(
+        key = app.packageName,
+        focusRequester = focusRequester,
+        enabled = autofocus,
+        delayMs = TvFocusConfig.PRIMARY_FOCUS_DELAY
+    )
 
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onSurface
+            containerColor = if (focused) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = if (focused) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
         ),
         modifier = Modifier
             .fillMaxWidth()
+            .focusRequester(focusRequester)
+            .onFocusChanged { focused = it.isFocused || it.hasFocus }
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
     ) {
         Row(

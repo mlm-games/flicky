@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.flicky.R
+import app.flicky.helper.tvFocusRing
 
 
 @Composable
@@ -76,7 +77,8 @@ private fun NavItem(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = 6.dp)
+            .tvFocusRing(),
         colors = ButtonDefaults.filledTonalButtonColors(
             containerColor = if (selected) colors.primaryContainer else colors.surfaceVariant,
             contentColor = if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant

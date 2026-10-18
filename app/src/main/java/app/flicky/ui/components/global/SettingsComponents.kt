@@ -20,14 +20,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.flicky.helper.DeviceUtils
 
 /**
  * TV-friendly setting section wrapper.
@@ -143,6 +146,7 @@ fun SettingsToggle(
     enabled: Boolean = true
 ) {
     val stateDesc = if (isChecked) "On" else "Off"
+    val isTv = DeviceUtils.isTV(LocalContext.current.packageManager)
     SettingRowContainer(
         enabled = enabled,
         onClick = { onCheckedChange(!isChecked) },
@@ -178,7 +182,8 @@ fun SettingsToggle(
         Switch(
             checked = isChecked,
             onCheckedChange = { onCheckedChange(it) },
-            enabled = enabled
+            enabled = enabled,
+            modifier = if (isTv) Modifier.focusProperties { canFocus = false } else Modifier
         )
     }
 }
@@ -196,9 +201,10 @@ fun SettingsAction(
     buttonText: String = "Run",
     enabled: Boolean = true
 ) {
+    val isTv = DeviceUtils.isTV(LocalContext.current.packageManager)
     SettingRowContainer(
         enabled = enabled,
-        onClick = onClick, // whole row clickable
+        onClick = onClick,
         modifier = modifier
     ) {
         Column(
@@ -228,6 +234,7 @@ fun SettingsAction(
         Button(
             onClick = onClick,
             enabled = enabled,
+            modifier = if (isTv) Modifier.focusProperties { canFocus = false } else Modifier,
             colors = ButtonDefaults.buttonColors(
                 containerColor = colorScheme.primary,
                 contentColor = colorScheme.onPrimary,
@@ -281,12 +288,12 @@ private fun SettingRowContainer(
         enabled = enabled,
         shape = shape,
         color = containerColor,
-        border = BorderStroke(1.dp, borderColor),
+        border = BorderStroke(if (focused && enabled) 2.dp else 1.dp, borderColor),
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 10.dp, vertical = 4.dp)
             .scale(scale)
-            .onFocusChanged { focused = it.isFocused }
+            .onFocusChanged { focused = it.isFocused || it.hasFocus }
             .semantics(mergeDescendants = true) {
                 if (role != null) this.role = role
             },

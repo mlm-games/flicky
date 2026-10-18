@@ -28,6 +28,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
@@ -96,6 +98,7 @@ import app.flicky.ui.components.global.SettingsSection
 import app.flicky.ui.components.global.SettingsToggle
 import app.flicky.ui.components.global.SliderSettingDialog
 import app.flicky.ui.components.snackbar.SnackbarManager
+import app.flicky.helper.tvFocusRing
 import app.flicky.viewmodel.SettingsViewModel
 import io.github.mlmgames.settings.core.SettingField
 import io.github.mlmgames.settings.core.annotations.CategoryDefinition
@@ -320,12 +323,18 @@ fun SettingsScreen(vm: SettingsViewModel) {
                     )
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { isSearchActive = true }) {
+                        IconButton(
+                            onClick = { isSearchActive = true },
+                            modifier = Modifier.tvFocusRing(shape = CircleShape)
+                        ) {
                             Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
                         }
 
                         Box {
-                            IconButton(onClick = { showMoreMenu = true }) {
+                            IconButton(
+                                onClick = { showMoreMenu = true },
+                                modifier = Modifier.tvFocusRing(shape = CircleShape)
+                            ) {
                                 Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
                             }
                             DropdownMenu(
@@ -738,7 +747,9 @@ private fun RepoConfigCard(
                     Box {
                         IconButton(
                             onClick = { showMenu = true },
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier
+                                .size(36.dp)
+                                .tvFocusRing(shape = CircleShape)
                         ) {
                             Icon(
                                 Icons.Default.MoreVert,
@@ -809,7 +820,10 @@ private fun RepoConfigCard(
 
                     Switch(
                         checked = repo.enabled,
-                        onCheckedChange = { onToggle() }
+                        onCheckedChange = { onToggle() },
+                        modifier = Modifier.tvFocusRing(
+                            shape = RoundedCornerShape(16.dp)
+                        )
                     )
                 }
             }
@@ -826,7 +840,8 @@ private fun RepoConfigCard(
                         onClick = {
                             updateConfig(localConfig.copy(rotateMirrors = !localConfig.rotateMirrors))
                         },
-                        label = { Text(stringResource(R.string.rotate_mirrors)) }
+                        label = { Text(stringResource(R.string.rotate_mirrors)) },
+                        modifier = Modifier.tvFocusRing()
                     )
 
                     FilterChip(
@@ -834,7 +849,8 @@ private fun RepoConfigCard(
                         onClick = {
                             updateConfig(localConfig.copy(includeOnion = !localConfig.includeOnion))
                         },
-                        label = { Text(stringResource(R.string.use_onion)) }
+                        label = { Text(stringResource(R.string.use_onion)) },
+                        modifier = Modifier.tvFocusRing()
                     )
                 }
 
@@ -1055,7 +1071,10 @@ private fun AddRepoDialog(
                 ) {
                     Switch(
                         checked = allowInsecureHttp,
-                        onCheckedChange = { allowInsecureHttp = it }
+                        onCheckedChange = { allowInsecureHttp = it },
+                        modifier = Modifier.tvFocusRing(
+                            shape = RoundedCornerShape(16.dp)
+                        )
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(

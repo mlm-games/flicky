@@ -42,6 +42,7 @@ import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.helper.DeviceUtils
 import app.flicky.helper.RequestFocusOnKey
+import app.flicky.helper.TvFocusConfig
 import app.flicky.helper.rememberDebouncedFocusState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -201,6 +202,7 @@ fun TVAppCard(
         key = app.packageName,
         focusRequester = focusRequester,
         enabled = autofocus,
+        delayMs = TvFocusConfig.PRIMARY_FOCUS_DELAY
     )
 
     ElevatedCard(
