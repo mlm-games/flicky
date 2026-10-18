@@ -654,6 +654,13 @@ private fun TvAwareDockedSearchBar(
         }
     }
 
+    val submitQuery = {
+        // Physical keypad Enter does not always trigger InputField.onSearch;
+        // write the currently displayed text before notifying the host.
+        onImmediateChange(localQuery)
+        onCommit(localQuery)
+    }
+
     val colors1 = SearchBarDefaults.colors(
         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         dividerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
@@ -668,7 +675,7 @@ private fun TvAwareDockedSearchBar(
                     onImmediateChange(new)
                 },
                 onSearch = {
-                    onCommit(localQuery)
+                    submitQuery()
                     keyboard?.hide()
                 },
                 expanded = false,
@@ -740,7 +747,7 @@ private fun TvAwareDockedSearchBar(
                     }
 
                     e.type == KeyEventType.KeyDown && e.key in okKeys -> {
-                        onCommit(localQuery)
+                        submitQuery()
                         keyboard?.hide()
                         true
                     }

@@ -53,7 +53,7 @@ class BrowseViewModel(
     private val _uiState = MutableStateFlow(BrowseUiState())
     val uiState: StateFlow<BrowseUiState> = _uiState.asStateFlow()
 
-    val pagedApps: StateFlow<PagingData<FDroidApp>> =
+    val pagedApps: Flow<PagingData<FDroidApp>> =
         combine(
             _query.debounce(300),
             _sort,
@@ -64,7 +64,6 @@ class BrowseViewModel(
             repo.pagedAppsFlow(query, sort, reverseSort, hideAnti, showIncompat)
         }.flatMapLatest { it }
             .cachedIn(viewModelScope)
-            .stateIn(viewModelScope, SharingStarted.Lazily, PagingData.empty())
 
     init {
         viewModelScope.launch {
