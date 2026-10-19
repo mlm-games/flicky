@@ -34,11 +34,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -77,6 +79,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import app.flicky.R
 import app.flicky.data.local.RepoConfig
@@ -121,7 +124,11 @@ import kotlin.reflect.KClass
 
 @Composable
 @Suppress("NonObservableLocale")
-fun SettingsScreen(vm: SettingsViewModel) {
+fun SettingsScreen(
+    vm: SettingsViewModel,
+    pendingRepoUrl: String? = null,
+    onPendingRepoUrlConsumed: () -> Unit = {}
+) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val repos by vm.repositories.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
@@ -147,9 +154,17 @@ fun SettingsScreen(vm: SettingsViewModel) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var repoToDelete by remember { mutableStateOf<RepositoryInfo?>(null) }
     var showAddRepo by remember { mutableStateOf(false) }
+    var addRepoPrefillUrl by remember { mutableStateOf("") }
     var showImportDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
     var showMoreMenu by remember { mutableStateOf(false) }
+
+    LaunchedEffect(pendingRepoUrl) {
+        if (!pendingRepoUrl.isNullOrBlank()) {
+            addRepoPrefillUrl = pendingRepoUrl
+            showAddRepo = true
+        }
+    }
 
     val cfg = LocalConfiguration.current
 
@@ -551,7 +566,10 @@ fun SettingsScreen(vm: SettingsViewModel) {
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Button(
-                            onClick = { showAddRepo = true },
+                            onClick = {
+                                addRepoPrefillUrl = ""
+                                showAddRepo = true
+                            },
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null)
@@ -649,13 +667,20 @@ fun SettingsScreen(vm: SettingsViewModel) {
 
     if (showAddRepo) {
         AddRepoDialog(
-            onDismiss = { showAddRepo = false },
+            initialUrl = addRepoPrefillUrl,
+            onDismiss = {
+                showAddRepo = false
+                addRepoPrefillUrl = ""
+                onPendingRepoUrlConsumed()
+            },
             onAdd = { name, url, trustMode ->
                 scope.launch {
                     vm.addRepository(name, url, trustMode)
                     mirrorPolicyProvider.ensureDefault(url.trimEnd('/'))
                 }
                 showAddRepo = false
+                addRepoPrefillUrl = ""
+                onPendingRepoUrlConsumed()
             }
         )
     }
@@ -708,6 +733,7 @@ private fun RepoConfigCard(
 ) {
     var localConfig by remember(config) { mutableStateOf(config) }
     var showMenu by remember { mutableStateOf(false) }
+    var showAdvanced by remember { mutableStateOf(false) }
     var openStrategy by remember { mutableStateOf(false) }
     var openTrust by remember { mutableStateOf(false) }
 
@@ -763,6 +789,21 @@ private fun RepoConfigCard(
                             containerColor = colorScheme.background,
                             onDismissRequest = { showMenu = false }
                         ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.advanced)) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Tune,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                },
+                                onClick = {
+                                    showMenu = false
+                                    showAdvanced = true
+                                }
+                            )
+
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.test_ping)) },
                                 leadingIcon = {
@@ -988,16 +1029,188 @@ private fun RepoConfigCard(
             }
         }
     }
+
+    if (showAdvanced) {
+        AdvancedRepoDialog(
+            config = localConfig,
+            repoUrl = repo.url,
+            fingerprint = repo.signingKey,
+            onSave = { newConfig ->
+                updateConfig(newConfig)
+                showAdvanced = false
+            },
+            onDismiss = { showAdvanced = false }
+        )
+    }
+}
+
+@Composable
+private fun AdvancedRepoDialog(
+    config: RepoConfig,
+    repoUrl: String,
+    fingerprint: String,
+    onSave: (RepoConfig) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var user by remember { mutableStateOf(config.basicAuthUser) }
+    var password by remember { mutableStateOf(config.basicAuthPassword) }
+    var downloadBase by remember { mutableStateOf(config.downloadBase) }
+    var mirrors by remember { mutableStateOf(config.customMirrors) }
+    var newMirror by remember { mutableStateOf("") }
+
+    val hasFingerprint = fingerprint.isNotBlank()
+
+    FlickyDialog(
+        onDismissRequest = onDismiss,
+        title = stringResource(R.string.advanced),
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSave(
+                        config.copy(
+                            basicAuthUser = user.trim(),
+                            basicAuthPassword = password,
+                            downloadBase = downloadBase.trim().trimEnd('/'),
+                            customMirrors = mirrors
+                        )
+                    )
+                },
+                colors = ButtonDefaults.textButtonColors(contentColor = colorScheme.primary)
+            ) {
+                Text(stringResource(R.string.action_apply))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = colorScheme.onSurfaceVariant
+                )
+            ) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        }
+    ) {
+        Column {
+            Text(stringResource(R.string.basic_auth), style = typography.labelLarge)
+
+            Spacer(Modifier.height(6.dp))
+
+            OutlinedTextField(
+                value = user,
+                onValueChange = { user = it },
+                label = { Text(stringResource(R.string.username)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text(stringResource(R.string.password)) },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Text(stringResource(R.string.custom_mirrors), style = typography.labelLarge)
+
+            mirrors.forEach { mirror ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        mirror,
+                        style = typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(
+                        onClick = { mirrors = mirrors - mirror },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.remove),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(4.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = newMirror,
+                    onValueChange = { newMirror = it },
+                    label = { Text(stringResource(R.string.url)) },
+                    placeholder = { Text("https://example.com/fdroid/repo") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+
+                IconButton(
+                    onClick = {
+                        val candidate = newMirror.trim().trimEnd('/')
+                        if (candidate.isNotBlank() && !mirrors.contains(candidate)) {
+                            mirrors = mirrors + candidate
+                        }
+                        newMirror = ""
+                    },
+                    enabled = newMirror.isNotBlank(),
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = stringResource(R.string.action_add)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Text(stringResource(R.string.signer_fingerprint), style = typography.labelLarge)
+
+            Text(
+                if (hasFingerprint) fingerprint else stringResource(R.string.not_verified),
+                style = typography.bodySmall,
+                color = if (hasFingerprint) colorScheme.onSurfaceVariant else colorScheme.error
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Text(stringResource(R.string.download_base), style = typography.labelLarge)
+
+            Spacer(Modifier.height(6.dp))
+
+            OutlinedTextField(
+                value = downloadBase,
+                onValueChange = { downloadBase = it },
+                placeholder = { Text(repoUrl) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
 }
 
 @Composable
 private fun AddRepoDialog(
+    initialUrl: String = "",
     onDismiss: () -> Unit,
     onAdd: (String, String, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    var url by remember { mutableStateOf("") }
-    var allowInsecureHttp by remember { mutableStateOf(false) }
+    var url by remember(initialUrl) { mutableStateOf(initialUrl) }
+    var allowInsecureHttp by remember(initialUrl) {
+        mutableStateOf(initialUrl.startsWith("http://", ignoreCase = true))
+    }
 
     val normalizedUrl = url.trim()
     val isHttpRepo = normalizedUrl.startsWith("http://", ignoreCase = true)

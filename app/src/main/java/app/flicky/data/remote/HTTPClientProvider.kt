@@ -10,6 +10,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.CertificatePinner
 import okhttp3.Credentials
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import java.net.Authenticator
 import java.net.InetAddress
@@ -90,6 +91,8 @@ class DbHttpClientProvider(
         val pins: String,
         val caPem: String,
         val proxyKey: String,
+        val authUser: String,
+        val authPassword: String,
     )
 
     private val cache = ConcurrentHashMap<CacheKey, OkHttpClient>()
@@ -108,7 +111,7 @@ class DbHttpClientProvider(
         val proxyKey = proxyConfig?.cacheKey ?: "DIRECT"
 
         try {
-            val cfg = repoConfigDao.get(normalizedUrl) ?: RepoConfig(baseUrl = normalizedUrl)
+            val cfg = configFor(normalizedUrl) ?: RepoConfig(baseUrl = normalizedUrl)
 
             jvmProxyAuthenticator.current = proxyConfig
 
@@ -122,6 +125,8 @@ class DbHttpClientProvider(
                 pins = cfg.pins,
                 caPem = cfg.caPem,
                 proxyKey = proxyKey,
+                authUser = cfg.basicAuthUser,
+                authPassword = cfg.basicAuthPassword,
             )
 
             cache.getOrPut(key) {
@@ -140,6 +145,28 @@ class DbHttpClientProvider(
 
     override fun clientForSync(baseUrl: String): OkHttpClient = runBlocking {
         clientFor(baseUrl)
+    }
+
+    /**
+     * Exact config for a repo base URL, otherwise a config whose base URL contains
+     * the requested host (Coil asks for icons with a host-only URL).
+     */
+    private suspend fun configFor(normalizedUrl: String): RepoConfig? {
+        repoConfigDao.get(normalizedUrl)?.let { return it }
+
+        val target = normalizedUrl.toHttpUrlOrNull() ?: return null
+        if (target.encodedPath.isNotEmpty() && target.encodedPath != "/") return null
+
+        return runCatching {
+            repoConfigDao.all().firstOrNull { cfg ->
+                if (cfg.baseUrl == normalizedUrl) return@firstOrNull false
+                if (cfg.basicAuthUser.isBlank() && cfg.trustMode.equals("HttpsOnly", true)) {
+                    return@firstOrNull false
+                }
+                val url = cfg.baseUrl.toHttpUrlOrNull() ?: return@firstOrNull false
+                url.host == target.host && cfg.baseUrl.startsWith(normalizedUrl)
+            }
+        }.getOrNull()
     }
 
     private fun buildBaseClient(proxyConfig: ProxyConfig?): OkHttpClient {
@@ -200,7 +227,7 @@ class DbHttpClientProvider(
         val url = cfg.baseUrl.toHttpUrlOrNull()
             ?: return baseClient
 
-        return when (cfg.trustMode.lowercase()) {
+        val client = when (cfg.trustMode.lowercase()) {
             "httpsonly" -> {
                 if (!url.isHttps) {
                     throw TrustPolicyException("Repo ${cfg.baseUrl} requires HTTPS (trustMode=HttpsOnly)")
@@ -254,6 +281,44 @@ class DbHttpClientProvider(
             }
 
             else -> baseClient
+        }
+
+        val authInterceptor = basicAuthInterceptor(cfg) ?: return client
+        return client.newBuilder()
+            .addInterceptor(authInterceptor)
+            .build()
+    }
+
+    private fun basicAuthInterceptor(cfg: RepoConfig): Interceptor? {
+        val user = cfg.basicAuthUser.trim()
+        if (user.isEmpty()) return null
+
+        val header = Credentials.basic(user, cfg.basicAuthPassword)
+        val allowedHosts = buildSet {
+            cfg.baseUrl.toHttpUrlOrNull()?.host?.let { add(it) }
+            cfg.downloadBase.toHttpUrlOrNull()?.host?.let { add(it) }
+            cfg.customMirrors.forEach { mirror -> mirror.toHttpUrlOrNull()?.host?.let { add(it) } }
+        }
+
+        return Interceptor { chain ->
+            val request = chain.request()
+            val host = request.url.host
+            if (request.header("Authorization") != null || !isRepoHost(host, cfg, allowedHosts)) {
+                chain.proceed(request)
+            } else {
+                chain.proceed(
+                    request.newBuilder()
+                        .header("Authorization", header)
+                        .build()
+                )
+            }
+        }
+    }
+
+    private fun isRepoHost(host: String, cfg: RepoConfig, allowedHosts: Set<String>): Boolean {
+        if (host in allowedHosts) return true
+        return MirrorRegistry.mirrorUrls(cfg.baseUrl).any { mirror ->
+            mirror.toHttpUrlOrNull()?.host == host
         }
     }
 

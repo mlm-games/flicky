@@ -45,5 +45,16 @@ data class RepoConfig(
     val caPem: String = "",
 
     @ColumnInfo(name = "downloadBase")
-    val downloadBase: String = "" // empty => use baseUrl
+    val downloadBase: String = "", // empty => use baseUrl
+
+    // HTTP basic auth for private repos; empty user => disabled
+    @ColumnInfo(name = "basicAuthUser")
+    val basicAuthUser: String = "",
+
+    @ColumnInfo(name = "basicAuthPassword")
+    val basicAuthPassword: String = "",
+
+    // User-supplied mirrors, tried alongside the mirrors from the index
+    @ColumnInfo(name = "customMirrors")
+    val customMirrors: List<String> = emptyList()
 )

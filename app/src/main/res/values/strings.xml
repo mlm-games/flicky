@@ -405,4 +405,16 @@
     <string name="waiting_for_wifi">Updates will install when Wi-Fi is available</string>
     <string name="error_not_enough_storage">Not enough storage. Free up about %1$s to install.</string>
     <string name="update_over_metered">Update over mobile data</string>
+
+    <string name="technical_info">Technical info</string>
+    <string name="signer_fingerprint">Signer fingerprint</string>
+    <string name="apk_sha256">APK SHA-256</string>
+    <string name="permissions_header">Permissions</string>
+    <string name="not_verified">Not verified</string>
+    <string name="advanced">Advanced</string>
+    <string name="basic_auth">Basic auth</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="custom_mirrors">Custom mirrors</string>
+    <string name="download_base">Download base URL</string>
 </resources>

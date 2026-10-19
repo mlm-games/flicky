@@ -15,7 +15,9 @@ class DbMirrorPolicyProvider(
 ) : MirrorPolicyProvider {
 
     override suspend fun policyFor(baseUrl: String): MirrorPolicy = withContext(Dispatchers.IO) {
-        val cfg = dao.get(baseUrl.trim().trimEnd('/')) ?: RepoConfig(baseUrl = baseUrl.trim().trimEnd('/'))
+        val base = baseUrl.trim().trimEnd('/')
+        val cfg = dao.get(base) ?: RepoConfig(baseUrl = base)
+        MirrorRegistry.setCustomMirrors(base, cfg.customMirrors)
         MirrorPolicy(
             enabled = cfg.enabled,
             rotateMirrors = cfg.rotateMirrors,

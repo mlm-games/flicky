@@ -94,6 +94,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
 
                 <data android:scheme="fdroidrepos" />
+                <data android:scheme="fdroidrepo" />
             </intent-filter>
 
             <intent-filter>

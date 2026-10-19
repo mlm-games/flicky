@@ -443,17 +443,26 @@ class Installer(
         val sha256: String,
         val size: Long,
         val repoBase: String,
-        val trustMode: String
+        val trustMode: String,
+        val hasBasicAuth: Boolean = false,
+        val configBase: String = ""
     )
 
     private fun normalize(urlOrId: String) = urlOrId.trim().trimEnd('/')
+
+    private suspend fun repoConfigFor(baseUrl: String): RepoConfig? =
+        runCatching { db.repoConfigDao().get(baseUrl) }.getOrNull()
 
     private suspend fun resolve(app: FDroidApp): ResolvedApk? {
         val title = "${app.name} ${app.version}"
         val base = resolveBase(app.repositoryUrl.ifBlank { app.repository })
         val (dlBase, trustMode) = resolveDownloadBaseAndTrust(base)
         val urls = resolveUrls(dlBase, app.apkUrl)
-        return ResolvedApk(app.packageName, title, urls, app.sha256, app.size, dlBase, trustMode)
+        val cfg = repoConfigFor(base)
+        val hasBasicAuth = cfg?.basicAuthUser?.isNotBlank() == true
+        return ResolvedApk(
+            app.packageName, title, urls, app.sha256, app.size, dlBase, trustMode, hasBasicAuth, base
+        )
     }
 
     private suspend fun resolve(variant: AppVariant): ResolvedApk? {
@@ -461,15 +470,22 @@ class Installer(
         val base = resolveBase(variant.repositoryUrl)
         val (dlBase, trustMode) = resolveDownloadBaseAndTrust(base)
         val urls = resolveUrls(dlBase, variant.apkUrl)
-        return ResolvedApk(variant.packageName, title, urls, variant.sha256, variant.size, dlBase, trustMode)
+        val cfg = repoConfigFor(base)
+        val hasBasicAuth = cfg?.basicAuthUser?.isNotBlank() == true
+        return ResolvedApk(
+            variant.packageName, title, urls, variant.sha256, variant.size, dlBase, trustMode, hasBasicAuth, base
+        )
     }
 
     private suspend fun resolveDownloadBaseAndTrust(baseUrl: String): Pair<String, String> {
-        val cfg: RepoConfig? = runCatching { db.repoConfigDao().get(baseUrl) }.getOrNull()
+        val cfg: RepoConfig? = repoConfigFor(baseUrl)
         val dlBase = normalize(cfg?.downloadBase?.takeIf { it.isNotBlank() } ?: baseUrl)
         val trust = cfg?.trustMode ?: "HttpsOnly"
         return dlBase to trust
     }
+
+    private fun clientBaseFor(req: ResolvedApk): String =
+        if (req.hasBasicAuth && req.configBase.isNotBlank()) req.configBase else req.repoBase
 
     private suspend fun resolveUrls(repoBase: String, apkPathOrUrl: String): List<String> {
         if (apkPathOrUrl.startsWith("http://") || apkPathOrUrl.startsWith("https://")) {
@@ -586,18 +602,23 @@ class Installer(
         val proxyConfig = parseProxyConfig(appSettings)
         val proxyEnabled = proxyConfig != null
 
-        val preferred = preflightPickUrl(req.repoBase, req.urls)
+        val preferred = preflightPickUrl(clientBaseFor(req), req.urls)
         val tryUrls = if (preferred != null) listOf(preferred) + req.urls.filterNot { it == preferred } else req.urls
         val userAgent = "Flicky/${app.flicky.BuildConfig.VERSION_NAME} (${Build.MODEL}; ${Build.SUPPORTED_ABIS.joinToString()})"
 
         val mustUseProviderClient = proxyEnabled ||
+                req.hasBasicAuth ||
                 req.trustMode.equals("Pinned", true) ||
                 req.trustMode.equals("CustomCA", true) ||
                 req.trustMode.equals("InsecureHttp", true)
 
+        if (req.hasBasicAuth) {
+            DebugLog.log("Downloader", "Basic auth repo: streaming (DownloadManager cannot send credentials)")
+        }
+
         for (url in tryUrls) {
             if (mustUseProviderClient) {
-                val client = try { httpClients.clientFor(req.repoBase) } catch (e: ClientConfigurationException) {
+                val client = try { httpClients.clientFor(clientBaseFor(req)) } catch (e: ClientConfigurationException) {
                     DebugLog.log("Downloader", "TLS policy failed: ${e.message}")
                     throw e
                 } catch (e: Exception) {
@@ -664,7 +685,7 @@ class Installer(
             }
 
             DebugLog.log("Downloader", "Fallback to streaming for $url")
-            val client = try { httpClients.clientFor(req.repoBase) } catch (e: ClientConfigurationException) {
+            val client = try { httpClients.clientFor(clientBaseFor(req)) } catch (e: ClientConfigurationException) {
                 DebugLog.log("Downloader", "TLS policy failed: ${e.message}")
                 throw e
             } catch (e: Exception) {

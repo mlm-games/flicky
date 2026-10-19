@@ -166,6 +166,7 @@ fun AppDetailScreen(
 
     val izzyStatsRepo: IzzyStatsRepository = koinInject()
     var izzyStats by remember { mutableStateOf<IzzyDownloadStats?>(null) }
+    var showTechnicalInfo by remember { mutableStateOf(false) }
 
     LaunchedEffect(app.packageName) {
         izzyStats = runCatching { izzyStatsRepo.statsFor(app.packageName) }.getOrNull()
@@ -237,7 +238,8 @@ fun AppDetailScreen(
                     izzyStats = izzyStats,
                     plexusApp = plexusApp,
                     reproducibleBuildInfo = reproducibleBuildInfo,
-                    showReproducibleBadges = showReproducibleBadges
+                    showReproducibleBadges = showReproducibleBadges,
+                    onOpenTechnicalInfo = { showTechnicalInfo = true }
                 )
             } else {
                 MobileLayout(
@@ -261,10 +263,19 @@ fun AppDetailScreen(
                     izzyStats = izzyStats,
                     plexusApp = plexusApp,
                     reproducibleBuildInfo = reproducibleBuildInfo,
-                    showReproducibleBadges = showReproducibleBadges
+                    showReproducibleBadges = showReproducibleBadges,
+                    onOpenTechnicalInfo = { showTechnicalInfo = true }
                 )
             }
         }
+    }
+
+    if (showTechnicalInfo) {
+        TechnicalInfoDialog(
+            app = app,
+            variant = updateCandidate ?: variants.firstOrNull(),
+            onDismiss = { showTechnicalInfo = false }
+        )
     }
 
     val settingsState by settings.settingsFlow.collectAsState(initial = AppSettings())
@@ -296,6 +307,7 @@ private fun DesktopLayout(
     plexusApp: PlexusApp?,
     reproducibleBuildInfo: ReproducibleBuildInfo? = null,
     showReproducibleBadges: Boolean = false,
+    onOpenTechnicalInfo: () -> Unit = {},
 ) {
     var showPlexusDialog by remember { mutableStateOf(false) }
 
@@ -325,7 +337,7 @@ private fun DesktopLayout(
                     )
                 }
                 item { ChipsSection(app, installedVersionCode, onOpenCategory, onOpenAuthor) }
-                item { DetailsSection(app, izzyStats) }
+                item { DetailsSection(app, izzyStats, onOpenTechnicalInfo) }
                 if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
                 item { LinksSection(app, onPlexusClick = { showPlexusDialog = true }) }
             }
@@ -388,6 +400,7 @@ private fun MobileLayout(
     plexusApp: PlexusApp?,
     reproducibleBuildInfo: ReproducibleBuildInfo? = null,
     showReproducibleBadges: Boolean = false,
+    onOpenTechnicalInfo: () -> Unit = {},
 ) {
     var showPlexusDialog by remember { mutableStateOf(false) }
 
@@ -418,7 +431,7 @@ private fun MobileLayout(
         item { ChipsSection(app, installedVersionCode, onOpenCategory, onOpenAuthor) }
         if (app.antiFeatures.isNotEmpty()) item { AntiFeaturesSection(app.antiFeatures) }
         item { LinksSection(app, onPlexusClick = { showPlexusDialog = true }) }
-        item { DetailsSection(app, izzyStats) }
+        item { DetailsSection(app, izzyStats, onOpenTechnicalInfo) }
         item {
             RightPaneContent(
                 app = app,
@@ -692,13 +705,24 @@ private fun ChipsSection(
 }
 
 @Composable
-private fun DetailsSection(app: FDroidApp, izzyStats: IzzyDownloadStats?) {
+private fun DetailsSection(
+    app: FDroidApp,
+    izzyStats: IzzyDownloadStats?,
+    onOpenTechnicalInfo: () -> Unit
+) {
     Column {
         SectionTitle(stringResource(R.string.details))
         InfoRow(stringResource(R.string.package_name), app.packageName)
         InfoRow(stringResource(R.string.version_code), app.versionCode.toString())
         if (app.lastUpdated > 0) InfoRow(stringResource(R.string.updated), formatDate(app.lastUpdated))
         if (app.added > 0) InfoRow(stringResource(R.string.added), formatDate(app.added))
+
+        Spacer(Modifier.height(8.dp))
+
+        AssistChip(
+            onClick = onOpenTechnicalInfo,
+            label = { Text(stringResource(R.string.technical_info)) }
+        )
 
         Spacer(Modifier.height(12.dp))
 

@@ -27,6 +27,8 @@ fun Nav3Host(
     backStack: NavBackStack<NavKey>,
     browseViewModel: BrowseViewModel,
     settingsViewModel: SettingsViewModel,
+    pendingRepoUrl: String? = null,
+    onPendingRepoUrlConsumed: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
@@ -90,7 +92,11 @@ fun Nav3Host(
             }
 
             entry<NavScreen.Settings> {
-                SettingsScreen(vm = settingsViewModel)
+                SettingsScreen(
+                    vm = settingsViewModel,
+                    pendingRepoUrl = pendingRepoUrl,
+                    onPendingRepoUrlConsumed = onPendingRepoUrlConsumed
+                )
             }
 
             entry<NavScreen.Detail> { args ->

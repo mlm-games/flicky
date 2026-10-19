@@ -40,8 +40,32 @@ object MirrorRegistry {
     )
 
     private val repos = ConcurrentHashMap<String, Mirrors>()
+    private val customRepos = ConcurrentHashMap<String, List<String>>()
 
     private fun norm(url: String) = url.trim().trimEnd('/')
+
+    fun mirrorUrls(base: String): List<String> {
+        val b = norm(base)
+        val registered = repos[b]
+        return (customRepos[b].orEmpty() +
+                listOfNotNull(registered?.primary, registered?.canonicalBase) +
+                registered?.https.orEmpty() +
+                registered?.onion.orEmpty())
+            .filter { it.isNotBlank() }
+            .distinct()
+    }
+
+    /**
+     * Replace the user-supplied mirrors for a repository. These are merged into the
+     * candidate pool and are not touched by [register].
+     */
+    fun setCustomMirrors(base: String, urls: List<String>) {
+        val b = norm(base)
+        if (b.isBlank()) return
+
+        val normalized = urls.map(::norm).filter { it.isNotBlank() }.distinct()
+        if (normalized.isEmpty()) customRepos.remove(b) else customRepos[b] = normalized
+    }
 
     /**
      * Register mirrors for a repository.
@@ -75,12 +99,22 @@ object MirrorRegistry {
      * Compute ordered candidates based on strategy and onion preference.
      */
     fun candidates(base: String, includeOnion: Boolean, strategy: Strategy): List<String> {
-        val m = repos[norm(base)] ?: return listOf(norm(base))
+        val b = norm(base)
         // Deduplicate while preserving preference order
         fun dedup(list: List<String>) = list.asSequence().distinct().toList()
 
-        val https = m.https
-        val onion = if (includeOnion) m.onion else emptyList()
+        val custom = customRepos[b].orEmpty()
+        val customHttps = custom.filter { it.startsWith("https://", ignoreCase = true) }
+        val customOnion = if (includeOnion) {
+            custom.filterNot { it.startsWith("https://", ignoreCase = true) }
+        } else {
+            emptyList()
+        }
+
+        val m = repos[b] ?: return dedup(listOf(b) + customHttps + customOnion)
+
+        val https = dedup(m.https + customHttps)
+        val onion = if (includeOnion) dedup(m.onion + customOnion) else emptyList()
         val canonical = m.canonicalBase
         val primary = m.primary ?: canonical
         val lastGood = stateStore.getLastGood(m.canonicalBase)
@@ -107,8 +141,12 @@ object MirrorRegistry {
     fun markHealthy(base: String, url: String) {
         val b = norm(base)
         val u = norm(url)
-        val m = repos[b] ?: return
-        if (u == b || m.https.contains(u) || m.onion.contains(u)) {
+        val m = repos[b]
+        val known = u == b ||
+                customRepos[b].orEmpty().contains(u) ||
+                m?.https?.contains(u) == true ||
+                m?.onion?.contains(u) == true
+        if (known) {
             stateStore.putLastGood(b, u)
         }
     }
@@ -116,5 +154,6 @@ object MirrorRegistry {
     fun clear(base: String) {
         val b = norm(base)
         stateStore.clear(b)
+        customRepos.remove(b)
     }
 }

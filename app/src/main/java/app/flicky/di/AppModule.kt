@@ -59,6 +59,7 @@ val appModule = module {
             "flicky.db"
         )
             .fallbackToDestructiveMigration(true)
+            .addMigrations(AppDatabase.MIGRATION_12_13)
             .build()
 
         scope.launch {
