@@ -293,7 +293,7 @@ class FDroidApi(
         client: OkHttpClient
     ): FetchResult? {
         val candidates = indexCandidates(baseUrl)
-        val expectedFingerprint = storedFingerprint.takeIf { it.isNotEmpty() }
+        val expectedFingerprint = expectedSigningKey(baseUrl, storedFingerprint)
         val hasLocalData = storedTimestamp > 0 &&
                 runCatching { db.appDao().countForRepo(baseUrl) > 0 }.getOrDefault(false)
         var noSignedIndex = false
@@ -756,7 +756,7 @@ class FDroidApi(
                 IndexJarVerifier.verify(
                     jarFile,
                     IndexJarVerifier.INDEX_V1_JSON,
-                    storedFingerprint.takeIf { it.isNotEmpty() }
+                    expectedSigningKey(baseUrl, storedFingerprint)
                 ) { stream ->
                     InputStreamReader(stream, Charsets.UTF_8).use { isr ->
                         JsonReader(isr).use { reader ->
