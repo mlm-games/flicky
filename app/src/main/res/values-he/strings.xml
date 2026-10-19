@@ -347,6 +347,7 @@
     <plurals name="notification_updates_available_count">
         <item quantity="one">ניתן לעדכן %1$d אפליקציה</item>
         <item quantity="two">ניתן לעדכן %1$d אפליקציות</item>
+        <item quantity="many">ניתן לעדכן %1$d אפליקציות</item>
         <item quantity="other">ניתן לעדכן %1$d אפליקציות</item>
     </plurals>
     <string name="technical_info">מידע טכני</string>

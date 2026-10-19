@@ -1,6 +1,7 @@
 package app.flicky.notify
 
 import android.Manifest
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -21,10 +22,12 @@ object UpdateNotifications {
     private const val NOTIFICATION_ID = 1001
     private const val NOTIFICATION_ID_UPDATES_AVAILABLE = 1002
 
-    private fun canPost(context: Context): Boolean {
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
-                PackageManager.PERMISSION_GRANTED
+    private fun postNotification(context: Context, id: Int, notification: Notification) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) return
+        runCatching { NotificationManagerCompat.from(context).notify(id, notification) }
     }
 
     private fun updatesPendingIntent(context: Context): PendingIntent {
@@ -55,7 +58,6 @@ object UpdateNotifications {
 
     fun notifyResult(context: Context, updated: Int, failed: Int) {
         if (updated == 0 && failed == 0) return
-        if (!canPost(context)) return
         val text = when {
             updated > 0 && failed > 0 ->
                 context.getString(R.string.notification_updated_and_failed, updated, failed)
@@ -70,7 +72,7 @@ object UpdateNotifications {
             .setAutoCancel(true)
             .setOnlyAlertOnce(true)
             .build()
-        runCatching { NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification) }
+        postNotification(context, NOTIFICATION_ID, notification)
     }
 
     fun notifyUpdatesAvailable(context: Context, count: Int) {
@@ -78,7 +80,6 @@ object UpdateNotifications {
             cancelUpdatesAvailable(context)
             return
         }
-        if (!canPost(context)) return
         val text = context.resources.getQuantityString(
             R.plurals.notification_updates_available_count,
             count,
@@ -92,10 +93,7 @@ object UpdateNotifications {
             .setAutoCancel(true)
             .setOnlyAlertOnce(true)
             .build()
-        runCatching {
-            NotificationManagerCompat.from(context)
-                .notify(NOTIFICATION_ID_UPDATES_AVAILABLE, notification)
-        }
+        postNotification(context, NOTIFICATION_ID_UPDATES_AVAILABLE, notification)
     }
 
     fun cancelUpdatesAvailable(context: Context) {
