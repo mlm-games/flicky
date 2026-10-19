@@ -152,8 +152,16 @@ object MirrorRegistry {
     }
 
     fun clear(base: String) {
-        val b = norm(base)
-        stateStore.clear(b)
-        customRepos.remove(b)
+        clearLastGood(base)
+        clearCustomMirrors(base)
+    }
+
+    /** Drops the sticky last-good mirror, keeping user supplied custom mirrors. */
+    fun clearLastGood(base: String) {
+        stateStore.clear(norm(base))
+    }
+
+    fun clearCustomMirrors(base: String) {
+        customRepos.remove(norm(base))
     }
 }

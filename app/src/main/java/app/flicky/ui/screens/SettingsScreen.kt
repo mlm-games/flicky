@@ -550,7 +550,7 @@ fun SettingsScreen(
                             }
                         },
                         onForgetMirror = {
-                            MirrorRegistry.clear(base)
+                            MirrorRegistry.clearLastGood(base)
                             snackbarManager.show(context.getString(R.string.forgot_mirror, repo.name))
                         },
                         onDelete = {

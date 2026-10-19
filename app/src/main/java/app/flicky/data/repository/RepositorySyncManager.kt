@@ -83,14 +83,13 @@ class RepositorySyncManager(
             if (force) {
                 val storedRepos = runCatching { db.repositoryDao().getAll() }
                     .getOrDefault(emptyList())
-                    .filter { it.fingerprint.isNotEmpty() }
                 headersStore.clear()
                 dao.clear()
                 dao.clearVariants()
                 db.repositoryDao().clearAll()
                 runCatching {
                     val bases = settings.repositoriesFlow.first().map { it.url }
-                    bases.forEach { MirrorRegistry.clear(it) }
+                    bases.forEach { MirrorRegistry.clearLastGood(it) }
                 }
                 if (storedRepos.isNotEmpty()) {
                     db.withTransaction {

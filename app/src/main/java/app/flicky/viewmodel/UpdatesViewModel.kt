@@ -19,7 +19,6 @@ import app.flicky.install.TaskStage
 import app.flicky.notify.UpdateNotifications
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -90,14 +89,6 @@ class UpdatesViewModel(
                         }
                     }
                 }
-        }
-
-        viewModelScope.launch {
-            installer.tasks
-                .map { tasks -> tasks.values.count { it is TaskStage.Finished && it.success } }
-                .distinctUntilChanged()
-                .filter { it > 0 }
-                .collect { delay(500) }
         }
 
         viewModelScope.launch {

@@ -208,9 +208,18 @@ class MainActivity : AppCompatActivity() {
                             pendingRepoUrl = repoUrl
                         }
 
-                        newIntent.isUpdatesDeepLink() -> backStack.add(NavScreen.Updates)
-                        else -> newIntent.deepLinkPackageName()
-                            ?.let { backStack.add(NavScreen.Detail(it)) }
+                        newIntent.isUpdatesDeepLink() -> {
+                            if (backStack.lastOrNull() != NavScreen.Updates) {
+                                backStack.add(NavScreen.Updates)
+                            }
+                        }
+
+                        else -> newIntent.deepLinkPackageName()?.let { pkg ->
+                            val dest = NavScreen.Detail(pkg)
+                            if (backStack.lastOrNull() != dest) {
+                                backStack.add(dest)
+                            }
+                        }
                     }
                 }
                 addOnNewIntentListener(listener)
