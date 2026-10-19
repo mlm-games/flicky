@@ -247,7 +247,7 @@ data class AppSettings(
     val differentialSync: Boolean = true,
 
     @Persisted
-    val useEntryJson: Boolean = false,
+    val useEntryJson: Boolean = true,
 
     @Setting(
         titleKey = FlickySettingsKeys.SETTING_FAIL_ON_TRUST_ERRORS,

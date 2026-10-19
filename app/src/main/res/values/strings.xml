@@ -417,4 +417,11 @@
     <string name="password">Password</string>
     <string name="custom_mirrors">Custom mirrors</string>
     <string name="download_base">Download base URL</string>
+
+    <string name="repo_index_not_signed">%1$s index is not signed</string>
+    <string name="repo_index_signature_invalid">%1$s index signature is invalid</string>
+    <string name="repo_index_key_mismatch">%1$s signing key does not match the stored key</string>
+    <string name="repo_index_hash_mismatch">%1$s index file hash does not match the signed entry (%2$s)</string>
+    <string name="repo_index_missing">%1$s no longer provides a signed index</string>
+    <string name="repo_index_malformed">%1$s provided an invalid index file (%2$s)</string>
 </resources>

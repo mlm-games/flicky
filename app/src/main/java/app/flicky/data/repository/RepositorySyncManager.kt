@@ -46,6 +46,8 @@ class RepositorySyncManager(
         _state.value = block(_state.value)
     }
 
+    private val diffApplier = IndexDiffApplier(db)
+
     private val syncMutex = Mutex()
     @Volatile private var cancelRequested = false
 
@@ -79,6 +81,9 @@ class RepositorySyncManager(
             val repos = others + preferredList // preferred last => deterministic overwrite
 
             if (force) {
+                val storedRepos = runCatching { db.repositoryDao().getAll() }
+                    .getOrDefault(emptyList())
+                    .filter { it.fingerprint.isNotEmpty() }
                 headersStore.clear()
                 dao.clear()
                 dao.clearVariants()
@@ -86,6 +91,11 @@ class RepositorySyncManager(
                 runCatching {
                     val bases = settings.repositoriesFlow.first().map { it.url }
                     bases.forEach { MirrorRegistry.clear(it) }
+                }
+                if (storedRepos.isNotEmpty()) {
+                    db.withTransaction {
+                        storedRepos.forEach { row -> db.repositoryDao().upsert(row.copy(timestamp = 0L)) }
+                    }
                 }
             }
 
@@ -146,6 +156,12 @@ class RepositorySyncManager(
                             val errorMsg = "Network or parse error"
                             repoErrors.add(repo.name to errorMsg)
                             if (showDebug) DebugLog.log(TAG, "${repo.name} -> $errorMsg")
+                        }
+                        result.diff != null -> {
+                            val touched = diffApplier.apply(result.diff)
+                            totalApps += touched
+                            anySuccess = true
+                            if (showDebug) DebugLog.log(TAG, "${repo.name} diff applied: $touched packages")
                         }
                         result.modified || force -> {
                             db.withTransaction {

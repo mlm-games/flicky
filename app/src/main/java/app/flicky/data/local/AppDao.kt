@@ -38,6 +38,9 @@ interface AppDao {
     @Query("SELECT COUNT(*) FROM apps")
     suspend fun count(): Int
 
+    @Query("SELECT COUNT(*) FROM apps WHERE repositoryUrl = :repoUrl")
+    suspend fun countForRepo(repoUrl: String): Int
+
     @Query("SELECT * FROM apps WHERE name LIKE '%' || :q || '%' OR summary LIKE '%' || :q || '%' OR packageName LIKE '%' || :q || '%'")
     fun search(q: String): Flow<List<FDroidApp>>
 
@@ -48,10 +51,22 @@ interface AppDao {
     suspend fun upsertAll(apps: List<FDroidApp>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertApp(app: FDroidApp)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertVariants(variants: List<AppVariant>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertVariant(variant: AppVariant)
+
+    @Query("SELECT * FROM apps WHERE packageName = :pkg LIMIT 1")
+    suspend fun getApp(pkg: String): FDroidApp?
 
     @Query("SELECT * FROM app_variants WHERE packageName = :pkg ORDER BY repositoryName, versionCode DESC")
     suspend fun variantsFor(pkg: String): List<AppVariant>
+
+    @Query("SELECT * FROM app_variants WHERE packageName = :pkg AND repositoryUrl = :repoUrl ORDER BY versionCode DESC")
+    suspend fun variantsForRepo(pkg: String, repoUrl: String): List<AppVariant>
 
     @Query("SELECT * FROM app_variants WHERE packageName IN (:packageNames)")
     fun variantsForPackages(packageNames: List<String>): List<AppVariant>
@@ -65,8 +80,17 @@ interface AppDao {
     @Query("DELETE FROM apps WHERE repositoryUrl = :repoUrl")
     suspend fun deleteByRepositoryUrl(repoUrl: String)
 
+    @Query("DELETE FROM apps WHERE packageName = :pkg AND repositoryUrl = :repoUrl")
+    suspend fun deleteAppForRepo(pkg: String, repoUrl: String)
+
     @Query("DELETE FROM app_variants WHERE repositoryUrl = :repoUrl")
     suspend fun deleteVariantsByRepositoryUrl(repoUrl: String)
+
+    @Query("DELETE FROM app_variants WHERE packageName = :pkg AND repositoryUrl = :repoUrl")
+    suspend fun deleteVariantsForPackage(pkg: String, repoUrl: String)
+
+    @Query("DELETE FROM app_variants WHERE packageName = :pkg AND repositoryUrl = :repoUrl AND sha256 = :sha256 COLLATE NOCASE")
+    suspend fun deleteVariantBySha(pkg: String, repoUrl: String, sha256: String): Int
 
     @Query("SELECT MAX(versionCode) FROM app_variants WHERE packageName = :pkg AND isCompatible = 1")
     suspend fun maxCompatibleVersionCode(pkg: String): Int?
