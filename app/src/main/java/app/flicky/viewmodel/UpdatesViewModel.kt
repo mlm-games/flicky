@@ -1,5 +1,6 @@
 package app.flicky.viewmodel
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,9 +13,10 @@ import app.flicky.data.repository.AppUpdatePreference
 import app.flicky.data.repository.InstalledAppsRepository
 import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.SettingsRepository
-import app.flicky.data.repository.VariantSelector
+import app.flicky.data.repository.UpdatesCalculator
 import app.flicky.install.Installer
 import app.flicky.install.TaskStage
+import app.flicky.notify.UpdateNotifications
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
@@ -51,13 +53,16 @@ class UpdatesViewModel(
     private val installedRepo: InstalledAppsRepository,
     private val installer: Installer,
     private val settings: SettingsRepository,
-    private val appDao: AppDao
+    private val appDao: AppDao,
+    private val context: Context
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(UpdatesUi())
     val ui: StateFlow<UpdatesUi> = _ui.asStateFlow()
 
     init {
+        UpdateNotifications.cancelUpdatesAvailable(context)
+
         viewModelScope.launch {
             combine(
                 repo.appsFlow("", sort = SortOption.Updated, reverseSort = false, hideAnti = false, showIncompatible = false),
@@ -113,88 +118,26 @@ class UpdatesViewModel(
         preferredRepo: PreferredRepo,
         ignoreUnstable: Boolean
     ) = withContext(Dispatchers.IO) {
-        val installedMap = installedDetails.associateBy { it.packageName }
-        val installedFDroidApps = allApps.filter { installedMap.containsKey(it.packageName) }
-        val installedPackageNames = installedFDroidApps.map { it.packageName }
-
-        val allVariantsByPackage = appDao
-            .variantsForPackages(installedPackageNames)
-            .groupBy { it.packageName }
-
-        val candidatesByPkg = mutableMapOf<String, AppVariant>()
-        val latestCompatByPkg = installedFDroidApps.associate { app ->
-            val pref = allPrefs[app.packageName] ?: AppUpdatePreference()
-            val variantsForApp = allVariantsByPackage[app.packageName] ?: emptyList()
-            val effectiveIgnoreUnstable = pref.ignoreUnstable ?: ignoreUnstable
-            val chosen = VariantSelector.pickCompatible(
-                variants = variantsForApp,
-                preferred = preferredRepo,
-                preferredRepoUrl = pref.preferredRepoUrl,
-                strict = pref.lockToRepo,
-                ignoreUnstable = effectiveIgnoreUnstable
-            )
-            if (chosen != null) {
-                candidatesByPkg[app.packageName] = chosen
-            }
-            app.packageName to (chosen?.versionCode?.toLong() ?: 0L)
-        }
-
-        val (updates, suppressed, upToDate) = partitionUpdates(
-            installedFDroidApps,
-            installedMap,
-            latestCompatByPkg,
-            allPrefs,
-            candidatesByPkg
+        val snapshot = UpdatesCalculator.compute(
+            allApps = allApps,
+            installedDetails = installedDetails,
+            appDao = appDao,
+            prefs = allPrefs,
+            preferredRepo = preferredRepo,
+            ignoreUnstable = ignoreUnstable
         )
 
         _ui.update {
             it.copy(
-                installed = upToDate,
-                updates = updates,
-                suppressed = suppressed,
-                updateCandidates = candidatesByPkg,
+                installed = snapshot.upToDate,
+                updates = snapshot.updates,
+                suppressed = snapshot.suppressed,
+                updateCandidates = snapshot.candidates,
                 installedVersionsCode = installedDetails.associate { p -> p.packageName to p.versionCode },
                 installedVersionsName = installedDetails.associate { p -> p.packageName to (p.versionName ?: "") },
                 ignoredPrefs = allPrefs
             )
         }
-    }
-
-    private fun partitionUpdates(
-        installedApps: List<FDroidApp>,
-        installedMap: Map<String, InstalledAppsRepository.InstalledDetailed>,
-        latestCompatMap: Map<String, Long>,
-        prefsMap: Map<String, AppUpdatePreference>,
-        candidatesMap: Map<String, AppVariant>
-    ): Triple<List<FDroidApp>, List<FDroidApp>, List<FDroidApp>> {
-        val updates = mutableListOf<FDroidApp>()
-        val suppressed = mutableListOf<FDroidApp>()
-        val upToDate = mutableListOf<FDroidApp>()
-
-        for (app in installedApps) {
-            val currentVersion = installedMap[app.packageName]?.versionCode ?: 0L
-            val latestVersion = latestCompatMap[app.packageName] ?: 0L
-
-            val pref = prefsMap[app.packageName] ?: AppUpdatePreference()
-            val candidateVersion = candidatesMap[app.packageName]?.versionCode?.toLong() ?: 0L
-            val hasUpdate = latestVersion > currentVersion && candidateVersion == latestVersion
-            if (hasUpdate) {
-                val isIgnored = pref.ignoreUpdates ||
-                        (pref.ignoreVersionCode != 0L && latestVersion <= pref.ignoreVersionCode)
-                if (isIgnored) {
-                    suppressed.add(app)
-                } else {
-                    updates.add(app)
-                }
-            } else {
-                upToDate.add(app)
-            }
-        }
-        return Triple(
-            updates.sortedByDescending { it.lastUpdated },
-            suppressed.sortedByDescending { it.lastUpdated },
-            upToDate
-        )
     }
 
     fun ignoreThisVersion(packageName: String, versionCode: Long) {

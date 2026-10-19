@@ -19,6 +19,26 @@ object UpdateNotifications {
     const val CHANNEL_ID = "updates"
     const val UPDATES_URI = "flicky://updates"
     private const val NOTIFICATION_ID = 1001
+    private const val NOTIFICATION_ID_UPDATES_AVAILABLE = 1002
+
+    private fun canPost(context: Context): Boolean {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun updatesPendingIntent(context: Context): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            data = Uri.parse(UPDATES_URI)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        }
+        return PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
 
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -35,36 +55,52 @@ object UpdateNotifications {
 
     fun notifyResult(context: Context, updated: Int, failed: Int) {
         if (updated == 0 && failed == 0) return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
+        if (!canPost(context)) return
         val text = when {
             updated > 0 && failed > 0 ->
                 context.getString(R.string.notification_updated_and_failed, updated, failed)
             updated > 0 -> context.getString(R.string.notification_updated, updated)
             else -> context.getString(R.string.notification_update_failed, failed)
         }
-        val intent = Intent(context, MainActivity::class.java).apply {
-            data = Uri.parse(UPDATES_URI)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setContentTitle(context.getString(R.string.nav_updates))
             .setContentText(text)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(updatesPendingIntent(context))
             .setAutoCancel(true)
             .setOnlyAlertOnce(true)
             .build()
         runCatching { NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification) }
+    }
+
+    fun notifyUpdatesAvailable(context: Context, count: Int) {
+        if (count <= 0) {
+            cancelUpdatesAvailable(context)
+            return
+        }
+        if (!canPost(context)) return
+        val text = context.resources.getQuantityString(
+            R.plurals.notification_updates_available_count,
+            count,
+            count
+        )
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setContentTitle(context.getString(R.string.notification_updates_available))
+            .setContentText(text)
+            .setContentIntent(updatesPendingIntent(context))
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .build()
+        runCatching {
+            NotificationManagerCompat.from(context)
+                .notify(NOTIFICATION_ID_UPDATES_AVAILABLE, notification)
+        }
+    }
+
+    fun cancelUpdatesAvailable(context: Context) {
+        runCatching {
+            NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_UPDATES_AVAILABLE)
+        }
     }
 }

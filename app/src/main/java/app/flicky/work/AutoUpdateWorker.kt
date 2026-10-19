@@ -16,6 +16,7 @@ import app.flicky.data.repository.VariantSelector
 import app.flicky.install.Installer
 import app.flicky.install.TaskStage
 import app.flicky.notify.UpdateNotifications
+import app.flicky.notify.UpdatesNotifier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -39,6 +40,7 @@ class AutoUpdateWorker(
     private val installedRepo: InstalledAppsRepository by inject()
     private val db: AppDatabase by inject()
     private val installer: Installer by inject()
+    private val updatesNotifier: UpdatesNotifier by inject()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
@@ -105,6 +107,7 @@ class AutoUpdateWorker(
                 }
             }
             UpdateNotifications.notifyResult(applicationContext, updated.get(), failed.get())
+            updatesNotifier.refresh()
             installer.pruneCache()
             Result.success()
         } catch (e: Exception) {

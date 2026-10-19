@@ -126,6 +126,13 @@
                 android:resource="@xml/filepaths"/>
         </provider>
         <receiver android:name=".install.InstallResultReceiver" android:exported="false" />
+        <receiver
+            android:name=".install.UnarchivePackageReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.UNARCHIVE_PACKAGE" />
+            </intent-filter>
+        </receiver>
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"

@@ -7,6 +7,7 @@ import app.flicky.data.repository.AppUpdatePreferencesMap
 import app.flicky.data.repository.RepositorySyncManager
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.install.Installer
+import app.flicky.notify.UpdatesNotifier
 import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -19,10 +20,12 @@ class SyncWorker(
     private val syncManager: RepositorySyncManager by inject()
     private val settings: SettingsRepository by inject()
     private val installer: Installer by inject()
+    private val updatesNotifier: UpdatesNotifier by inject()
 
     override suspend fun doWork(): Result {
         return try {
             syncManager.syncAll()
+            updatesNotifier.refresh()
             val s = settings.settingsFlow.first()
             if (s.autoUpdate) {
                 val hasMeteredOverrides = AppUpdatePreferencesMap.fromJson(s.appUpdatePrefsJson)

@@ -24,6 +24,7 @@ import app.flicky.data.repository.flickyStringResourceProvider
 import app.flicky.R
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.install.Installer
+import app.flicky.notify.UpdatesNotifier
 import app.flicky.ui.components.snackbar.SnackbarManager
 import app.flicky.viewmodel.AppDetailViewModel
 import app.flicky.viewmodel.AuthorListViewModel
@@ -118,6 +119,16 @@ val appModule = module {
 
     single<SnackbarManager> { SnackbarManager() }
 
+    single<UpdatesNotifier> {
+        UpdatesNotifier(
+            context = androidContext(),
+            repo = get(),
+            installedRepo = get(),
+            appDao = get(),
+            settings = get()
+        )
+    }
+
     single<SettingsActions> {
         SettingsActions(
             clearCache = {
@@ -161,7 +172,8 @@ val appModule = module {
             installedRepo = get(),
             installer = get(),
             settings = get(),
-            appDao = get()
+            appDao = get(),
+            context = androidContext()
         )
     }
 
