@@ -342,4 +342,27 @@
     <string name="notification_updated_and_failed">Ενημερώθηκαν %1$d εφαρμογές, απέτυχαν %2$d</string>
     <string name="notification_update_failed">Αποτυχία ενημέρωσης για %1$d εφαρμογές</string>
     <string name="waiting_for_wifi">Οι ενημερώσεις θα εγκατασταθούν όταν υπάρχει Wi-Fi</string>
+
+    <string name="notification_updates_available">Διαθέσιμες ενημερώσεις</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">%1$d εφαρμογή μπορεί να ενημερωθεί</item>
+        <item quantity="other">%1$d εφαρμογές μπορούν να ενημερωθούν</item>
+    </plurals>
+    <string name="technical_info">Τεχνικές πληροφορίες</string>
+    <string name="signer_fingerprint">Αποτύπωμα υπογράφοντος</string>
+    <string name="apk_sha256">SHA-256 του APK</string>
+    <string name="permissions_header">Δικαιώματα</string>
+    <string name="not_verified">Μη επαληθευμένο</string>
+    <string name="advanced">Για προχωρημένους</string>
+    <string name="basic_auth">Έλεγχος ταυτότητας Basic</string>
+    <string name="username">Όνομα χρήστη</string>
+    <string name="password">Κωδικός πρόσβασης</string>
+    <string name="custom_mirrors">Προσαρμοσμένοι καθρέφτες</string>
+    <string name="download_base">Βασικό URL λήψης</string>
+    <string name="repo_index_not_signed">Το ευρετήριο του %1$s δεν είναι υπογεγραμμένο</string>
+    <string name="repo_index_signature_invalid">Η υπογραφή του ευρετηρίου του %1$s δεν είναι έγκυρη</string>
+    <string name="repo_index_key_mismatch">Το κλειδί υπογραφής του %1$s δεν ταιριάζει με το αναμενόμενο κλειδί</string>
+    <string name="repo_index_hash_mismatch">Το hash του αρχείου ευρετηρίου του %1$s δεν ταιριάζει με την υπογεγραμμένη καταχώριση (%2$s)</string>
+    <string name="repo_index_missing">Το %1$s δεν παρέχει πλέον υπογεγραμμένο ευρετήριο</string>
+    <string name="repo_index_malformed">Το %1$s παρείχε μη έγκυρο αρχείο ευρετηρίου (%2$s)</string>
 </resources>

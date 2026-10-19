@@ -342,4 +342,27 @@
     <string name="notification_updated_and_failed">%1$d برنامه به‌روزرسانی شد، %2$d ناموفق</string>
     <string name="notification_update_failed">به‌روزرسانی %1$d برنامه ناموفق بود</string>
     <string name="waiting_for_wifi">به‌روزرسانی‌ها هنگام دسترس بودن Wi-Fi نصب می‌شوند</string>
+
+    <string name="notification_updates_available">به‌روزرسانی‌های موجود</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">%1$d برنامه قابل به‌روزرسانی است</item>
+        <item quantity="other">%1$d برنامه قابل به‌روزرسانی است</item>
+    </plurals>
+    <string name="technical_info">اطلاعات فنی</string>
+    <string name="signer_fingerprint">اثر انگشت امضاکننده</string>
+    <string name="apk_sha256">SHA-256 فایل APK</string>
+    <string name="permissions_header">مجوزها</string>
+    <string name="not_verified">تأییدنشده</string>
+    <string name="advanced">پیشرفته</string>
+    <string name="basic_auth">احراز هویت Basic</string>
+    <string name="username">نام کاربری</string>
+    <string name="password">گذرواژه</string>
+    <string name="custom_mirrors">آینه‌های سفارشی</string>
+    <string name="download_base">نشانی اینترنتی پایه دانلود</string>
+    <string name="repo_index_not_signed">فهرست %1$s امضا نشده است</string>
+    <string name="repo_index_signature_invalid">امضای فهرست %1$s نامعتبر است</string>
+    <string name="repo_index_key_mismatch">کلید امضای %1$s با کلید مورد انتظار مطابقت ندارد</string>
+    <string name="repo_index_hash_mismatch">هش فایل فهرست %1$s با ورودی امضاشده مطابقت ندارد (%2$s)</string>
+    <string name="repo_index_missing">%1$s دیگر فهرست امضاشده ارائه نمی‌دهد</string>
+    <string name="repo_index_malformed">%1$s فایل فهرست نامعتبری ارائه کرد (%2$s)</string>
 </resources>

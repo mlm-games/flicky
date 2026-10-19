@@ -342,4 +342,27 @@
     <string name="notification_updated_and_failed">%1$d apps bijgewerkt, %2$d mislukt</string>
     <string name="notification_update_failed">Bijwerken van %1$d apps mislukt</string>
     <string name="waiting_for_wifi">Updates worden geïnstalleerd zodra Wi-Fi beschikbaar is</string>
+
+    <string name="notification_updates_available">Updates beschikbaar</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">%1$d app kan worden bijgewerkt</item>
+        <item quantity="other">%1$d apps kunnen worden bijgewerkt</item>
+    </plurals>
+    <string name="technical_info">Technische info</string>
+    <string name="signer_fingerprint">Vingerafdruk van ondertekenaar</string>
+    <string name="apk_sha256">SHA-256 van de APK</string>
+    <string name="permissions_header">Machtigingen</string>
+    <string name="not_verified">Niet geverifieerd</string>
+    <string name="advanced">Geavanceerd</string>
+    <string name="basic_auth">Basic-authenticatie</string>
+    <string name="username">Gebruikersnaam</string>
+    <string name="password">Wachtwoord</string>
+    <string name="custom_mirrors">Aangepaste spiegels</string>
+    <string name="download_base">Basis-URL voor downloads</string>
+    <string name="repo_index_not_signed">Index van %1$s is niet ondertekend</string>
+    <string name="repo_index_signature_invalid">De signatuur van de index van %1$s is ongeldig</string>
+    <string name="repo_index_key_mismatch">De ondertekeningssleutel van %1$s komt niet overeen met de verwachte sleutel</string>
+    <string name="repo_index_hash_mismatch">De hash van het indexbestand van %1$s komt niet overeen met de ondertekende vermelding (%2$s)</string>
+    <string name="repo_index_missing">%1$s levert niet langer een ondertekende index</string>
+    <string name="repo_index_malformed">%1$s heeft een ongeldig indexbestand geleverd (%2$s)</string>
 </resources>

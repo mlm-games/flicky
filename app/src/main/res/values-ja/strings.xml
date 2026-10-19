@@ -342,4 +342,26 @@
     <string name="notification_updated_and_failed">%1$d 件のアプリを更新、%2$d 件が失敗</string>
     <string name="notification_update_failed">%1$d 件のアプリの更新に失敗しました</string>
     <string name="waiting_for_wifi">Wi-Fi に接続すると更新がインストールされます</string>
+
+    <string name="notification_updates_available">利用可能なアップデート</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="other">%1$d 個のアプリを更新できます</item>
+    </plurals>
+    <string name="technical_info">技術情報</string>
+    <string name="signer_fingerprint">署名者のフィンガープリント</string>
+    <string name="apk_sha256">APK の SHA-256</string>
+    <string name="permissions_header">権限</string>
+    <string name="not_verified">未検証</string>
+    <string name="advanced">詳細設定</string>
+    <string name="basic_auth">Basic 認証</string>
+    <string name="username">ユーザー名</string>
+    <string name="password">パスワード</string>
+    <string name="custom_mirrors">カスタムミラー</string>
+    <string name="download_base">ダウンロードのベース URL</string>
+    <string name="repo_index_not_signed">%1$s のインデックスは署名されていません</string>
+    <string name="repo_index_signature_invalid">%1$s のインデックスの署名が無効です</string>
+    <string name="repo_index_key_mismatch">%1$s の署名キーが想定されたキーと一致しません</string>
+    <string name="repo_index_hash_mismatch">%1$s のインデックスファイルのハッシュが署名されたエントリと一致しません (%2$s)</string>
+    <string name="repo_index_missing">%1$s は署名されたインデックスを提供しなくなりました</string>
+    <string name="repo_index_malformed">%1$s が無効なインデックスファイルを提供しました (%2$s)</string>
 </resources>

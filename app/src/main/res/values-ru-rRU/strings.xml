@@ -342,4 +342,29 @@
     <string name="notification_updated_and_failed">Обновлено приложений: %1$d, ошибок: %2$d</string>
     <string name="notification_update_failed">Не удалось обновить приложений: %1$d</string>
     <string name="waiting_for_wifi">Обновления установятся, когда появится Wi-Fi</string>
+
+    <string name="notification_updates_available">Доступны обновления</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">%1$d приложение можно обновить</item>
+        <item quantity="few">%1$d приложения можно обновить</item>
+        <item quantity="many">%1$d приложений можно обновить</item>
+        <item quantity="other">%1$d приложений можно обновить</item>
+    </plurals>
+    <string name="technical_info">Техническая информация</string>
+    <string name="signer_fingerprint">Отпечаток подписи</string>
+    <string name="apk_sha256">SHA-256 файла APK</string>
+    <string name="permissions_header">Разрешения</string>
+    <string name="not_verified">Не проверено</string>
+    <string name="advanced">Дополнительно</string>
+    <string name="basic_auth">Аутентификация Basic</string>
+    <string name="username">Имя пользователя</string>
+    <string name="password">Пароль</string>
+    <string name="custom_mirrors">Пользовательские зеркала</string>
+    <string name="download_base">Базовый URL загрузки</string>
+    <string name="repo_index_not_signed">Индекс %1$s не подписан</string>
+    <string name="repo_index_signature_invalid">Неверная подпись индекса %1$s</string>
+    <string name="repo_index_key_mismatch">Ключ подписи %1$s не совпадает с ожидаемым ключом</string>
+    <string name="repo_index_hash_mismatch">Хеш файла индекса %1$s не совпадает с подписанной записью (%2$s)</string>
+    <string name="repo_index_missing">%1$s больше не предоставляет подписанный индекс</string>
+    <string name="repo_index_malformed">%1$s предоставил недопустимый файл индекса (%2$s)</string>
 </resources>

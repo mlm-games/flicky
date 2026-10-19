@@ -342,4 +342,26 @@
     <string name="notification_updated_and_failed">Đã cập nhật %1$d ứng dụng, %2$d thất bại</string>
     <string name="notification_update_failed">Cập nhật %1$d ứng dụng thất bại</string>
     <string name="waiting_for_wifi">Các bản cập nhật sẽ được cài khi có Wi-Fi</string>
+
+    <string name="notification_updates_available">Có bản cập nhật</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="other">%1$d ứng dụng có thể được cập nhật</item>
+    </plurals>
+    <string name="technical_info">Thông tin kỹ thuật</string>
+    <string name="signer_fingerprint">Dấu vân tay của người ký</string>
+    <string name="apk_sha256">SHA-256 của APK</string>
+    <string name="permissions_header">Quyền</string>
+    <string name="not_verified">Chưa xác minh</string>
+    <string name="advanced">Nâng cao</string>
+    <string name="basic_auth">Xác thực Basic</string>
+    <string name="username">Tên người dùng</string>
+    <string name="password">Mật khẩu</string>
+    <string name="custom_mirrors">Gương tùy chỉnh</string>
+    <string name="download_base">URL cơ sở tải xuống</string>
+    <string name="repo_index_not_signed">Chỉ mục của %1$s chưa được ký</string>
+    <string name="repo_index_signature_invalid">Chữ ký chỉ mục của %1$s không hợp lệ</string>
+    <string name="repo_index_key_mismatch">Khóa ký của %1$s không khớp với khóa mong đợi</string>
+    <string name="repo_index_hash_mismatch">Mã băm tệp chỉ mục của %1$s không khớp với mục đã ký (%2$s)</string>
+    <string name="repo_index_missing">%1$s không còn cung cấp chỉ mục đã ký</string>
+    <string name="repo_index_malformed">%1$s đã cung cấp tệp chỉ mục không hợp lệ (%2$s)</string>
 </resources>

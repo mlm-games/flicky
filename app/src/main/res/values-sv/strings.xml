@@ -342,4 +342,27 @@
     <string name="notification_updated_and_failed">%1$d appar uppdaterade, %2$d misslyckades</string>
     <string name="notification_update_failed">Uppdatering misslyckades för %1$d appar</string>
     <string name="waiting_for_wifi">Uppdateringar installeras när Wi-Fi är tillgängligt</string>
+
+    <string name="notification_updates_available">Tillgängliga uppdateringar</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">%1$d app kan uppdateras</item>
+        <item quantity="other">%1$d appar kan uppdateras</item>
+    </plurals>
+    <string name="technical_info">Teknisk information</string>
+    <string name="signer_fingerprint">Undertecknarens fingeravtryck</string>
+    <string name="apk_sha256">SHA-256 för APK-filen</string>
+    <string name="permissions_header">Behörigheter</string>
+    <string name="not_verified">Ej verifierat</string>
+    <string name="advanced">Avancerat</string>
+    <string name="basic_auth">Basic-autentisering</string>
+    <string name="username">Användarnamn</string>
+    <string name="password">Lösenord</string>
+    <string name="custom_mirrors">Anpassade speglar</string>
+    <string name="download_base">Bas-URL för nedladdning</string>
+    <string name="repo_index_not_signed">Indexet för %1$s är inte signerat</string>
+    <string name="repo_index_signature_invalid">Signaturen för indexet för %1$s är ogiltig</string>
+    <string name="repo_index_key_mismatch">Signeringsnyckeln för %1$s matchar inte den förväntade nyckeln</string>
+    <string name="repo_index_hash_mismatch">Hashvärdet för indexfilen för %1$s matchar inte den signerade posten (%2$s)</string>
+    <string name="repo_index_missing">%1$s tillhandahåller inte längre ett signerat index</string>
+    <string name="repo_index_malformed">%1$s tillhandahöll en ogiltig indexfil (%2$s)</string>
 </resources>

@@ -342,4 +342,28 @@
     <string name="notification_updated_and_failed">%1$d אפליקציות עודכנו, %2$d נכשלו</string>
     <string name="notification_update_failed">עדכון %1$d אפליקציות נכשל</string>
     <string name="waiting_for_wifi">העדכונים יותקנו כשיהיה Wi-Fi זמין</string>
+
+    <string name="notification_updates_available">עדכונים זמינים</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">ניתן לעדכן %1$d אפליקציה</item>
+        <item quantity="two">ניתן לעדכן %1$d אפליקציות</item>
+        <item quantity="other">ניתן לעדכן %1$d אפליקציות</item>
+    </plurals>
+    <string name="technical_info">מידע טכני</string>
+    <string name="signer_fingerprint">טביעת אצבע של החותם</string>
+    <string name="apk_sha256">SHA-256 של ה-APK</string>
+    <string name="permissions_header">הרשאות</string>
+    <string name="not_verified">לא מאומת</string>
+    <string name="advanced">מתקדם</string>
+    <string name="basic_auth">אימות Basic</string>
+    <string name="username">שם משתמש</string>
+    <string name="password">סיסמה</string>
+    <string name="custom_mirrors">מראות מותאמות אישית</string>
+    <string name="download_base">כתובת בסיס להורדה</string>
+    <string name="repo_index_not_signed">האינדקס של %1$s אינו חתום</string>
+    <string name="repo_index_signature_invalid">חתימת האינדקס של %1$s אינה תקפה</string>
+    <string name="repo_index_key_mismatch">מפתח החתימה של %1$s אינו תואם למפתח הצפוי</string>
+    <string name="repo_index_hash_mismatch">גיבוב קובץ האינדקס של %1$s אינו תואם לרשומה החתומה (%2$s)</string>
+    <string name="repo_index_missing">%1$s אינה מספקת עוד אינדקס חתום</string>
+    <string name="repo_index_malformed">%1$s סיפקה קובץ אינדקס לא תקין (%2$s)</string>
 </resources>

@@ -342,4 +342,27 @@
     <string name="notification_updated_and_failed">%1$d uygulama güncellendi, %2$d başarısız</string>
     <string name="notification_update_failed">%1$d uygulama güncellenemedi</string>
     <string name="waiting_for_wifi">Güncellemeler Wi-Fi kullanılabilir olduğunda yüklenecek</string>
+
+    <string name="notification_updates_available">Kullanılabilir güncellemeler</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">%1$d uygulama güncellenebilir</item>
+        <item quantity="other">%1$d uygulama güncellenebilir</item>
+    </plurals>
+    <string name="technical_info">Teknik bilgiler</string>
+    <string name="signer_fingerprint">İmzalayan parmak izi</string>
+    <string name="apk_sha256">APK SHA-256</string>
+    <string name="permissions_header">İzinler</string>
+    <string name="not_verified">Doğrulanmadı</string>
+    <string name="advanced">Gelişmiş</string>
+    <string name="basic_auth">Basic kimlik doğrulama</string>
+    <string name="username">Kullanıcı adı</string>
+    <string name="password">Parola</string>
+    <string name="custom_mirrors">Özel aynalar</string>
+    <string name="download_base">İndirme temel URL adresi</string>
+    <string name="repo_index_not_signed">%1$s dizini imzalanmamış</string>
+    <string name="repo_index_signature_invalid">%1$s dizin imzası geçersiz</string>
+    <string name="repo_index_key_mismatch">%1$s imzalama anahtarı beklenen anahtarla eşleşmiyor</string>
+    <string name="repo_index_hash_mismatch">%1$s dizin dosyası karma değeri imzalı girdiyle eşleşmiyor (%2$s)</string>
+    <string name="repo_index_missing">%1$s artık imzalı bir dizin sunmuyor</string>
+    <string name="repo_index_malformed">%1$s geçersiz bir dizin dosyası sundu (%2$s)</string>
 </resources>

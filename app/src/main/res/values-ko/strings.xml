@@ -342,4 +342,26 @@
     <string name="notification_updated_and_failed">앱 %1$d개 업데이트됨, %2$d개 실패</string>
     <string name="notification_update_failed">앱 %1$d개 업데이트 실패</string>
     <string name="waiting_for_wifi">Wi-Fi가 연결되면 업데이트가 설치됩니다</string>
+
+    <string name="notification_updates_available">사용 가능한 업데이트</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="other">%1$d개 앱을 업데이트할 수 있습니다</item>
+    </plurals>
+    <string name="technical_info">기술 정보</string>
+    <string name="signer_fingerprint">서명자 지문</string>
+    <string name="apk_sha256">APK SHA-256</string>
+    <string name="permissions_header">권한</string>
+    <string name="not_verified">확인되지 않음</string>
+    <string name="advanced">고급</string>
+    <string name="basic_auth">Basic 인증</string>
+    <string name="username">사용자 이름</string>
+    <string name="password">비밀번호</string>
+    <string name="custom_mirrors">사용자 지정 미러</string>
+    <string name="download_base">다운로드 기본 URL</string>
+    <string name="repo_index_not_signed">%1$s 인덱스가 서명되지 않았습니다</string>
+    <string name="repo_index_signature_invalid">%1$s 인덱스의 서명이 유효하지 않습니다</string>
+    <string name="repo_index_key_mismatch">%1$s 서명 키가 예상 키와 일치하지 않습니다</string>
+    <string name="repo_index_hash_mismatch">%1$s 인덱스 파일 해시가 서명된 항목과 일치하지 않습니다 (%2$s)</string>
+    <string name="repo_index_missing">%1$s에서 더 이상 서명된 인덱스를 제공하지 않습니다</string>
+    <string name="repo_index_malformed">%1$s에서 잘못된 인덱스 파일을 제공했습니다 (%2$s)</string>
 </resources>

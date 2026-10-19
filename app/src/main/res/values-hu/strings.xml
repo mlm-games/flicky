@@ -342,4 +342,27 @@
     <string name="notification_updated_and_failed">%1$d alkalmazás frissítve, %2$d sikertelen</string>
     <string name="notification_update_failed">%1$d alkalmazás frissítése sikertelen</string>
     <string name="waiting_for_wifi">A frissítések telepítése Wi-Fi elérhetősége esetén történik</string>
+
+    <string name="notification_updates_available">Elérhető frissítések</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">%1$d alkalmazás frissíthető</item>
+        <item quantity="other">%1$d alkalmazás frissíthető</item>
+    </plurals>
+    <string name="technical_info">Műszaki információk</string>
+    <string name="signer_fingerprint">Aláíró ujjlenyomata</string>
+    <string name="apk_sha256">APK SHA-256</string>
+    <string name="permissions_header">Engedélyek</string>
+    <string name="not_verified">Nincs ellenőrizve</string>
+    <string name="advanced">Speciális</string>
+    <string name="basic_auth">Basic hitelesítés</string>
+    <string name="username">Felhasználónév</string>
+    <string name="password">Jelszó</string>
+    <string name="custom_mirrors">Egyéni tükrök</string>
+    <string name="download_base">Letöltési alap URL</string>
+    <string name="repo_index_not_signed">A %1$s indexe nincs aláírva</string>
+    <string name="repo_index_signature_invalid">A %1$s indexének aláírása érvénytelen</string>
+    <string name="repo_index_key_mismatch">A %1$s aláírókulcsa nem egyezik a várt kulccsal</string>
+    <string name="repo_index_hash_mismatch">A %1$s indexfájl hash értéke nem egyezik az aláírt bejegyzéssel (%2$s)</string>
+    <string name="repo_index_missing">A %1$s már nem nyújt aláírt indexet</string>
+    <string name="repo_index_malformed">A %1$s érvénytelen indexfájlt adott meg (%2$s)</string>
 </resources>

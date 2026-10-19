@@ -342,4 +342,29 @@
     <string name="notification_updated_and_failed">Оновлено застосунків: %1$d, помилок: %2$d</string>
     <string name="notification_update_failed">Не вдалося оновити застосунків: %1$d</string>
     <string name="waiting_for_wifi">Оновлення встановляться, коли буде доступний Wi-Fi</string>
+
+    <string name="notification_updates_available">Доступні оновлення</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">Можна оновити %1$d застосунок</item>
+        <item quantity="few">Можна оновити %1$d застосунки</item>
+        <item quantity="many">Можна оновити %1$d застосунків</item>
+        <item quantity="other">Можна оновити %1$d застосунку</item>
+    </plurals>
+    <string name="technical_info">Технічна інформація</string>
+    <string name="signer_fingerprint">Відбиток підписувача</string>
+    <string name="apk_sha256">SHA-256 файлу APK</string>
+    <string name="permissions_header">Дозволи</string>
+    <string name="not_verified">Не перевірено</string>
+    <string name="advanced">Додатково</string>
+    <string name="basic_auth">Автентифікація Basic</string>
+    <string name="username">Логін</string>
+    <string name="password">Пароль</string>
+    <string name="custom_mirrors">Власні дзеркала</string>
+    <string name="download_base">Базовий URL завантаження</string>
+    <string name="repo_index_not_signed">Індекс %1$s не підписано</string>
+    <string name="repo_index_signature_invalid">Підпис індексу %1$s є недійсним</string>
+    <string name="repo_index_key_mismatch">Ключ підпису %1$s не збігається з очікуваним ключем</string>
+    <string name="repo_index_hash_mismatch">Хеш файлу індексу %1$s не збігається з підписаним записом (%2$s)</string>
+    <string name="repo_index_missing">%1$s більше не надає підписаний індекс</string>
+    <string name="repo_index_malformed">%1$s надав недійсний файл індексу (%2$s)</string>
 </resources>

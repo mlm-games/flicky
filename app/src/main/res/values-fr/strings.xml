@@ -342,4 +342,27 @@
     <string name="notification_updated_and_failed">%1$d applis mises à jour, %2$d échecs</string>
     <string name="notification_update_failed">Échec de la mise à jour de %1$d applis</string>
     <string name="waiting_for_wifi">Les mises à jour seront installées dès que le Wi-Fi sera disponible</string>
+
+    <string name="notification_updates_available">Mises à jour disponibles</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">%1$d appli peut être mise à jour</item>
+        <item quantity="other">%1$d applis peuvent être mises à jour</item>
+    </plurals>
+    <string name="technical_info">Informations techniques</string>
+    <string name="signer_fingerprint">Empreinte du signataire</string>
+    <string name="apk_sha256">SHA-256 du fichier APK</string>
+    <string name="permissions_header">Autorisations</string>
+    <string name="not_verified">Non vérifié</string>
+    <string name="advanced">Avancé</string>
+    <string name="basic_auth">Authentification Basic</string>
+    <string name="username">Identifiant</string>
+    <string name="password">Mot de passe</string>
+    <string name="custom_mirrors">Miroirs personnalisés</string>
+    <string name="download_base">URL de base de téléchargement</string>
+    <string name="repo_index_not_signed">Index de %1$s : non signé</string>
+    <string name="repo_index_signature_invalid">Index de %1$s : signature non valide</string>
+    <string name="repo_index_key_mismatch">Index de %1$s : la clé de signature ne correspond pas à la clé attendue</string>
+    <string name="repo_index_hash_mismatch">Index de %1$s : le hachage du fichier index ne correspond pas à la ligne signée (%2$s)</string>
+    <string name="repo_index_missing">%1$s ne fournit plus de fichier index signé</string>
+    <string name="repo_index_malformed">%1$s a fourni un fichier index non valide (%2$s)</string>
 </resources>

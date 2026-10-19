@@ -342,4 +342,26 @@
     <string name="notification_updated_and_failed">已更新 %1$d 个应用，%2$d 个失败</string>
     <string name="notification_update_failed">%1$d 个应用更新失败</string>
     <string name="waiting_for_wifi">有 Wi-Fi 时将安装更新</string>
+
+    <string name="notification_updates_available">有可用更新</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="other">有 %1$d 个应用可以更新</item>
+    </plurals>
+    <string name="technical_info">技术信息</string>
+    <string name="signer_fingerprint">签名者指纹</string>
+    <string name="apk_sha256">APK SHA-256</string>
+    <string name="permissions_header">权限</string>
+    <string name="not_verified">未验证</string>
+    <string name="advanced">高级</string>
+    <string name="basic_auth">Basic 认证</string>
+    <string name="username">用户名</string>
+    <string name="password">密码</string>
+    <string name="custom_mirrors">自定义镜像</string>
+    <string name="download_base">下载基础 URL</string>
+    <string name="repo_index_not_signed">%1$s 的索引未签名</string>
+    <string name="repo_index_signature_invalid">%1$s 的索引签名无效</string>
+    <string name="repo_index_key_mismatch">%1$s 的签名密钥与预期的密钥不匹配</string>
+    <string name="repo_index_hash_mismatch">%1$s 的索引文件哈希与已签名条目不匹配 (%2$s)</string>
+    <string name="repo_index_missing">%1$s 不再提供已签名索引</string>
+    <string name="repo_index_malformed">%1$s 提供了无效的索引文件 (%2$s)</string>
 </resources>

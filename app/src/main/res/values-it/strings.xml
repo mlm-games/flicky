@@ -342,4 +342,27 @@
     <string name="notification_updated_and_failed">%1$d app aggiornate, %2$d non riuscite</string>
     <string name="notification_update_failed">Aggiornamento non riuscito per %1$d app</string>
     <string name="waiting_for_wifi">Gli aggiornamenti verranno installati quando il Wi-Fi sarà disponibile</string>
+
+    <string name="notification_updates_available">Aggiornamenti disponibili</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">%1$d app può essere aggiornata</item>
+        <item quantity="other">%1$d app possono essere aggiornate</item>
+    </plurals>
+    <string name="technical_info">Informazioni tecniche</string>
+    <string name="signer_fingerprint">Impronta del firmatario</string>
+    <string name="apk_sha256">SHA-256 del file APK</string>
+    <string name="permissions_header">Autorizzazioni</string>
+    <string name="not_verified">Non verificato</string>
+    <string name="advanced">Avanzate</string>
+    <string name="basic_auth">Autenticazione Basic</string>
+    <string name="username">Nome utente</string>
+    <string name="password">Password</string>
+    <string name="custom_mirrors">Mirror personalizzati</string>
+    <string name="download_base">URL di base per il download</string>
+    <string name="repo_index_not_signed">Indice di %1$s: non firmato</string>
+    <string name="repo_index_signature_invalid">Indice di %1$s: firma non valida</string>
+    <string name="repo_index_key_mismatch">Indice di %1$s: la chiave di firma non corrisponde alla chiave prevista</string>
+    <string name="repo_index_hash_mismatch">Indice di %1$s: il valore hash del file non corrisponde alla voce firmata (%2$s)</string>
+    <string name="repo_index_missing">%1$s non fornisce più un indice firmato</string>
+    <string name="repo_index_malformed">%1$s ha fornito un file indice non valido (%2$s)</string>
 </resources>

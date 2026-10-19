@@ -342,4 +342,28 @@
     <string name="notification_updated_and_failed">Ažurirano %1$d aplikacija, %2$d nije uspjelo</string>
     <string name="notification_update_failed">Ažuriranje %1$d aplikacija nije uspjelo</string>
     <string name="waiting_for_wifi">Ažuriranja će se instalirati kad Wi-Fi bude dostupan</string>
+
+    <string name="notification_updates_available">Dostupna ažuriranja</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">Može se ažurirati %1$d aplikacija</item>
+        <item quantity="few">Mogu se ažurirati %1$d aplikacije</item>
+        <item quantity="other">Može se ažurirati %1$d aplikacija</item>
+    </plurals>
+    <string name="technical_info">Tehnički podaci</string>
+    <string name="signer_fingerprint">Otisak potpisnika</string>
+    <string name="apk_sha256">SHA-256 datoteke APK</string>
+    <string name="permissions_header">Dozvole</string>
+    <string name="not_verified">Nije provjereno</string>
+    <string name="advanced">Napredno</string>
+    <string name="basic_auth">Basic autentifikacija</string>
+    <string name="username">Korisničko ime</string>
+    <string name="password">Lozinka</string>
+    <string name="custom_mirrors">Prilagođena zrcala</string>
+    <string name="download_base">Osnovni URL za preuzimanje</string>
+    <string name="repo_index_not_signed">Indeks %1$s nije potpisan</string>
+    <string name="repo_index_signature_invalid">Potpis indeksa %1$s nije valjan</string>
+    <string name="repo_index_key_mismatch">Ključ za potpisivanje %1$s ne odgovara očekivanom ključu</string>
+    <string name="repo_index_hash_mismatch">Hash datoteke indeksa %1$s ne odgovara potpisanom unosu (%2$s)</string>
+    <string name="repo_index_missing">%1$s više ne pruža potpisani indeks</string>
+    <string name="repo_index_malformed">%1$s je pružio nevažeću datoteku indeksa (%2$s)</string>
 </resources>

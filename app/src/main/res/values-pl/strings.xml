@@ -342,4 +342,29 @@
     <string name="notification_updated_and_failed">Zaktualizowano %1$d aplikacji, %2$d niepowodzeń</string>
     <string name="notification_update_failed">Aktualizacja %1$d aplikacji nie powiodła się</string>
     <string name="waiting_for_wifi">Aktualizacje zostaną zainstalowane, gdy będzie dostępne Wi-Fi</string>
+
+    <string name="notification_updates_available">Dostępne aktualizacje</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">Można zaktualizować %1$d aplikację</item>
+        <item quantity="few">Można zaktualizować %1$d aplikacje</item>
+        <item quantity="many">Można zaktualizować %1$d aplikacji</item>
+        <item quantity="other">Można zaktualizować %1$d aplikacji</item>
+    </plurals>
+    <string name="technical_info">Informacje techniczne</string>
+    <string name="signer_fingerprint">Odcisk podpisującego</string>
+    <string name="apk_sha256">SHA-256 pliku APK</string>
+    <string name="permissions_header">Uprawnienia</string>
+    <string name="not_verified">Niezweryfikowano</string>
+    <string name="advanced">Zaawansowane</string>
+    <string name="basic_auth">Uwierzytelnianie Basic</string>
+    <string name="username">Nazwa użytkownika</string>
+    <string name="password">Hasło</string>
+    <string name="custom_mirrors">Niestandardowe lustra</string>
+    <string name="download_base">Podstawowy URL pobierania</string>
+    <string name="repo_index_not_signed">Indeks %1$s nie jest podpisany</string>
+    <string name="repo_index_signature_invalid">Podpis indeksu %1$s jest nieprawidłowy</string>
+    <string name="repo_index_key_mismatch">Klucz podpisywania %1$s nie zgadza się z oczekiwanym kluczem</string>
+    <string name="repo_index_hash_mismatch">Skrót pliku indeksu %1$s nie zgadza się z podpisanym wpisem (%2$s)</string>
+    <string name="repo_index_missing">%1$s nie udostępnia już podpisanego indeksu</string>
+    <string name="repo_index_malformed">%1$s udostępnił nieprawidłowy plik indeksu (%2$s)</string>
 </resources>

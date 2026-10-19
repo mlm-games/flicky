@@ -342,4 +342,27 @@
     <string name="notification_updated_and_failed">%1$d Apps aktualisiert, %2$d fehlgeschlagen</string>
     <string name="notification_update_failed">Update für %1$d Apps fehlgeschlagen</string>
     <string name="waiting_for_wifi">Updates werden installiert, sobald WLAN verfügbar ist</string>
+
+    <string name="notification_updates_available">Updates verfügbar</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">%1$d App kann aktualisiert werden</item>
+        <item quantity="other">%1$d Apps können aktualisiert werden</item>
+    </plurals>
+    <string name="technical_info">Technische Informationen</string>
+    <string name="signer_fingerprint">Signatur-Fingerabdruck</string>
+    <string name="apk_sha256">SHA-256 der APK</string>
+    <string name="permissions_header">Berechtigungen</string>
+    <string name="not_verified">Nicht verifiziert</string>
+    <string name="advanced">Erweitert</string>
+    <string name="basic_auth">Basic-Authentifizierung</string>
+    <string name="username">Benutzername</string>
+    <string name="password">Passwort</string>
+    <string name="custom_mirrors">Eigene Spiegel</string>
+    <string name="download_base">Basis-URL für Downloads</string>
+    <string name="repo_index_not_signed">Index von %1$s ist nicht signiert</string>
+    <string name="repo_index_signature_invalid">Signatur des Index von %1$s ist ungültig</string>
+    <string name="repo_index_key_mismatch">Signaturschlüssel von %1$s stimmt nicht mit dem erwarteten Schlüssel überein</string>
+    <string name="repo_index_hash_mismatch">Dateihash des Index von %1$s stimmt nicht mit dem signierten Eintrag überein (%2$s)</string>
+    <string name="repo_index_missing">%1$s stellt keinen signierten Index mehr bereit</string>
+    <string name="repo_index_malformed">%1$s hat eine ungültige Indexdatei bereitgestellt (%2$s)</string>
 </resources>

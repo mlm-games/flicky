@@ -342,4 +342,31 @@
     <string name="notification_updated_and_failed">تم تحديث %1$d من التطبيقات، فشل %2$d</string>
     <string name="notification_update_failed">فشل تحديث %1$d من التطبيقات</string>
     <string name="waiting_for_wifi">سيتم تثبيت التحديثات عند توفر Wi-Fi</string>
+
+    <string name="notification_updates_available">تحديثات متاحة</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="zero">يمكن تحديث %1$d من التطبيقات</item>
+        <item quantity="one">يمكن تحديث %1$d تطبيق</item>
+        <item quantity="two">يمكن تحديث تطبيقين (%1$d)</item>
+        <item quantity="few">يمكن تحديث %1$d تطبيقات</item>
+        <item quantity="many">يمكن تحديث %1$d تطبيقًا</item>
+        <item quantity="other">يمكن تحديث %1$d تطبيق</item>
+    </plurals>
+    <string name="technical_info">معلومات تقنية</string>
+    <string name="signer_fingerprint">بصمة الموقّع</string>
+    <string name="apk_sha256">SHA-256 لتطبيق APK</string>
+    <string name="permissions_header">الأذونات</string>
+    <string name="not_verified">غير مُتحقق منه</string>
+    <string name="advanced">متقدم</string>
+    <string name="basic_auth">مصادقة Basic</string>
+    <string name="username">اسم المستخدم</string>
+    <string name="password">كلمة المرور</string>
+    <string name="custom_mirrors">مرايا مخصصة</string>
+    <string name="download_base">عنوان URL الأساسي للتنزيل</string>
+    <string name="repo_index_not_signed">فهرس %1$s غير موقّع</string>
+    <string name="repo_index_signature_invalid">توقيع فهرس %1$s غير صالح</string>
+    <string name="repo_index_key_mismatch">مفتاح توقيع %1$s لا يطابق المفتاح المتوقع</string>
+    <string name="repo_index_hash_mismatch">تجزئة ملف فهرس %1$s لا تطابق المُدخل الموقّع (%2$s)</string>
+    <string name="repo_index_missing">لم يعد %1$s يوفر فهرسًا موقّعًا</string>
+    <string name="repo_index_malformed">قدّم %1$s ملف فهرس غير صالح (%2$s)</string>
 </resources>

@@ -342,4 +342,27 @@
     <string name="notification_updated_and_failed">%1$d apps atualizados, %2$d falharam</string>
     <string name="notification_update_failed">Falha ao atualizar %1$d apps</string>
     <string name="waiting_for_wifi">As atualizações serão instaladas quando o Wi-Fi estiver disponível</string>
+
+    <string name="notification_updates_available">Atualizações disponíveis</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">%1$d app pode ser atualizado</item>
+        <item quantity="other">%1$d apps podem ser atualizados</item>
+    </plurals>
+    <string name="technical_info">Informações técnicas</string>
+    <string name="signer_fingerprint">Impressão digital do signatário</string>
+    <string name="apk_sha256">SHA-256 do APK</string>
+    <string name="permissions_header">Permissões</string>
+    <string name="not_verified">Não verificado</string>
+    <string name="advanced">Avançado</string>
+    <string name="basic_auth">Autenticação Basic</string>
+    <string name="username">Nome de usuário</string>
+    <string name="password">Senha</string>
+    <string name="custom_mirrors">Espelhos personalizados</string>
+    <string name="download_base">URL base de download</string>
+    <string name="repo_index_not_signed">O índice de %1$s não está assinado</string>
+    <string name="repo_index_signature_invalid">A assinatura do índice de %1$s é inválida</string>
+    <string name="repo_index_key_mismatch">A chave de assinatura de %1$s não corresponde à chave esperada</string>
+    <string name="repo_index_hash_mismatch">O hash do arquivo de índice de %1$s não corresponde à entrada assinada (%2$s)</string>
+    <string name="repo_index_missing">%1$s não fornece mais um índice assinado</string>
+    <string name="repo_index_malformed">%1$s forneceu um arquivo de índice inválido (%2$s)</string>
 </resources>

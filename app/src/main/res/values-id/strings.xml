@@ -342,4 +342,26 @@
     <string name="notification_updated_and_failed">%1$d aplikasi diperbarui, %2$d gagal</string>
     <string name="notification_update_failed">Pembaruan %1$d aplikasi gagal</string>
     <string name="waiting_for_wifi">Pembaruan akan dipasang saat Wi-Fi tersedia</string>
+
+    <string name="notification_updates_available">Pembaruan tersedia</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="other">%1$d aplikasi dapat diperbarui</item>
+    </plurals>
+    <string name="technical_info">Informasi teknis</string>
+    <string name="signer_fingerprint">Sidik jari penanda tangan</string>
+    <string name="apk_sha256">SHA-256 APK</string>
+    <string name="permissions_header">Izin</string>
+    <string name="not_verified">Tidak diverifikasi</string>
+    <string name="advanced">Lanjutan</string>
+    <string name="basic_auth">Autentikasi Basic</string>
+    <string name="username">Nama pengguna</string>
+    <string name="password">Kata sandi</string>
+    <string name="custom_mirrors">Cermin kustom</string>
+    <string name="download_base">URL dasar unduhan</string>
+    <string name="repo_index_not_signed">Indeks %1$s tidak ditandatangani</string>
+    <string name="repo_index_signature_invalid">Tanda tangan indeks %1$s tidak valid</string>
+    <string name="repo_index_key_mismatch">Kunci penandatanganan %1$s tidak cocok dengan kunci yang diharapkan</string>
+    <string name="repo_index_hash_mismatch">Hash file indeks %1$s tidak cocok dengan entri yang ditandatangani (%2$s)</string>
+    <string name="repo_index_missing">%1$s tidak lagi menyediakan indeks bertanda tangan</string>
+    <string name="repo_index_malformed">%1$s menyediakan file indeks yang tidak valid (%2$s)</string>
 </resources>

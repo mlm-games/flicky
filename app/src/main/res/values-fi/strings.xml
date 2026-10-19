@@ -342,4 +342,27 @@
     <string name="notification_updated_and_failed">%1$d sovellusta päivitetty, %2$d epäonnistui</string>
     <string name="notification_update_failed">%1$d sovelluksen päivitys epäonnistui</string>
     <string name="waiting_for_wifi">Päivitykset asennetaan, kun Wi-Fi on käytettävissä</string>
+
+    <string name="notification_updates_available">Päivityksiä saatavilla</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">%1$d sovellus voidaan päivittää</item>
+        <item quantity="other">%1$d sovellusta voidaan päivittää</item>
+    </plurals>
+    <string name="technical_info">Tekniset tiedot</string>
+    <string name="signer_fingerprint">Allekirjoittajan sormenjälki</string>
+    <string name="apk_sha256">APK-tiedoston SHA-256</string>
+    <string name="permissions_header">Käyttöoikeudet</string>
+    <string name="not_verified">Ei varmennettu</string>
+    <string name="advanced">Lisäasetukset</string>
+    <string name="basic_auth">Basic-todennus</string>
+    <string name="username">Käyttäjänimi</string>
+    <string name="password">Salasana</string>
+    <string name="custom_mirrors">Mukautetut peilit</string>
+    <string name="download_base">Latauksen perus-URL</string>
+    <string name="repo_index_not_signed">Kohteen %1$s hakemistoa ei ole allekirjoitettu</string>
+    <string name="repo_index_signature_invalid">Kohteen %1$s hakemiston allekirjoitus on virheellinen</string>
+    <string name="repo_index_key_mismatch">Kohteen %1$s allekirjoitusavain ei vastaa odotettua avainta</string>
+    <string name="repo_index_hash_mismatch">Kohteen %1$s hakemistotiedoston tiiviste ei vastaa allekirjoitettua merkintää (%2$s)</string>
+    <string name="repo_index_missing">%1$s ei enää tarjoa allekirjoitettua hakemistoa</string>
+    <string name="repo_index_malformed">%1$s tarjosi virheellisen hakemistotiedoston (%2$s)</string>
 </resources>

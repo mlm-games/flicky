@@ -342,4 +342,29 @@
     <string name="notification_updated_and_failed">Aktualizováno %1$d aplikací, %2$d selhalo</string>
     <string name="notification_update_failed">Aktualizace %1$d aplikací se nezdařila</string>
     <string name="waiting_for_wifi">Aktualizace se nainstalují, až bude k dispozici Wi-Fi</string>
+
+    <string name="notification_updates_available">Dostupné aktualizace</string>
+    <plurals name="notification_updates_available_count">
+        <item quantity="one">Lze aktualizovat %1$d aplikaci</item>
+        <item quantity="few">Lze aktualizovat %1$d aplikace</item>
+        <item quantity="many">Lze aktualizovat %1$d aplikace</item>
+        <item quantity="other">Lze aktualizovat %1$d aplikací</item>
+    </plurals>
+    <string name="technical_info">Technické informace</string>
+    <string name="signer_fingerprint">Otisk podpisu</string>
+    <string name="apk_sha256">SHA-256 souboru APK</string>
+    <string name="permissions_header">Oprávnění</string>
+    <string name="not_verified">Neověřeno</string>
+    <string name="advanced">Rozšířené</string>
+    <string name="basic_auth">Autentizace Basic</string>
+    <string name="username">Uživatelské jméno</string>
+    <string name="password">Heslo</string>
+    <string name="custom_mirrors">Vlastní zrcadla</string>
+    <string name="download_base">Základní URL pro stahování</string>
+    <string name="repo_index_not_signed">Index %1$s není podepsán</string>
+    <string name="repo_index_signature_invalid">Podpis indexu %1$s je neplatný</string>
+    <string name="repo_index_key_mismatch">Podepisovací klíč %1$s neodpovídá očekávanému klíči</string>
+    <string name="repo_index_hash_mismatch">Hash souboru indexu %1$s neodpovídá podepsané položce (%2$s)</string>
+    <string name="repo_index_missing">%1$s již neposkytuje podepsaný index</string>
+    <string name="repo_index_malformed">%1$s poskytl neplatný soubor indexu (%2$s)</string>
 </resources>
