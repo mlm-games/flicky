@@ -23,8 +23,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -362,6 +360,7 @@ class FDroidApi(
             }
 
             val payloadFile = tempFile("index", ".json")
+            var handedOff = false
             try {
                 val download = try {
                     downloadToFile("$candidate/$payloadName", payloadFile, client, null, null)
@@ -389,12 +388,12 @@ class FDroidApi(
                 }
 
                 if (useDiff) {
-                    val payloadJson = readDiff(payloadFile, repo.name, payloadName)
                     Log.d(TAG, "${repo.name} has a diff from $storedTimestamp to ${entry.timestamp}")
+                    handedOff = true
                     return FetchResult(
                         null,
                         modified = true,
-                        diff = RepoIndexDiff(baseUrl, repo.name, entryTimestamp(entry), fingerprint, payloadJson)
+                        diff = RepoIndexDiff(baseUrl, repo.name, entryTimestamp(entry), fingerprint, payloadFile)
                     )
                 }
 
@@ -405,7 +404,7 @@ class FDroidApi(
                 mergeRepositoryRow(db.repositoryDao(), baseUrl, entryTimestamp(entry), fingerprint)
                 return FetchResult(null, modified = true)
             } finally {
-                payloadFile.delete()
+                if (!handedOff) payloadFile.delete()
             }
         }
 
@@ -422,16 +421,6 @@ class FDroidApi(
         }
         if (lastError != null) throw lastError
         return null
-    }
-
-    private fun readDiff(file: File, repoName: String, payloadName: String): JsonObject = try {
-        entryJson.parseToJsonElement(file.readText()).jsonObject
-    } catch (e: Exception) {
-        throw IndexVerificationException(
-            IndexVerificationException.Reason.MALFORMED,
-            verificationMessage(IndexVerificationException.Reason.MALFORMED, repoName, payloadName),
-            e
-        )
     }
 
     private class FileDownload(

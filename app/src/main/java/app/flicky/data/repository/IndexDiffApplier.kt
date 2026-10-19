@@ -11,24 +11,43 @@ import app.flicky.data.local.RepositoryDao
 import app.flicky.data.local.RepositoryEntity
 import app.flicky.data.model.FDroidApp
 import app.flicky.data.remote.MirrorRegistry
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.CompositeDecoder
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.decodeFromStream
+import kotlinx.serialization.json.jsonObject
+import java.io.File
 import java.util.Locale
 
 /**
  * A verified v2 index diff for a repository, ready to be applied as a partial update.
+ * [payload] is owned by the applier, which deletes it after applying.
  */
 data class RepoIndexDiff(
     val baseUrl: String,
     val repoName: String,
     val timestamp: Long,
     val fingerprint: String,
-    val payload: JsonObject
+    val payload: File
 )
 
 /**
@@ -42,33 +61,62 @@ class IndexDiffApplier(private val db: AppDatabase) {
 
     private companion object {
         const val TAG = "IndexDiffApplier"
-        const val INDEX_REPO = "repo"
-        const val INDEX_PACKAGES = "packages"
     }
 
     private val appDao: AppDao = db.appDao()
     private val repositoryDao: RepositoryDao = db.repositoryDao()
     private val locales: LocaleListCompat = LocaleListCompat.getDefault()
+    private val diffJson = Json { ignoreUnknownKeys = true }
 
-    suspend fun apply(diff: RepoIndexDiff): Int = db.withTransaction {
-        val repo = diff.payload[INDEX_REPO] as? JsonObject
-        if (repo != null) applyRepoDiff(diff, repo)
+    /**
+     * Streams [diff] from disk in a background producer and merges one package at a time on the
+     * transaction thread. A decode failure is delivered through the channel, so the whole
+     * transaction rolls back.
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun apply(diff: RepoIndexDiff): Int = try {
+        db.withTransaction {
+            coroutineScope {
+                val events = Channel<DiffEvent>(8)
+                launch(Dispatchers.IO) {
+                    try {
+                        diff.payload.inputStream().use { stream ->
+                            diffJson.decodeFromStream(DiffStreamSerializer(events), stream)
+                        }
+                        events.close()
+                    } catch (t: Throwable) {
+                        events.close(t)
+                    }
+                }
 
-        val packages = diff.payload[INDEX_PACKAGES]
-        var touched = 0
-        if (packages is JsonObject) {
-            packages.forEach { (pkg, value) ->
-                applyPackageDiff(diff, pkg, value)
-                touched++
+                var touched = 0
+                var repo: JsonObject? = null
+                try {
+                    for (event in events) {
+                        when (event) {
+                            is DiffEvent.Repo -> {
+                                repo = event.repo
+                                applyRepoDiff(diff, event.repo)
+                            }
+
+                            is DiffEvent.Package -> {
+                                applyPackageDiff(diff, event.name, event.value)
+                                touched++
+                            }
+                        }
+                    }
+                } finally {
+                    events.close()
+                }
+
+                val diffTimestamp = (repo?.get("timestamp") as? JsonPrimitive)?.contentOrNull?.toLongOrNull()
+                val timestamp = diffTimestamp?.takeIf { it > 0 } ?: diff.timestamp
+                mergeRepositoryRow(repositoryDao, diff.baseUrl, timestamp, diff.fingerprint)
+                touched
             }
-        } else if (packages is JsonNull) {
-            Log.w(TAG, "Diff for ${diff.baseUrl} removes all packages, ignored")
         }
-
-        val diffTimestamp = (repo?.get("timestamp") as? JsonPrimitive)?.contentOrNull?.toLongOrNull()
-        val timestamp = diffTimestamp?.takeIf { it > 0 } ?: diff.timestamp
-        mergeRepositoryRow(repositoryDao, diff.baseUrl, timestamp, diff.fingerprint)
-        touched
+    } finally {
+        diff.payload.delete()
     }
 
     private suspend fun applyRepoDiff(diff: RepoIndexDiff, repo: JsonObject) {
@@ -493,4 +541,95 @@ suspend fun mergeRepositoryRow(
         fingerprint = fingerprint?.takeIf { it.isNotEmpty() } ?: existing?.fingerprint.orEmpty()
     )
     dao.upsert(entity)
+}
+
+@Serializable
+private data class DiffEnvelope(
+    val repo: JsonObject? = null,
+    val packages: Map<String, JsonElement?>? = null
+)
+
+private sealed interface DiffEvent {
+    class Repo(val repo: JsonObject) : DiffEvent
+
+    class Package(val name: String, val value: JsonElement) : DiffEvent
+}
+
+/**
+ * Streaming decoder ported from the reference client's IndexV2DiffStreamProcessor: it walks the
+ * diff payload one top-level entry at a time, so only the current package is materialized.
+ * [DiffEnvelope] stands in for IndexV2, so the element indices match the wire format.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+private class DiffStreamSerializer(
+    private val events: SendChannel<DiffEvent>
+) : KSerializer<DiffEnvelope?> {
+
+    override val descriptor: SerialDescriptor = DiffEnvelope.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): DiffEnvelope? {
+        decoder as? JsonDecoder ?: error("Can be deserialized only by JSON")
+
+        decoder.beginStructure(descriptor)
+        val repoIndex = descriptor.getElementIndex("repo")
+        val packagesIndex = descriptor.getElementIndex("packages")
+
+        when (val startIndex = decoder.decodeElementIndex(descriptor)) {
+            repoIndex -> {
+                diffRepo(decoder, startIndex)
+                val index = decoder.decodeElementIndex(descriptor)
+                if (index == packagesIndex) diffPackages(decoder, index)
+            }
+
+            packagesIndex -> {
+                diffPackages(decoder, startIndex)
+                val index = decoder.decodeElementIndex(descriptor)
+                if (index == repoIndex) diffRepo(decoder, index)
+            }
+
+            else -> error("Unexpected startIndex: $startIndex")
+        }
+        var currentIndex = 0
+        while (currentIndex != CompositeDecoder.DECODE_DONE) {
+            currentIndex = decoder.decodeElementIndex(descriptor)
+        }
+        decoder.endStructure(descriptor)
+        return null
+    }
+
+    private fun diffRepo(decoder: JsonDecoder, index: Int) {
+        require(index == descriptor.getElementIndex("repo"))
+        send(DiffEvent.Repo(decoder.decodeJsonElement().jsonObject))
+    }
+
+    private fun diffPackages(decoder: JsonDecoder, index: Int) {
+        require(index == descriptor.getElementIndex("packages"))
+        val mapDescriptor = descriptor.getElementDescriptor(index)
+        val compositeDecoder = decoder.beginStructure(mapDescriptor)
+        while (true) {
+            val packageIndex = compositeDecoder.decodeElementIndex(descriptor)
+            if (packageIndex == CompositeDecoder.DECODE_DONE) break
+            readMapEntry(compositeDecoder, packageIndex)
+        }
+        compositeDecoder.endStructure(mapDescriptor)
+    }
+
+    private fun readMapEntry(decoder: CompositeDecoder, index: Int) {
+        val packageName = decoder.decodeStringElement(descriptor, index)
+        decoder.decodeElementIndex(descriptor)
+        val packageV2 = decoder.decodeSerializableElement(
+            descriptor = descriptor,
+            index = index + 1,
+            deserializer = JsonElement.serializer()
+        )
+        send(DiffEvent.Package(packageName, packageV2))
+    }
+
+    private fun send(event: DiffEvent) {
+        runBlocking { events.send(event) }
+    }
+
+    override fun serialize(encoder: Encoder, value: DiffEnvelope?) {
+        error("Not implemented")
+    }
 }
