@@ -1,3 +1,16 @@
+## v4.6.0
+
+- Add keypad softkeys and repositories page
+- Fix lint errors
+- Pin well known repo signing keys
+- Fix mirror stickiness, force sync snapshot, duplicate deep links
+- Stream index diff application
+- Signed v2 index verification, differential updates
+- Repo advanced settings, technical info dialog, fdroidrepo links
+- Unarchive broadcast, updates-available notification
+- Deep links, update notifications, storage checks
+
+
 ## v4.5.5
 
 - Fix TV focus ring and default focus
