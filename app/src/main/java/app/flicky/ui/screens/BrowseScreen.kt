@@ -2,6 +2,9 @@
 
 package app.flicky.ui.screens
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -58,12 +61,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -77,6 +82,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -105,6 +111,9 @@ import app.flicky.viewmodel.UiText
 import app.flicky.helper.RequestFocusOnKey
 import app.flicky.helper.TvFocusConfig
 import app.flicky.helper.tvFocusRing
+import com.theonionsarewatching.yapchik.SoftkeyController
+import com.theonionsarewatching.yapchik.Softkeys
+import com.theonionsarewatching.yapchik.Yapchik
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -145,6 +154,43 @@ fun BrowseScreen(
     var lastFocusedKey by rememberSaveable { mutableStateOf<String?>(null) }
     var tvSearchActive by remember { mutableStateOf(false) }
     val sortChipFocusRequester = remember { FocusRequester() }
+    val searchFocusRequester = remember { FocusRequester() }
+
+    val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+    val keypadSoftkeys = Yapchik.isActive
+    val currentQuery = rememberUpdatedState(query)
+    val softkeyController = remember { mutableStateOf<SoftkeyController?>(null) }
+
+    DisposableEffect(activity, keypadSoftkeys) {
+        val controller = if (keypadSoftkeys) activity?.let { Softkeys.of(it) } else null
+        softkeyController.value = controller
+        controller?.set {
+            left(
+                label = {
+                    context.getString(
+                        if (currentQuery.value.isBlank()) R.string.search
+                        else R.string.action_clear
+                    )
+                }
+            ) {
+                if (currentQuery.value.isBlank()) {
+                    searchFocusRequester.requestFocus()
+                } else {
+                    onSearchChange("")
+                }
+            }
+            right(context.getString(R.string.more_options)) { menuOpen = true }
+        }
+        onDispose {
+            controller?.clear()
+            softkeyController.value = null
+        }
+    }
+
+    LaunchedEffect(query.isBlank()) {
+        softkeyController.value?.invalidate()
+    }
 
     if (isTv) {
         RequestFocusOnKey(
@@ -200,6 +246,7 @@ fun BrowseScreen(
                             onCommit = onSearchChange,
                             includeVoiceTrailing = !isTv,
                             modifier = Modifier.weight(1f),
+                            focusRequester = searchFocusRequester,
                             onActiveChangeExternal = { tvSearchActive = it }
                         )
                         if (isTv) {
@@ -618,6 +665,7 @@ private fun TvAwareDockedSearchBar(
     onCommit: (String) -> Unit,
     includeVoiceTrailing: Boolean = true,
     modifier: Modifier = Modifier,
+    focusRequester: FocusRequester? = null,
     onActiveChangeExternal: (Boolean) -> Unit = {},
 ) {
     var localQuery by rememberSaveable { mutableStateOf(query) }
@@ -701,7 +749,12 @@ private fun TvAwareDockedSearchBar(
                     focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
-                modifier = Modifier.fillMaxWidth(1f)
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .then(
+                        if (focusRequester != null) Modifier.focusRequester(focusRequester)
+                        else Modifier
+                    )
             )
         },
         expanded = false,
@@ -795,4 +848,10 @@ private fun AppListRow(
             )
         }
     }
+}
+
+private fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

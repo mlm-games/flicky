@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.WindowInsets
 @Composable
 fun MyScreenScaffold(
     title: String,
+    navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable (RowScope.() -> Unit) = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
@@ -28,6 +29,7 @@ fun MyScreenScaffold(
                             maxLines = 1
                         )
                     },
+                    navigationIcon = { navigationIcon?.invoke() },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = colorScheme.surfaceContainerLow,
                         titleContentColor = colorScheme.onSurface

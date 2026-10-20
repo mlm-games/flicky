@@ -236,6 +236,15 @@
     <string name="category_proxy">Proxy</string>
     <string name="category_other">Other</string>
     <string name="repositories">Repositories</string>
+    <string name="manage_repositories">Manage repositories</string>
+    <string name="manage_repositories_desc">Add, remove, and configure repositories</string>
+    <string name="back">Back</string>
+    <string name="softkeys">Softkeys</string>
+    <string name="softkey_bar">Softkey bar</string>
+    <string name="softkey_bar_desc">Show LEFT and RIGHT softkeys for keypad devices</string>
+    <string name="softkey_mode_on">On</string>
+    <string name="softkey_mode_off">Off</string>
+    <string name="softkey_mode_auto">Automatic</string>
     <string name="reset_to_defaults">Reset to Defaults</string>
     <string name="reset_repositories">Reset Repositories</string>
     <string

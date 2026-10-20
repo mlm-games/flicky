@@ -9,6 +9,7 @@ import app.flicky.di.appModule
 import app.flicky.migration.PreferencesMigration
 import app.flicky.notify.UpdateNotifications
 import app.flicky.work.SyncScheduler
+import com.theonionsarewatching.yapchik.Yapchik
 import io.github.mlmgames.settings.core.actions.ActionRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +22,7 @@ import org.koin.core.context.startKoin
 class FlickyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        Yapchik.install(this)
 
         val koin = startKoin {
             androidContext(this@FlickyApplication)

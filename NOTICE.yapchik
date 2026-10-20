@@ -1,0 +1,8 @@
+Softkey integration (Yapchik)
+
+Copyright (C) 2026 theonionsarewatching
+https://github.com/theonionsarewatching/yapchik
+
+Flicky depends on the Yapchik artifact
+com.github.theonionsarewatching:yapchik:1.0.2,
+licensed under the GNU Lesser General Public License v3.0 or later.

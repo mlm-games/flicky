@@ -172,6 +172,8 @@ dependencies {
 
     implementation(libs.dhizuku.api)
 
+    implementation(libs.yapchik)
+
     implementation(libs.kmp.settings.core)
     implementation(libs.kmp.settings.ui.compose)
     ksp(libs.kmp.settings.ksp)

@@ -186,11 +186,11 @@ class MainActivity : AppCompatActivity() {
             val dynamicColors = settingsState.dynamicTheme
 
             val backStack = rememberNavBackStack(
-                when {
-                    initialRepoUrl != null -> NavScreen.Settings
-                    initialUpdates -> NavScreen.Updates
-                    initialPackage != null -> NavScreen.Detail(initialPackage)
-                    else -> NavScreen.Browse
+                *when {
+                    initialRepoUrl != null -> arrayOf(NavScreen.Settings, NavScreen.Repositories)
+                    initialUpdates -> arrayOf(NavScreen.Updates)
+                    initialPackage != null -> arrayOf(NavScreen.Detail(initialPackage))
+                    else -> arrayOf(NavScreen.Browse)
                 }
             )
 
@@ -204,6 +204,9 @@ class MainActivity : AppCompatActivity() {
                             while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
                             if (backStack.lastOrNull() != NavScreen.Settings) {
                                 backStack.add(NavScreen.Settings)
+                            }
+                            if (backStack.lastOrNull() != NavScreen.Repositories) {
+                                backStack.add(NavScreen.Repositories)
                             }
                             pendingRepoUrl = repoUrl
                         }
@@ -233,6 +236,7 @@ class MainActivity : AppCompatActivity() {
                     is NavScreen.Updates -> 1
                     is NavScreen.Favorites -> 2
                     is NavScreen.Settings -> 3
+                    is NavScreen.Repositories -> 3
                     else -> 0
                 }
             }
@@ -246,6 +250,7 @@ class MainActivity : AppCompatActivity() {
                     is NavScreen.Updates -> "updates"
                     is NavScreen.Favorites -> "favorites"
                     is NavScreen.Settings -> "settings"
+                    is NavScreen.Repositories -> "repositories"
                     else -> top?.toString() ?: "root"
                 }
             }

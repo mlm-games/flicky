@@ -31,6 +31,7 @@ uiText = "1.11.4"
 apkDist = "0.5.3"
 composeBom = "2026.07.00"
 kmpSettingsCore = "0.10.4"
+yapchik = "1.0.2"
 
 koinBom = "4.2.2"
 navigation3Runtime = "1.1.5"
@@ -98,6 +99,9 @@ androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecy
 
 # Dhizuku
 dhizuku-api = { module = "io.github.iamr0s:Dhizuku-API", version.ref = "dhizuku" }
+
+# Softkeys for keypad / D-pad devices
+yapchik = { module = "com.github.theonionsarewatching:yapchik", version.ref = "yapchik" }
 
 
 [plugins]
