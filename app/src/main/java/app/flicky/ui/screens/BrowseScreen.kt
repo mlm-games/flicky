@@ -74,6 +74,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
@@ -110,6 +111,7 @@ import app.flicky.ui.components.global.FlickyDialog
 import app.flicky.viewmodel.UiText
 import app.flicky.helper.RequestFocusOnKey
 import app.flicky.helper.TvFocusConfig
+import app.flicky.helper.safeRequestFocus
 import app.flicky.helper.tvFocusRing
 import com.theonionsarewatching.yapchik.SoftkeyController
 import com.theonionsarewatching.yapchik.Softkeys
@@ -671,15 +673,32 @@ private fun TvAwareDockedSearchBar(
     var localQuery by rememberSaveable { mutableStateOf(query) }
     LaunchedEffect(query) { if (query != localQuery) localQuery = query }
 
-    var active by rememberSaveable { mutableStateOf(false) }
+    var active by remember { mutableStateOf(false) }
+    var barFocused by remember { mutableStateOf(false) }
     val keyboard = LocalSoftwareKeyboardController.current
+    val inputFocusRequester = remember { FocusRequester() }
+    val barFocusRequester = remember { FocusRequester() }
     val okKeys = remember { setOf(Key.Enter, Key.NumPadEnter, Key.DirectionCenter) }
 
+    fun deactivate() {
+        active = false
+        onActiveChangeExternal(false)
+        keyboard?.hide()
+    }
+
     val onActiveChange: (Boolean) -> Unit = { isActive ->
-        active = isActive
-        onActiveChangeExternal(isActive)
-        if (!isActive) {
-            keyboard?.hide()
+        when {
+            !isActive -> deactivate()
+            !isTv -> {
+                active = true
+                onActiveChangeExternal(true)
+            }
+        }
+    }
+
+    LaunchedEffect(active) {
+        if (isTv && active && inputFocusRequester.safeRequestFocus()) {
+            keyboard?.show()
         }
     }
 
@@ -698,9 +717,7 @@ private fun TvAwareDockedSearchBar(
                 },
                 onSearch = {
                     onCommit(localQuery)
-                    active = false
-                    onActiveChangeExternal(false)
-                    keyboard?.hide()
+                    deactivate()
                 },
                 expanded = false,
                 onExpandedChange = onActiveChange,
@@ -741,9 +758,13 @@ private fun TvAwareDockedSearchBar(
                 },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                        alpha = if (isTv && barFocused) 0.5f else 0.3f
+                    ),
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedBorderColor =
+                        if (isTv && barFocused) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.surfaceVariant,
                     focusedTextColor = MaterialTheme.colorScheme.onSurface,
                     unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                     focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -751,19 +772,26 @@ private fun TvAwareDockedSearchBar(
                 ),
                 modifier = Modifier
                     .fillMaxWidth(1f)
-                    .then(
-                        if (focusRequester != null) Modifier.focusRequester(focusRequester)
-                        else Modifier
-                    )
+                    .focusProperties { canFocus = !isTv || active }
+                    .focusRequester(inputFocusRequester)
             )
         },
         expanded = false,
         onExpandedChange = onActiveChange,
         modifier = modifier
             .fillMaxWidth()
+            .then(
+                if (focusRequester != null) Modifier.focusRequester(focusRequester)
+                else Modifier
+            )
+            .focusRequester(barFocusRequester)
             .onFocusChanged { state ->
-                if (isTv && !active && (state.isFocused || state.hasFocus)) {
-                    keyboard?.hide()
+                barFocused = state.hasFocus
+                if (!isTv) return@onFocusChanged
+                if (state.hasFocus) {
+                    if (!active) keyboard?.hide()
+                } else if (active) {
+                    deactivate()
                 }
             }
             .onPreviewKeyEvent { e ->
@@ -771,20 +799,19 @@ private fun TvAwareDockedSearchBar(
                     isTv && !active && e.type == KeyEventType.KeyDown && e.key in okKeys -> {
                         active = true
                         onActiveChangeExternal(true)
-                        keyboard?.show()
                         true
                     }
 
                     isTv && active && e.type == KeyEventType.KeyDown && e.key == Key.Back -> {
-                        active = false
-                        onActiveChangeExternal(false)
-                        keyboard?.hide()
+                        deactivate()
+                        barFocusRequester.safeRequestFocus()
                         true
                     }
 
                     else -> false
                 }
-            },
+            }
+            .then(if (isTv) Modifier.focusable() else Modifier),
         shape = SearchBarDefaults.dockedShape,
         colors = colors1,
         tonalElevation = SearchBarDefaults.TonalElevation,
