@@ -137,8 +137,8 @@
     <string name="no_action_attached">لا يوجد إجراء مرفق</string>
     <string name="no_repos_enabled">لا توجد مستودعات ممكّنة. قم بتمكين مستودع واحد على الأقل في الإعدادات.</string>
     <string name="connection_timeout">انتهت مهلة الاتصال. يرجى التحقق من اتصالك بالإنترنت.</string>
-    <string name="sync_completed_with_errors">اكتملت المزامنة مع وجود أخطاء:\\\\n%1$s</string>
-    <string name="partial_sync_completed">اكتملت المزامنة الجزئية:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">اكتملت المزامنة مع وجود أخطاء:\n%1$s</string>
+    <string name="partial_sync_completed">اكتملت المزامنة الجزئية:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">خطأ في الشبكة أو التحليل</string>
     <string name="error_unknown">خطأ غير معروف</string>

@@ -137,8 +137,8 @@
     <string name="no_action_attached">Nincs csatolt művelet</string>
     <string name="no_repos_enabled">Nincsenek engedélyezett tárolók. Engedélyezzen legalább egyet a Beállításokban.</string>
     <string name="connection_timeout">Csatlakozási időtúllépés. Ellenőrizze az internetkapcsolatot.</string>
-    <string name="sync_completed_with_errors">A szinkronizálás hibákkal fejeződött be:\\\\n%1$s</string>
-    <string name="partial_sync_completed">A részleges szinkronizálás befejeződött:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">A szinkronizálás hibákkal fejeződött be:\n%1$s</string>
+    <string name="partial_sync_completed">A részleges szinkronizálás befejeződött:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Hálózati vagy elemzési hiba</string>
     <string name="error_unknown">Ismeretlen hiba</string>

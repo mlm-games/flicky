@@ -137,8 +137,8 @@
     <string name="no_action_attached">Tidak ada tindakan yang terlampir</string>
     <string name="no_repos_enabled">Tidak ada repositori yang diaktifkan. Aktifkan setidaknya satu di Pengaturan.</string>
     <string name="connection_timeout">Waktu koneksi habis. Periksa koneksi internet Anda.</string>
-    <string name="sync_completed_with_errors">Sinkronisasi selesai dengan kesalahan:\\\\n%1$s</string>
-    <string name="partial_sync_completed">Sinkronisasi sebagian selesai:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">Sinkronisasi selesai dengan kesalahan:\n%1$s</string>
+    <string name="partial_sync_completed">Sinkronisasi sebagian selesai:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Kesalahan jaringan atau penguraian</string>
     <string name="error_unknown">Kesalahan tidak diketahui</string>

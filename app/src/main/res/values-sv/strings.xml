@@ -137,8 +137,8 @@
     <string name="no_action_attached">Ingen åtgärd bifogad</string>
     <string name="no_repos_enabled">Inga arkiv aktiverade. Aktivera minst ett i Inställningar.</string>
     <string name="connection_timeout">Anslutningen tog för lång tid. Kontrollera din internetanslutning.</string>
-    <string name="sync_completed_with_errors">Synkronisering slutförd med fel:\\\\n%1$s</string>
-    <string name="partial_sync_completed">Delvis synkronisering slutförd:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">Synkronisering slutförd med fel:\n%1$s</string>
+    <string name="partial_sync_completed">Delvis synkronisering slutförd:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Nätverks- eller tolkningsfel</string>
     <string name="error_unknown">Okänt fel</string>

@@ -137,8 +137,8 @@
     <string name="no_action_attached">אין פעולה משויכת</string>
     <string name="no_repos_enabled">אין מאגרים פעילים. הפעל לפחות אחד בהגדרות.</string>
     <string name="connection_timeout">תם הזמן של החיבור. בדוק את חיבור האינטרנט שלך.</string>
-    <string name="sync_completed_with_errors">הסנכרון הושלם עם שגיאות:\\\\n%1$s</string>
-    <string name="partial_sync_completed">סנכרון חלקי הושלם:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">הסנכרון הושלם עם שגיאות:\n%1$s</string>
+    <string name="partial_sync_completed">סנכרון חלקי הושלם:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">שגיאת רשת או ניתוח</string>
     <string name="error_unknown">שגיאה לא ידועה</string>

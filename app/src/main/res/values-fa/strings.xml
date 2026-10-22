@@ -137,8 +137,8 @@
     <string name="no_action_attached">اقدامی متصل نیست</string>
     <string name="no_repos_enabled">هیچ مخزنی فعال نیست. در تنظیمات دست‌کم یکی را فعال کنید.</string>
     <string name="connection_timeout">اتمام زمان اتصال. لطفاً اتصال اینترنت خود را بررسی کنید.</string>
-    <string name="sync_completed_with_errors">همگام‌سازی با خطاها کامل شد:\\\\n%1$s</string>
-    <string name="partial_sync_completed">همگام‌سازی ناقص انجام شد:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">همگام‌سازی با خطاها کامل شد:\n%1$s</string>
+    <string name="partial_sync_completed">همگام‌سازی ناقص انجام شد:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">خطای شبکه یا تجزیه</string>
     <string name="error_unknown">خطای ناشناخته</string>

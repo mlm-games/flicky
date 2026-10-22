@@ -137,8 +137,8 @@
     <string name="no_action_attached">연결된 작업이 없습니다</string>
     <string name="no_repos_enabled">활성화된 저장소가 없습니다. 설정에서 하나 이상 활성화하세요.</string>
     <string name="connection_timeout">연결 시간이 초과되었습니다. 인터넷 연결을 확인하세요.</string>
-    <string name="sync_completed_with_errors">오류가 있어 동기화가 완료되었습니다:\\\\n%1$s</string>
-    <string name="partial_sync_completed">부분 동기화가 완료되었습니다:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">오류가 있어 동기화가 완료되었습니다:\n%1$s</string>
+    <string name="partial_sync_completed">부분 동기화가 완료되었습니다:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">네트워크 또는 파싱 오류</string>
     <string name="error_unknown">알 수 없는 오류</string>

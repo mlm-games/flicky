@@ -137,8 +137,8 @@
     <string name="no_action_attached">Καμία συνδεδεμένη ενέργεια</string>
     <string name="no_repos_enabled">Δεν υπάρχουν ενεργοποιημένα αποθετήρια. Ενεργοποιήστε τουλάχιστον ένα στις Ρυθμίσεις.</string>
     <string name="connection_timeout">Λήξη χρονικού ορίου σύνδεσης. Ελέγξτε τη σύνδεσή σας στο διαδίκτυο.</string>
-    <string name="sync_completed_with_errors">Ο συγχρονισμός ολοκληρώθηκε με σφάλματα:\\\\n%1$s</string>
-    <string name="partial_sync_completed">Μερικός συγχρονισμός ολοκληρώθηκε:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">Ο συγχρονισμός ολοκληρώθηκε με σφάλματα:\n%1$s</string>
+    <string name="partial_sync_completed">Μερικός συγχρονισμός ολοκληρώθηκε:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Σφάλμα δικτύου ή ανάλυσης</string>
     <string name="error_unknown">Άγνωστο σφάλμα</string>

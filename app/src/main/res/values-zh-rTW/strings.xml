@@ -137,8 +137,8 @@
     <string name="no_action_attached">未附加動作</string>
     <string name="no_repos_enabled">沒有啟用任何儲存庫。請在設定中至少啟用一個。</string>
     <string name="connection_timeout">連線逾時。請檢查您的網際網路連線。</string>
-    <string name="sync_completed_with_errors">同步完成但有錯誤：\\\\n%1$s</string>
-    <string name="partial_sync_completed">部分同步已完成：\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">同步完成但有錯誤：\n%1$s</string>
+    <string name="partial_sync_completed">部分同步已完成：\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">網路或解析錯誤</string>
     <string name="error_unknown">未知錯誤</string>

@@ -136,9 +136,9 @@
     <string name="cache_cleared">Кеш очищено</string>
     <string name="no_action_attached">Дія не прикріплена</string>
     <string name="no_repos_enabled">Немає увімкнених репозиторіїв. Увімкніть хоча б один у Налаштуваннях.</string>
-    <string name="connection_timeout">Час очікування з\\\\\\\'єднання минув. Перевірте підключення до Інтернету.</string>
-    <string name="sync_completed_with_errors">Синхронізацію завершено з помилками:\\\\n%1$s</string>
-    <string name="partial_sync_completed">Часткову синхронізацію завершено:\\\\n%1$s</string>
+    <string name="connection_timeout">Час очікування з\'єднання минув. Перевірте підключення до Інтернету.</string>
+    <string name="sync_completed_with_errors">Синхронізацію завершено з помилками:\n%1$s</string>
+    <string name="partial_sync_completed">Часткову синхронізацію завершено:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Помилка мережі або аналізу</string>
     <string name="error_unknown">Невідома помилка</string>
@@ -207,7 +207,7 @@
     <string name="pins_label">Закріплені ключі (sha256/BASE64, через кому)</string>
     <string name="pins_placeholder">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
     <string name="custom_ca_pem">Власний сертифікат CA</string>
-    <string name="optional">Необов\\\'язково</string>
+    <string name="optional">Необов\'язково</string>
     <string name="more_options_for">Інші параметри (список)</string>
     <string name="install_from">Встановити з</string>
     <string name="show_less">Показати менше</string>
@@ -257,7 +257,7 @@
     <string name="setting_fail_on_trust_errors">Помилка при проблемах довіри</string>
     <string name="setting_fail_on_trust_errors_desc">Сувора перевірка SSL/TLS</string>
     <string name="setting_use_proxy">Використовувати проксі</string>
-    <string name="setting_use_proxy_desc">Спрямовувати з\\\'єднання через проксі</string>
+    <string name="setting_use_proxy_desc">Спрямовувати з\'єднання через проксі</string>
     <string name="setting_proxy_url">URL проксі</string>
     <string name="setting_show_debug_info">Показувати налагоджувальну інформацію</string>
     <string name="setting_show_debug_info_desc">Показувати налагоджувальну інформацію в інтерфейсі</string>

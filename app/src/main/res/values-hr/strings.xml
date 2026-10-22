@@ -137,8 +137,8 @@
     <string name="no_action_attached">Nema priložene radnje</string>
     <string name="no_repos_enabled">Nema omogućenih repozitorija. Omogućite barem jedan u Postavkama.</string>
     <string name="connection_timeout">Isteklo je vrijeme za povezivanje. Provjerite internetsku vezu.</string>
-    <string name="sync_completed_with_errors">Sinkronizacija je dovršena s pogreškama:\\\\n%1$s</string>
-    <string name="partial_sync_completed">Djelomična sinkronizacija je dovršena:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">Sinkronizacija je dovršena s pogreškama:\n%1$s</string>
+    <string name="partial_sync_completed">Djelomična sinkronizacija je dovršena:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Pogreška mreže ili parsiranja</string>
     <string name="error_unknown">Nepoznata pogreška</string>

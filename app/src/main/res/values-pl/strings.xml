@@ -137,8 +137,8 @@
     <string name="no_action_attached">Brak dołączonej akcji</string>
     <string name="no_repos_enabled">Brak włączonych repozytoriów. Włącz przynajmniej jedno w Ustawieniach.</string>
     <string name="connection_timeout">Przekroczono limit czasu połączenia. Sprawdź połączenie z internetem.</string>
-    <string name="sync_completed_with_errors">Synchronizacja zakończona z błędami:\\\\n%1$s</string>
-    <string name="partial_sync_completed">Częściowa synchronizacja zakończona:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">Synchronizacja zakończona z błędami:\n%1$s</string>
+    <string name="partial_sync_completed">Częściowa synchronizacja zakończona:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Błąd sieci lub parsowania</string>
     <string name="error_unknown">Nieznany błąd</string>

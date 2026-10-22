@@ -137,8 +137,8 @@
     <string name="no_action_attached">Keine Aktion angehängt</string>
     <string name="no_repos_enabled">Keine Paketquellen aktiviert. Aktivieren Sie mindestens eine in den Einstellungen.</string>
     <string name="connection_timeout">Zeitüberschreitung der Verbindung. Bitte überprüfen Sie Ihre Internetverbindung.</string>
-    <string name="sync_completed_with_errors">Synchronisierung mit Fehlern abgeschlossen:\\\\n%1$s</string>
-    <string name="partial_sync_completed">Partielle Synchronisierung abgeschlossen:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">Synchronisierung mit Fehlern abgeschlossen:\n%1$s</string>
+    <string name="partial_sync_completed">Partielle Synchronisierung abgeschlossen:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Netzwerk- oder Analysefehler</string>
     <string name="error_unknown">Unbekannter Fehler</string>

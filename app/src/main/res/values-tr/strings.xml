@@ -93,7 +93,7 @@
     <string name="setting_sync_interval">Senkronizasyon aralığı</string>
     <string name="setting_sync_interval_desc">Depoların ne sıklıkla senkronize edileceği</string>
     <string name="setting_keep_cache">İndirme önbelleğini tut</string>
-    <string name="setting_keep_cache_desc">Daha hızlı yeniden yükleme için indirilen APK\\\\\\\'ları sakla</string>
+    <string name="setting_keep_cache_desc">Daha hızlı yeniden yükleme için indirilen APK\'ları sakla</string>
     <string name="setting_installer">Yükleyici</string>
     <string name="setting_installer_desc">Uygulamaların nasıl yükleneceğini seçin</string>
     <string name="setting_fallback_installer">Yedek kurucu</string>
@@ -129,16 +129,16 @@
     <string name="installer_shizuku">Shizuku (pm)</string>
     <string name="installer_dhizuku">Dhizuku (cihaz sahibi)</string>
     <string name="repo_auto">Otomatik</string>
-    <string name="repo_prefer_fdroid">F-Droid\\\\\\\'i tercih et</string>
-    <string name="repo_prefer_izzy">IzzyOnDroid\\\\\\\'i tercih et</string>
+    <string name="repo_prefer_fdroid">F-Droid\'i tercih et</string>
+    <string name="repo_prefer_izzy">IzzyOnDroid\'i tercih et</string>
     <string name="toggle_on">Açık</string>
     <string name="toggle_off">Kapalı</string>
     <string name="cache_cleared">Önbellek temizlendi</string>
     <string name="no_action_attached">Eylem eklenmemiş</string>
-    <string name="no_repos_enabled">Etkin depo yok. Ayarlar\\\\\\\'dan en az birini etkinleştirin.</string>
+    <string name="no_repos_enabled">Etkin depo yok. Ayarlar\'dan en az birini etkinleştirin.</string>
     <string name="connection_timeout">Bağlantı zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edin.</string>
-    <string name="sync_completed_with_errors">Senkronizasyon hatalarla tamamlandı:\\\\n%1$s</string>
-    <string name="partial_sync_completed">Kısmi senkronizasyon tamamlandı:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">Senkronizasyon hatalarla tamamlandı:\n%1$s</string>
+    <string name="partial_sync_completed">Kısmi senkronizasyon tamamlandı:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Ağ veya ayrıştırma hatası</string>
     <string name="error_unknown">Bilinmeyen hata</string>
@@ -151,9 +151,9 @@
     <string name="exodus_privacy">Exodus Privacy</string>
     <string name="plexus">Plexus</string>
     <string name="plexus_compatibility">Plexus uyumluluğu</string>
-    <string name="plexus_degoogled">Google\\\'dan arındırılmış</string>
+    <string name="plexus_degoogled">Google\'dan arındırılmış</string>
     <string name="plexus_microg">microG</string>
-    <string name="plexus_unrated">Plexus\\\'ta puanlanmamış</string>
+    <string name="plexus_unrated">Plexus\'ta puanlanmamış</string>
     <string name="plexus_view_details">Ayrıntıları görüntüle</string>
     <string name="plexus_ratings">puan</string>
     <string name="plexus_open_website">Plexus web sitesinde aç</string>
@@ -196,7 +196,7 @@
     <string name="reset_repositories_confirm">Tüm özel depolar kaldırılacak ve varsayılan liste geri yüklenecek. Devam edilsin mi?</string>
     <string name="reset">Sıfırla</string>
     <string name="run">Çalıştır</string>
-    <string name="test_ping">Ping\\\'i test et</string>
+    <string name="test_ping">Ping\'i test et</string>
     <string name="forget_last_mirror">Son aynayı unut</string>
     <string name="forgot_mirror">%s için son ayna unutuldu</string>
     <string name="delete_repository">Depoyu sil</string>
@@ -232,7 +232,7 @@
     <string name="izzy_stats_yearly">Yıllık indirmeler</string>
     <string name="izzy_stats_unavailable">İstatistikler kullanılamıyor</string>
     <string name="dhizuku_permission_denied">Dhizuku izni reddedildi. Lütfen izni Dhizuku uygulamasından verin.</string>
-    <string name="dhizuku_not_available">Dhizuku kullanılamıyor. Lütfen önce Dhizuku\\\'yu yükleyin ve cihaz sahibi olarak ayarlayın.</string>
+    <string name="dhizuku_not_available">Dhizuku kullanılamıyor. Lütfen önce Dhizuku\'yu yükleyin ve cihaz sahibi olarak ayarlayın.</string>
     <string name="dhizuku_fallback">Oturum kurucusuna geri dönülüyor</string>
     <string name="dismiss_banner">Afişi kapat</string>
     <string name="no_browser_available">Bağlantıyı açmak için tarayıcı yok</string>
@@ -240,9 +240,9 @@
     <string name="category_about">Hakkında</string>
     <string name="support_development">Geliştirmeyi destekle</string>
     <string name="support_development_desc">Bu uygulama işinize yarıyorsa, gelişimini desteklemeyi düşünün</string>
-    <string name="donate_on_kofi">Ko-fi\\\'da bağış yap</string>
+    <string name="donate_on_kofi">Ko-fi\'da bağış yap</string>
     <string name="insecure_http_warning">Bu depo güvenli olmayan HTTP kullanıyor. Bunu yalnızca güvendiğiniz yerel veya LAN deposu için etkinleştirin.</string>
-    <string name="allow_insecure_http">Bu depo için güvenli olmayan HTTP\\\'ye izin ver</string>
+    <string name="allow_insecure_http">Bu depo için güvenli olmayan HTTP\'ye izin ver</string>
     <string name="setting_theme_desc">Açık, koyu veya sistem teması arasında seçim yapın</string>
     <string name="setting_show_app_icons">Uygulama simgelerini göster</string>
     <string name="setting_show_app_icons_desc">Uygulama simgelerini listelerde ve ızgaralarda göster</string>
@@ -253,12 +253,12 @@
     <string name="setting_auto_update_desc">Uygulamaları arka planda otomatik güncelle</string>
     <string name="setting_wifi_only_desc">Yalnızca Wi-Fi üzerinden indir ve eşitle</string>
     <string name="setting_show_reproducible">Yeniden üretilebilir derleme rozetlerini göster</string>
-    <string name="setting_show_reproducible_desc">IzzyOnDroid\\\'den gelen yeniden üretilebilir derleme rozetlerini göster</string>
+    <string name="setting_show_reproducible_desc">IzzyOnDroid\'den gelen yeniden üretilebilir derleme rozetlerini göster</string>
     <string name="setting_fail_on_trust_errors">Güven hatalarında başarısız ol</string>
     <string name="setting_fail_on_trust_errors_desc">Katı SSL/TLS doğrulaması</string>
     <string name="setting_use_proxy">Proxy kullan</string>
     <string name="setting_use_proxy_desc">Bağlantıları bir proxy üzerinden yönlendir</string>
-    <string name="setting_proxy_url">Proxy URL\\\'si</string>
+    <string name="setting_proxy_url">Proxy URL\'si</string>
     <string name="setting_show_debug_info">Hata ayıklama bilgilerini göster</string>
     <string name="setting_show_debug_info_desc">Arayüzde hata ayıklama bilgilerini göster</string>
     <string name="mirror_sticky_last_good">Son geçerli olana öncelik ver</string>
@@ -267,7 +267,7 @@
     <string name="trust_https_only">Yalnızca HTTPS</string>
     <string name="trust_pinned">Sabitlenmiş sertifikalar</string>
     <string name="trust_custom_ca">Özel CA</string>
-    <string name="trust_insecure_http">Güvenli olmayan HTTP\\\'ye izin ver</string>
+    <string name="trust_insecure_http">Güvenli olmayan HTTP\'ye izin ver</string>
     <string-array name="setting_theme_options">
         <item>@string/theme_system</item>
         <item>@string/theme_light</item>

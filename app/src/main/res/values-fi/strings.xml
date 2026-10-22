@@ -137,8 +137,8 @@
     <string name="no_action_attached">Ei toimintoa liitetty</string>
     <string name="no_repos_enabled">Yhtään repositoriaa ei ole käytössä. Ota käyttöön vähintään yksi asetuksista.</string>
     <string name="connection_timeout">Yhteyden aikakatkaisu. Tarkista internetyhteytesi.</string>
-    <string name="sync_completed_with_errors">Synkronointi valmis virheiden kanssa:\\\\n%1$s</string>
-    <string name="partial_sync_completed">Osittainen synkronointi valmis:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">Synkronointi valmis virheiden kanssa:\n%1$s</string>
+    <string name="partial_sync_completed">Osittainen synkronointi valmis:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Verkko- tai jäsennysvirhe</string>
     <string name="error_unknown">Tuntematon virhe</string>

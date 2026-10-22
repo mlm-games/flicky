@@ -137,8 +137,8 @@
     <string name="no_action_attached">Không có hành động nào được gắn</string>
     <string name="no_repos_enabled">Chưa bật kho lưu trữ nào. Hãy bật ít nhất một kho trong Cài đặt.</string>
     <string name="connection_timeout">Quá thời gian kết nối. Vui lòng kiểm tra kết nối mạng của bạn.</string>
-    <string name="sync_completed_with_errors">Đồng bộ hoàn tất kèm lỗi:\\\\n%1$s</string>
-    <string name="partial_sync_completed">Đồng bộ một phần hoàn tất:\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">Đồng bộ hoàn tất kèm lỗi:\n%1$s</string>
+    <string name="partial_sync_completed">Đồng bộ một phần hoàn tất:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Lỗi mạng hoặc phân tích</string>
     <string name="error_unknown">Lỗi không xác định</string>

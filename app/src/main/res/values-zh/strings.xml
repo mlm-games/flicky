@@ -137,8 +137,8 @@
     <string name="no_action_attached">未附加操作</string>
     <string name="no_repos_enabled">没有已启用的软件源。请在设置中至少启用一个。</string>
     <string name="connection_timeout">连接超时。请检查您的网络连接。</string>
-    <string name="sync_completed_with_errors">同步完成，但出现错误：\\\\n%1$s</string>
-    <string name="partial_sync_completed">部分同步完成：\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">同步完成，但出现错误：\n%1$s</string>
+    <string name="partial_sync_completed">部分同步完成：\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">网络或解析错误</string>
     <string name="error_unknown">未知错误</string>

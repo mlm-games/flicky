@@ -137,8 +137,8 @@
     <string name="no_action_attached">Není připojena žádná akce</string>
     <string name="no_repos_enabled">Nejsou povoleny žádné repozitáře. Povolte alespoň jeden v Nastavení.</string>
     <string name="connection_timeout">Časový limit připojení vypršel. Zkontrolujte připojení k internetu.</string>
-    <string name="sync_completed_with_errors">Synchronizace dokončena s chybami:\\\\\\\\\\\\\\\\n%1$s</string>
-    <string name="partial_sync_completed">Částečná synchronizace dokončena:\\\\\\\\\\\\\\\\n%1$s</string>
+    <string name="sync_completed_with_errors">Synchronizace dokončena s chybami:\n%1$s</string>
+    <string name="partial_sync_completed">Částečná synchronizace dokončena:\n%1$s</string>
     <string name="image_counter">%1$d / %2$d</string>
     <string name="error_network">Chyba sítě nebo analýzy</string>
     <string name="error_unknown">Neznámá chyba</string>
