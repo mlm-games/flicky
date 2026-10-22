@@ -1,0 +1,2 @@
+- fix few transl. escapes
+- Fix language selection (#123)

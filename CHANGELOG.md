@@ -1,3 +1,9 @@
+## v4.6.1
+
+- fix few transl. escapes
+- Fix language selection (#123)
+
+
 ## v4.6.0
 
 - Add keypad softkeys and repositories page
