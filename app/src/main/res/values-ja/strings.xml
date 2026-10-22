@@ -160,7 +160,7 @@
     <string name="permissions">アプリ情報</string>
     <string name="app_not_installed">アプリは未インストール</string>
     <string name="versions">Versions</string>
-    <string name="installed"></string>
+    <string name="installed">インストール済み</string>
     <string name="more_apps">もっと見る</string>
     <string name="more_apps_by_author">%1$s の他のアプリ</string>
     <string name="no_apps_by_author">%1$s のアプリが見つかりません</string>

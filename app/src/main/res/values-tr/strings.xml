@@ -160,7 +160,7 @@
     <string name="permissions">Uygulama bilgisi</string>
     <string name="app_not_installed">Uygulama yüklü değil</string>
     <string name="versions">Versions</string>
-    <string name="installed"></string>
+    <string name="installed">Yüklendi</string>
     <string name="more_apps">Daha fazla</string>
     <string name="more_apps_by_author">%1$s uygulamasından daha fazlası</string>
     <string name="no_apps_by_author">%1$s tarafından hiç uygulama bulunamadı</string>

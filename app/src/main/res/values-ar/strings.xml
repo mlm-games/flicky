@@ -160,7 +160,7 @@
     <string name="permissions">معلومات التطبيق</string>
     <string name="app_not_installed">التطبيق غير مثبَّت</string>
     <string name="versions">Versions</string>
-    <string name="installed"></string>
+    <string name="installed">مثبّت</string>
     <string name="more_apps">المزيد</string>
     <string name="more_apps_by_author">مزيد من تطبيقات %1$s</string>
     <string name="no_apps_by_author">لم يُعثر على تطبيقات من %1$s</string>

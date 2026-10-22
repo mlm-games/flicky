@@ -160,7 +160,7 @@
     <string name="permissions">Infos de l’application</string>
     <string name="app_not_installed">Application non installée</string>
     <string name="versions">Versions</string>
-    <string name="installed"></string>
+    <string name="installed">Installé</string>
     <string name="more_apps">Plus</string>
     <string name="more_apps_by_author">Plus d\'applications de %1$s</string>
     <string name="no_apps_by_author">Aucune application de %1$s trouvée</string>

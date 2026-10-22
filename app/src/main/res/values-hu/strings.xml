@@ -160,7 +160,7 @@
     <string name="permissions">Alkalmazás adatai</string>
     <string name="app_not_installed">Az alkalmazás nincs telepítve</string>
     <string name="versions">Versions</string>
-    <string name="installed"></string>
+    <string name="installed">Telepítve</string>
     <string name="more_apps">Több</string>
     <string name="more_apps_by_author">További alkalmazások: %1$s</string>
     <string name="no_apps_by_author">Nem található alkalmazás innen: %1$s</string>

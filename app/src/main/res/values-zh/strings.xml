@@ -160,7 +160,7 @@
     <string name="permissions">应用信息</string>
     <string name="app_not_installed">应用未安装</string>
     <string name="versions">Versions</string>
-    <string name="installed"></string>
+    <string name="installed">已安装</string>
     <string name="more_apps">更多</string>
     <string name="more_apps_by_author">来自 %1$s 的更多应用</string>
     <string name="no_apps_by_author">未找到来自 %1$s 的应用</string>

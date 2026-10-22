@@ -160,7 +160,7 @@
     <string name="permissions">Podaci o aplikaciji</string>
     <string name="app_not_installed">Aplikacija nije instalirana</string>
     <string name="versions">Versions</string>
-    <string name="installed"></string>
+    <string name="installed">Instalirano</string>
     <string name="more_apps">Još</string>
     <string name="more_apps_by_author">Još aplikacija od %1$s</string>
     <string name="no_apps_by_author">Nema aplikacija od %1$s</string>

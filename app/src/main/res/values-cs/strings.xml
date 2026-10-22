@@ -160,7 +160,7 @@
     <string name="permissions">Informace o aplikaci</string>
     <string name="app_not_installed">Aplikace není nainstalována</string>
     <string name="versions">Verze</string>
-    <string name="installed"></string>
+    <string name="installed">Nainstalováno</string>
     <string name="more_apps">Více</string>
     <string name="more_apps_by_author">Další aplikace od %1$s</string>
     <string name="no_apps_by_author">Žádné aplikace od %1$s nenalezeny</string>

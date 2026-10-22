@@ -160,7 +160,7 @@
     <string name="permissions">Відомості про застосунок</string>
     <string name="app_not_installed">Застосунок не встановлено</string>
     <string name="versions">Versions</string>
-    <string name="installed"></string>
+    <string name="installed">Встановлено</string>
     <string name="more_apps">Ще</string>
     <string name="more_apps_by_author">Ще застосунків від %1$s</string>
     <string name="no_apps_by_author">Застосунків від %1$s не знайдено</string>
