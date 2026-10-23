@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.shapes
@@ -67,6 +68,8 @@ fun SmartText(
 ) {
     val hasHtml = remember(text) { HtmlUtils.containsHtml(text) }
     val plain = remember(text, hasHtml) { if (hasHtml) HtmlUtils.toPlainText(text) else text }
+    val context = LocalContext.current
+    val selectable = remember(context) { !DeviceUtils.isTV(context.packageManager) }
 
     if (rich && hasHtml) {
         val color = colorScheme.onSurface.toArgb()
@@ -80,6 +83,7 @@ fun SmartText(
                     setTextColor(color)
                     setLinkTextColor(link)
                     textSize = 14f
+                    setTextIsSelectable(selectable)
                     movementMethod = LinkMovementMethod.getInstance()
                     setLineSpacing(0f, 1.1f)
                     if (maxLines != Int.MAX_VALUE) {
@@ -102,13 +106,16 @@ fun SmartText(
             }
         )
     } else {
-        Text(
-            text = plain,
-            modifier = modifier,
-            style = typography.bodyMedium,
-            color = colorScheme.onSurface,
-            maxLines = maxLines
-        )
+        val content: @Composable () -> Unit = {
+            Text(
+                text = plain,
+                modifier = modifier,
+                style = typography.bodyMedium,
+                color = colorScheme.onSurface,
+                maxLines = maxLines
+            )
+        }
+        if (selectable) SelectionContainer { content() } else content()
     }
 }
 

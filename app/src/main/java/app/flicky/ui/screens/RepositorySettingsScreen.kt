@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -717,11 +718,13 @@ private fun AdvancedRepoDialog(
 
             Text(stringResource(R.string.signer_fingerprint), style = typography.labelLarge)
 
-            Text(
-                if (hasFingerprint) fingerprint else stringResource(R.string.not_verified),
-                style = typography.bodySmall,
-                color = if (hasFingerprint) colorScheme.onSurfaceVariant else colorScheme.error
-            )
+            SelectionContainer {
+                Text(
+                    if (hasFingerprint) fingerprint else stringResource(R.string.not_verified),
+                    style = typography.bodySmall,
+                    color = if (hasFingerprint) colorScheme.onSurfaceVariant else colorScheme.error
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
 
