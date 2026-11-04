@@ -52,7 +52,7 @@
             android:configChanges="uiMode"
             android:exported="true"
             android:launchMode="singleTask"
-            android:windowSoftInputMode="stateAlwaysHidden"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize"
             android:resumeWhilePausing="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -5,6 +5,7 @@ package app.flicky.ui.screens
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -16,10 +17,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -59,6 +62,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -71,24 +75,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import app.flicky.R
@@ -154,9 +155,21 @@ fun BrowseScreen(
     val s by settings.settingsFlow.collectAsState(initial = AppSettings())
 
     var lastFocusedKey by rememberSaveable { mutableStateOf<String?>(null) }
-    var tvSearchActive by remember { mutableStateOf(false) }
+    var tvSearchEditing by remember { mutableStateOf(false) }
+    var tvSearchInteracted by rememberSaveable { mutableStateOf(false) }
     val sortChipFocusRequester = remember { FocusRequester() }
     val searchFocusRequester = remember { FocusRequester() }
+
+    val clearSearch: () -> Unit = {
+        tvSearchInteracted = true
+        onSearchChange("")
+        searchFocusRequester.safeRequestFocus()
+    }
+
+    val changeQuery: (String) -> Unit = { value ->
+        if (isTv) tvSearchInteracted = true
+        onSearchChange(value)
+    }
 
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
@@ -177,9 +190,9 @@ fun BrowseScreen(
                 }
             ) {
                 if (currentQuery.value.isBlank()) {
-                    searchFocusRequester.requestFocus()
+                    searchFocusRequester.safeRequestFocus()
                 } else {
-                    onSearchChange("")
+                    clearSearch()
                 }
             }
             right(context.getString(R.string.more_options)) { menuOpen = true }
@@ -198,7 +211,7 @@ fun BrowseScreen(
         RequestFocusOnKey(
             key = apps.itemCount,
             focusRequester = sortChipFocusRequester,
-            enabled = lastFocusedKey == null && !tvSearchActive && query.isEmpty() && apps.itemCount == 0,
+            enabled = lastFocusedKey == null && !tvSearchEditing && !tvSearchInteracted && query.isEmpty() && apps.itemCount == 0,
             delayMs = TvFocusConfig.PRIMARY_FOCUS_DELAY
         )
     }
@@ -217,6 +230,17 @@ fun BrowseScreen(
                 installVariants = vars
             }
         }
+    }
+
+    BackHandler(
+        enabled = isTv &&
+            !tvSearchEditing &&
+            query.isNotEmpty() &&
+            !menuOpen &&
+            !showSortDialog &&
+            installFromTarget == null
+    ) {
+        clearSearch()
     }
 
     LaunchedEffect(resolvedError) {
@@ -241,20 +265,32 @@ fun BrowseScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        TvAwareDockedSearchBar(
+                        FlickySearchBar(
                             query = query,
                             isTv = isTv,
-                            onImmediateChange = onSearchChange,
-                            onCommit = onSearchChange,
+                            onImmediateChange = changeQuery,
+                            onCommit = changeQuery,
                             includeVoiceTrailing = !isTv,
                             modifier = Modifier.weight(1f),
                             focusRequester = searchFocusRequester,
-                            onActiveChangeExternal = { tvSearchActive = it }
+                            onEditingChange = { editing ->
+                                tvSearchEditing = editing
+                                if (editing) tvSearchInteracted = true
+                            }
                         )
                         if (isTv) {
-                            VoiceSearchButton(
-                                onResult = { onSearchChange(it) }
-                            )
+                            IconButton(
+                                onClick = clearSearch,
+                                enabled = query.isNotEmpty(),
+                                modifier = Modifier.tvFocusRing(shape = CircleShape)
+                            ) {
+                                Icon(
+                                    Icons.Default.Clear,
+                                    contentDescription = stringResource(R.string.action_clear),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            VoiceSearchButton(onResult = changeQuery)
                         }
                     }
                 }
@@ -413,9 +449,9 @@ fun BrowseScreen(
                                 val key = app.packageName
                                 AppListRow(
                                     app = app,
-                                    autofocus = isTv && !tvSearchActive && query.isEmpty() && (
+                                    autofocus = isTv && !tvSearchEditing && (
                                         lastFocusedKey == key ||
-                                            (lastFocusedKey == null && idx == 0)
+                                            (lastFocusedKey == null && !tvSearchInteracted && query.isEmpty() && idx == 0)
                                         ),
                                     onClick = {
                                         lastFocusedKey = key
@@ -448,9 +484,9 @@ fun BrowseScreen(
                                 val key = app.packageName
                                 AdaptiveAppCard(
                                     app = app,
-                                    autofocus = isTv && !tvSearchActive && query.isEmpty() && (
+                                    autofocus = isTv && !tvSearchEditing && (
                                         lastFocusedKey == key ||
-                                            (lastFocusedKey == null && idx == 0)
+                                            (lastFocusedKey == null && !tvSearchInteracted && query.isEmpty() && idx == 0)
                                         ),
                                     onClick = {
                                         lastFocusedKey = key
@@ -660,7 +696,7 @@ fun UiText.asString(): String {
 }
 
 @Composable
-private fun TvAwareDockedSearchBar(
+private fun FlickySearchBar(
     query: String,
     isTv: Boolean,
     onImmediateChange: (String) -> Unit,
@@ -668,44 +704,39 @@ private fun TvAwareDockedSearchBar(
     includeVoiceTrailing: Boolean = true,
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester? = null,
-    onActiveChangeExternal: (Boolean) -> Unit = {},
+    onEditingChange: (Boolean) -> Unit = {},
 ) {
     var localQuery by rememberSaveable { mutableStateOf(query) }
     LaunchedEffect(query) { if (query != localQuery) localQuery = query }
 
-    var active by remember { mutableStateOf(false) }
-    var barFocused by remember { mutableStateOf(false) }
     val keyboard = LocalSoftwareKeyboardController.current
-    val inputFocusRequester = remember { FocusRequester() }
-    val barFocusRequester = remember { FocusRequester() }
-    val okKeys = remember { setOf(Key.Enter, Key.NumPadEnter, Key.DirectionCenter) }
-
-    fun deactivate() {
-        active = false
-        onActiveChangeExternal(false)
-        keyboard?.hide()
-    }
-
-    val onActiveChange: (Boolean) -> Unit = { isActive ->
-        when {
-            !isActive -> deactivate()
-            !isTv -> {
-                active = true
-                onActiveChangeExternal(true)
-            }
-        }
-    }
-
-    LaunchedEffect(active) {
-        if (isTv && active && inputFocusRequester.safeRequestFocus()) {
-            keyboard?.show()
-        }
-    }
-
-    val colors1 = SearchBarDefaults.colors(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        dividerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+        focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        cursorColor = MaterialTheme.colorScheme.primary
     )
+
+    if (isTv) {
+        TvSearchBar(
+            query = localQuery,
+            onQueryChange = {
+                localQuery = it
+                onImmediateChange(it)
+            },
+            onSearch = { onCommit(localQuery) },
+            modifier = modifier,
+            focusRequester = focusRequester,
+            colors = fieldColors,
+            onEditingChange = onEditingChange
+        )
+        return
+    }
 
     DockedSearchBar(
         inputField = {
@@ -717,10 +748,10 @@ private fun TvAwareDockedSearchBar(
                 },
                 onSearch = {
                     onCommit(localQuery)
-                    deactivate()
+                    keyboard?.hide()
                 },
                 expanded = false,
-                onExpandedChange = onActiveChange,
+                onExpandedChange = {},
                 placeholder = {
                     Text(
                         stringResource(R.string.search_hint),
@@ -737,7 +768,12 @@ private fun TvAwareDockedSearchBar(
                 trailingIcon = {
                     when {
                         localQuery.isNotEmpty() -> {
-                            IconButton(onClick = { localQuery = ""; onImmediateChange("") }) {
+                            IconButton(
+                                onClick = {
+                                    localQuery = ""
+                                    onImmediateChange("")
+                                }
+                            ) {
                                 Icon(
                                     Icons.Default.Clear,
                                     contentDescription = stringResource(R.string.action_clear),
@@ -756,68 +792,182 @@ private fun TvAwareDockedSearchBar(
                         }
                     }
                 },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
-                        alpha = if (isTv && barFocused) 0.5f else 0.3f
-                    ),
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor =
-                        if (isTv && barFocused) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.surfaceVariant,
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
+                colors = fieldColors,
                 modifier = Modifier
-                    .fillMaxWidth(1f)
-                    .focusProperties { canFocus = !isTv || active }
-                    .focusRequester(inputFocusRequester)
+                    .fillMaxWidth()
+                    .then(
+                        if (focusRequester != null) Modifier.focusRequester(focusRequester)
+                        else Modifier
+                    )
             )
         },
         expanded = false,
-        onExpandedChange = onActiveChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .then(
-                if (focusRequester != null) Modifier.focusRequester(focusRequester)
-                else Modifier
-            )
-            .focusRequester(barFocusRequester)
-            .onFocusChanged { state ->
-                barFocused = state.hasFocus
-                if (!isTv) return@onFocusChanged
-                if (state.hasFocus) {
-                    if (!active) keyboard?.hide()
-                } else if (active) {
-                    deactivate()
-                }
-            }
-            .onPreviewKeyEvent { e ->
-                when {
-                    isTv && !active && e.type == KeyEventType.KeyDown && e.key in okKeys -> {
-                        active = true
-                        onActiveChangeExternal(true)
-                        true
-                    }
-
-                    isTv && active && e.type == KeyEventType.KeyDown && e.key == Key.Back -> {
-                        deactivate()
-                        barFocusRequester.safeRequestFocus()
-                        true
-                    }
-
-                    else -> false
-                }
-            }
-            .then(if (isTv) Modifier.focusable() else Modifier),
+        onExpandedChange = {},
+        modifier = modifier.fillMaxWidth(),
         shape = SearchBarDefaults.dockedShape,
-        colors = colors1,
+        colors = SearchBarDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            dividerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+        ),
         tonalElevation = SearchBarDefaults.TonalElevation,
         shadowElevation = SearchBarDefaults.ShadowElevation,
-        content = { /* suggestions/history later? */ },
+        content = { }
     )
+}
+
+@Composable
+private fun TvSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    modifier: Modifier = Modifier,
+    focusRequester: FocusRequester? = null,
+    colors: TextFieldColors,
+    onEditingChange: (Boolean) -> Unit = {},
+) {
+    var editing by remember { mutableStateOf(false) }
+    var barFocused by remember { mutableStateOf(false) }
+    var editorWasFocused by remember { mutableStateOf(false) }
+    var restoreFocusAfterEdit by remember { mutableStateOf(false) }
+    var imeWasVisibleDuringEdit by remember { mutableStateOf(false) }
+
+    val keyboard = LocalSoftwareKeyboardController.current
+    val windowInfo = LocalWindowInfo.current
+    val windowFocused = windowInfo.isWindowFocused
+    val internalFocusRequester = remember { FocusRequester() }
+    val fieldFocusRequester = focusRequester ?: internalFocusRequester
+    val imeVisible = WindowInsets.isImeVisible
+    val shape = SearchBarDefaults.dockedShape
+
+    fun stopEditing(restoreFocus: Boolean) {
+        if (!editing) return
+        editing = false
+        restoreFocusAfterEdit = restoreFocus
+        imeWasVisibleDuringEdit = false
+        onEditingChange(false)
+        keyboard?.hide()
+    }
+
+    fun startEditing() {
+        if (editing) return
+        editorWasFocused = false
+        restoreFocusAfterEdit = false
+        imeWasVisibleDuringEdit = false
+        editing = true
+        onEditingChange(true)
+    }
+
+    BackHandler(enabled = editing) {
+        stopEditing(restoreFocus = true)
+    }
+
+    LaunchedEffect(editing, windowFocused) {
+        if (editing && windowFocused) {
+            withFrameNanos { }
+            if (fieldFocusRequester.safeRequestFocus()) {
+                keyboard?.show()
+            }
+        } else if (!editing && restoreFocusAfterEdit) {
+            withFrameNanos { }
+            fieldFocusRequester.safeRequestFocus()
+            restoreFocusAfterEdit = false
+        }
+    }
+
+    LaunchedEffect(editing, imeVisible) {
+        if (!editing) {
+            imeWasVisibleDuringEdit = false
+        } else if (imeVisible) {
+            imeWasVisibleDuringEdit = true
+        } else if (imeWasVisibleDuringEdit && windowInfo.isWindowFocused) {
+            stopEditing(restoreFocus = true)
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { onEditingChange(false) }
+    }
+
+    if (editing) {
+        SearchBarDefaults.InputField(
+            query = query,
+            onQueryChange = onQueryChange,
+            onSearch = {
+                onSearch()
+                stopEditing(restoreFocus = true)
+            },
+            expanded = false,
+            onExpandedChange = {},
+            placeholder = {
+                Text(
+                    stringResource(R.string.search_hint),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            colors = colors,
+            modifier = modifier
+                .fillMaxWidth()
+                .focusRequester(fieldFocusRequester)
+                .tvFocusRing(shape = shape)
+                .onFocusChanged { state ->
+                    if (state.isFocused) {
+                        editorWasFocused = true
+                    } else if (editing && editorWasFocused && windowInfo.isWindowFocused) {
+                        stopEditing(restoreFocus = false)
+                    }
+                }
+        )
+    } else {
+        Surface(
+            onClick = { startEditing() },
+            modifier = modifier
+                .fillMaxWidth()
+                .height(SearchBarDefaults.InputFieldHeight)
+                .focusRequester(fieldFocusRequester)
+                .onFocusChanged { barFocused = it.hasFocus }
+                .tvFocusRing(shape = shape),
+            shape = shape,
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(
+                alpha = if (barFocused) 0.5f else 0.3f
+            ),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            tonalElevation = SearchBarDefaults.TonalElevation,
+            shadowElevation = SearchBarDefaults.ShadowElevation
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.size(16.dp))
+                Text(
+                    text = query.ifEmpty { stringResource(R.string.search_hint) },
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (query.isEmpty()) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
 }
 
 @Composable
