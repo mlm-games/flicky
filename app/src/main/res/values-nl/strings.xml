@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Kies tussen licht, donker en het systeemthema</string>
     <string name="setting_show_app_icons">Apppictogrammen tonen</string>
     <string name="setting_show_app_icons_desc">Apppictogrammen tonen in lijsten en rasters</string>
+    <string name="setting_show_focus_ring">Focusring</string>
+    <string name="setting_show_focus_ring_desc">Het gefocuste element markeren bij navigeren met een afstandsbediening of toetsenbord</string>
+    <string name="setting_restore_last_query">Laatste zoekopdracht herstellen</string>
+    <string name="setting_restore_last_query_desc">Heropenen met de vorige zoekopdracht</string>
     <string name="setting_use_list_layout">Lijstindeling gebruiken</string>
     <string name="setting_use_list_layout_desc">Apps in een lijst in plaats van een raster tonen</string>
     <string name="sort_name_za">Naam (Z-A)</string>

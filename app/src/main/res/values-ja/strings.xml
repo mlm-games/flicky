@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">ライト、ダーク、またはシステムテーマから選択</string>
     <string name="setting_show_app_icons">アプリアイコンを表示</string>
     <string name="setting_show_app_icons_desc">リストとグリッドでアプリアイコンを表示</string>
+    <string name="setting_show_focus_ring">フォーカスリング</string>
+    <string name="setting_show_focus_ring_desc">リモコンやキーボードで移動するときにフォーカス中のコントロールを強調表示します</string>
+    <string name="setting_restore_last_query">最後の検索を復元</string>
+    <string name="setting_restore_last_query_desc">前回の検索クエリで開きます</string>
     <string name="setting_use_list_layout">リスト表示を使用</string>
     <string name="setting_use_list_layout_desc">グリッドではなくリストでアプリを表示</string>
     <string name="sort_name_za">名前 (Z-A)</string>

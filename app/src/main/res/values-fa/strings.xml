@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">میان پوستهٔ روشن، تیره یا سیستم انتخاب کنید</string>
     <string name="setting_show_app_icons">نمایش نمادهای برنامه</string>
     <string name="setting_show_app_icons_desc">نمایش نمادهای برنامه در فهرست‌ها و شبکه‌ها</string>
+    <string name="setting_show_focus_ring">حلقه تمرکز</string>
+    <string name="setting_show_focus_ring_desc">برجسته کردن کنترل انتخاب‌شده هنگام پیمایش با کنترل یا صفحه‌کلید</string>
+    <string name="setting_restore_last_query">بازیابی آخرین جستجو</string>
+    <string name="setting_restore_last_query_desc">بازکردن دوباره با آخرین عبارت جستجو</string>
     <string name="setting_use_list_layout">استفاده از چیدمان فهرست</string>
     <string name="setting_use_list_layout_desc">نمایش برنامه‌ها به‌صورت فهرست به‌جای شبکه</string>
     <string name="sort_name_za">نام (Z-A)</string>

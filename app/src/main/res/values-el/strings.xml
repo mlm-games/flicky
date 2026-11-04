@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Επιλέξτε μεταξύ φωτεινού, σκούρου ή θέματος συστήματος</string>
     <string name="setting_show_app_icons">Εμφάνιση εικονιδίων εφαρμογών</string>
     <string name="setting_show_app_icons_desc">Εμφάνιση εικονιδίων εφαρμογών σε λίστες και πλέγματα</string>
+    <string name="setting_show_focus_ring">Περίγραμμα εστίασης</string>
+    <string name="setting_show_focus_ring_desc">Επισήμανση του στοιχείου που έχει εστίαση κατά την πλοήγηση με τηλεχειριστήριο ή πληκτρολόγιο</string>
+    <string name="setting_restore_last_query">Επαναφορά τελευταίας αναζήτησης</string>
+    <string name="setting_restore_last_query_desc">Άνοιγμα ξανά με τον τελευταίο όρο αναζήτησης</string>
     <string name="setting_use_list_layout">Χρήση διάταξης λίστας</string>
     <string name="setting_use_list_layout_desc">Εμφάνιση εφαρμογών σε λίστα αντί για πλέγμα</string>
     <string name="sort_name_za">Όνομα (Z-A)</string>

@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Chọn giữa chủ đề sáng, tối hoặc theo hệ thống</string>
     <string name="setting_show_app_icons">Hiện biểu tượng ứng dụng</string>
     <string name="setting_show_app_icons_desc">Hiện biểu tượng ứng dụng trong danh sách và lưới</string>
+    <string name="setting_show_focus_ring">Vòng lấy nét</string>
+    <string name="setting_show_focus_ring_desc">Làm nổi bật phần tử đang lấy nét khi điều hướng bằng điều khiển hoặc bàn phím</string>
+    <string name="setting_restore_last_query">Khôi phục tìm kiếm gần nhất</string>
+    <string name="setting_restore_last_query_desc">Mở lại với truy vấn tìm kiếm trước đó</string>
     <string name="setting_use_list_layout">Dùng bố cục danh sách</string>
     <string name="setting_use_list_layout_desc">Hiện ứng dụng theo danh sách thay vì lưới</string>
     <string name="sort_name_za">Tên (Z-A)</string>

@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Escolha entre o tema claro, escuro ou do sistema</string>
     <string name="setting_show_app_icons">Mostrar ícones dos aplicativos</string>
     <string name="setting_show_app_icons_desc">Mostrar os ícones dos aplicativos em listas e grades</string>
+    <string name="setting_show_focus_ring">Anel de foco</string>
+    <string name="setting_show_focus_ring_desc">Destacar o controle em foco ao navegar com um controle remoto ou teclado</string>
+    <string name="setting_restore_last_query">Restaurar última pesquisa</string>
+    <string name="setting_restore_last_query_desc">Reabrir com a consulta de pesquisa anterior</string>
     <string name="setting_use_list_layout">Usar layout de lista</string>
     <string name="setting_use_list_layout_desc">Mostrar os aplicativos em lista em vez de grade</string>
     <string name="sort_name_za">Nome (Z-A)</string>

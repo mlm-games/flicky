@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">밝은 테마, 어두운 테마, 시스템 테마 중에서 선택하세요</string>
     <string name="setting_show_app_icons">앱 아이콘 표시</string>
     <string name="setting_show_app_icons_desc">목록과 그리드에서 앱 아이콘 표시</string>
+    <string name="setting_show_focus_ring">포커스 링</string>
+    <string name="setting_show_focus_ring_desc">리모컨이나 키보드로 이동할 때 포커스된 컨트롤을 강조 표시</string>
+    <string name="setting_restore_last_query">마지막 검색 복원</string>
+    <string name="setting_restore_last_query_desc">이전 검색어로 다시 열기</string>
     <string name="setting_use_list_layout">목록 레이아웃 사용</string>
     <string name="setting_use_list_layout_desc">그리드 대신 목록으로 앱 표시</string>
     <string name="sort_name_za">이름 (Z-A)</string>

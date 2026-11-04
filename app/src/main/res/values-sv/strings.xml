@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Välj mellan ljust, mörkt eller systemtema</string>
     <string name="setting_show_app_icons">Visa appikoner</string>
     <string name="setting_show_app_icons_desc">Visa appikoner i listor och rutnät</string>
+    <string name="setting_show_focus_ring">Fokusring</string>
+    <string name="setting_show_focus_ring_desc">Markera fokuserat element vid navigering med fjärrkontroll eller tangentbord</string>
+    <string name="setting_restore_last_query">Återställ senaste sökning</string>
+    <string name="setting_restore_last_query_desc">Öppna igen med den senaste sökningen</string>
     <string name="setting_use_list_layout">Använd listlayout</string>
     <string name="setting_use_list_layout_desc">Visa appar i en lista i stället för ett rutnät</string>
     <string name="sort_name_za">Namn (Z-A)</string>

@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">在浅色、深色或系统主题之间选择</string>
     <string name="setting_show_app_icons">显示应用图标</string>
     <string name="setting_show_app_icons_desc">在列表和网格中显示应用图标</string>
+    <string name="setting_show_focus_ring">聚焦框</string>
+    <string name="setting_show_focus_ring_desc">使用遥控器或键盘导航时突出显示聚焦的控件</string>
+    <string name="setting_restore_last_query">恢复上次搜索</string>
+    <string name="setting_restore_last_query_desc">使用上次的搜索词重新打开</string>
     <string name="setting_use_list_layout">使用列表布局</string>
     <string name="setting_use_list_layout_desc">以列表而非网格显示应用</string>
     <string name="sort_name_za">名称 (Z-A)</string>

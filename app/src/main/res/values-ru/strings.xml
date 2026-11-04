@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Выберите светлую, тёмную или системную тему</string>
     <string name="setting_show_app_icons">Показывать значки приложений</string>
     <string name="setting_show_app_icons_desc">Показывать значки приложений в списках и сетках</string>
+    <string name="setting_show_focus_ring">Кольцо фокуса</string>
+    <string name="setting_show_focus_ring_desc">Выделять элемент в фокусе при навигации с пульта или клавиатуры</string>
+    <string name="setting_restore_last_query">Восстановить последний поиск</string>
+    <string name="setting_restore_last_query_desc">Открывать с прошлым поисковым запросом</string>
     <string name="setting_use_list_layout">Вид списком</string>
     <string name="setting_use_list_layout_desc">Показывать приложения списком, а не сеткой</string>
     <string name="sort_name_za">Название (Я-А)</string>

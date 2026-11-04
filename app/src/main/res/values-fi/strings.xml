@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Valitse vaalea, tumma tai järjestelmän teema</string>
     <string name="setting_show_app_icons">Näytä sovelluskuvakkeet</string>
     <string name="setting_show_app_icons_desc">Näytä sovelluskuvakkeet luetteloissa ja ruudukoissa</string>
+    <string name="setting_show_focus_ring">Kohdistusrengas</string>
+    <string name="setting_show_focus_ring_desc">Korosta kohdistettu kohde kaukosäätimellä tai näppäimistöllä liikuttaessa</string>
+    <string name="setting_restore_last_query">Palauta viimeisin haku</string>
+    <string name="setting_restore_last_query_desc">Avaa uudelleen edellisellä hakusanalla</string>
     <string name="setting_use_list_layout">Käytä luetteloruokitusta</string>
     <string name="setting_use_list_layout_desc">Näytä sovellukset luettelona ruudukon sijaan</string>
     <string name="sort_name_za">Nimi (Z-A)</string>

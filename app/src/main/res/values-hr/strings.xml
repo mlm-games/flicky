@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Odaberite svijetlu, tamnu ili sustavsku temu</string>
     <string name="setting_show_app_icons">Prikaži ikone aplikacija</string>
     <string name="setting_show_app_icons_desc">Prikaži ikone aplikacija na popisima i mrežama</string>
+    <string name="setting_show_focus_ring">Prsten fokusa</string>
+    <string name="setting_show_focus_ring_desc">Istakni fokusirani element pri navigaciji daljinskim upravljačem ili tipkovnicom</string>
+    <string name="setting_restore_last_query">Vrati posljednje pretraživanje</string>
+    <string name="setting_restore_last_query_desc">Ponovno otvori s prethodnim upitom pretraživanja</string>
     <string name="setting_use_list_layout">Koristi prikaz popisa</string>
     <string name="setting_use_list_layout_desc">Prikaži aplikacije kao popis umjesto mreže</string>
     <string name="sort_name_za">Naziv (Z-A)</string>

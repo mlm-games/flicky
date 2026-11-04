@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Vyberte mezi světlým, tmavým a systémovým motivem</string>
     <string name="setting_show_app_icons">Zobrazit ikony aplikací</string>
     <string name="setting_show_app_icons_desc">Zobrazit ikony aplikací v seznamech a mřížkách</string>
+    <string name="setting_show_focus_ring">Zvýraznění zaostření</string>
+    <string name="setting_show_focus_ring_desc">Zvýraznit zaostřený prvek při navigaci ovladačem nebo klávesnicí</string>
+    <string name="setting_restore_last_query">Obnovit poslední hledání</string>
+    <string name="setting_restore_last_query_desc">Znovu otevřít s posledním hledaným výrazem</string>
     <string name="setting_use_list_layout">Použít rozvržení seznamu</string>
     <string name="setting_use_list_layout_desc">Zobrazovat aplikace v seznamu místo mřížky</string>
     <string name="sort_name_za">Jméno (Z→A)</string>

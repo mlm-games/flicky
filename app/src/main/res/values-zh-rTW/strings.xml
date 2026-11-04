@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">在淺色、深色與系統主題之間選擇</string>
     <string name="setting_show_app_icons">顯示應用程式圖示</string>
     <string name="setting_show_app_icons_desc">在清單與格線中顯示應用程式圖示</string>
+    <string name="setting_show_focus_ring">聚焦框</string>
+    <string name="setting_show_focus_ring_desc">使用遙控器或鍵盤導覽時突顯聚焦的控制項</string>
+    <string name="setting_restore_last_query">還原上次搜尋</string>
+    <string name="setting_restore_last_query_desc">使用先前的搜尋字詞重新開啟</string>
     <string name="setting_use_list_layout">使用清單版面</string>
     <string name="setting_use_list_layout_desc">以清單而非格線顯示應用程式</string>
     <string name="sort_name_za">名稱（Z-A）</string>

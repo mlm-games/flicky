@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Elige entre el tema claro, oscuro o del sistema</string>
     <string name="setting_show_app_icons">Mostrar iconos de las apps</string>
     <string name="setting_show_app_icons_desc">Mostrar los iconos de las apps en listas y cuadrículas</string>
+    <string name="setting_show_focus_ring">Anillo de foco</string>
+    <string name="setting_show_focus_ring_desc">Resaltar el control enfocado al navegar con un mando o teclado</string>
+    <string name="setting_restore_last_query">Restaurar última búsqueda</string>
+    <string name="setting_restore_last_query_desc">Reabrir con la consulta de búsqueda anterior</string>
     <string name="setting_use_list_layout">Usar diseño de lista</string>
     <string name="setting_use_list_layout_desc">Mostrar las apps en una lista en lugar de una cuadrícula</string>
     <string name="sort_name_za">Nombre (Z-A)</string>

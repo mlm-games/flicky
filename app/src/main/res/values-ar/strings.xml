@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">اختر بين المظهر الفاتح والداكن ومظهر النظام</string>
     <string name="setting_show_app_icons">إظهار أيقونات التطبيقات</string>
     <string name="setting_show_app_icons_desc">عرض أيقونات التطبيقات في القوائم والشبكات</string>
+    <string name="setting_show_focus_ring">حلقة التركيز</string>
+    <string name="setting_show_focus_ring_desc">إبراز العنصر المركّز عند التنقل بجهاز التحكم أو لوحة المفاتيح</string>
+    <string name="setting_restore_last_query">استعادة آخر بحث</string>
+    <string name="setting_restore_last_query_desc">إعادة الفتح بآخر استعلام بحث</string>
     <string name="setting_use_list_layout">استخدام تخطيط القائمة</string>
     <string name="setting_use_list_layout_desc">عرض التطبيقات في قائمة بدلًا من شبكة</string>
     <string name="sort_name_za">الاسم (ي-أ)</string>

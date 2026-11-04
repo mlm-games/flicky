@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Wybierz między jasnym, ciemnym lub systemowym motywem</string>
     <string name="setting_show_app_icons">Pokazuj ikony aplikacji</string>
     <string name="setting_show_app_icons_desc">Wyświetlaj ikony aplikacji na listach i w siatkach</string>
+    <string name="setting_show_focus_ring">Pierścień fokusu</string>
+    <string name="setting_show_focus_ring_desc">Wyróżnij aktywny element podczas nawigacji pilotem lub klawiaturą</string>
+    <string name="setting_restore_last_query">Przywróć ostatnie wyszukiwanie</string>
+    <string name="setting_restore_last_query_desc">Otwórz ponownie z poprzednim zapytaniem wyszukiwania</string>
     <string name="setting_use_list_layout">Używaj układu listy</string>
     <string name="setting_use_list_layout_desc">Wyświetlaj aplikacje jako listę zamiast siatki</string>
     <string name="sort_name_za">Nazwa (Z-A)</string>

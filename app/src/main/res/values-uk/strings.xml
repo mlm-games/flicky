@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Виберіть світлу, темну або системну тему</string>
     <string name="setting_show_app_icons">Показувати значки застосунків</string>
     <string name="setting_show_app_icons_desc">Показувати значки застосунків у списках і сітках</string>
+    <string name="setting_show_focus_ring">Кільце фокуса</string>
+    <string name="setting_show_focus_ring_desc">Виділяти елемент у фокусі під час навігації пультом або клавіатурою</string>
+    <string name="setting_restore_last_query">Відновити останній пошук</string>
+    <string name="setting_restore_last_query_desc">Відкривати з попереднім пошуковим запитом</string>
     <string name="setting_use_list_layout">Вигляд списком</string>
     <string name="setting_use_list_layout_desc">Показувати застосунки списком, а не сіткою</string>
     <string name="sort_name_za">Назва (Я-А)</string>

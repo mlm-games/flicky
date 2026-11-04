@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Choisissez entre le thème clair, sombre ou celui du système</string>
     <string name="setting_show_app_icons">Afficher les icônes des applications</string>
     <string name="setting_show_app_icons_desc">Afficher les icônes des applications dans les listes et les grilles</string>
+    <string name="setting_show_focus_ring">Anneau de focus</string>
+    <string name="setting_show_focus_ring_desc">Mettre en évidence le contrôle ciblé lors de la navigation avec une télécommande ou un clavier</string>
+    <string name="setting_restore_last_query">Restaurer la dernière recherche</string>
+    <string name="setting_restore_last_query_desc">Rouvrir avec la dernière requête de recherche</string>
     <string name="setting_use_list_layout">Utiliser une disposition en liste</string>
     <string name="setting_use_list_layout_desc">Afficher les applications sous forme de liste au lieu d\'une grille</string>
     <string name="sort_name_za">Nom (Z-A)</string>

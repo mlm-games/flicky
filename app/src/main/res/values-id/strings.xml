@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Pilih antara tema terang, gelap, atau sistem</string>
     <string name="setting_show_app_icons">Tampilkan ikon aplikasi</string>
     <string name="setting_show_app_icons_desc">Tampilkan ikon aplikasi di daftar dan kisi</string>
+    <string name="setting_show_focus_ring">Cincin fokus</string>
+    <string name="setting_show_focus_ring_desc">Sorot kontrol yang difokuskan saat menavigasi dengan remote atau keyboard</string>
+    <string name="setting_restore_last_query">Pulihkan pencarian terakhir</string>
+    <string name="setting_restore_last_query_desc">Buka lagi dengan kueri pencarian sebelumnya</string>
     <string name="setting_use_list_layout">Gunakan tata letak daftar</string>
     <string name="setting_use_list_layout_desc">Tampilkan aplikasi sebagai daftar, bukan kisi</string>
     <string name="sort_name_za">Nama (Z-A)</string>

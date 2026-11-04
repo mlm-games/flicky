@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Wähle zwischen hellem, dunklem oder Systemdesign</string>
     <string name="setting_show_app_icons">App-Symbole anzeigen</string>
     <string name="setting_show_app_icons_desc">App-Symbole in Listen und Rastern anzeigen</string>
+    <string name="setting_show_focus_ring">Fokusrahmen</string>
+    <string name="setting_show_focus_ring_desc">Fokussiertes Element bei Navigation mit Fernbedienung oder Tastatur hervorheben</string>
+    <string name="setting_restore_last_query">Letzte Suche wiederherstellen</string>
+    <string name="setting_restore_last_query_desc">Mit dem letzten Suchbegriff erneut öffnen</string>
     <string name="setting_use_list_layout">Listenlayout verwenden</string>
     <string name="setting_use_list_layout_desc">Apps als Liste statt als Raster anzeigen</string>
     <string name="sort_name_za">Name (Z-A)</string>

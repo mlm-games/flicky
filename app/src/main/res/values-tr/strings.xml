@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">Açık, koyu veya sistem teması arasında seçim yapın</string>
     <string name="setting_show_app_icons">Uygulama simgelerini göster</string>
     <string name="setting_show_app_icons_desc">Uygulama simgelerini listelerde ve ızgaralarda göster</string>
+    <string name="setting_show_focus_ring">Odak halkası</string>
+    <string name="setting_show_focus_ring_desc">Uzaktan kumanda veya klavyeyle gezinirken odaklanan öğeyi vurgula</string>
+    <string name="setting_restore_last_query">Son aramayı geri yükle</string>
+    <string name="setting_restore_last_query_desc">Önceki arama sorgusuyla yeniden aç</string>
     <string name="setting_use_list_layout">Liste düzenini kullan</string>
     <string name="setting_use_list_layout_desc">Uygulamaları ızgara yerine liste olarak göster</string>
     <string name="sort_name_za">Ad (Z-A)</string>

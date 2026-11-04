@@ -246,6 +246,10 @@
     <string name="setting_theme_desc">בחר בין ערכת נושא בהירה, כהה או של המערכת</string>
     <string name="setting_show_app_icons">הצגת סמלי אפליקציות</string>
     <string name="setting_show_app_icons_desc">הצגת סמלי האפליקציות ברשימות וברשתות</string>
+    <string name="setting_show_focus_ring">טבעת מיקוד</string>
+    <string name="setting_show_focus_ring_desc">הדגשת הרכיב שבמיקוד בעת ניווט עם שלט או מקלדת</string>
+    <string name="setting_restore_last_query">שחזור החיפוש האחרון</string>
+    <string name="setting_restore_last_query_desc">פתח מחדש עם שאילתת החיפוש הקודמת</string>
     <string name="setting_use_list_layout">שימוש בפריסת רשימה</string>
     <string name="setting_use_list_layout_desc">הצגת האפליקציות ברשימה במקום ברשת</string>
     <string name="sort_name_za">שם (Z-A)</string>
