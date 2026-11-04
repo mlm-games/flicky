@@ -37,6 +37,7 @@ private val settingsResources: Map<String, Int> = mapOf(
     FlickySettingsKeys.SETTING_RESTORE_LAST_QUERY to R.string.setting_restore_last_query,
     FlickySettingsKeys.SETTING_SHOW_APP_ICONS to R.string.setting_show_app_icons,
     FlickySettingsKeys.SETTING_SHOW_DEBUG_INFO to R.string.setting_show_debug_info,
+    FlickySettingsKeys.SETTING_SHOW_FOCUS_RING to R.string.setting_show_focus_ring,
     FlickySettingsKeys.SETTING_SHOW_INCOMPATIBLE to R.string.setting_show_incompatible,
     FlickySettingsKeys.SETTING_SHOW_REPRODUCIBLE to R.string.setting_show_reproducible,
     FlickySettingsKeys.SETTING_SUPPORT_DEVELOPMENT to R.string.setting_support_development,
@@ -64,6 +65,7 @@ private val settingsResources: Map<String, Int> = mapOf(
         R.string.setting_restore_last_query_desc,
     FlickySettingsKeys.SETTING_SHOW_APP_ICONS_DESCRIPTION to R.string.setting_show_app_icons_desc,
     FlickySettingsKeys.SETTING_SHOW_DEBUG_INFO_DESCRIPTION to R.string.setting_show_debug_info_desc,
+    FlickySettingsKeys.SETTING_SHOW_FOCUS_RING_DESCRIPTION to R.string.setting_show_focus_ring_desc,
     FlickySettingsKeys.SETTING_SHOW_INCOMPATIBLE_DESCRIPTION to R.string.setting_show_incompatible_desc,
     FlickySettingsKeys.SETTING_SHOW_REPRODUCIBLE_DESCRIPTION to R.string.setting_show_reproducible_desc,
     FlickySettingsKeys.SETTING_SUPPORT_DEVELOPMENT_DESCRIPTION to

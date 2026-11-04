@@ -324,6 +324,8 @@
     <string name="setting_theme_desc">Choose between light, dark, or system theme</string>
     <string name="setting_show_app_icons">Show app icons</string>
     <string name="setting_show_app_icons_desc">Display app icons in lists and grids</string>
+    <string name="setting_show_focus_ring">Focus ring</string>
+    <string name="setting_show_focus_ring_desc">Outline the focused control when navigating with a remote or keyboard</string>
     <string name="setting_restore_last_query">Restore last search</string>
     <string name="setting_restore_last_query_desc">Reopen with the previous search query</string>
     <string name="setting_use_list_layout">Use list layout</string>

@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +37,8 @@ object TvFocusConfig {
         easing = LinearEasing
     )
 }
+
+val LocalFocusRingEnabled = compositionLocalOf { true }
 
 @Composable
 fun rememberDebouncedFocusState(): Pair<Boolean, (Boolean) -> Unit> {
@@ -69,6 +72,8 @@ fun Modifier.tvFocusRing(
     shape: Shape = RoundedCornerShape(12.dp),
     borderWidth: Dp = 2.dp
 ): Modifier {
+    if (!LocalFocusRingEnabled.current) return this
+
     var focused by remember { mutableStateOf(false) }
     val color by animateColorAsState(
         targetValue = if (focused) MaterialTheme.colorScheme.primary else Color.Transparent,

@@ -116,6 +116,15 @@ data class AppSettings(
     val useListLayout: Boolean = false,
 
     @Setting(
+        titleKey = FlickySettingsKeys.SETTING_SHOW_FOCUS_RING,
+        description = "Outline the focused control when navigating with a remote or keyboard",
+        descriptionKey = FlickySettingsKeys.SETTING_SHOW_FOCUS_RING_DESCRIPTION,
+        category = Appearance::class,
+        type = Toggle::class
+    )
+    val showFocusRing: Boolean = true,
+
+    @Setting(
         titleKey = FlickySettingsKeys.SETTING_DEFAULT_SORT,
         description = "How to sort apps by default",
         descriptionKey = FlickySettingsKeys.SETTING_DEFAULT_SORT_DESCRIPTION,

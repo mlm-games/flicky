@@ -14,6 +14,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,6 +29,7 @@ import app.flicky.data.remote.HttpClientProvider
 import app.flicky.data.repository.AppSettings
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.applyAppLocale
+import app.flicky.helper.LocalFocusRingEnabled
 import app.flicky.navigation.NavScreen
 import app.flicky.navigation.Nav3Host
 import app.flicky.network.CoilCallFactory
@@ -287,27 +289,31 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
 
-                Scaffold(
-                    snackbarHost = {
-                        LauncherSnackbarHost(
-                            hostState = snackbarHostState,
-                            manager = snackbarManager
-                        )
-                    }
+                CompositionLocalProvider(
+                    LocalFocusRingEnabled provides settingsState.showFocusRing
                 ) {
-                    if (isTV) {
-                        TvMainScreen(
-                            selectedIndex = selectedIndexForTop(),
-                            contentKey = contentKeyForFocus(),
-                            onSelect = ::switchTab,
-                            content = content
-                        )
-                    } else {
-                        MobileMainScaffold(
-                            selectedIndex = selectedIndexForTop(),
-                            onSelect = ::switchTab,
-                            content = content
-                        )
+                    Scaffold(
+                        snackbarHost = {
+                            LauncherSnackbarHost(
+                                hostState = snackbarHostState,
+                                manager = snackbarManager
+                            )
+                        }
+                    ) {
+                        if (isTV) {
+                            TvMainScreen(
+                                selectedIndex = selectedIndexForTop(),
+                                contentKey = contentKeyForFocus(),
+                                onSelect = ::switchTab,
+                                content = content
+                            )
+                        } else {
+                            MobileMainScaffold(
+                                selectedIndex = selectedIndexForTop(),
+                                onSelect = ::switchTab,
+                                content = content
+                            )
+                        }
                     }
                 }
             }
