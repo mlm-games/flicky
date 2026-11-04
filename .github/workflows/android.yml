@@ -38,6 +38,7 @@ jobs:
     uses: mlm-games/ci/.github/workflows/android-release.yml@v1
     with:
       publish-release: ${{ inputs.publish_github_release }}
+      prerelease: ${{ inputs.mark_prerelease }}
       app-name: Flicky
       app-slug: flicky
       application-id: app.flicky
