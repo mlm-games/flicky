@@ -1,0 +1,3 @@
+- Improve the SearchBar focus logic on TV by separating focus from editing
+- toggle off last searched term by default
+- Allow selection for descriptions

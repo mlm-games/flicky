@@ -1,3 +1,10 @@
+## v4.6.2
+
+- Improve the SearchBar focus logic on TV by separating focus from editing
+- toggle off last searched term by default
+- Allow selection for descriptions
+
+
 ## v4.6.1
 
 - fix few transl. escapes
