@@ -34,6 +34,7 @@ private val settingsResources: Map<String, Int> = mapOf(
     FlickySettingsKeys.SETTING_KEEP_CACHE to R.string.setting_keep_cache,
     FlickySettingsKeys.SETTING_PREFERRED_REPO to R.string.setting_preferred_repo,
     FlickySettingsKeys.SETTING_PROXY_URL to R.string.setting_proxy_url,
+    FlickySettingsKeys.SETTING_RESTORE_LAST_QUERY to R.string.setting_restore_last_query,
     FlickySettingsKeys.SETTING_SHOW_APP_ICONS to R.string.setting_show_app_icons,
     FlickySettingsKeys.SETTING_SHOW_DEBUG_INFO to R.string.setting_show_debug_info,
     FlickySettingsKeys.SETTING_SHOW_INCOMPATIBLE to R.string.setting_show_incompatible,
@@ -59,6 +60,8 @@ private val settingsResources: Map<String, Int> = mapOf(
     FlickySettingsKeys.SETTING_INSTALLER_DESCRIPTION to R.string.setting_installer_desc,
     FlickySettingsKeys.SETTING_KEEP_CACHE_DESCRIPTION to R.string.setting_keep_cache_desc,
     FlickySettingsKeys.SETTING_PREFERRED_REPO_DESCRIPTION to R.string.setting_preferred_repo_desc,
+    FlickySettingsKeys.SETTING_RESTORE_LAST_QUERY_DESCRIPTION to
+        R.string.setting_restore_last_query_desc,
     FlickySettingsKeys.SETTING_SHOW_APP_ICONS_DESCRIPTION to R.string.setting_show_app_icons_desc,
     FlickySettingsKeys.SETTING_SHOW_DEBUG_INFO_DESCRIPTION to R.string.setting_show_debug_info_desc,
     FlickySettingsKeys.SETTING_SHOW_INCOMPATIBLE_DESCRIPTION to R.string.setting_show_incompatible_desc,

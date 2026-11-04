@@ -55,7 +55,7 @@ class BrowseViewModel(
 
     val pagedApps: Flow<PagingData<FDroidApp>> =
         combine(
-            _query.debounce(300),
+            _query.debounce { if (it.isEmpty()) 0L else 300L },
             _sort,
             settings.settingsFlow.map { it.reverseSort }.distinctUntilChanged(),
             settings.settingsFlow.map { it.hideAntiFeatures }.distinctUntilChanged(),
@@ -67,7 +67,11 @@ class BrowseViewModel(
 
     init {
         viewModelScope.launch {
-            _query.value = runCatching { settings.getLastQuery() }.getOrDefault("")
+            val saved = settings.settingsFlow.first()
+            if (saved.restoreLastQuery) {
+                _query.value = runCatching { settings.getLastQuery() }.getOrDefault("")
+            }
+            startQueryPersistence()
         }
         viewModelScope.launch {
             settings.settingsFlow
@@ -97,8 +101,27 @@ class BrowseViewModel(
                 }
             }
         }
+    }
+
+    private fun startQueryPersistence() {
         viewModelScope.launch {
-            query.debounce(400).collect { q -> runCatching { settings.setLastQuery(q) } }
+            settings.settingsFlow
+                .map { it.restoreLastQuery }
+                .distinctUntilChanged()
+                .collect { enabled ->
+                    if (!enabled) runCatching { settings.setLastQuery("") }
+                }
+        }
+        viewModelScope.launch {
+            combine(
+                _query.debounce { if (it.isEmpty()) 0L else 400L },
+                settings.settingsFlow
+                    .map { it.restoreLastQuery }
+                    .distinctUntilChanged()
+            ) { q, enabled -> q to enabled }
+                .collect { (q, enabled) ->
+                    if (enabled) runCatching { settings.setLastQuery(q) }
+                }
         }
     }
 

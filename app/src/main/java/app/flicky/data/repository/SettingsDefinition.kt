@@ -126,6 +126,15 @@ data class AppSettings(
     )
     val defaultSort: Int = 1,
 
+    @Setting(
+        titleKey = FlickySettingsKeys.SETTING_RESTORE_LAST_QUERY,
+        description = "Reopen with the previous search query",
+        descriptionKey = FlickySettingsKeys.SETTING_RESTORE_LAST_QUERY_DESCRIPTION,
+        category = General::class,
+        type = Toggle::class
+    )
+    val restoreLastQuery: Boolean = false,
+
     @Persisted(key = "reverse_sort")
     val reverseSort: Boolean = false,
 
