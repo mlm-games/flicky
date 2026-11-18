@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">سيتم تثبيت التحديثات عند توفر Wi-Fi</string>
 
     <string name="notification_updates_available">تحديثات متاحة</string>
+    <string name="notification_needs_confirmation">اضغط لتثبيت التحديث</string>
     <plurals name="notification_updates_available_count">
         <item quantity="zero">يمكن تحديث %1$d من التطبيقات</item>
         <item quantity="one">يمكن تحديث %1$d تطبيق</item>

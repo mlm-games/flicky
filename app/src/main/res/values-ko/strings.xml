@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">Wi-Fi가 연결되면 업데이트가 설치됩니다</string>
 
     <string name="notification_updates_available">사용 가능한 업데이트</string>
+    <string name="notification_needs_confirmation">탭하여 업데이트 설치</string>
     <plurals name="notification_updates_available_count">
         <item quantity="other">%1$d개 앱을 업데이트할 수 있습니다</item>
     </plurals>

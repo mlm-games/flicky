@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">Uppdateringar installeras när Wi-Fi är tillgängligt</string>
 
     <string name="notification_updates_available">Tillgängliga uppdateringar</string>
+    <string name="notification_needs_confirmation">Tryck för att installera uppdateringen</string>
     <plurals name="notification_updates_available_count">
         <item quantity="one">%1$d app kan uppdateras</item>
         <item quantity="other">%1$d appar kan uppdateras</item>

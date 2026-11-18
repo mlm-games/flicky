@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">Aktualizace se nainstalují, až bude k dispozici Wi-Fi</string>
 
     <string name="notification_updates_available">Dostupné aktualizace</string>
+    <string name="notification_needs_confirmation">Klepnutím nainstalujte aktualizaci</string>
     <plurals name="notification_updates_available_count">
         <item quantity="one">Lze aktualizovat %1$d aplikaci</item>
         <item quantity="few">Lze aktualizovat %1$d aplikace</item>

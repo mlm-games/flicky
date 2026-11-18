@@ -96,6 +96,26 @@ object UpdateNotifications {
         postNotification(context, NOTIFICATION_ID_UPDATES_AVAILABLE, notification)
     }
 
+    fun notifyNeedsConfirmation(context: Context, packageName: String, title: String, confirm: PendingIntent) {
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setContentTitle(title)
+            .setContentText(context.getString(R.string.notification_needs_confirmation))
+            .setContentIntent(confirm)
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .build()
+        postNotification(context, notificationIdFor(packageName), notification)
+    }
+
+    fun cancelNeedsConfirmation(context: Context, packageName: String) {
+        runCatching {
+            NotificationManagerCompat.from(context).cancel(notificationIdFor(packageName))
+        }
+    }
+
+    private fun notificationIdFor(packageName: String): Int = packageName.hashCode()
+
     fun cancelUpdatesAvailable(context: Context) {
         runCatching {
             NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_UPDATES_AVAILABLE)

@@ -411,6 +411,7 @@
     <string name="notification_updated_and_failed">Updated %1$d apps, %2$d failed</string>
     <string name="notification_update_failed">Update failed for %1$d apps</string>
     <string name="notification_updates_available">Updates available</string>
+    <string name="notification_needs_confirmation">Tap to install the update</string>
     <plurals name="notification_updates_available_count">
         <item quantity="one">%1$d app can be updated</item>
         <item quantity="other">%1$d apps can be updated</item>

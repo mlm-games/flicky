@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">Οι ενημερώσεις θα εγκατασταθούν όταν υπάρχει Wi-Fi</string>
 
     <string name="notification_updates_available">Διαθέσιμες ενημερώσεις</string>
+    <string name="notification_needs_confirmation">Πατήστε για εγκατάσταση της ενημέρωσης</string>
     <plurals name="notification_updates_available_count">
         <item quantity="one">%1$d εφαρμογή μπορεί να ενημερωθεί</item>
         <item quantity="other">%1$d εφαρμογές μπορούν να ενημερωθούν</item>

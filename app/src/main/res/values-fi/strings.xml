@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">Päivitykset asennetaan, kun Wi-Fi on käytettävissä</string>
 
     <string name="notification_updates_available">Päivityksiä saatavilla</string>
+    <string name="notification_needs_confirmation">Napauta asentaaksesi päivityksen</string>
     <plurals name="notification_updates_available_count">
         <item quantity="one">%1$d sovellus voidaan päivittää</item>
         <item quantity="other">%1$d sovellusta voidaan päivittää</item>

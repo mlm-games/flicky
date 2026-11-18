@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">Güncellemeler Wi-Fi kullanılabilir olduğunda yüklenecek</string>
 
     <string name="notification_updates_available">Kullanılabilir güncellemeler</string>
+    <string name="notification_needs_confirmation">Güncellemeyi yüklemek için dokunun</string>
     <plurals name="notification_updates_available_count">
         <item quantity="one">%1$d uygulama güncellenebilir</item>
         <item quantity="other">%1$d uygulama güncellenebilir</item>

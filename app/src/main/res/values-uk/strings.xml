@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">Оновлення встановляться, коли буде доступний Wi-Fi</string>
 
     <string name="notification_updates_available">Доступні оновлення</string>
+    <string name="notification_needs_confirmation">Торкніться, щоб установити оновлення</string>
     <plurals name="notification_updates_available_count">
         <item quantity="one">Можна оновити %1$d застосунок</item>
         <item quantity="few">Можна оновити %1$d застосунки</item>

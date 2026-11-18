@@ -6,6 +6,7 @@ import app.flicky.data.repository.SettingsActions
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.SupportDevelopmentAction
 import app.flicky.di.appModule
+import app.flicky.helper.AppVisibility
 import app.flicky.migration.PreferencesMigration
 import app.flicky.notify.UpdateNotifications
 import app.flicky.work.SyncScheduler
@@ -23,6 +24,7 @@ class FlickyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         Yapchik.install(this)
+        AppVisibility.register(this)
 
         val koin = startKoin {
             androidContext(this@FlickyApplication)

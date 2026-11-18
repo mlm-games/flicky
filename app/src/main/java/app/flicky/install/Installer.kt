@@ -1,6 +1,7 @@
 package app.flicky.install
 
 import android.annotation.SuppressLint
+import android.app.ActivityOptions
 import android.app.DownloadManager
 import android.app.PendingIntent
 import android.content.*
@@ -9,6 +10,7 @@ import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.StatFs
 import android.provider.Settings
 import android.util.Log
@@ -29,7 +31,9 @@ import app.flicky.data.remote.MirrorRegistry.Strategy
 import app.flicky.data.repository.PreferredRepo
 import app.flicky.data.repository.SettingsRepository
 import app.flicky.data.repository.VariantSelector
+import app.flicky.helper.AppVisibility
 import app.flicky.helper.DebugLog
+import app.flicky.notify.UpdateNotifications
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -56,7 +60,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.SSLHandshakeException
 import kotlin.coroutines.resume
 
-private data class InstallSessionResult(val success: Boolean, val wasCancelledByUser: Boolean = false)
+private data class InstallSessionResult(
+    val success: Boolean,
+    val wasCancelledByUser: Boolean = false,
+    val deferred: Boolean = false
+)
 
 class Installer(
     private val context: Context,
@@ -101,6 +109,7 @@ class Installer(
         private const val STREAM_BUF = 64 * 1024
         const val DOWNLOAD_PARALLELISM = 3
         const val BATCH_WORKERS = DOWNLOAD_PARALLELISM + 1
+        private const val DEFERRED_CONFIRM_TIMEOUT_MS = 30 * 60 * 1000L
     }
 
     private val _errors = MutableStateFlow<Map<String, String>>(emptyMap())
@@ -291,6 +300,8 @@ class Installer(
             emitStage(req.packageName, TaskStage.Cancelled)
         } else if (result.wasCancelledByUser) {
             emitStage(req.packageName, TaskStage.Cancelled)
+        } else if (result.deferred) {
+            // The deferred-confirmation collector advances it once the user acts on the notification or in-app button.
         } else {
             emitStage(req.packageName, TaskStage.Finished(result.success))
         }
@@ -384,7 +395,7 @@ class Installer(
 
             result = tryInstallWithMode(mode, file, packageName, sha256)
 
-            if (result.success || result.wasCancelledByUser || isCancelled(packageName)) {
+            if (result.success || result.wasCancelledByUser || result.deferred || isCancelled(packageName)) {
                 if (result.success) clearError(packageName)
                 break
             }
@@ -862,6 +873,10 @@ class Installer(
     } catch (_: Exception) { false }
 
     private suspend fun installSystem(file: File, packageName: String): Boolean {
+        if (!AppVisibility.isForeground) {
+            DebugLog.log("Installer", "Skipping system installer in background for $packageName")
+            return false
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !context.packageManager.canRequestPackageInstalls()
         ) {
@@ -884,6 +899,10 @@ class Installer(
     }
 
     private suspend fun installAppManager(file: File, packageName: String): Boolean {
+        if (!AppVisibility.isForeground) {
+            DebugLog.log("Installer", "Skipping App Manager installer in background for $packageName")
+            return false
+        }
         return try {
             val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 
@@ -1000,6 +1019,7 @@ class Installer(
             }
         }
         val sess = pm.openSession(sessionId)
+        var deferred = false
         try {
             val total = file.length().coerceAtLeast(1L)
             val writeOk = withContext(Dispatchers.IO) {
@@ -1062,7 +1082,31 @@ class Installer(
                     return false
                 }
                 emitStage(packageName, TaskStage.NeedsConfirmation(confirm))
-                val sent = runCatching { confirm.send() }
+                if (!AppVisibility.isForeground) {
+                    deferred = true
+                    DebugLog.log("Installer", "Deferring confirmation for $packageName (app in background)")
+                    val label = runCatching {
+                        context.packageManager.getApplicationLabel(
+                            context.packageManager.getApplicationInfo(packageName, 0)
+                        ).toString()
+                    }.getOrDefault(packageName)
+                    UpdateNotifications.notifyNeedsConfirmation(context, packageName, label, confirm)
+                    scope.launch {
+                        val deferredEvt = withTimeoutOrNull(DEFERRED_CONFIRM_TIMEOUT_MS) {
+                            bus.first { it.status != PackageInstaller.STATUS_PENDING_USER_ACTION }
+                        }
+                        finishDeferred(packageName, sessionId, deferredEvt, confirm)
+                    }
+                    return false
+                }
+                val sent = runCatching {
+                    val options = balStartOptions()
+                    if (options != null) {
+                        confirm.send(context, 0, null, null, null, null, options)
+                    } else {
+                        confirm.send()
+                    }
+                }
                 if (sent.isFailure) {
                     DebugLog.log("Installer", "Confirmation launch failed for $packageName: ${sent.exceptionOrNull()?.message}")
                     setError(packageName, "Couldn't open the system confirmation dialog.")
@@ -1119,7 +1163,7 @@ class Installer(
             }
         } finally {
             runCatching { sess.close() }
-            SessionInstallBus.release(sessionId)
+            if (!deferred) SessionInstallBus.release(sessionId)
         }
     }
 
@@ -1131,6 +1175,56 @@ class Installer(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && canDoUnattendedUpdate(packageName)) {
             params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
         }
+    }
+
+    private fun balStartOptions(): Bundle? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return null
+        return try {
+            ActivityOptions.makeBasic().apply {
+                if (Build.VERSION.SDK_INT >= 36) {
+                    setPendingIntentBackgroundActivityStartMode(
+                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOW_IF_VISIBLE
+                    )
+                } else {
+                    setPendingIntentBackgroundActivityStartMode(
+                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+                    )
+                }
+            }.toBundle()
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private fun finishDeferred(
+        packageName: String,
+        sessionId: Int,
+        evt: InstallEvent?,
+        confirm: PendingIntent
+    ) {
+        val current = _tasks.value[packageName]
+        if (current !is TaskStage.NeedsConfirmation || current.intent !== confirm) {
+            runCatching { UpdateNotifications.cancelNeedsConfirmation(context, packageName) }
+            SessionInstallBus.release(sessionId)
+            return
+        }
+        when {
+            evt == null -> emitStage(packageName, TaskStage.Finished(false))
+            evt.status == PackageInstaller.STATUS_SUCCESS -> {
+                clearError(packageName)
+                emitStage(packageName, TaskStage.Finished(true))
+            }
+            isUserCancelled(evt.status) -> emitStage(packageName, TaskStage.Cancelled)
+            else -> {
+                setError(
+                    packageName,
+                    friendlyFromPackageInstaller(evt.status, evt.message, evt.otherPackage)
+                )
+                emitStage(packageName, TaskStage.Finished(false))
+            }
+        }
+        UpdateNotifications.cancelNeedsConfirmation(context, packageName)
+        SessionInstallBus.release(sessionId)
     }
 
     private fun canDoUnattendedUpdate(packageName: String): Boolean {

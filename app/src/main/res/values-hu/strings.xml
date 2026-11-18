@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">A frissítések telepítése Wi-Fi elérhetősége esetén történik</string>
 
     <string name="notification_updates_available">Elérhető frissítések</string>
+    <string name="notification_needs_confirmation">Koppintson a frissítés telepítéséhez</string>
     <plurals name="notification_updates_available_count">
         <item quantity="one">%1$d alkalmazás frissíthető</item>
         <item quantity="other">%1$d alkalmazás frissíthető</item>

@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">به‌روزرسانی‌ها هنگام دسترس بودن Wi-Fi نصب می‌شوند</string>
 
     <string name="notification_updates_available">به‌روزرسانی‌های موجود</string>
+    <string name="notification_needs_confirmation">برای نصب به‌روزرسانی ضربه بزنید</string>
     <plurals name="notification_updates_available_count">
         <item quantity="one">%1$d برنامه قابل به‌روزرسانی است</item>
         <item quantity="other">%1$d برنامه قابل به‌روزرسانی است</item>

@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">有 Wi-Fi 時將安裝更新</string>
 
     <string name="notification_updates_available">有可用的更新</string>
+    <string name="notification_needs_confirmation">點按以安裝更新</string>
     <plurals name="notification_updates_available_count">
         <item quantity="other">有 %1$d 個應用程式可以更新</item>
     </plurals>

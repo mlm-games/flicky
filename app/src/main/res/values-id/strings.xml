@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">Pembaruan akan dipasang saat Wi-Fi tersedia</string>
 
     <string name="notification_updates_available">Pembaruan tersedia</string>
+    <string name="notification_needs_confirmation">Ketuk untuk memasang pembaruan</string>
     <plurals name="notification_updates_available_count">
         <item quantity="other">%1$d aplikasi dapat diperbarui</item>
     </plurals>

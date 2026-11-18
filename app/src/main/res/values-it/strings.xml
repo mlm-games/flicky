@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">Gli aggiornamenti verranno installati quando il Wi-Fi sarà disponibile</string>
 
     <string name="notification_updates_available">Aggiornamenti disponibili</string>
+    <string name="notification_needs_confirmation">Tocca per installare l\'aggiornamento</string>
     <plurals name="notification_updates_available_count">
         <item quantity="one">%1$d app può essere aggiornata</item>
         <item quantity="other">%1$d app possono essere aggiornate</item>

@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">Updates worden geïnstalleerd zodra Wi-Fi beschikbaar is</string>
 
     <string name="notification_updates_available">Updates beschikbaar</string>
+    <string name="notification_needs_confirmation">Tik om de update te installeren</string>
     <plurals name="notification_updates_available_count">
         <item quantity="one">%1$d app kan worden bijgewerkt</item>
         <item quantity="other">%1$d apps kunnen worden bijgewerkt</item>

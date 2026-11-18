@@ -348,6 +348,7 @@
     <string name="waiting_for_wifi">העדכונים יותקנו כשיהיה Wi-Fi זמין</string>
 
     <string name="notification_updates_available">עדכונים זמינים</string>
+    <string name="notification_needs_confirmation">הקישו כדי להתקין את העדכון</string>
     <plurals name="notification_updates_available_count">
         <item quantity="one">ניתן לעדכן %1$d אפליקציה</item>
         <item quantity="two">ניתן לעדכן %1$d אפליקציות</item>
