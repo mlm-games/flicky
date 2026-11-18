@@ -1,3 +1,8 @@
+## v4.6.3
+
+- Fix "waiting in queue" issue
+
+
 ## v4.6.2
 
 - Improve the SearchBar focus logic on TV by separating focus from editing
